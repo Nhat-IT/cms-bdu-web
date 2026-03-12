@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS BDU - Phân Công Giảng Dạy</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+    <style>
+        .sidebar-admin { background-color: #1e293b; }
+        .top-navbar-admin { background-color: #0f172a; }
+        .action-btn { padding: 0.2rem 0.5rem; font-size: 0.875rem; border-radius: 4px; }
+    </style>
+</head>
+<body class="dashboard-body">
+
+<div class="sidebar sidebar-admin d-flex flex-column" id="sidebar" style="height: 100vh;">
+    <div>
+        <div class="brand text-white">CMS ADMIN</div>
+        <div class="text-center mb-3 text-white-50 small fw-bold">QUẢN TRỊ HỆ THỐNG</div>
+        <nav>
+            <a href="home.html"><i class="bi bi-speedometer2"></i> Tổng quan hệ thống</a>
+            <a href="accounts.html"><i class="bi bi-people"></i> Quản lý Tài khoản</a>
+            <a href="classes-subjects.html"><i class="bi bi-building"></i> Quản lý Lớp & Môn</a>
+            <a href="assignments.html" class="active"><i class="bi bi-diagram-3"></i> Phân công Giảng dạy</a>
+        </nav>
+    </div>
+    
+    <div class="mt-auto mb-3 px-3">
+        <hr class="text-secondary border-opacity-50">
+        <a href="../login.html" class="text-danger d-flex align-items-center text-decoration-none py-2 px-3 rounded hover-logout" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất?');">
+            <i class="bi bi-box-arrow-left me-2 fs-5"></i> <span class="fw-bold">Đăng xuất</span>
+        </a>
+    </div>
+</div>
+
+<div class="main-content" id="mainContent" style="padding: 0; background-color: #f1f5f9; min-height: 100vh;">
+    
+    <div class="top-navbar-admin d-flex justify-content-between align-items-center px-4 py-3">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+            <h4 class="m-0 text-white fw-bold d-flex align-items-center">
+                <i class="bi bi-diagram-3-fill me-2 fs-3 text-success"></i> QUẢN LÝ PHÂN CÔNG GIẢNG DẠY
+            </h4>
+        </div>
+        
+        <div class="d-flex align-items-center text-white">
+            <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
+                <div class="fs-6">Quản trị viên: <span class="fw-bold text-success">Admin Khoa CNTT</span></div>
+            </div>
+            <i class="bi bi-person-badge-fill fs-2"></i>
+        </div>
+    </div>
+
+    <div class="p-4">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="fw-bold small text-muted mb-1">TÌM KIẾM</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                            <input type="text" class="form-control" placeholder="Tên lớp, môn, giảng viên...">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="fw-bold small text-muted mb-1">HỌC KỲ</label>
+                        <select class="form-select fw-bold text-primary border-primary">
+                            <option value="all">Tất cả HK</option>
+                            <option value="HK1">Học kỳ 1</option>
+                            <option value="HK2" selected>Học kỳ 2</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="fw-bold small text-muted mb-1">TRẠNG THÁI</label>
+                        <select class="form-select fw-bold">
+                            <option value="all">Tất cả trạng thái</option>
+                            <option value="open">Đang mở</option>
+                            <option value="closed">Đã đóng</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <button class="btn btn-success fw-bold shadow-sm w-100" data-bs-toggle="modal" data-bs-target="#assignmentModal" onclick="openAssignmentModal('add')">
+                            <i class="bi bi-plus-lg me-1"></i> TẠO PHÂN CÔNG MỚI
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white pt-3 pb-2 border-0">
+                <h5 class="fw-bold text-dark m-0">Danh sách Lớp Học Phần</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light small text-muted fw-bold">
+                            <tr>
+                                <th class="ps-4 py-3">MÃ LỚP</th>
+                                <th class="py-3">MÔN HỌC</th>
+                                <th class="py-3">GIẢNG VIÊN PHỤ TRÁCH</th>
+                                <th class="text-center py-3">HỌC KỲ</th>
+                                <th class="text-end pe-4 py-3">HÀNH ĐỘNG</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="fw-bold ps-4 text-primary">25TH01</td>
+                                <td class="fw-bold">An ninh cơ sở dữ liệu (IT001)</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;">
+                                            <i class="bi bi-person-workspace small"></i>
+                                        </div>
+                                        <span>ThS. Dương Quang Sinh</span>
+                                    </div>
+                                </td>
+                                <td class="text-center"><span class="badge bg-light text-dark border">HK2</span></td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-light action-btn text-primary border me-1" title="Chỉnh sửa phân công" onclick="openAssignmentModal('edit', '25TH01', 'IT001', 'GVDQS', 'HK2')" data-bs-toggle="modal" data-bs-target="#assignmentModal">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                    <button class="btn btn-light action-btn text-danger border" title="Xóa phân công" onclick="confirmDeleteAssignment('25TH01', 'An ninh cơ sở dữ liệu')">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold ps-4 text-primary">24CNTT02</td>
+                                <td class="fw-bold">Cấu trúc dữ liệu & Giải thuật (IT002)</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;">
+                                            <i class="bi bi-person-workspace small"></i>
+                                        </div>
+                                        <span>TS. Nguyễn Hồ Hải</span>
+                                    </div>
+                                </td>
+                                <td class="text-center"><span class="badge bg-light text-dark border">HK2</span></td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-light action-btn text-primary border me-1" title="Chỉnh sửa phân công" onclick="openAssignmentModal('edit', '24CNTT02', 'IT002', 'GVNHH', 'HK2')" data-bs-toggle="modal" data-bs-target="#assignmentModal">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                    <button class="btn btn-light action-btn text-danger border" title="Xóa phân công" onclick="confirmDeleteAssignment('24CNTT02', 'Cấu trúc dữ liệu & Giải thuật')">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="assignmentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title fw-bold" id="assignmentModalTitle">Tạo Phân Công Giảng Dạy Mới</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        
+        <div class="alert alert-info py-2 small mb-4 border-info">
+            <i class="bi bi-info-circle-fill me-1"></i> Các tùy chọn bên dưới được tự động lấy từ danh sách Lớp hành chính, Môn học và Tài khoản giảng viên đã có trên hệ thống.
+        </div>
+
+        <form id="assignmentForm" onsubmit="return handleAssignmentSubmit(event)">
+          
+          <div class="mb-3">
+            <label class="form-label fw-bold">Chọn Lớp Hành Chính <span class="text-danger">*</span></label>
+            <select class="form-select border-primary fw-bold text-primary" id="modalClassId" required>
+                <option value="" disabled selected>-- Chọn lớp cần phân công --</option>
+                <option value="25TH01">25TH01 (Niên khóa 2025-2029)</option>
+                <option value="24CNTT02">24CNTT02 (Niên khóa 2024-2028)</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Chọn Môn Học <span class="text-danger">*</span></label>
+            <select class="form-select border-secondary fw-bold text-dark" id="modalSubjectId" required>
+                <option value="" disabled selected>-- Chọn môn học --</option>
+                <option value="IT001">IT001 - An ninh cơ sở dữ liệu</option>
+                <option value="IT002">IT002 - Cấu trúc dữ liệu & Giải thuật</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Phân công Giảng Viên <span class="text-danger">*</span></label>
+            <select class="form-select border-success fw-bold text-success" id="modalTeacherId" required>
+                <option value="" disabled selected>-- Chọn giảng viên phụ trách --</option>
+                <option value="GVDQS">ThS. Dương Quang Sinh</option>
+                <option value="GVNHH">TS. Nguyễn Hồ Hải</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Học Kỳ <span class="text-danger">*</span></label>
+            <select class="form-select border-secondary" id="modalSemester" required>
+                <option value="HK1">Học kỳ 1</option>
+                <option value="HK2" selected>Học kỳ 2</option>
+                <option value="HK3">Học kỳ 3 (Hè)</option>
+            </select>
+          </div>
+          
+          <div class="text-end mt-4">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+            <button type="submit" class="btn btn-success fw-bold px-4" id="assignmentModalBtn">LƯU PHÂN CÔNG</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../public/js/script.js"></script>
+
+<script>
+    // Hàm mở form Thêm/Sửa
+    function openAssignmentModal(mode, classId = '', subjectId = '', teacherId = '', semester = 'HK2') {
+        const title = document.getElementById('assignmentModalTitle');
+        const btn = document.getElementById('assignmentModalBtn');
+        const form = document.getElementById('assignmentForm');
+        
+        // Cần reset trạng thái disable trước khi làm các bước tiếp theo
+        document.getElementById('modalClassId').removeAttribute('disabled');
+        document.getElementById('modalSubjectId').removeAttribute('disabled');
+
+        if (mode === 'add') {
+            title.innerText = 'Tạo Phân Công Giảng Dạy Mới';
+            btn.innerText = 'LƯU PHÂN CÔNG';
+            form.reset();
+        } else {
+            title.innerText = 'Chỉnh sửa Phân Công';
+            btn.innerText = 'CẬP NHẬT';
+            
+            document.getElementById('modalClassId').value = classId;
+            document.getElementById('modalSubjectId').value = subjectId;
+            document.getElementById('modalTeacherId').value = teacherId;
+            document.getElementById('modalSemester').value = semester;
+
+            // Khi Sửa, khóa Lớp và Môn lại, vì nếu đổi Lớp/Môn thì bản chất là tạo một Phân công mới hoàn toàn
+            // Chỉ cho phép đổi Giảng viên hoặc đổi Học kỳ
+            document.getElementById('modalClassId').setAttribute('disabled', 'true');
+            document.getElementById('modalSubjectId').setAttribute('disabled', 'true');
+        }
+    }
+
+    // Hàm Submit form (Thêm hoặc Sửa)
+    function handleAssignmentSubmit(event) {
+        event.preventDefault();
+        const action = document.getElementById('assignmentModalBtn').innerText.includes('CẬP NHẬT') ? 'cập nhật' : 'tạo mới';
+        
+        if(confirm(`Bạn có chắc chắn muốn ${action} phân công này vào hệ thống?`)) {
+            alert(`✅ Đã ${action} dữ liệu thành công! Lớp học phần đã sẵn sàng để hoạt động.`);
+            var modalEl = document.getElementById('assignmentModal');
+            var modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+        }
+        return false;
+    }
+
+    // Hàm Xác nhận Xóa Phân công
+    function confirmDeleteAssignment(className, subjectName) {
+        if(confirm(`⛔ CẢNH BÁO: BẠN ĐANG HỦY LỚP HỌC PHẦN\n\nBạn có chắc chắn muốn hủy phân công môn [${subjectName}] của lớp [${className}] không?\nLưu ý: Hành động này sẽ xóa toàn bộ dữ liệu điểm danh và kho tài liệu liên quan đến lớp học phần này.`)) {
+            alert(`✅ Đã hủy lớp học phần thành công.`);
+        }
+    }
+</script>
+</body>
+</html>

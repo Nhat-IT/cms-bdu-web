@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS BDU - Quản Lý Lớp & Môn Học</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+    <style>
+        .sidebar-admin { background-color: #1e293b; }
+        .top-navbar-admin { background-color: #0f172a; }
+        .action-btn { padding: 0.2rem 0.5rem; font-size: 0.875rem; border-radius: 4px; }
+        .nav-tabs .nav-link { color: #475569; font-weight: bold; padding: 10px 20px; border: none; border-bottom: 3px solid transparent; }
+        .nav-tabs .nav-link.active { color: #0d6efd; border-bottom: 3px solid #0d6efd; background-color: transparent; }
+        .nav-tabs .nav-link:hover { border-bottom: 3px solid #cbd5e1; }
+    </style>
+</head>
+<body class="dashboard-body">
+
+<div class="sidebar sidebar-admin d-flex flex-column" id="sidebar" style="height: 100vh;">
+    <div>
+        <div class="brand text-white">CMS ADMIN</div>
+        <div class="text-center mb-3 text-white-50 small fw-bold">QUẢN TRỊ HỆ THỐNG</div>
+        <nav>
+            <a href="home.html"><i class="bi bi-speedometer2"></i> Tổng quan hệ thống</a>
+            <a href="accounts.html"><i class="bi bi-people"></i> Quản lý Tài khoản</a>
+            <a href="classes-subjects.html" class="active"><i class="bi bi-building"></i> Quản lý Lớp & Môn</a>
+            <a href="#"><i class="bi bi-diagram-3"></i> Phân công Giảng dạy</a>
+        </nav>
+    </div>
+    
+    <div class="mt-auto mb-3 px-3">
+        <hr class="text-secondary border-opacity-50">
+        <a href="../login.html" class="text-danger d-flex align-items-center text-decoration-none py-2 px-3 rounded hover-logout" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất?');">
+            <i class="bi bi-box-arrow-left me-2 fs-5"></i> <span class="fw-bold">Đăng xuất</span>
+        </a>
+    </div>
+</div>
+
+<div class="main-content" id="mainContent" style="padding: 0; background-color: #f1f5f9; min-height: 100vh;">
+    
+    <div class="top-navbar-admin d-flex justify-content-between align-items-center px-4 py-3">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+            <h4 class="m-0 text-white fw-bold d-flex align-items-center">
+                <i class="bi bi-building me-2 fs-3 text-warning"></i> QUẢN LÝ DANH MỤC GỐC
+            </h4>
+        </div>
+        
+        <div class="d-flex align-items-center text-white">
+            <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
+                <div class="fs-6">Quản trị viên: <span class="fw-bold text-warning">Admin Khoa CNTT</span></div>
+            </div>
+            <i class="bi bi-person-badge-fill fs-2"></i>
+        </div>
+    </div>
+
+    <div class="p-4">
+        
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white pt-3 pb-0 border-0">
+                <ul class="nav nav-tabs border-bottom-0" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="class-tab" data-bs-toggle="tab" data-bs-target="#class-pane" type="button" role="tab"><i class="bi bi-building-fill me-2"></i>LỚP HÀNH CHÍNH</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="subject-tab" data-bs-toggle="tab" data-bs-target="#subject-pane" type="button" role="tab"><i class="bi bi-journal-bookmark-fill me-2"></i>DANH MỤC MÔN HỌC</button>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="card-body bg-white pt-4">
+                <div class="tab-content" id="myTabContent">
+                    
+                    <div class="tab-pane fade show active" id="class-pane" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                            <div class="input-group input-group-sm" style="width: 300px;">
+                                <span class="input-group-text bg-light"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" class="form-control" placeholder="Tìm tên lớp, niên khóa...">
+                            </div>
+                            <button class="btn btn-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#classModal" onclick="openClassModal('add')">
+                                <i class="bi bi-plus-circle-fill me-1"></i> THÊM LỚP MỚI
+                            </button>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle border">
+                                <thead class="table-light small text-muted fw-bold">
+                                    <tr>
+                                        <th class="ps-4 py-3">STT</th>
+                                        <th class="py-3">MÃ LỚP HÀNH CHÍNH</th>
+                                        <th class="py-3">NIÊN KHÓA</th>
+                                        <th class="text-center py-3">SỐ LƯỢNG SV</th>
+                                        <th class="text-end pe-4 py-3">HÀNH ĐỘNG</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="ps-4 text-muted">1</td>
+                                        <td class="fw-bold text-primary fs-6">25TH01</td>
+                                        <td>2025 - 2029</td>
+                                        <td class="text-center"><span class="badge bg-secondary">68 SV</span></td>
+                                        <td class="text-end pe-4">
+                                            <button class="btn btn-light action-btn text-primary border me-1" title="Sửa tên lớp" onclick="openClassModal('edit', '25TH01', '2025 - 2029')" data-bs-toggle="modal" data-bs-target="#classModal">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                            <button class="btn btn-light action-btn text-danger border" title="Xóa lớp" onclick="confirmDelete('Lớp hành chính', '25TH01')">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="ps-4 text-muted">2</td>
+                                        <td class="fw-bold text-primary fs-6">24CNTT02</td>
+                                        <td>2024 - 2028</td>
+                                        <td class="text-center"><span class="badge bg-secondary">72 SV</span></td>
+                                        <td class="text-end pe-4">
+                                            <button class="btn btn-light action-btn text-primary border me-1" title="Sửa tên lớp" onclick="openClassModal('edit', '24CNTT02', '2024 - 2028')" data-bs-toggle="modal" data-bs-target="#classModal">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                            <button class="btn btn-light action-btn text-danger border" title="Xóa lớp" onclick="confirmDelete('Lớp hành chính', '24CNTT02')">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="subject-pane" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                            <div class="input-group input-group-sm" style="width: 300px;">
+                                <span class="input-group-text bg-light"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" class="form-control" placeholder="Tìm mã môn, tên môn...">
+                            </div>
+                            <button class="btn btn-success fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#subjectModal" onclick="openSubjectModal('add')">
+                                <i class="bi bi-plus-circle-fill me-1"></i> THÊM MÔN HỌC
+                            </button>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle border">
+                                <thead class="table-light small text-muted fw-bold">
+                                    <tr>
+                                        <th class="ps-4 py-3">MÃ MÔN</th>
+                                        <th class="py-3">TÊN MÔN HỌC</th>
+                                        <th class="text-center py-3">SỐ TÍN CHỈ</th>
+                                        <th class="text-end pe-4 py-3">HÀNH ĐỘNG</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="ps-4 fw-bold text-success">IT001</td>
+                                        <td class="fw-bold">An ninh cơ sở dữ liệu</td>
+                                        <td class="text-center"><span class="badge bg-light text-dark border">3</span></td>
+                                        <td class="text-end pe-4">
+                                            <button class="btn btn-light action-btn text-primary border me-1" title="Sửa môn học" onclick="openSubjectModal('edit', 'IT001', 'An ninh cơ sở dữ liệu', 3)" data-bs-toggle="modal" data-bs-target="#subjectModal">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                            <button class="btn btn-light action-btn text-danger border" title="Xóa môn học" onclick="confirmDelete('Môn học', 'IT001 - An ninh cơ sở dữ liệu')">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="ps-4 fw-bold text-success">IT002</td>
+                                        <td class="fw-bold">Cấu trúc dữ liệu & Giải thuật</td>
+                                        <td class="text-center"><span class="badge bg-light text-dark border">4</span></td>
+                                        <td class="text-end pe-4">
+                                            <button class="btn btn-light action-btn text-primary border me-1" title="Sửa môn học" onclick="openSubjectModal('edit', 'IT002', 'Cấu trúc dữ liệu & Giải thuật', 4)" data-bs-toggle="modal" data-bs-target="#subjectModal">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                            <button class="btn btn-light action-btn text-danger border" title="Xóa môn học" onclick="confirmDelete('Môn học', 'IT002 - Cấu trúc dữ liệu & Giải thuật')">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="classModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold" id="classModalTitle">Thêm Lớp Hành Chính</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="classForm" onsubmit="return handleDataSubmit(event, 'Lớp hành chính', 'classModal')">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Tên Lớp (Mã Lớp) <span class="text-danger">*</span></label>
+            <input type="text" class="form-control border-primary text-uppercase" id="modalClassName" placeholder="VD: 25TH01" required>
+            <small class="text-muted">Nhập chính xác mã lớp theo quy định của trường.</small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Niên Khóa <span class="text-danger">*</span></label>
+            <input type="text" class="form-control border-secondary" id="modalAcademicYear" placeholder="VD: 2025 - 2029" required>
+          </div>
+          <div class="text-end mt-4">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+            <button type="submit" class="btn btn-primary fw-bold px-4" id="classModalBtn">LƯU LỚP HỌC</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="subjectModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title fw-bold" id="subjectModalTitle">Thêm Môn Học Mới</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="subjectForm" onsubmit="return handleDataSubmit(event, 'Môn học', 'subjectModal')">
+          <div class="row">
+              <div class="col-md-5 mb-3">
+                <label class="form-label fw-bold">Mã Môn <span class="text-danger">*</span></label>
+                <input type="text" class="form-control border-success text-uppercase" id="modalSubjectCode" placeholder="VD: IT001" required>
+              </div>
+              <div class="col-md-7 mb-3">
+                <label class="form-label fw-bold">Số Tín Chỉ <span class="text-danger">*</span></label>
+                <input type="number" class="form-control border-secondary" id="modalCredits" placeholder="VD: 3" min="1" max="10" required>
+              </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Tên Môn Học <span class="text-danger">*</span></label>
+            <input type="text" class="form-control border-secondary" id="modalSubjectName" placeholder="VD: An ninh cơ sở dữ liệu" required>
+          </div>
+          <div class="text-end mt-4">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+            <button type="submit" class="btn btn-success fw-bold px-4" id="subjectModalBtn">LƯU MÔN HỌC</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../public/js/script.js"></script>
+
+<script>
+    // --- XỬ LÝ CHO TAB LỚP HÀNH CHÍNH ---
+    function openClassModal(mode, className = '', year = '') {
+        const title = document.getElementById('classModalTitle');
+        const btn = document.getElementById('classModalBtn');
+        const inputName = document.getElementById('modalClassName');
+        
+        if (mode === 'add') {
+            title.innerText = 'Thêm Lớp Hành Chính';
+            btn.innerText = 'LƯU LỚP HỌC';
+            document.getElementById('classForm').reset();
+            inputName.removeAttribute('readonly');
+        } else {
+            title.innerText = 'Chỉnh sửa Lớp Hành Chính';
+            btn.innerText = 'CẬP NHẬT LỚP';
+            inputName.value = className;
+            inputName.setAttribute('readonly', 'true'); // Không cho sửa tên mã lớp gốc
+            document.getElementById('modalAcademicYear').value = year;
+        }
+    }
+
+    // --- XỬ LÝ CHO TAB MÔN HỌC ---
+    function openSubjectModal(mode, subCode = '', subName = '', credits = '') {
+        const title = document.getElementById('subjectModalTitle');
+        const btn = document.getElementById('subjectModalBtn');
+        const inputCode = document.getElementById('modalSubjectCode');
+        
+        if (mode === 'add') {
+            title.innerText = 'Thêm Môn Học Mới';
+            btn.innerText = 'LƯU MÔN HỌC';
+            document.getElementById('subjectForm').reset();
+            inputCode.removeAttribute('readonly');
+        } else {
+            title.innerText = 'Chỉnh sửa Môn Học';
+            btn.innerText = 'CẬP NHẬT MÔN';
+            inputCode.value = subCode;
+            inputCode.setAttribute('readonly', 'true'); // Không cho sửa mã môn gốc
+            document.getElementById('modalSubjectName').value = subName;
+            document.getElementById('modalCredits').value = credits;
+        }
+    }
+
+    // --- HÀM XÁC NHẬN CHUNG (LƯU DỮ LIỆU) ---
+    function handleDataSubmit(event, entityName, modalId) {
+        event.preventDefault();
+        const action = event.submitter.innerText.includes('CẬP NHẬT') ? 'cập nhật' : 'thêm mới';
+        
+        if(confirm(`Bạn có chắc chắn muốn ${action} dữ liệu [${entityName}] này vào hệ thống?`)) {
+            alert(`✅ Đã ${action} ${entityName} thành công!`);
+            var modalEl = document.getElementById(modalId);
+            var modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+        }
+        return false;
+    }
+
+    // --- HÀM XÁC NHẬN XÓA (CẢNH BÁO CAO) ---
+    function confirmDelete(entityName, itemName) {
+        if(confirm(`⛔ BẠN ĐANG THỰC HIỆN XÓA DỮ LIỆU GỐC\n\nBạn có chắc chắn muốn xóa [${entityName}: ${itemName}] không? Hành động này có thể ảnh hưởng đến các lớp học phần và sinh viên đang liên kết với nó.`)) {
+            alert(`✅ Đã xóa ${entityName} [${itemName}] khỏi hệ thống.`);
+        }
+    }
+</script>
+</body>
+</html>

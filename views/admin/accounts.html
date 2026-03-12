@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS BDU - Quản Lý Tài Khoản</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+    <style>
+        .sidebar-admin { background-color: #1e293b; }
+        .top-navbar-admin { background-color: #0f172a; }
+        .action-btn { padding: 0.2rem 0.5rem; font-size: 0.875rem; border-radius: 4px; }
+        .table-avatar { width: 35px; height: 35px; object-fit: cover; border-radius: 50%; }
+    </style>
+</head>
+<body class="dashboard-body">
+
+<div class="sidebar sidebar-admin d-flex flex-column" id="sidebar" style="height: 100vh;">
+    <div>
+        <div class="brand text-white">CMS ADMIN</div>
+        <div class="text-center mb-3 text-white-50 small fw-bold">QUẢN TRỊ HỆ THỐNG</div>
+        <nav>
+            <a href="home.html"><i class="bi bi-speedometer2"></i> Tổng quan hệ thống</a>
+            <a href="accounts.html" class="active"><i class="bi bi-people"></i> Quản lý Tài khoản</a>
+            <a href="classes-subjects.html"><i class="bi bi-building"></i> Quản lý Lớp & Môn</a>
+            <a href="assignments.html"><i class="bi bi-diagram-3"></i> Phân công Giảng dạy</a>
+        </nav>
+    </div>
+    
+    <div class="mt-auto mb-3 px-3">
+        <hr class="text-secondary border-opacity-50">
+        <a href="../login.html" class="text-danger d-flex align-items-center text-decoration-none py-2 px-3 rounded hover-logout" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất?');">
+            <i class="bi bi-box-arrow-left me-2 fs-5"></i> <span class="fw-bold">Đăng xuất</span>
+        </a>
+    </div>
+</div>
+
+<div class="main-content" id="mainContent" style="padding: 0; background-color: #f1f5f9; min-height: 100vh;">
+    
+    <div class="top-navbar-admin d-flex justify-content-between align-items-center px-4 py-3">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+            <h4 class="m-0 text-white fw-bold d-flex align-items-center">
+                <i class="bi bi-people-fill me-2 fs-3 text-info"></i> QUẢN LÝ TÀI KHOẢN
+            </h4>
+        </div>
+        
+        <div class="d-flex align-items-center text-white">
+            <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
+                <div class="fs-6">Quản trị viên: <span class="fw-bold text-info">Admin Khoa CNTT</span></div>
+            </div>
+            <i class="bi bi-person-badge-fill fs-2"></i>
+        </div>
+    </div>
+
+    <div class="p-4">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="fw-bold small text-muted mb-1">TÌM KIẾM NGƯỜI DÙNG</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                            <input type="text" class="form-control" placeholder="Nhập tên, MSSV, Mã GV hoặc Email...">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="fw-bold small text-muted mb-1">LỌC THEO VAI TRÒ</label>
+                        <select class="form-select fw-bold">
+                            <option selected>Tất cả vai trò</option>
+                            <option value="student">Sinh viên</option>
+                            <option value="bcs">Ban Cán Sự</option>
+                            <option value="teacher">Giảng viên</option>
+                        </select>
+                    </div>
+                    <div class="col-md-5 text-md-end">
+                        <button class="btn btn-success fw-bold me-2 shadow-sm">
+                            <i class="bi bi-file-earmark-excel me-1"></i> Import Excel
+                        </button>
+                        <button class="btn btn-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#accountModal" onclick="openAddAccountModal()">
+                            <i class="bi bi-person-plus-fill me-1"></i> THÊM TÀI KHOẢN
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white pt-3 pb-2 border-0">
+                <h5 class="fw-bold text-dark m-0">Danh sách người dùng hệ thống</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light small text-muted fw-bold">
+                            <tr>
+                                <th class="ps-4 py-3">TÀI KHOẢN / EMAIL</th>
+                                <th class="py-3">HỌ VÀ TÊN</th>
+                                <th class="py-3">VAI TRÒ</th>
+                                <th class="text-center py-3">TRẠNG THÁI</th>
+                                <th class="text-end pe-4 py-3">HÀNH ĐỘNG</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                            <i class="bi bi-person-workspace fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark">GVNHH</div>
+                                            <small class="text-muted">nguyenhohai@bdu.edu.vn</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="fw-bold">TS. Nguyễn Hồ Hải</td>
+                                <td><span class="badge bg-primary">Giảng viên</span></td>
+                                <td class="text-center"><span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">Hoạt động</span></td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-light action-btn text-primary border me-1" title="Chỉnh sửa" onclick="openEditAccountModal('GVNHH', 'TS. Nguyễn Hồ Hải', 'nguyenhohai@bdu.edu.vn', 'teacher')" data-bs-toggle="modal" data-bs-target="#accountModal">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                    <button class="btn btn-light action-btn text-warning border me-1" title="Khôi phục mật khẩu" onclick="confirmResetPassword('GVNHH', 'TS. Nguyễn Hồ Hải')">
+                                        <i class="bi bi-key-fill"></i>
+                                    </button>
+                                    <button class="btn btn-light action-btn text-danger border" title="Khóa tài khoản" onclick="confirmLockAccount('GVNHH', 'TS. Nguyễn Hồ Hải')">
+                                        <i class="bi bi-shield-lock-fill"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                            <i class="bi bi-star-fill fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark">22050089</div>
+                                            <small class="text-muted">22050089@student.bdu.edu.vn</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="fw-bold">Phan Đình Luyến</td>
+                                <td><span class="badge bg-warning text-dark">Ban Cán Sự</span></td>
+                                <td class="text-center"><span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">Hoạt động</span></td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-light action-btn text-primary border me-1" title="Chỉnh sửa" onclick="openEditAccountModal('22050089', 'Phan Đình Luyến', '22050089@student.bdu.edu.vn', 'bcs')" data-bs-toggle="modal" data-bs-target="#accountModal">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                    <button class="btn btn-light action-btn text-warning border me-1" title="Khôi phục mật khẩu" onclick="confirmResetPassword('22050089', 'Phan Đình Luyến')">
+                                        <i class="bi bi-key-fill"></i>
+                                    </button>
+                                    <button class="btn btn-light action-btn text-danger border" title="Khóa tài khoản" onclick="confirmLockAccount('22050089', 'Phan Đình Luyến')">
+                                        <i class="bi bi-shield-lock-fill"></i>
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-secondary bg-opacity-10 text-secondary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                            <i class="bi bi-person-fill fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark">22050022</div>
+                                            <small class="text-muted">22050022@student.bdu.edu.vn</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="fw-bold">Trần Vũ Gia Huy</td>
+                                <td><span class="badge bg-secondary">Sinh viên</span></td>
+                                <td class="text-center"><span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">Hoạt động</span></td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-light action-btn text-primary border me-1" title="Chỉnh sửa" onclick="openEditAccountModal('22050022', 'Trần Vũ Gia Huy', '22050022@student.bdu.edu.vn', 'student')" data-bs-toggle="modal" data-bs-target="#accountModal">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                    <button class="btn btn-light action-btn text-warning border me-1" title="Khôi phục mật khẩu" onclick="confirmResetPassword('22050022', 'Trần Vũ Gia Huy')">
+                                        <i class="bi bi-key-fill"></i>
+                                    </button>
+                                    <button class="btn btn-light action-btn text-danger border" title="Khóa tài khoản" onclick="confirmLockAccount('22050022', 'Trần Vũ Gia Huy')">
+                                        <i class="bi bi-shield-lock-fill"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center p-3 border-top">
+                    <span class="small text-muted">Hiển thị 1 đến 3 của 1,287 người dùng</span>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item disabled"><a class="page-link" href="#">Trước</a></li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item"><a class="page-link" href="#">Sau</a></li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="accountModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title fw-bold" id="accountModalTitle">Thêm Tài Khoản Mới</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="adminAccountForm" onsubmit="return handleAccountSubmit(event)">
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Tên đăng nhập / MSSV <span class="text-danger">*</span></label>
+                <input type="text" class="form-control border-secondary fw-bold text-primary" id="modalUsername" placeholder="VD: 22050022, GVNHH..." required>
+                <small class="text-muted" style="font-size: 0.75rem;">Không được đổi sau khi tạo</small>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Vai trò <span class="text-danger">*</span></label>
+                <select class="form-select border-secondary fw-bold" id="modalRole" required>
+                    <option value="student" selected>Sinh viên</option>
+                    <option value="bcs">Ban Cán Sự</option>
+                    <option value="teacher">Giảng viên</option>
+                </select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Họ và Tên <span class="text-danger">*</span></label>
+            <input type="text" class="form-control border-secondary" id="modalFullName" placeholder="Nhập đầy đủ họ tên..." required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Email (Đuôi BDU) <span class="text-danger">*</span></label>
+            <input type="email" class="form-control border-secondary" id="modalEmail" placeholder="VD: 22050022@student.bdu.edu.vn" required>
+          </div>
+
+          <div class="alert alert-info border-info py-2 small mb-0 mt-3">
+            <i class="bi bi-info-circle-fill me-1"></i> Mật khẩu mặc định khi cấp mới là: <strong>Bdu@123456</strong>
+          </div>
+          
+          <div class="text-end mt-4">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+            <button type="submit" class="btn btn-dark fw-bold px-4" id="accountModalBtn">LƯU TÀI KHOẢN</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../public/js/script.js"></script>
+
+<script>
+    // Mở form Thêm
+    function openAddAccountModal() {
+        document.getElementById('accountModalTitle').innerText = 'Thêm Tài Khoản Mới';
+        document.getElementById('accountModalBtn').innerText = 'LƯU TÀI KHOẢN';
+        document.getElementById('modalUsername').removeAttribute('readonly'); // Cho phép nhập Username
+        document.getElementById('adminAccountForm').reset();
+    }
+
+    // Mở form Sửa (Khóa ô Username lại vì DB thường không cho sửa khóa chính/tên đăng nhập)
+    function openEditAccountModal(username, fullName, email, role) {
+        document.getElementById('accountModalTitle').innerText = 'Chỉnh sửa Tài Khoản';
+        document.getElementById('accountModalBtn').innerText = 'CẬP NHẬT';
+        
+        document.getElementById('modalUsername').value = username;
+        document.getElementById('modalUsername').setAttribute('readonly', 'true'); // Khóa không cho sửa
+        document.getElementById('modalFullName').value = fullName;
+        document.getElementById('modalEmail').value = email;
+        document.getElementById('modalRole').value = role;
+    }
+
+    // Xác nhận Submit Thêm/Sửa
+    function handleAccountSubmit(event) {
+        event.preventDefault();
+        var action = document.getElementById('accountModalBtn').innerText === 'CẬP NHẬT' ? 'cập nhật' : 'thêm mới';
+        
+        if(confirm(`Bạn có chắc chắn muốn ${action} thông tin người dùng này vào hệ thống?`)) {
+            alert(`✅ Đã ${action} dữ liệu thành công!`);
+            var modalEl = document.getElementById('accountModal');
+            var modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+        }
+        return false;
+    }
+
+    // Nút Reset Mật Khẩu (Chìa khóa vàng)
+    function confirmResetPassword(username, fullName) {
+        if(confirm(`⚠️ BẠN ĐANG THỰC HIỆN RESET MẬT KHẨU\n\nBạn có chắc chắn muốn đặt lại mật khẩu của người dùng [${fullName} - ${username}] về mặc định (Bdu@123456) không? Hành động này sẽ gửi email thông báo cho người dùng.`)) {
+            alert(`✅ Đã reset mật khẩu cho tài khoản ${username} thành công!`);
+        }
+    }
+
+    // Nút Khóa tài khoản (Khiên đỏ)
+    function confirmLockAccount(username, fullName) {
+        if(confirm(`⛔ CẢNH BÁO NGUY HIỂM\n\nBạn có chắc chắn muốn KHÓA tài khoản của [${fullName} - ${username}]? Người dùng này sẽ lập tức bị đăng xuất và không thể truy cập hệ thống.`)) {
+            alert(`✅ Tài khoản ${username} đã bị khóa an toàn.`);
+        }
+    }
+</script>
+</body>
+</html>
