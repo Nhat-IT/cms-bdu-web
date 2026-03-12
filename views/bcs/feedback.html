@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS BDU - Cổng Tương Tác</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+</head>
+<body class="dashboard-body">
+
+<div class="sidebar d-flex flex-column" id="sidebar" style="height: 100vh;">
+    <div>
+        <div class="brand">CMS BDU</div>
+        <div class="text-center mb-3 text-white-50 small fw-bold">BAN CÁN SỰ</div>
+        <nav>
+            <a href="home.html"><i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển</a>
+            <a href="attendance.html"><i class="bi bi-calendar-check"></i> Quản lý Chuyên cần</a>
+            <a href="documents.html"><i class="bi bi-folder2-open"></i> Kho Lưu Trữ</a>
+            <a href="feedback.html" class="active"><i class="bi bi-chat-dots"></i> Cổng Tương Tác</a>
+        </nav>
+    </div>
+    
+    <div class="mt-auto mb-3 px-3">
+        <hr class="text-secondary border-opacity-50">
+        <a href="../../login.html" class="text-danger d-flex align-items-center text-decoration-none py-2 px-3 rounded hover-logout">
+            <i class="bi bi-box-arrow-left me-2 fs-5"></i> <span class="fw-bold">Đăng xuất</span>
+        </a>
+    </div>
+</div>
+
+<div class="main-content" id="mainContent" style="padding: 0; background-color: #f4f6f9; min-height: 100vh;">
+    
+    <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 py-3">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+            <h4 class="m-0 text-white fw-bold d-flex align-items-center">
+                <i class="bi bi-chat-right-text-fill me-2 fs-3"></i> CỔNG TƯƠNG TÁC <span class="mx-2 opacity-50 fw-normal">|</span> LỚP <span class="text-warning ms-1">25TH01</span>
+            </h4>
+        </div>
+        
+        <div class="d-flex align-items-center text-white">
+            <div class="dropdown">
+                <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
+                    <span class="me-2 d-none d-md-inline">Ban Cán Sự</span>
+                    <i class="bi bi-person-circle fs-3 me-3"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-4">
+        
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card stat-card-custom h-100 p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box-custom bg-light-primary me-3 text-primary"><i class="bi bi-inbox-fill"></i></div>
+                        <div>
+                            <p class="text-muted fw-bold mb-1" style="font-size: 0.85rem;">TỔNG PHẢN HỒI</p>
+                            <h2 class="mb-0 fw-bold text-dark">15</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stat-card-custom border-left-warning h-100 p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box-custom bg-light-warning me-3 text-warning"><i class="bi bi-hourglass-split"></i></div>
+                        <div>
+                            <p class="text-warning fw-bold mb-1" style="font-size: 0.85rem;">CHỜ XỬ LÝ</p>
+                            <h2 class="mb-0 fw-bold text-warning">3</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stat-card-custom border-left-success h-100 p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box-custom bg-light-success me-3 text-success"><i class="bi bi-check-circle-fill"></i></div>
+                        <div>
+                            <p class="text-success fw-bold mb-1" style="font-size: 0.85rem;">ĐÃ GIẢI QUYẾT</p>
+                            <h2 class="mb-0 fw-bold text-success">12</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white pt-3 pb-2 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="fw-bold text-dark m-0"><i class="bi bi-envelope-paper me-2 text-primary"></i>Hộp thư góp ý từ Sinh viên</h5>
+                
+                <div class="d-flex gap-2">
+                    <input type="text" class="form-control form-control-sm" placeholder="Tìm MSSV hoặc Tên..." style="width: 200px;">
+                    <select class="form-select form-select-sm w-auto fw-bold text-secondary">
+                        <option value="all" selected>Tất cả trạng thái</option>
+                        <option value="pending">Chờ xử lý</option>
+                        <option value="resolved">Đã giải quyết</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle custom-detail-table mb-0" id="feedbackTable">
+                        <thead class="text-muted small fw-bold" style="background-color: #f8f9fa;">
+                            <tr>
+                                <th class="ps-4 py-3">NGƯỜI GỬI</th>
+                                <th class="py-3">CHỦ ĐỀ</th>
+                                <th class="py-3">THỜI GIAN</th>
+                                <th class="py-3">TRẠNG THÁI</th>
+                                <th class="pe-4 py-3 text-end">XEM CHI TIẾT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-light">
+                                <td class="ps-4 py-3">
+                                    <div class="fw-bold text-dark">Nguyễn Thị C</div>
+                                    <div class="text-muted small">MSSV: 22050111</div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-dark mb-1">Thắc mắc số buổi vắng môn An ninh CSDL</div>
+                                    <div class="text-muted small text-truncate" style="max-width: 300px;">Chào Ban cán sự, mình thấy trên hệ thống báo mình vắng 2 buổi nhưng thực tế hôm đó mình có đi học...</div>
+                                </td>
+                                <td class="text-dark small">Hôm nay, 08:30</td>
+                                <td><span class="badge bg-warning text-dark px-3 py-2 rounded-pill"><i class="bi bi-hourglass me-1"></i>Chờ xử lý</span></td>
+                                <td class="pe-4 text-end">
+                                    <button class="btn btn-sm btn-primary" onclick="viewFeedback(1)"><i class="bi bi-eye"></i></button>
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <td class="ps-4 py-3">
+                                    <div class="fw-bold text-dark">Lê Hoàng D</div>
+                                    <div class="text-muted small">MSSV: 22050222</div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-dark mb-1">Xin nộp bổ sung giấy khám bệnh</div>
+                                    <div class="text-muted small text-truncate" style="max-width: 300px;">Mình gửi kèm file ảnh giấy khám bệnh của tuần trước, nhờ BCS cập nhật lại trạng thái vắng có phép giúp mình nhé.</div>
+                                </td>
+                                <td class="text-dark small">Hôm qua, 14:15</td>
+                                <td><span class="badge bg-success px-3 py-2 rounded-pill"><i class="bi bi-check-circle me-1"></i>Đã giải quyết</span></td>
+                                <td class="pe-4 text-end">
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="viewFeedback(2)"><i class="bi bi-eye"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="modal fade" id="feedbackModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-envelope-open me-2"></i>Chi tiết Phản hồi</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="d-flex justify-content-between border-bottom pb-3 mb-3">
+            <div>
+                <h6 class="fw-bold text-dark mb-1" id="fbSenderName">Nguyễn Thị C (22050111)</h6>
+                <small class="text-muted" id="fbTime">Hôm nay, 08:30</small>
+            </div>
+            <div>
+                <span class="badge bg-warning text-dark" id="fbStatusBadge">Chờ xử lý</span>
+            </div>
+        </div>
+
+        <h6 class="fw-bold text-primary mb-2" id="fbSubject">Thắc mắc số buổi vắng môn An ninh CSDL</h6>
+        <div class="p-3 bg-light rounded border mb-3" style="font-size: 0.95rem; line-height: 1.6;" id="fbContent">
+            Chào Ban cán sự, mình thấy trên hệ thống báo mình vắng 2 buổi nhưng thực tế hôm đó mình có đi học và có điểm danh trên giấy. Nhờ BCS kiểm tra lại giúp mình nhé. Cảm ơn!
+        </div>
+
+        <div class="mb-4 d-none" id="fbAttachment">
+            <h6 class="fw-bold text-dark small mb-2"><i class="bi bi-paperclip me-1"></i>Tệp đính kèm:</h6>
+            <a href="#" class="btn btn-sm btn-outline-secondary"><i class="bi bi-image me-1"></i> giay_kham_benh.jpg</a>
+        </div>
+
+        <div>
+            <label class="fw-bold text-dark small mb-2">Ghi chú xử lý của Ban cán sự:</label>
+            <textarea class="form-control" rows="3" placeholder="Nhập phản hồi hoặc ghi chú nội bộ sau khi giải quyết xong..." id="fbReply"></textarea>
+        </div>
+
+      </div>
+      <div class="modal-footer justify-content-between">
+        <button type="button" class="btn btn-danger btn-sm"><i class="bi bi-trash me-1"></i>Xóa</button>
+        <div>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            <button type="button" class="btn btn-success fw-bold" id="btnMarkResolved"><i class="bi bi-check2-all me-1"></i>Đánh dấu Đã giải quyết</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../public/js/script.js"></script>
+</body>
+</html>

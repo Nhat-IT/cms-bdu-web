@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS BDU - Quản Lý Chuyên Cần</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+</head>
+<body class="dashboard-body">
+
+<div class="sidebar d-flex flex-column" id="sidebar" style="height: 100vh;">
+    <div>
+        <div class="brand">CMS BDU</div>
+        <div class="text-center mb-3 text-white-50 small fw-bold">BAN CÁN SỰ</div>
+        <nav>
+            <a href="home.html"><i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển</a>
+            <a href="attendance.html" class="active"><i class="bi bi-calendar-check"></i> Quản lý Chuyên cần</a>
+            <a href="documents.html"><i class="bi bi-folder2-open"></i> Kho Lưu Trữ</a>
+            <a href="feedback.html"><i class="bi bi-chat-dots"></i> Cổng Tương Tác</a>
+        </nav>
+    </div>
+    
+    <div class="mt-auto mb-3 px-3">
+        <hr class="text-secondary border-opacity-50">
+        <a href="../../login.html" class="text-danger d-flex align-items-center text-decoration-none py-2 px-3 rounded hover-logout">
+            <i class="bi bi-box-arrow-left me-2 fs-5"></i> <span class="fw-bold">Đăng xuất</span>
+        </a>
+    </div>
+</div>
+
+<div class="main-content" id="mainContent">
+    
+    <div class="top-navbar d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+            <h4 class="m-0 text-dark d-none d-sm-block">Điểm Danh Lớp <span class="text-primary fw-bold">25TH01</span></h4>
+        </div>
+        
+        <div class="user-profile d-flex align-items-center">
+            <span class="badge bg-primary me-3 px-3 py-2 fs-6 d-none d-md-inline-block">Vai trò: Lớp phó Học tập</span>
+            <div class="dropdown">
+                <a href="#" class="d-flex align-items-center text-dark text-decoration-none dropdown-toggle" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img src="https://ui-avatars.com/api/?name=Nhat+Y&background=0D8ABC&color=fff" alt="Avatar" width="40" height="40" class="rounded-circle me-2">
+                    <strong>Nhật Ý</strong>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow">
+                    <li><a class="dropdown-item" href="#">Hồ sơ cá nhân</a></li>
+                    <li><a class="dropdown-item text-danger" href="../../login.html">Đăng xuất</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm border-0">
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-2">
+                    <label class="fw-bold small text-muted mb-1">HỌC KỲ</label>
+                    <select class="form-select border-primary bg-light fw-bold text-primary" id="filterSemester">
+                        <option value="all">Tất cả HK</option>
+                        <option value="HK1">Học kỳ 1</option>
+                        <option value="HK2" selected>Học kỳ 2</option>
+                        <option value="HK3">Học kỳ 3 (Hè)</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex justify-content-between mb-1">
+                        <label class="fw-bold small text-muted">MÔN HỌC</label>
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="openSubjectModal('add')"><i class="bi bi-plus-lg"></i> Thêm</button>
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="openSubjectModal('edit')"><i class="bi bi-pencil"></i> Sửa</button>
+                        </div>
+                    </div>
+                    <select class="form-select border-primary" id="subjectSelect">
+                        <option value="">-- Chọn môn học --</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="fw-bold small text-muted mb-1">NGÀY ĐIỂM DANH</label>
+                    <input type="date" class="form-control" id="attendanceDate">
+                </div>
+                <div class="col-md-2">
+                    <label class="fw-bold small text-muted mb-1">BUỔI</label>
+                    <select class="form-select fw-bold text-dark" id="attendanceSession">
+                        <option value="Sáng">Sáng</option>
+                        <option value="Chiều">Chiều</option>
+                        <option value="Tối">Tối</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <button class="btn btn-primary w-100" title="Lọc danh sách"><i class="bi bi-search"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm border-0 border-start border-success border-4">
+        <div class="card-body">
+            <h6 class="fw-bold mb-3"><i class="bi bi-cloud-arrow-down-fill text-success me-2"></i>Nhập danh sách sinh viên hàng loạt</h6>
+            <ul class="nav nav-tabs mb-3" id="importTabs">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#link-pane" type="button">Từ Google Sheet</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#file-pane" type="button">Tải file (Excel/CSV)</button>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="link-pane">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-9">
+                            <input type="url" class="form-control" id="googleSheetLink" placeholder="Nhập đường dẫn Google Sheet...">
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-outline-success w-100" id="btnLoadSheet">
+                                <span class="spinner-border spinner-border-sm d-none me-2" id="loadingSpinnerSheet"></span>
+                                <i class="bi bi-link-45deg me-1" id="loadIconSheet"></i>Đồng bộ ngay
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="file-pane">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-9">
+                            <input class="form-control" type="file" id="excelFileInput" accept=".xlsx, .xls, .csv">
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-outline-success w-100" id="btnUploadFile">
+                                <span class="spinner-border spinner-border-sm d-none me-2" id="loadingSpinnerFile"></span>
+                                <i class="bi bi-file-earmark-arrow-up-fill me-1" id="loadIconFile"></i>Tải lên
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white pt-3 pb-2 border-0 d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div>
+                <h5 class="fw-bold text-dark m-0"><i class="bi bi-list-check me-2 text-success"></i>Danh sách Sinh viên</h5>
+                
+                <div id="activeSubjectInfo" class="mt-2 d-none p-2 bg-light rounded border-start border-3 border-primary shadow-sm">
+                    <div class="d-flex flex-wrap gap-4 small text-dark">
+                        <span><i class="bi bi-book text-primary me-1"></i>Môn: <strong id="lblSubjName">...</strong></span>
+                        <span><i class="bi bi-person-badge text-primary me-1"></i>GV: <strong id="lblSubjTeacher">...</strong></span>
+                        <span><i class="bi bi-calendar3 text-primary me-1"></i>Thời gian: <strong id="lblSubjTime">...</strong></span>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn btn-sm btn-primary mt-1" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                <i class="bi bi-person-plus-fill me-1"></i>Thêm sinh viên
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="attendanceTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>STT</th>
+                            <th>MSSV</th>
+                            <th>Họ và Tên</th>
+                            <th>Trạng thái hiện diện</th>
+                            <th>Minh chứng (Giấy phép/Khám bệnh)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="stt-col">1</td>
+                            <td class="fw-bold mssv-col">20260001</td>
+                            <td class="name-col">Nguyễn Văn A</td>
+                            <td>
+                                <select class="form-select form-select-sm status-select">
+                                    <option value="1" selected>Có mặt</option>
+                                    <option value="2">Vắng có phép</option>
+                                    <option value="3">Vắng không phép</option>
+                                </select>
+                            </td>
+                            <td><input type="file" class="form-control form-control-sm file-upload" disabled></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <span class="text-muted small" id="studentCountText">Đang hiển thị 1 sinh viên</span>
+                <button class="btn btn-success px-4"><i class="bi bi-save me-2"></i>Lưu Dữ Liệu</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="addStudentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="bi bi-person-plus-fill me-2"></i>Thêm sinh viên</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addStudentForm">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Mã số sinh viên (MSSV)</label>
+            <input type="text" class="form-control" id="newMssv" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Họ và Tên</label>
+            <input type="text" class="form-control" id="newFullName" required>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-primary" id="btnSaveNewStudent">Thêm vào danh sách</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="subjectModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-dark">
+        <h5 class="modal-title fw-bold"><i class="bi bi-journal-plus me-2"></i><span id="subjectModalTitle">Thêm môn học mới</span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="subjectForm">
+          <input type="hidden" id="subjectId"> 
+          
+          <div class="row">
+              <div class="col-md-8 mb-3">
+                <label class="form-label fw-bold">Tên môn học & Nhóm</label>
+                <input type="text" class="form-control" id="subjectName" placeholder="VD: Mạng máy tính - Nhóm 03" required>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold text-primary">Học kỳ áp dụng</label>
+                <select class="form-select border-primary" id="subjectSemester">
+                    <option value="HK1">Học kỳ 1</option>
+                    <option value="HK2" selected>Học kỳ 2</option>
+                    <option value="HK3">Học kỳ 3 (Hè)</option>
+                </select>
+              </div>
+          </div>
+
+          <div class="row">
+              <div class="col-md-5 mb-3">
+                <label class="form-label fw-bold">Tên Giảng viên</label>
+                <input type="text" class="form-control" id="teacherName" placeholder="VD: ThS. Lê Văn Y" required>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label fw-bold">Buổi học</label>
+                <select class="form-select" id="defaultSession">
+                    <option value="Sáng" selected>Sáng</option>
+                    <option value="Chiều">Chiều</option>
+                    <option value="Tối">Tối</option>
+                </select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Tiết học</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light">Tiết</span>
+                    <input type="number" class="form-control text-center px-1" id="startPeriod" placeholder="1" min="1" max="15" required>
+                    <span class="input-group-text bg-light">-</span>
+                    <input type="number" class="form-control text-center px-1" id="endPeriod" placeholder="3" min="1" max="15" required>
+                </div>
+              </div>
+          </div>
+
+          <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Ngày bắt đầu</label>
+                <input type="date" class="form-control" id="startDate" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Ngày kết thúc</label>
+                <input type="date" class="form-control" id="endDate" required>
+              </div>
+          </div>
+
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-info fw-bold" id="btnSaveSubject">Lưu cấu hình Môn học</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../public/js/script.js"></script>
+</body>
+</html>

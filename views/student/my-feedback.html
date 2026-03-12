@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS BDU - Phản Hồi Của Tôi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+</head>
+<body class="dashboard-body">
+
+<div class="sidebar d-flex flex-column" id="sidebar" style="height: 100vh;">
+    <div>
+        <div class="brand">CMS BDU</div>
+        <div class="text-center mb-3 text-white-50 small fw-bold">CỔNG SINH VIÊN</div>
+        <nav>
+            <a href="home.html"><i class="bi bi-grid-1x2-fill"></i> Tổng quan cá nhân</a>
+            <a href="my-attendance.html"><i class="bi bi-person-lines-fill"></i> Xem điểm danh</a>
+            <a href="documents.html"><i class="bi bi-folder2-open"></i> Kho Tài liệu lớp</a>
+            <a href="my-feedback.html" class="active"><i class="bi bi-envelope-paper"></i> Gửi phản hồi</a>
+        </nav>
+    </div>
+    <div class="mt-auto mb-3 px-3">
+        <hr class="text-secondary border-opacity-50">
+        <a href="../login.html" class="text-danger d-flex align-items-center text-decoration-none py-2 px-3 rounded hover-logout">
+            <i class="bi bi-box-arrow-left me-2 fs-5"></i> <span class="fw-bold">Đăng xuất</span>
+        </a>
+    </div>
+</div>
+
+<div class="main-content" id="mainContent" style="padding: 0; background-color: #f4f6f9; min-height: 100vh;">
+    
+    <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 py-3">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+            <h4 class="m-0 text-white fw-bold d-flex align-items-center">
+                <i class="bi bi-chat-dots-fill me-2 fs-3"></i> CỔNG TƯƠNG TÁC SV
+            </h4>
+        </div>
+        <div class="user-profile d-flex align-items-center text-white">
+            <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
+                <div class="fs-6">Hỗ trợ trực tuyến</div>
+                <div class="fw-bold text-warning" style="font-size: 0.8rem;">Trạng thái: Đang hoạt động</div>
+            </div>
+            <i class="bi bi-person-circle fs-2"></i>
+        </div>
+    </div>
+
+    <div class="p-4">
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white pt-4 border-0">
+                        <h5 class="fw-bold text-dark"><i class="bi bi-pencil-square text-primary me-2"></i>Gửi phản hồi mới</h5>
+                        <p class="text-muted small">Mọi thắc mắc của bạn sẽ được Ban cán sự giải đáp trong 24h.</p>
+                    </div>
+                    <div class="card-body">
+                        <form id="studentFeedbackForm">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Chủ đề <span class="text-danger">*</span></label>
+                                <select class="form-select border-primary" required>
+                                    <option value="" selected disabled>-- Chọn chủ đề --</option>
+                                    <option>Thắc mắc điểm danh</option>
+                                    <option>Nộp minh chứng bổ sung</option>
+                                    <option>Góp ý tài liệu học tập</option>
+                                    <option>Vấn đề khác</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Nội dung chi tiết <span class="text-danger">*</span></label>
+                                <textarea class="form-control" rows="5" placeholder="Mô tả cụ thể vấn đề của bạn..." required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Đính kèm ảnh (nếu có)</label>
+                                <input type="file" class="form-control" accept="image/*">
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 fw-bold py-2 shadow-sm">
+                                <i class="bi bi-send-fill me-2"></i>GỬI YÊU CẦU
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white pt-4 border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-clock-history text-secondary me-2"></i>Yêu cầu đã gửi</h5>
+                        <span class="badge bg-light text-dark border">Tổng số: 2</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="p-3 mb-3 border rounded bg-white shadow-xs">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">Đã giải quyết</span>
+                                <small class="text-muted">10/03/2026</small>
+                            </div>
+                            <h6 class="fw-bold text-dark">Xin nộp bổ sung giấy khám bệnh</h6>
+                            <p class="small text-muted mb-2 text-truncate">Mình gửi kèm file ảnh giấy khám bệnh của tuần trước...</p>
+                            <div class="p-2 bg-light rounded border-start border-3 border-success small">
+                                <strong>BCS trả lời:</strong> Đã check và cập nhật lại điểm danh.
+                            </div>
+                        </div>
+
+                        <div class="p-3 border rounded bg-white">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 py-1">Đang chờ xử lý</span>
+                                <small class="text-muted">Hôm nay</small>
+                            </div>
+                            <h6 class="fw-bold text-dark">Thắc mắc số buổi vắng môn An ninh CSDL</h6>
+                            <p class="small text-muted mb-0">Chào Ban cán sự, mình thấy trên hệ thống báo mình vắng 2 buổi nhưng thực tế...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../public/js/script.js"></script>
+<script>
+    // Logic giả lập gửi form thành công
+    const feedbackForm = document.getElementById('studentFeedbackForm');
+    if(feedbackForm) {
+        feedbackForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Yêu cầu của bạn đã được gửi đến Ban cán sự lớp thành công!');
+            this.reset();
+        });
+    }
+</script>
+</body>
+</html>

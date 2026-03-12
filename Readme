@@ -1,0 +1,56 @@
+cms-bdu-project/
+│
+├── public/                 # KHU VỰC TÀI NGUYÊN TĨNH (Dùng chung cho cả hệ thống)
+│   ├── css/
+│   │   └── style.css       # Giao diện CSS dùng chung
+│   ├── js/
+│   │   └── script.js       # Các hàm JS (ẩn/hiện pass, modal, hiệu ứng...)
+│   └── uploads/            # Nơi lưu trữ thực tế các file được upload (Minh chứng, Tài liệu)
+│
+├── views/                  # KHU VỰC GIAO DIỆN HTML (Phân chia theo phân quyền)
+│   ├── login.html          # Trang đăng nhập (Dùng chung, hệ thống tự điều hướng theo Role)
+│   │
+│   ├── bcs/                # 1. GIAO DIỆN BAN CÁN SỰ (Các file chúng ta vừa thiết kế)
+│   │   ├── home.html               # Tổng quan lớp học (Dashboard)
+│   │   ├── dashboard-detail.html   # Báo cáo, thống kê cảnh báo chi tiết
+│   │   ├── attendance.html         # Điểm danh, quản lý môn học, nhập danh sách
+│   │   ├── documents.html          # Quản lý kho tài liệu (Upload/Xóa thông báo, biên bản)
+│   │   └── feedback.html           # Hộp thư tương tác (Duyệt/Trả lời phản hồi của SV)
+│   │
+│   ├── student/            # 2. GIAO DIỆN SINH VIÊN (Lược bỏ bớt quyền, chỉ Xem/Gửi)
+│   │   ├── home.html               # Dashboard cá nhân (Số buổi vắng của bản thân, Lịch học)
+│   │   ├── my-attendance.html      # Xem chi tiết điểm danh cá nhân & Nút "Nộp minh chứng vắng"
+│   │   ├── documents.html          # Kho tài liệu (Chỉ có nút Xem/Tải xuống, KHÔNG có nút Upload/Xóa)
+│   │   └── my-feedback.html        # Form gửi thắc mắc cho BCS và xem trạng thái giải quyết
+│   │
+│   └── teacher/            # 3. GIAO DIỆN GIẢNG VIÊN (Quản lý học tập)
+│       ├── home.html               # Thống kê lớp học (Sĩ số, danh sách SV vắng môn mình dạy)
+│       ├── attendance-report.html  # Xem báo cáo điểm danh & Nút "Xuất file Excel" nộp về Khoa
+│       └── documents.html          # Quản lý tài liệu môn học (GV tự upload Slide, Bài tập)
+│
+├── src/                    # KHU VỰC BACKEND NODE.JS (Xử lý dữ liệu ngầm)
+│   ├── config/
+│   │   └── db.js           # Nơi chứa code kết nối với Database MySQL
+│   │
+│   ├── controllers/        # Bộ não xử lý logic phân theo đối tượng
+│   │   ├── authController.js       # Xử lý kiểm tra tài khoản, phân quyền đăng nhập
+│   │   ├── bcsController.js        # Logic của BCS (Lưu điểm danh, Lưu môn học...)
+│   │   ├── studentController.js    # Logic của SV (Upload giấy phép, gửi phản hồi...)
+│   │   └── teacherController.js    # Logic của GV (Xuất báo cáo, thêm học liệu...)
+│   │
+│   ├── models/             # Nơi chứa các câu lệnh SQL (Select, Insert, Update)
+│   │   ├── userModel.js            # Bảng tài khoản
+│   │   ├── subjectModel.js         # Bảng môn học
+│   │   ├── attendanceModel.js      # Bảng điểm danh
+│   │   └── documentModel.js        # Bảng tài liệu
+│   │
+│   └── routes/             # Định tuyến đường dẫn (URL)
+│       ├── authRoutes.js
+│       ├── bcsRoutes.js
+│       ├── studentRoutes.js
+│       └── teacherRoutes.js
+│
+├── .env                    # FILE BÍ MẬT: Chứa mật khẩu Database, Khóa bảo mật (Tuyệt đối không đẩy lên Github)
+├── .gitignore              # Danh sách các file bỏ qua không lưu trữ lên Github
+├── package.json            # File cấu hình thư viện của Node.js (Express, MySQL2...)
+└── server.js               # FILE ENTRY POINT: Khởi động server Backend

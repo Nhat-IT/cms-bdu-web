@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS BDU - Giảng Viên</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+</head>
+<body class="dashboard-body">
+
+<div class="sidebar d-flex flex-column" id="sidebar" style="height: 100vh;">
+    <div>
+        <div class="brand">CMS BDU</div>
+        <div class="text-center mb-3 text-white-50 small fw-bold">CỔNG GIẢNG VIÊN</div>
+        <nav>
+            <a href="home.html" class="active"><i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển</a>
+            <a href="class-reports.html"><i class="bi bi-journal-check"></i> Báo cáo môn học</a>
+            <a href="documents.html"><i class="bi bi-folder-symlink"></i> Quản lý học liệu</a>
+        </nav>
+    </div>
+    
+    <div class="mt-auto mb-3 px-3">
+        <hr class="text-secondary border-opacity-50">
+        <a href="../login.html" class="text-danger d-flex align-items-center text-decoration-none py-2 px-3 rounded hover-logout">
+            <i class="bi bi-box-arrow-left me-2 fs-5"></i> <span class="fw-bold">Đăng xuất</span>
+        </a>
+    </div>
+</div>
+
+<div class="main-content" id="mainContent" style="padding: 0; background-color: #f4f6f9; min-height: 100vh;">
+    
+    <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 py-3">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+            <h4 class="m-0 text-white fw-bold d-flex align-items-center">
+                <i class="bi bi-person-workspace me-2 fs-3"></i> TỔNG QUAN GIẢNG DẠY
+            </h4>
+        </div>
+        
+        <div class="d-flex align-items-center text-white">
+            <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
+                <div class="fs-6">Giảng viên: <span class="fw-bold">ThS. Dương Quang Sinh</span></div>
+                <div class="fw-bold text-warning" style="font-size: 0.8rem;">Học kỳ 2 (2025-2026)</div>
+            </div>
+            <div class="dropdown">
+                <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
+                    <i class="bi bi-person-circle fs-2 me-2"></i>
+                    <i class="bi bi-caret-down-fill small"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow">
+                    <li><a class="dropdown-item" href="#">Hồ sơ cá nhân</a></li>
+                    <li><a class="dropdown-item" href="#">Đổi mật khẩu</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="../login.html">Đăng xuất</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-4">
+        
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card stat-card-custom h-100 p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box-custom bg-light-primary me-3 text-primary"><i class="bi bi-book"></i></div>
+                        <div>
+                            <p class="text-muted fw-bold mb-1" style="font-size: 0.8rem;">MÔN ĐANG DẠY</p>
+                            <h3 class="mb-0 fw-bold text-dark">4</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stat-card-custom border-left-danger h-100 p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box-custom bg-light-danger me-3 text-danger"><i class="bi bi-exclamation-octagon"></i></div>
+                        <div>
+                            <p class="text-danger fw-bold mb-1" style="font-size: 0.8rem;">SV NGHỈ QUÁ PHÉP</p>
+                            <h3 class="mb-0 fw-bold text-danger">12</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stat-card-custom border-left-success h-100 p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box-custom bg-light-success me-3 text-success"><i class="bi bi-check-all"></i></div>
+                        <div>
+                            <p class="text-success fw-bold mb-1" style="font-size: 0.8rem;">MINH CHỨNG ĐÃ DUYỆT</p>
+                            <h3 class="mb-0 fw-bold text-success">45</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-white pt-3 border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-collection text-primary me-2"></i>Lớp học & Nhóm môn học</h5>
+                        <button class="btn btn-sm btn-outline-primary"><i class="bi bi-arrow-repeat"></i> Làm mới</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr class="small text-muted">
+                                        <th>MÃ LỚP</th>
+                                        <th>TÊN MÔN HỌC</th>
+                                        <th>SĨ SỐ</th>
+                                        <th>TÌNH TRẠNG</th>
+                                        <th class="text-end">HÀNH ĐỘNG</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-bold">25TH01</td>
+                                        <td>An ninh cơ sở dữ liệu</td>
+                                        <td>68</td>
+                                        <td><span class="badge bg-success-subtle text-success">Đang giảng dạy</span></td>
+                                        <td class="text-end">
+                                            <a href="class-reports.html" class="btn btn-sm btn-primary">Xem báo cáo</a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">24CNTT02</td>
+                                        <td>Cấu trúc dữ liệu và Giải thuật</td>
+                                        <td>45</td>
+                                        <td><span class="badge bg-success-subtle text-success">Đang giảng dạy</span></td>
+                                        <td class="text-end">
+                                            <a href="class-reports.html" class="btn btn-sm btn-primary">Xem báo cáo</a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">25TH02</td>
+                                        <td>Hệ quản trị CSDL</td>
+                                        <td>65</td>
+                                        <td><span class="badge bg-warning-subtle text-warning">Tạm ngưng</span></td>
+                                        <td class="text-end">
+                                            <button class="btn btn-sm btn-light" disabled>Xem báo cáo</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-white pt-3 border-0">
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-megaphone text-danger me-2"></i>Lời nhắc giảng viên</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="p-3 mb-3 bg-danger bg-opacity-10 border-start border-4 border-danger rounded">
+                            <h6 class="fw-bold text-danger mb-1">Cảnh báo vắng học (25TH01)</h6>
+                            <p class="small mb-0">Lớp 25TH01 môn An ninh CSDL có 5 sinh viên đã nghỉ quá 3 buổi.</p>
+                        </div>
+                        <div class="p-3 mb-3 bg-warning bg-opacity-10 border-start border-4 border-warning rounded">
+                            <h6 class="fw-bold text-warning mb-1">Minh chứng chờ duyệt</h6>
+                            <p class="small mb-0">Bạn có 3 minh chứng mới cần xác nhận cho lớp 24CNTT02.</p>
+                        </div>
+                        <div class="p-3 bg-primary bg-opacity-10 border-start border-4 border-primary rounded">
+                            <h6 class="fw-bold text-primary mb-1">Thời hạn nhập điểm</h6>
+                            <p class="small mb-0">Hệ thống sẽ đóng cổng nhập điểm quá trình vào ngày 30/03/2026.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../public/js/script.js"></script>
+</body>
+</html>

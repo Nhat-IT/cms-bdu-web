@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS BDU - Giảng Viên | Kho Học Liệu</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+    <style>
+        .btn-check:checked + .btn-outline-light {
+            background-color: #f8f9fa !important;
+            border-color: #0d6efd !important;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+    </style>
+</head>
+<body class="dashboard-body">
+
+<div class="sidebar d-flex flex-column" id="sidebar" style="height: 100vh;">
+    <div>
+        <div class="brand">CMS BDU</div>
+        <div class="text-center mb-3 text-white-50 small fw-bold">CỔNG GIẢNG VIÊN</div>
+        <nav>
+            <a href="home.html"><i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển</a>
+            <a href="class-reports.html"><i class="bi bi-journal-check"></i> Báo cáo môn học</a>
+            <a href="documents.html" class="active"><i class="bi bi-folder-symlink"></i> Quản lý học liệu</a>
+        </nav>
+    </div>
+    <div class="mt-auto mb-3 px-3">
+        <hr class="text-secondary border-opacity-50">
+        <a href="../login.html" class="text-danger d-flex align-items-center text-decoration-none py-2 px-3 rounded hover-logout">
+            <i class="bi bi-box-arrow-left me-2 fs-5"></i> <span class="fw-bold">Đăng xuất</span>
+        </a>
+    </div>
+</div>
+
+<div class="main-content" id="mainContent" style="padding: 0; background-color: #f4f6f9; min-height: 100vh;">
+    
+    <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 py-3">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+            <h4 class="m-0 text-white fw-bold d-flex align-items-center">
+                <i class="bi bi-cloud-check-fill me-2 fs-3"></i> QUẢN LÝ HỌC LIỆU
+            </h4>
+        </div>
+        <div class="d-flex align-items-center text-white">
+            <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
+                <div class="fs-6">Giảng viên: <span class="fw-bold">ThS. Dương Quang Sinh</span></div>
+                <div class="fw-bold text-warning" style="font-size: 0.8rem;">Học kỳ 2 (2025-2026)</div>
+            </div>
+            <i class="bi bi-person-circle fs-2"></i>
+        </div>
+    </div>
+
+    <div class="p-4">
+        
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <div class="d-flex gap-2">
+                <select class="form-select border-primary fw-bold text-primary w-auto">
+                    <option value="HK1">Học kỳ 1</option>
+                    <option value="HK2" selected>Học kỳ 2</option>
+                    <option value="HK3">Học kỳ 3 (Hè)</option>
+                </select>
+                <select class="form-select w-auto">
+                    <option selected>Tất cả lớp giảng dạy</option>
+                    <option>25TH01 - An ninh CSDL</option>
+                    <option>24CNTT02 - Cấu trúc dữ liệu</option>
+                </select>
+            </div>
+            <button class="btn btn-primary fw-bold px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#uploadModal" onclick="resetFormForAdd()">
+                <i class="bi bi-cloud-arrow-up-fill me-2"></i> Tải Tài Liệu Mới
+            </button>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white pt-3 pb-2 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="fw-bold text-dark m-0"><i class="bi bi-list-ul me-2 text-secondary"></i>Danh sách học liệu đã đăng</h5>
+                <input type="text" class="form-control form-control-sm" placeholder="Tìm tên tài liệu..." style="width: 250px;">
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" id="documentsTable">
+                        <thead class="text-muted small fw-bold" style="background-color: #f8f9fa;">
+                            <tr>
+                                <th class="ps-4 py-3">TÊN TÀI LIỆU</th>
+                                <th class="py-3">ÁP DỤNG LỚP</th>
+                                <th class="py-3">PHÂN LOẠI</th>
+                                <th class="py-3">NGÀY ĐĂNG</th>
+                                <th class="pe-4 py-3 text-end">HÀNH ĐỘNG</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="ps-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-file-earmark-zip-fill fs-3 text-warning me-3"></i>
+                                        <div>
+                                            <h6 class="mb-0 fw-bold text-dark">Slide Chương 1: Tổng quan An ninh mạng</h6>
+                                            <small class="text-muted">Môn học: An ninh CSDL. Tài liệu nén.</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">25TH01</span></td>
+                                <td><span class="badge bg-light text-dark border">Học liệu</span></td>
+                                <td class="small">12/03/2026</td>
+                                <td class="pe-4 text-end">
+                                    <button class="btn btn-sm btn-light text-success me-1" title="Sửa" data-bs-toggle="modal" data-bs-target="#uploadModal" onclick="prepareEditDoc('Slide Chương 1: Tổng quan An ninh mạng', 'HocLieu', 'Môn học: An ninh CSDL. Tài liệu nén.')"><i class="bi bi-pencil-square"></i></button>
+                                    <button class="btn btn-sm btn-light text-primary me-1" title="Tải xuống"><i class="bi bi-download"></i></button>
+                                    <button class="btn btn-sm btn-light text-danger" title="Xóa"><i class="bi bi-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold" id="uploadModalLabel"><i class="bi bi-cloud-arrow-up-fill me-2"></i>Tải Tài Liệu Mới</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="uploadDocForm">
+          
+          <div class="mb-3">
+            <label class="form-label fw-bold">Chọn lớp áp dụng <span class="text-danger">*</span></label>
+            <select class="form-select border-primary fw-bold" id="applyClass" required>
+                <option value="" disabled selected>-- Chọn lớp nhận tài liệu --</option>
+                <option value="25TH01">Lớp 25TH01 - An ninh CSDL</option>
+                <option value="24CNTT02">Lớp 24CNTT02 - Cấu trúc dữ liệu</option>
+                <option value="ALL">Tất cả các lớp đang dạy</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Tiêu đề tài liệu <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="docTitle" placeholder="VD: Slide bài giảng chương 1..." required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Ghi chú hiển thị</label>
+            <input type="text" class="form-control" id="docNote" placeholder="VD: Môn học: An ninh CSDL, File nén bài tập...">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold d-block">Biểu tượng hiển thị</label>
+            <div class="d-flex gap-2 flex-wrap mb-2">
+                <input type="radio" class="btn-check" name="iconOption" id="iconPdf" value="pdf" checked onchange="toggleCustomIcon(false)">
+                <label class="btn btn-outline-light text-danger border" for="iconPdf"><i class="bi bi-file-earmark-pdf-fill fs-4"></i></label>
+                <input type="radio" class="btn-check" name="iconOption" id="iconWord" value="word" onchange="toggleCustomIcon(false)">
+                <label class="btn btn-outline-light text-primary border" for="iconWord"><i class="bi bi-file-earmark-word-fill fs-4"></i></label>
+                <input type="radio" class="btn-check" name="iconOption" id="iconZip" value="zip" onchange="toggleCustomIcon(false)">
+                <label class="btn btn-outline-light text-warning border" for="iconZip"><i class="bi bi-file-earmark-zip-fill fs-4"></i></label>
+                <input type="radio" class="btn-check" name="iconOption" id="iconCustom" value="custom" onchange="toggleCustomIcon(true)">
+                <label class="btn btn-outline-light text-dark border" for="iconCustom"><i class="bi bi-plus-square-dotted fs-4"></i></label>
+            </div>
+            <div id="customIconWrapper" class="d-none">
+                <input type="file" class="form-control form-control-sm border-info" accept="image/*">
+            </div>
+          </div>
+
+          <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Học kỳ <span class="text-danger">*</span></label>
+                <select class="form-select" id="docSemester" required>
+                    <option value="HK1">Học kỳ 1</option>
+                    <option value="HK2" selected>Học kỳ 2</option>
+                    <option value="HK3">Học kỳ 3</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Phân loại <span class="text-danger">*</span></label>
+                <select class="form-select" id="docCategorySelect" onchange="handleCategoryChange()" required>
+                    <option value="ThongBao">Thông báo</option>
+                    <option value="HocLieu" selected>Học liệu</option>
+                    <option value="BaiTap">Bài tập</option>
+                    <option value="custom">-- Khác (Tự nhập) --</option>
+                </select>
+              </div>
+          </div>
+
+          <div class="mb-3 d-none" id="newCategoryWrapper">
+            <label class="form-label fw-bold text-success">Tên phân loại mới</label>
+            <input type="text" class="form-control border-success" id="newCategoryName">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold text-primary">File đính kèm <span class="text-danger" id="fileReqStar">*</span></label>
+            <input class="form-control border-primary" type="file" id="docFile">
+            <small class="text-muted d-none" id="fileEditNote">Để trống nếu muốn giữ file cũ.</small>
+          </div>
+
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-primary fw-bold px-4">XÁC NHẬN LƯU</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../public/js/script.js"></script>
+
+<script>
+function resetFormForAdd() {
+    document.getElementById('uploadModalLabel').innerHTML = '<i class="bi bi-cloud-arrow-up-fill me-2"></i>Tải Tài Liệu Mới';
+    document.getElementById('uploadDocForm').reset();
+    document.getElementById('fileReqStar').classList.remove('d-none');
+    document.getElementById('fileEditNote').classList.add('d-none');
+    document.getElementById('docFile').setAttribute('required', 'true');
+    handleCategoryChange();
+    toggleCustomIcon(false);
+}
+
+function prepareEditDoc(title, category, note) {
+    document.getElementById('uploadModalLabel').innerHTML = '<i class="bi bi-pencil-square me-2"></i>Chỉnh Sửa Học Liệu';
+    document.getElementById('docTitle').value = title;
+    document.getElementById('docCategorySelect').value = category;
+    document.getElementById('docNote').value = note;
+    document.getElementById('fileReqStar').classList.add('d-none');
+    document.getElementById('fileEditNote').classList.remove('d-none');
+    document.getElementById('docFile').removeAttribute('required');
+    handleCategoryChange();
+}
+
+function toggleCustomIcon(show) {
+    document.getElementById('customIconWrapper').classList.toggle('d-none', !show);
+}
+
+function handleCategoryChange() {
+    const select = document.getElementById('docCategorySelect');
+    document.getElementById('newCategoryWrapper').classList.toggle('d-none', select.value !== 'custom');
+}
+</script>
+</body>
+</html>
