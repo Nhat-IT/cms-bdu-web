@@ -26,6 +26,12 @@ const dbConfig = {
     queueLimit: 0
 };
 
+// Thiết lập trang mặc định khi truy cập vào đường dẫn gốc (/)
+app.get('/', (req, res) => {
+    // Chuyển hướng người dùng đến trang đăng nhập
+    res.redirect('/login.html'); 
+});
+
 // Test API kết nối
 app.get('/api/test-db', async (req, res) => {
     try {
