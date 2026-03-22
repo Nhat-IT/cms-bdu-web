@@ -15,6 +15,8 @@
         .nav-tabs .nav-link.active { font-weight: bold; border-bottom: 3px solid #0d6efd; color: #0d6efd; background-color: transparent;}
         .nav-tabs .nav-link { color: #6c757d; border: none; font-size: 1.05rem;}
         .nav-tabs .nav-link:hover { color: #0d6efd; border-color: transparent; }
+        .file-link { cursor: pointer; transition: opacity 0.2s; }
+        .file-link:hover { opacity: 0.7; text-decoration: underline !important; }
     </style>
 </head>
 <body class="dashboard-body">
@@ -95,7 +97,7 @@
                                         <tr>
                                             <th class="ps-4">TIÊU ĐỀ BÀI TẬP</th>
                                             <th>LỚP HỌC PHẦN</th>
-                                            <th>ĐÍNH KÈM</th>
+                                            <th>ĐÍNH KÈM (ĐỀ BÀI)</th>
                                             <th>DEADLINE</th>
                                             <th>TRẠNG THÁI</th>
                                             <th>ĐÃ NỘP</th>
@@ -106,7 +108,11 @@
                                         <tr>
                                             <td class="ps-4 fw-bold text-primary">Báo cáo giữa kỳ - Chương 1,2</td>
                                             <td class="fw-bold text-dark">25TH01 <span class="fw-normal text-muted">- An ninh CSDL</span></td>
-                                            <td><i class="bi bi-file-earmark-pdf-fill text-danger fs-5" title="Có file đính kèm"></i></td>
+                                            <td>
+                                                <a class="text-decoration-none file-link" onclick="handleFileClick(event, 'DeBai_BaoCaoGiuaKy.pdf', 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf')">
+                                                    <i class="bi bi-file-earmark-pdf-fill text-danger fs-5" title="Xem đề bài"></i> <span class="small text-danger">Xem Đề</span>
+                                                </a>
+                                            </td>
                                             <td><span class="text-danger fw-bold">30/03/2026 23:59</span></td>
                                             <td><span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">Đang mở</span></td>
                                             <td><span class="fw-bold text-primary">35</span>/40</td>
@@ -166,7 +172,7 @@
                                             <th class="ps-4">MSSV</th>
                                             <th>HỌ TÊN SINH VIÊN</th>
                                             <th>THỜI GIAN NỘP</th>
-                                            <th>FILE ĐÍNH KÈM</th>
+                                            <th>FILE ĐÍNH KÈM (BÀI LÀM)</th>
                                             <th class="text-center">ĐIỂM SỐ</th>
                                             <th class="text-end pe-4">THAO TÁC</th>
                                         </tr>
@@ -176,7 +182,11 @@
                                             <td class="ps-4 fw-bold text-dark">22050022</td>
                                             <td class="fw-bold">Phạm Huỳnh Nhật Ý</td>
                                             <td><span class="text-success small"><i class="bi bi-check-circle-fill me-1"></i>28/03/2026 14:30</span></td>
-                                            <td><a href="#" class="text-decoration-none"><i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i>BaoCao_22050022.pdf</a></td>
+                                            <td>
+                                                <a class="text-decoration-none file-link text-primary" onclick="handleFileClick(event, 'BaoCao_22050022.pdf', 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf')">
+                                                    <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i>BaoCao_22050022.pdf
+                                                </a>
+                                            </td>
                                             <td class="text-center"><span class="badge bg-warning text-dark">Chưa chấm</span></td>
                                             <td class="text-end pe-4">
                                                 <button class="btn btn-sm btn-outline-primary fw-bold" data-bs-toggle="modal" data-bs-target="#gradeModal" onclick="openGradeModal('22050022', 'Phạm Huỳnh Nhật Ý', '', '')">
@@ -188,11 +198,31 @@
                                             <td class="ps-4 fw-bold text-dark">22050111</td>
                                             <td class="fw-bold">Nguyễn Văn A</td>
                                             <td><span class="text-success small"><i class="bi bi-check-circle-fill me-1"></i>27/03/2026 09:15</span></td>
-                                            <td><a href="#" class="text-decoration-none"><i class="bi bi-file-earmark-word-fill text-primary me-1"></i>BaoCao_NguyenVanA.docx</a></td>
+                                            <td>
+                                                <a class="text-decoration-none file-link text-primary" onclick="handleFileClick(event, 'BaoCao_NguyenVanA.docx', 'https://calibre-ebook.com/downloads/demos/demo.docx')">
+                                                    <i class="bi bi-file-earmark-word-fill text-primary me-1"></i>BaoCao_NguyenVanA.docx
+                                                </a>
+                                            </td>
                                             <td class="text-center"><span class="fw-bold text-success fs-5">8.5</span></td>
                                             <td class="text-end pe-4">
                                                 <button class="btn btn-sm btn-light border text-secondary fw-bold" data-bs-toggle="modal" data-bs-target="#gradeModal" onclick="openGradeModal('22050111', 'Nguyễn Văn A', '8.5', 'Làm bài tốt, trình bày rõ ràng.')">
                                                     <i class="bi bi-pencil me-1"></i> Sửa điểm
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="ps-4 fw-bold text-dark">22050222</td>
+                                            <td class="fw-bold">Trần Thị B</td>
+                                            <td><span class="text-success small"><i class="bi bi-check-circle-fill me-1"></i>26/03/2026 10:45</span></td>
+                                            <td>
+                                                <a class="text-decoration-none file-link text-primary" onclick="handleFileClick(event, 'SourceCode_TranThiB.zip', '#')">
+                                                    <i class="bi bi-file-earmark-zip-fill text-warning me-1"></i>SourceCode_TranThiB.zip
+                                                </a>
+                                            </td>
+                                            <td class="text-center"><span class="badge bg-warning text-dark">Chưa chấm</span></td>
+                                            <td class="text-end pe-4">
+                                                <button class="btn btn-sm btn-outline-primary fw-bold" data-bs-toggle="modal" data-bs-target="#gradeModal" onclick="openGradeModal('22050222', 'Trần Thị B', '', '')">
+                                                    <i class="bi bi-pencil-square me-1"></i> Chấm điểm
                                                 </button>
                                             </td>
                                         </tr>
@@ -292,6 +322,36 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // XỬ LÝ SỰ KIỆN CLICK VÀO FILE
+        function handleFileClick(event, fileName, fileUrl) {
+            event.preventDefault(); // Ngăn chặn chuyển trang mặc định của thẻ <a>
+            
+            // Lấy đuôi file (extension)
+            const ext = fileName.split('.').pop().toLowerCase();
+            
+            // Danh sách các định dạng file nén hoặc file chạy -> Bắt buộc tải xuống
+            const downloadExts = ['zip', 'rar', '7z', 'tar', 'gz', 'exe'];
+            
+            if (downloadExts.includes(ext)) {
+                // Hành vi 1: Tải xuống trực tiếp
+                if(confirm(`📦 Tệp [${fileName}] là tệp nén.\nBấm OK để tải xuống thiết bị của bạn.`)) {
+                    // Mô phỏng tải xuống. Thực tế sẽ dùng window.location.href = fileUrl;
+                    alert('⬇️ Đang tải tệp xuống...'); 
+                }
+            } else {
+                // Hành vi 2: Xem trực tiếp bằng Google Drive Viewer
+                if(confirm(`👀 Mở tệp [${fileName}] trong trình xem trước?`)) {
+                    // Nếu là PDF thì trình duyệt đọc được ngay. 
+                    // Nếu là DOCX, XLSX thì dùng Google Viewer đọc giùm.
+                    let viewerUrl = fileUrl;
+                    if(ext === 'doc' || ext === 'docx' || ext === 'xls' || ext === 'xlsx' || ext === 'ppt' || ext === 'pptx') {
+                        viewerUrl = `https://drive.google.com/viewerng/viewer?url=${encodeURIComponent(fileUrl)}`;
+                    }
+                    window.open(viewerUrl, '_blank');
+                }
+            }
+        }
+
         // JS Xử lý Modal Thêm/Sửa Bài Tập
         function openAssignmentModal(mode, title = '', classId = '', deadline = '', desc = '') {
             const modalTitle = document.getElementById('assignmentModalTitle');
@@ -300,8 +360,6 @@
             if(mode === 'add') {
                 modalTitle.innerHTML = '<i class="bi bi-journal-plus me-2"></i>Tạo Bài tập mới';
                 submitBtn.innerText = 'Giao bài tập';
-                
-                // Reset form
                 document.getElementById('modalAssignTitle').value = '';
                 document.getElementById('modalAssignClass').value = '';
                 document.getElementById('modalAssignDeadline').value = '';
@@ -310,8 +368,6 @@
             } else {
                 modalTitle.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Cập nhật Bài tập';
                 submitBtn.innerText = 'Lưu thay đổi';
-                
-                // Fill dữ liệu cũ vào form
                 document.getElementById('modalAssignTitle').value = title;
                 document.getElementById('modalAssignClass').value = classId;
                 document.getElementById('modalAssignDeadline').value = deadline;
@@ -319,14 +375,12 @@
             }
         }
 
-        // JS Xử lý cảnh báo Xóa bài tập
         function confirmDeleteAssignment(title) {
             if(confirm(`⚠️ CẢNH BÁO: Bạn có chắc chắn muốn xóa bài tập [${title}]?\nTOÀN BỘ bài nộp của sinh viên cho bài tập này cũng sẽ bị xóa vĩnh viễn!`)) {
                 alert(`✅ Đã xóa bài tập thành công!`);
             }
         }
 
-        // Tự động điền dữ liệu vào Modal Chấm điểm
         function openGradeModal(studentId, studentName, score, feedback) {
             document.getElementById('modalStudentId').innerText = 'MSSV: ' + studentId;
             document.getElementById('modalStudentName').innerText = studentName;
