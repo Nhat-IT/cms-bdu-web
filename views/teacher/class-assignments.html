@@ -95,6 +95,7 @@
                                         <tr>
                                             <th class="ps-4">TIÊU ĐỀ BÀI TẬP</th>
                                             <th>LỚP HỌC PHẦN</th>
+                                            <th>ĐÍNH KÈM</th>
                                             <th>DEADLINE</th>
                                             <th>TRẠNG THÁI</th>
                                             <th>ĐÃ NỘP</th>
@@ -105,6 +106,7 @@
                                         <tr>
                                             <td class="ps-4 fw-bold text-primary">Báo cáo giữa kỳ - Chương 1,2</td>
                                             <td class="fw-bold text-dark">25TH01 <span class="fw-normal text-muted">- An ninh CSDL</span></td>
+                                            <td><i class="bi bi-file-earmark-pdf-fill text-danger fs-5" title="Có file đính kèm"></i></td>
                                             <td><span class="text-danger fw-bold">30/03/2026 23:59</span></td>
                                             <td><span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">Đang mở</span></td>
                                             <td><span class="fw-bold text-primary">35</span>/40</td>
@@ -116,6 +118,7 @@
                                         <tr>
                                             <td class="ps-4 fw-bold text-primary">Bài tập thực hành Lab 01</td>
                                             <td class="fw-bold text-dark">24CNTT02 <span class="fw-normal text-muted">- Cấu trúc DL</span></td>
+                                            <td><span class="text-muted small">Không có</span></td>
                                             <td><span class="text-muted">15/03/2026 23:59</span></td>
                                             <td><span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25">Đã đóng</span></td>
                                             <td><span class="fw-bold text-primary">38</span>/38</td>
@@ -223,7 +226,13 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Mô tả / Yêu cầu chi tiết</label>
-                        <textarea class="form-control" rows="4" placeholder="Nhập hướng dẫn làm bài cho sinh viên..."></textarea>
+                        <textarea class="form-control" rows="3" placeholder="Nhập hướng dẫn làm bài cho sinh viên (không bắt buộc nếu đã đính kèm file)..."></textarea>
+                    </div>
+                    
+                    <div class="mb-2 p-3 bg-light border rounded">
+                        <label class="form-label fw-bold text-primary"><i class="bi bi-cloud-arrow-up-fill me-2"></i>Đính kèm File đề bài (Tùy chọn)</label>
+                        <input class="form-control form-control-sm" type="file" id="assignmentFile">
+                        <div class="form-text small mt-2"><i class="bi bi-info-circle me-1"></i>Hỗ trợ định dạng: PDF, DOCX, ZIP, RAR (Tối đa 15MB). Dùng để cung cấp đề bài chi tiết hoặc source code mẫu cho sinh viên.</div>
                     </div>
                 </div>
                 <div class="modal-footer border-0 pb-4 px-4">
