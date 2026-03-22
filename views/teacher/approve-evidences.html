@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS BDU - Duyệt Minh Chứng</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+    <style>
+        .sidebar-teacher { background-color: #1e293b; position: fixed; top: 0; left: 0; width: 250px; height: 100vh; z-index: 1000; }
+        .main-content { margin-left: 250px; min-height: 100vh; background-color: #f1f5f9; padding-bottom: 50px; }
+        .top-navbar-teacher { background-color: #0f172a !important; color: white; }
+        
+        .action-btn { padding: 0.2rem 0.5rem; font-size: 0.875rem; border-radius: 4px; }
+        /* Style cho preview ảnh minh chứng */
+        .evidence-preview-img { width: 100%; max-height: 500px; object-fit: contain; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; }
+    </style>
+</head>
+<body class="dashboard-body">
+
+    <div class="sidebar sidebar-teacher d-flex flex-column" id="sidebar">
+        <div>
+            <div class="brand text-white text-center py-3 fs-4 fw-bold border-bottom border-secondary border-opacity-25">CMS TEACHER</div>
+            <div class="text-start mt-3 mb-2 ms-3 text-white-50 small fw-bold">MENU GIẢNG VIÊN</div>
+            <nav class="nav flex-column ps-2 pe-2">
+                <a href="home.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-speedometer2 me-2"></i> Tổng quan</a>
+                <a href="attendance.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-calendar-check me-2"></i> Lịch & Điểm danh</a>
+                <a href="class-assignments.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-journal-text me-2"></i> Quản lý Bài tập</a>
+                <a href="class-grades.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-file-earmark-bar-graph me-2"></i> Bảng điểm</a>
+                <a href="approve-evidences.html" class="nav-link text-white active bg-primary bg-opacity-25 rounded py-2 mb-1 d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-file-earmark-medical me-2"></i> Duyệt minh chứng</span>
+                    <span class="badge bg-danger rounded-pill">3</span>
+                </a>
+                <a href="documents.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-folder2-open me-2"></i> Kho tài liệu</a>
+            </nav>
+        </div>
+        
+        <div class="mt-auto mb-3 px-3">
+            <hr class="text-secondary border-opacity-50">
+            <a href="../login.html" class="text-danger d-flex align-items-center text-decoration-none py-2 px-3 rounded hover-logout" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất?');">
+                <i class="bi bi-box-arrow-left me-2 fs-5"></i> <span class="fw-bold">Đăng xuất</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-navbar-teacher d-flex justify-content-between align-items-center px-4 py-3 shadow-sm mb-4">
+            <h4 class="m-0 fw-bold d-flex align-items-center text-white">
+                <i class="bi bi-file-earmark-medical me-2 fs-3 text-danger"></i> DUYỆT MINH CHỨNG NGHỈ HỌC
+            </h4>
+            <div class="d-flex align-items-center text-white">
+                <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
+                    <div class="fs-6">Giảng viên: <b class="text-info">ThS. Nguyễn Hồ Hải</b></div>
+                </div>
+                <img src="../../public/images/avatar-placeholder.png" alt="Avatar" class="rounded-circle bg-white" width="40" height="40">
+            </div>
+        </div>
+
+        <div class="p-4 pt-0">
+            
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white p-4 border-bottom border-secondary border-opacity-10 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="d-flex align-items-end gap-3 flex-wrap">
+                        <div>
+                            <label class="form-label small fw-bold text-muted mb-1">Trạng thái minh chứng</label>
+                            <select class="form-select border-secondary fw-bold text-dark" style="width: 200px;" id="statusFilter">
+                                <option value="all">Tất cả trạng thái</option>
+                                <option value="pending" selected>Đang chờ duyệt (3)</option>
+                                <option value="approved">Đã duyệt (Phép)</option>
+                                <option value="rejected">Bị từ chối (K.Phép)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label small fw-bold text-muted mb-1">Lớp học phần</label>
+                            <select class="form-select border-secondary fw-bold text-dark" style="width: 220px;" id="classFilter">
+                                <option value="">-- Tất cả lớp --</option>
+                                <option value="25TH01">25TH01 - An ninh CSDL</option>
+                                <option value="24CNTT02">24CNTT02 - Cấu trúc DL</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group input-group-sm" style="width: 250px;">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control border-start-0" placeholder="Tìm MSSV, Tên sinh viên...">
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light small text-muted fw-bold">
+                                <tr>
+                                    <th class="ps-4">NGÀY VẮNG</th>
+                                    <th>MSSV</th>
+                                    <th>HỌ VÀ TÊN SINH VIÊN</th>
+                                    <th>LỚP HỌC PHẦN</th>
+                                    <th>THỜI GIAN NỘP</th>
+                                    <th class="text-center">TRẠNG THÁI</th>
+                                    <th class="text-end pe-4">XEM & DUYỆT</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="ps-4 fw-bold text-dark">20/03/2026</td>
+                                    <td class="fw-bold text-primary">22050111</td>
+                                    <td class="fw-bold">Nguyễn Văn A</td>
+                                    <td class="text-muted small">25TH01 - An ninh CSDL</td>
+                                    <td>21/03/2026 08:30</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-warning text-dark border border-warning">Chờ duyệt</span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <button class="btn btn-sm btn-primary fw-bold" onclick="openEvidenceModal('Nguyễn Văn A', '22050111', '25TH01', '20/03/2026', 'https://thanhnien.mediacdn.vn/Uploaded/gianguyen/2022_03_03/giay-nghi-om-8488.jpg', 'pending')">
+                                            <i class="bi bi-eye-fill me-1"></i> Xem File
+                                        </button>
+                                    </td>
+                                </tr>
+                                
+                                <tr>
+                                    <td class="ps-4 fw-bold text-dark">20/03/2026</td>
+                                    <td class="fw-bold text-primary">22050222</td>
+                                    <td class="fw-bold">Trần Thị B</td>
+                                    <td class="text-muted small">24CNTT02 - Cấu trúc DL</td>
+                                    <td>20/03/2026 14:15</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-warning text-dark border border-warning">Chờ duyệt</span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <button class="btn btn-sm btn-primary fw-bold" onclick="openEvidenceModal('Trần Thị B', '22050222', '24CNTT02', '20/03/2026', 'https://luatsux.vn/wp-content/uploads/2022/07/Giay-xin-phep-nghi-hoc-cua-sinh-vien-1.jpg', 'pending')">
+                                            <i class="bi bi-eye-fill me-1"></i> Xem File
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                <tr class="bg-light">
+                                    <td class="ps-4 fw-bold text-dark">15/03/2026</td>
+                                    <td class="fw-bold text-secondary">22050333</td>
+                                    <td class="fw-bold text-secondary">Lê Văn C</td>
+                                    <td class="text-muted small">25TH01 - An ninh CSDL</td>
+                                    <td>16/03/2026 09:00</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25"><i class="bi bi-check-circle-fill me-1"></i>Đã duyệt</span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="openEvidenceModal('Lê Văn C', '22050333', '25TH01', '15/03/2026', 'https://thanhnien.mediacdn.vn/Uploaded/gianguyen/2022_03_03/giay-nghi-om-8488.jpg', 'approved')">
+                                            <i class="bi bi-eye-fill me-1"></i> Đã xem
+                                        </button>
+                                    </td>
+                                </tr>
+                                
+                                <tr class="bg-light">
+                                    <td class="ps-4 fw-bold text-dark">10/03/2026</td>
+                                    <td class="fw-bold text-secondary">22050444</td>
+                                    <td class="fw-bold text-secondary">Phan Văn D</td>
+                                    <td class="text-muted small">24CNTT02 - Cấu trúc DL</td>
+                                    <td>12/03/2026 10:20</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25"><i class="bi bi-x-circle-fill me-1"></i>Từ chối</span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="openEvidenceModal('Phan Văn D', '22050444', '24CNTT02', '10/03/2026', 'https://luatsux.vn/wp-content/uploads/2022/07/Giay-xin-phep-nghi-hoc-cua-sinh-vien-1.jpg', 'rejected')">
+                                            <i class="bi bi-eye-fill me-1"></i> Đã xem
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="modal fade" id="evidenceModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-file-earmark-image me-2"></i>Chi tiết Minh chứng</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0 bg-light">
+                    <div class="row g-0">
+                        <div class="col-md-7 p-3 text-center border-end bg-white">
+                            <p class="small text-muted mb-2"><i class="bi bi-zoom-in me-1"></i> Ảnh đính kèm (Có thể cuộn để xem)</p>
+                            <img src="" id="modalEvidenceImage" class="evidence-preview-img shadow-sm" alt="Hình ảnh minh chứng">
+                        </div>
+                        
+                        <div class="col-md-5 p-4 d-flex flex-column">
+                            <h5 class="fw-bold text-primary mb-1" id="modalStudentName">Nguyễn Văn A</h5>
+                            <p class="text-muted small mb-3 border-bottom pb-2" id="modalStudentId">MSSV: 22050111</p>
+                            
+                            <div class="mb-2">
+                                <span class="text-muted small d-block">Lớp học phần:</span>
+                                <span class="fw-bold text-dark" id="modalClass">25TH01 - An ninh CSDL</span>
+                            </div>
+                            <div class="mb-4">
+                                <span class="text-muted small d-block">Xin nghỉ ngày:</span>
+                                <span class="fw-bold text-danger fs-5" id="modalDate">20/03/2026</span>
+                            </div>
+                            
+                            <div class="mb-4" id="rejectReasonDiv">
+                                <label class="form-label small fw-bold text-danger">Lý do từ chối (Nếu có):</label>
+                                <textarea class="form-control form-control-sm" rows="2" placeholder="VD: Giấy phép quá mờ, không hợp lệ..."></textarea>
+                            </div>
+
+                            <div class="mt-auto d-flex flex-column gap-2" id="actionButtonsDiv">
+                                <button class="btn btn-success py-2 fw-bold shadow-sm" onclick="processEvidence('Approved')">
+                                    <i class="bi bi-check-circle-fill me-2"></i> Chấp nhận (Nghỉ Có Phép)
+                                </button>
+                                <button class="btn btn-outline-danger py-2 fw-bold" onclick="processEvidence('Rejected')">
+                                    <i class="bi bi-x-circle-fill me-2"></i> Từ chối (Nghỉ Không Phép)
+                                </button>
+                            </div>
+                            
+                            <div class="mt-auto alert alert-secondary text-center fw-bold d-none" id="statusMessageDiv">
+                                <i class="bi bi-info-circle-fill me-1"></i> Minh chứng này đã được xử lý.
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // JS Xử lý truyền dữ liệu vào Modal
+        function openEvidenceModal(name, id, className, date, imageUrl, status) {
+            // Gán thông tin
+            document.getElementById('modalStudentName').innerText = name;
+            document.getElementById('modalStudentId').innerText = 'MSSV: ' + id;
+            document.getElementById('modalClass').innerText = className;
+            document.getElementById('modalDate').innerText = date;
+            
+            // Gán ảnh giả lập (Thực tế sẽ là link Cloudinary trong bảng attendance_evidences)
+            document.getElementById('modalEvidenceImage').src = imageUrl;
+            
+            // Xử lý ẩn/hiện nút bấm dựa vào trạng thái (status)
+            const actionDiv = document.getElementById('actionButtonsDiv');
+            const rejectDiv = document.getElementById('rejectReasonDiv');
+            const messageDiv = document.getElementById('statusMessageDiv');
+            
+            if(status === 'pending') {
+                actionDiv.classList.remove('d-none'); // Hiện 2 nút Duyệt/Từ chối
+                rejectDiv.classList.remove('d-none'); // Hiện ô nhập lý do từ chối
+                messageDiv.classList.add('d-none');   // Ẩn thông báo đã xử lý
+            } else {
+                actionDiv.classList.add('d-none');    // Ẩn 2 nút vì đã xử lý rồi
+                rejectDiv.classList.add('d-none');    // Ẩn ô nhập
+                messageDiv.classList.remove('d-none'); // Hiện thông báo "Đã xử lý"
+            }
+
+            // Mở Modal
+            var evidenceModal = new bootstrap.Modal(document.getElementById('evidenceModal'));
+            evidenceModal.show();
+        }
+
+        // JS Giả lập xử lý Duyệt/Từ chối
+        function processEvidence(actionType) {
+            if(actionType === 'Approved') {
+                alert("✅ Đã DUYỆT minh chứng! Trạng thái sinh viên trong bảng điểm danh sẽ được chuyển thành: Vắng CÓ PHÉP.");
+            } else {
+                alert("❌ Đã TỪ CHỐI minh chứng! Trạng thái sinh viên trong bảng điểm danh sẽ bị đánh dấu: Vắng KHÔNG PHÉP.");
+            }
+            // Đóng Modal sau khi xử lý
+            var evidenceModal = bootstrap.Modal.getInstance(document.getElementById('evidenceModal'));
+            evidenceModal.hide();
+        }
+    </script>
+</body>
+</html>
