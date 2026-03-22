@@ -78,7 +78,7 @@
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-header bg-white pt-3 pb-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <h5 class="fw-bold text-dark m-0"><i class="bi bi-diagram-3 text-primary me-2"></i>Danh sách Khoa/Ngành</h5>
-                        <button class="btn btn-primary btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#deptModal" onclick="openModalMode('#deptModal', 'Thêm Khoa mới', 'bi-building')">
+                        <button class="btn btn-primary btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#deptModal" onclick="openDeptModal('add')">
                             <i class="bi bi-plus-lg me-1"></i> Thêm Khoa mới
                         </button>
                     </div>
@@ -99,12 +99,10 @@
                                         <td class="fw-bold text-dark">Công nghệ thông tin</td>
                                         <td>20/03/2026</td>
                                         <td class="text-end pe-4">
-                                            <button class="btn btn-light action-btn text-primary border me-1" data-bs-toggle="modal" data-bs-target="#deptModal" onclick="openModalMode('#deptModal', 'Cập nhật Khoa', 'bi-pencil-square')" title="Sửa">
+                                            <button class="btn btn-light action-btn text-primary border me-1" data-bs-toggle="modal" data-bs-target="#deptModal" onclick="openDeptModal('edit', 'Công nghệ thông tin')" title="Sửa">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
-                                            <button class="btn btn-light action-btn text-danger border" onclick="confirmDelete('Khoa Công nghệ thông tin')" title="Xóa">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
+                                            <button class="btn btn-light action-btn text-danger border" onclick="confirmDelete('Khoa Công nghệ thông tin')" title="Xóa"><i class="bi bi-trash"></i></button>
                                         </td>
                                     </tr>
                                     <tr>
@@ -112,12 +110,10 @@
                                         <td class="fw-bold text-dark">Kinh tế - Luật</td>
                                         <td>21/03/2026</td>
                                         <td class="text-end pe-4">
-                                            <button class="btn btn-light action-btn text-primary border me-1" data-bs-toggle="modal" data-bs-target="#deptModal" onclick="openModalMode('#deptModal', 'Cập nhật Khoa', 'bi-pencil-square')" title="Sửa">
+                                            <button class="btn btn-light action-btn text-primary border me-1" data-bs-toggle="modal" data-bs-target="#deptModal" onclick="openDeptModal('edit', 'Kinh tế - Luật')" title="Sửa">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
-                                            <button class="btn btn-light action-btn text-danger border" onclick="confirmDelete('Khoa Kinh tế - Luật')" title="Xóa">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
+                                            <button class="btn btn-light action-btn text-danger border" onclick="confirmDelete('Khoa Kinh tế - Luật')" title="Xóa"><i class="bi bi-trash"></i></button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -131,7 +127,7 @@
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-header bg-white pt-3 pb-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <h5 class="fw-bold text-dark m-0"><i class="bi bi-calendar-event text-success me-2"></i>Danh sách Học kỳ</h5>
-                        <button class="btn btn-success btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#semesterModal" onclick="openModalMode('#semesterModal', 'Cấu hình Học kỳ mới', 'bi-calendar-check')">
+                        <button class="btn btn-success btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#semesterModal" onclick="openSemesterModal('add')">
                             <i class="bi bi-plus-lg me-1"></i> Thêm Học kỳ
                         </button>
                     </div>
@@ -154,11 +150,8 @@
                                         <td>01/01/2026</td>
                                         <td>30/06/2026</td>
                                         <td class="text-end pe-4">
-                                            <button class="btn btn-light action-btn text-primary border me-1" data-bs-toggle="modal" data-bs-target="#semesterModal" onclick="openModalMode('#semesterModal', 'Cập nhật Học kỳ', 'bi-pencil-square')" title="Sửa">
+                                            <button class="btn btn-light action-btn text-primary border" data-bs-toggle="modal" data-bs-target="#semesterModal" onclick="openSemesterModal('edit', 'HK2', '2025-2026', '2026-01-01', '2026-06-30')" title="Sửa">
                                                 <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <button class="btn btn-light action-btn text-danger border" onclick="confirmDelete('Học kỳ 2 (2025-2026)')" title="Xóa">
-                                                <i class="bi bi-trash"></i>
                                             </button>
                                         </td>
                                     </tr>
@@ -168,11 +161,8 @@
                                         <td>15/08/2025</td>
                                         <td>31/12/2025</td>
                                         <td class="text-end pe-4">
-                                            <button class="btn btn-light action-btn text-primary border me-1" data-bs-toggle="modal" data-bs-target="#semesterModal" onclick="openModalMode('#semesterModal', 'Cập nhật Học kỳ', 'bi-pencil-square')" title="Sửa">
+                                            <button class="btn btn-light action-btn text-primary border" data-bs-toggle="modal" data-bs-target="#semesterModal" onclick="openSemesterModal('edit', 'HK1', '2025-2026', '2025-08-15', '2025-12-31')" title="Sửa">
                                                 <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <button class="btn btn-light action-btn text-danger border" onclick="confirmDelete('Học kỳ 1 (2025-2026)')" title="Xóa">
-                                                <i class="bi bi-trash"></i>
                                             </button>
                                         </td>
                                     </tr>
@@ -196,7 +186,7 @@
             </div>
             <div class="modal-body p-4">
                 <label class="form-label fw-bold">Tên Khoa/Ngành</label>
-                <input type="text" class="form-control form-control-lg" placeholder="Ví dụ: Công nghệ thông tin">
+                <input type="text" id="deptNameInput" class="form-control form-control-lg" placeholder="Ví dụ: Công nghệ thông tin">
             </div>
             <div class="modal-footer border-0 pb-4 px-4">
                 <button class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
@@ -216,20 +206,20 @@
             <div class="modal-body p-4">
                 <div class="mb-3">
                     <label class="form-label fw-bold">Tên học kỳ</label>
-                    <input type="text" class="form-control" placeholder="VD: HK1, HK2, HK3...">
+                    <input type="text" id="semNameInput" class="form-control" placeholder="VD: HK1, HK2, HK3...">
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold">Năm học</label>
-                    <input type="text" class="form-control" placeholder="VD: 2025-2026">
+                    <input type="text" id="semYearInput" class="form-control" placeholder="VD: 2025-2026">
                 </div>
                 <div class="row">
                     <div class="col-6 mb-3">
                         <label class="form-label fw-bold text-success">Ngày bắt đầu</label>
-                        <input type="date" class="form-control">
+                        <input type="date" id="semStartInput" class="form-control">
                     </div>
                     <div class="col-6 mb-3">
                         <label class="form-label fw-bold text-danger">Ngày kết thúc</label>
-                        <input type="date" class="form-control">
+                        <input type="date" id="semEndInput" class="form-control">
                     </div>
                 </div>
             </div>
@@ -252,12 +242,36 @@
         }
     }
 
-    // Hàm xử lý thay đổi tiêu đề Modal khi SỬA hoặc THÊM MỚI
-    function openModalMode(modalId, newTitle, iconClass) {
-        const modal = document.querySelector(modalId);
-        if(modal) {
-            const titleElement = modal.querySelector('.modal-title');
-            titleElement.innerHTML = `<i class="bi ${iconClass} me-2"></i>${newTitle}`;
+    // Xử lý Modal cho KHOA
+    function openDeptModal(mode, name = '') {
+        const modalTitle = document.querySelector('#deptModal .modal-title');
+        const inputField = document.querySelector('#deptNameInput');
+        
+        if (mode === 'add') {
+            modalTitle.innerHTML = '<i class="bi bi-building me-2"></i>Thêm Khoa mới';
+            inputField.value = ''; // Làm trống ô nhập
+        } else {
+            modalTitle.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Cập nhật Khoa';
+            inputField.value = name; // Điền dữ liệu cũ vào ô nhập
+        }
+    }
+
+    // Xử lý Modal cho HỌC KỲ
+    function openSemesterModal(mode, name = '', year = '', start = '', end = '') {
+        const modalTitle = document.querySelector('#semesterModal .modal-title');
+        
+        if (mode === 'add') {
+            modalTitle.innerHTML = '<i class="bi bi-calendar-check me-2"></i>Cấu hình Học kỳ mới';
+            document.querySelector('#semNameInput').value = '';
+            document.querySelector('#semYearInput').value = '';
+            document.querySelector('#semStartInput').value = '';
+            document.querySelector('#semEndInput').value = '';
+        } else {
+            modalTitle.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Cập nhật Học kỳ';
+            document.querySelector('#semNameInput').value = name;
+            document.querySelector('#semYearInput').value = year;
+            document.querySelector('#semStartInput').value = start; // Định dạng bắt buộc YYYY-MM-DD
+            document.querySelector('#semEndInput').value = end;
         }
     }
 </script>
