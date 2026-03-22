@@ -9,166 +9,222 @@
     <link rel="stylesheet" href="../../public/css/style.css">
     <style>
         .sidebar-admin { background-color: #1e293b; }
-        .nav-tabs .nav-link.active { font-weight: bold; border-bottom: 3px solid #0d6efd; }
+        .top-navbar-admin { background-color: #0f172a; }
+        .action-btn { padding: 0.2rem 0.5rem; font-size: 0.875rem; border-radius: 4px; }
+        /* CSS bổ sung cho phần Tab của trang này */
+        .nav-tabs .nav-link.active { font-weight: bold; border-bottom: 3px solid #0d6efd; color: #0d6efd; background-color: transparent;}
+        .nav-tabs .nav-link { color: #6c757d; border: none; font-size: 1.05rem;}
+        .nav-tabs .nav-link:hover { color: #0d6efd; border-color: transparent; }
     </style>
 </head>
 <body class="dashboard-body">
 
-<div class="sidebar sidebar-admin d-flex flex-column" id="sidebar">
+<div class="sidebar sidebar-admin d-flex flex-column" id="sidebar" style="height: 100vh;">
     <div>
         <div class="brand text-white">CMS ADMIN</div>
+        <div class="text-center mb-3 text-white-50 small fw-bold">QUẢN TRỊ HỆ THỐNG</div>
         <nav>
-            <a href="home.html"><i class="bi bi-speedometer2"></i> Tổng quan</a>
+            <a href="home.html"><i class="bi bi-speedometer2"></i> Tổng quan hệ thống</a>
             <a href="org-settings.html" class="active"><i class="bi bi-diagram-3"></i> Cấu hình Tổ chức</a>
-            <a href="accounts.html"><i class="bi bi-people"></i> Tài khoản</a>
-            <a href="classes-subjects.html"><i class="bi bi-building"></i> Lớp & Môn</a>
-            <a href="assignments.html"><i class="bi bi-journal-check"></i> Phân công</a>
+            <a href="accounts.html"><i class="bi bi-people"></i> Quản lý Tài khoản</a>
+            <a href="classes-subjects.html"><i class="bi bi-building"></i> Quản lý Lớp & Môn</a>
+            <a href="assignments.html"><i class="bi bi-diagram-3-fill"></i> Phân công Giảng dạy</a>
             <a href="system-logs.html"><i class="bi bi-shield-lock"></i> Nhật ký hệ thống</a>
         </nav>
     </div>
+    
+    <div class="mt-auto mb-3 px-3">
+        <hr class="text-secondary border-opacity-50">
+        <a href="../login.html" class="text-danger d-flex align-items-center text-decoration-none py-2 px-3 rounded hover-logout" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất?');">
+            <i class="bi bi-box-arrow-left me-2 fs-5"></i> <span class="fw-bold">Đăng xuất</span>
+        </a>
+    </div>
 </div>
 
-<div class="main-content">
-    <div class="top-navbar-admin d-flex justify-content-between align-items-center px-4 py-3 bg-dark text-white">
-        <h4 class="m-0"><i class="bi bi-gear-fill me-2"></i> THIẾT LẬP HỆ THỐNG</h4>
-        <div class="small">Admin: <b>Phạm Huỳnh Nhật Ý</b></div>
-</div>
+<div class="main-content" id="mainContent" style="padding: 0; background-color: #f1f5f9; min-height: 100vh;">
+    
+    <div class="top-navbar-admin d-flex justify-content-between align-items-center px-4 py-3">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+            <h4 class="m-0 text-white fw-bold d-flex align-items-center">
+                <i class="bi bi-gear-fill me-2 fs-3 text-warning"></i> CẤU HÌNH TỔ CHỨC
+            </h4>
+        </div>
+        
+        <div class="d-flex align-items-center text-white">
+            <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
+                <div class="fs-6">Quản trị viên: <span class="fw-bold text-warning">Admin Khoa CNTT</span></div>
+            </div>
+            <i class="bi bi-person-badge-fill fs-2"></i>
+        </div>
+    </div>
 
     <div class="p-4">
-        <ul class="nav nav-tabs mb-4" id="orgTab" role="tablist">
-            <li class="nav-item">
-                <button class="nav-link active" id="dept-tab" data-bs-toggle="tab" data-bs-target="#dept-panel">
-                    <i class="bi bi-house-gear-fill me-1"></i> Quản lý Khoa/Ngành
+        
+        <ul class="nav nav-tabs mb-4 border-bottom border-secondary border-opacity-25" id="orgTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active px-4 py-3" id="dept-tab" data-bs-toggle="tab" data-bs-target="#dept-panel" type="button" role="tab">
+                    <i class="bi bi-house-gear-fill me-2"></i> Quản lý Khoa/Ngành
                 </button>
             </li>
-            <li class="nav-item">
-                <button class="nav-link" id="semester-tab" data-bs-toggle="tab" data-bs-target="#semester-panel">
-                    <i class="bi bi-calendar-event me-1"></i> Quản lý Học kỳ
+            <li class="nav-item ms-2" role="presentation">
+                <button class="nav-link px-4 py-3" id="semester-tab" data-bs-toggle="tab" data-bs-target="#semester-panel" type="button" role="tab">
+                    <i class="bi bi-calendar-event me-2"></i> Quản lý Học kỳ
                 </button>
             </li>
         </ul>
 
         <div class="tab-content">
-            <div class="tab-pane fade show active" id="dept-panel">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="fw-bold m-0">Danh sách Khoa/Ngành</h5>
-                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#deptModal">
-                        <i class="bi bi-plus-lg"></i> Thêm Khoa mới
-                    </button>
-                </div>
-                <div class="card border-0 shadow-sm">
-                    <table class="table align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-4">ID</th>
-                                <th>Tên Khoa/Ngành</th>
-                                <th>Ngày tạo</th>
-                                <th class="text-end pe-4">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="ps-4">1</td>
-                                <td class="fw-bold">Công nghệ thông tin</td>
-                                <td>20/03/2026</td>
-                                <td class="text-end pe-4">
-                                    <button class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil"></i></button>
-                                    <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="tab-pane fade show active" id="dept-panel" role="tabpanel">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-white pt-3 pb-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-diagram-3 text-primary me-2"></i>Danh sách Khoa/Ngành</h5>
+                        <button class="btn btn-primary btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#deptModal">
+                            <i class="bi bi-plus-lg me-1"></i> Thêm Khoa mới
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light small text-muted fw-bold">
+                                    <tr>
+                                        <th class="ps-4">ID</th>
+                                        <th>TÊN KHOA/NGÀNH</th>
+                                        <th>NGÀY TẠO</th>
+                                        <th class="text-end pe-4">HÀNH ĐỘNG</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="ps-4 fw-bold">1</td>
+                                        <td class="fw-bold text-dark">Công nghệ thông tin</td>
+                                        <td>20/03/2026</td>
+                                        <td class="text-end pe-4">
+                                            <button class="btn btn-light action-btn text-primary border me-1"><i class="bi bi-pencil"></i></button>
+                                            <button class="btn btn-light action-btn text-danger border"><i class="bi bi-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="ps-4 fw-bold">2</td>
+                                        <td class="fw-bold text-dark">Kinh tế - Luật</td>
+                                        <td>21/03/2026</td>
+                                        <td class="text-end pe-4">
+                                            <button class="btn btn-light action-btn text-primary border me-1"><i class="bi bi-pencil"></i></button>
+                                            <button class="btn btn-light action-btn text-danger border"><i class="bi bi-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="semester-panel">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="fw-bold m-0">Danh sách Học kỳ</h5>
-                    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#semesterModal">
-                        <i class="bi bi-plus-lg"></i> Thêm Học kỳ
-                    </button>
-                </div>
-                <div class="card border-0 shadow-sm">
-                    <table class="table align-middle mb-0">
-                        <thead class="table-light text-success">
-                            <tr>
-                                <th class="ps-4">Học kỳ</th>
-                                <th>Năm học</th>
-                                <th>Bắt đầu</th>
-                                <th>Kết thúc</th>
-                                <th class="text-end pe-4">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="ps-4 fw-bold text-primary">HK2</td>
-                                <td>2025-2026</td>
-                                <td>01/01/2026</td>
-                                <td>30/06/2026</td>
-                                <td class="text-end pe-4">
-                                    <button class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil"></i></button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="tab-pane fade" id="semester-panel" role="tabpanel">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-white pt-3 pb-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-calendar-event text-success me-2"></i>Danh sách Học kỳ</h5>
+                        <button class="btn btn-success btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#semesterModal">
+                            <i class="bi bi-plus-lg me-1"></i> Thêm Học kỳ
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light small text-muted fw-bold">
+                                    <tr>
+                                        <th class="ps-4">HỌC KỲ</th>
+                                        <th>NĂM HỌC</th>
+                                        <th>BẮT ĐẦU</th>
+                                        <th>KẾT THÚC</th>
+                                        <th class="text-end pe-4">HÀNH ĐỘNG</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="ps-4 fw-bold text-success">HK2</td>
+                                        <td class="fw-bold text-dark">2025-2026</td>
+                                        <td>01/01/2026</td>
+                                        <td>30/06/2026</td>
+                                        <td class="text-end pe-4">
+                                            <button class="btn btn-light action-btn text-primary border"><i class="bi bi-pencil"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="ps-4 fw-bold text-muted">HK1</td>
+                                        <td class="fw-bold text-dark">2025-2026</td>
+                                        <td>15/08/2025</td>
+                                        <td>31/12/2025</td>
+                                        <td class="text-end pe-4">
+                                            <button class="btn btn-light action-btn text-primary border"><i class="bi bi-pencil"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+
     </div>
 </div>
 
 <div class="modal fade" id="deptModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold">Thêm Khoa mới</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-building me-2"></i>Thêm Khoa mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <label class="form-label fw-bold">Tên Khoa/Ngành [cite: 94]</label>
-                <input type="text" class="form-control" placeholder="Ví dụ: Công nghệ thông tin">
+            <div class="modal-body p-4">
+                <label class="form-label fw-bold">Tên Khoa/Ngành</label>
+                <input type="text" class="form-control form-control-lg" placeholder="Ví dụ: Công nghệ thông tin">
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary w-100">Lưu thông tin</button>
+            <div class="modal-footer border-0 pb-4 px-4">
+                <button class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                <button class="btn btn-primary px-4">Lưu thông tin</button>
             </div>
         </div>
     </div>
 </div>
 
 <div class="modal fade" id="semesterModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
             <div class="modal-header bg-success text-white">
-                <h5 class="modal-title fw-bold">Cấu hình Học kỳ mới</h5>
+                <h5 class="modal-title fw-bold"><i class="bi bi-calendar-check me-2"></i>Cấu hình Học kỳ mới</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body p-4">
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Tên học kỳ (VD: HK1, HK2...)</label>
-                    <input type="text" class="form-control">
+                    <label class="form-label fw-bold">Tên học kỳ</label>
+                    <input type="text" class="form-control" placeholder="VD: HK1, HK2, HK3...">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Năm học (VD: 2025-2026)</label>
-                    <input type="text" class="form-control">
+                    <label class="form-label fw-bold">Năm học</label>
+                    <input type="text" class="form-control" placeholder="VD: 2025-2026">
                 </div>
                 <div class="row">
                     <div class="col-6 mb-3">
-                        <label class="form-label fw-bold">Ngày bắt đầu</label>
+                        <label class="form-label fw-bold text-success">Ngày bắt đầu</label>
                         <input type="date" class="form-control">
                     </div>
                     <div class="col-6 mb-3">
-                        <label class="form-label fw-bold">Ngày kết thúc</label>
+                        <label class="form-label fw-bold text-danger">Ngày kết thúc</label>
                         <input type="date" class="form-control">
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-success w-100">Kích hoạt học kỳ</button>
+            <div class="modal-footer border-0 pb-4 px-4">
+                <button class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                <button class="btn btn-success px-4">Kích hoạt học kỳ</button>
             </div>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../public/js/script.js"></script>
 </body>
 </html>
