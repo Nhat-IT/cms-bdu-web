@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CMS BDU - Nhật ký hệ thống</title>
+    <title>CMS BDU - Cấu hình Tổ chức</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../../public/css/style.css">
@@ -11,11 +11,9 @@
         .sidebar-admin { background-color: #1e293b; }
         .top-navbar-admin { background-color: #0f172a; }
         .action-btn { padding: 0.2rem 0.5rem; font-size: 0.875rem; border-radius: 4px; }
-        /* Badge custom cho các loại hành động */
-        .badge-action-create { background-color: rgba(25, 135, 84, 0.1); color: #198754; border: 1px solid rgba(25, 135, 84, 0.2); }
-        .badge-action-update { background-color: rgba(13, 110, 253, 0.1); color: #0d6efd; border: 1px solid rgba(13, 110, 253, 0.2); }
-        .badge-action-delete { background-color: rgba(220, 53, 69, 0.1); color: #dc3545; border: 1px solid rgba(220, 53, 69, 0.2); }
-        .badge-action-login { background-color: rgba(13, 202, 240, 0.1); color: #0dcaf0; border: 1px solid rgba(13, 202, 240, 0.2); }
+        .nav-tabs .nav-link.active { font-weight: bold; border-bottom: 3px solid #0d6efd; color: #0d6efd; background-color: transparent;}
+        .nav-tabs .nav-link { color: #6c757d; border: none; font-size: 1.05rem;}
+        .nav-tabs .nav-link:hover { color: #0d6efd; border-color: transparent; }
     </style>
 </head>
 <body class="dashboard-body">
@@ -26,11 +24,11 @@
         <div class="text-center mb-3 text-white-50 small fw-bold">QUẢN TRỊ HỆ THỐNG</div>
         <nav>
             <a href="home.html"><i class="bi bi-speedometer2"></i> Tổng quan hệ thống</a>
-            <a href="org-settings.html"><i class="bi bi-diagram-3"></i> Cấu hình Tổ chức</a>
+            <a href="org-settings.html" class="active"><i class="bi bi-diagram-3"></i> Cấu hình Tổ chức</a>
             <a href="accounts.html"><i class="bi bi-people"></i> Quản lý Tài khoản</a>
             <a href="classes-subjects.html"><i class="bi bi-building"></i> Quản lý Lớp & Môn</a>
             <a href="assignments.html"><i class="bi bi-diagram-3-fill"></i> Phân công Giảng dạy</a>
-            <a href="system-logs.html" class="active"><i class="bi bi-shield-lock"></i> Nhật ký hệ thống</a>
+            <a href="system-logs.html"><i class="bi bi-shield-lock"></i> Nhật ký hệ thống</a>
         </nav>
     </div>
     
@@ -48,7 +46,7 @@
         <div class="d-flex align-items-center">
             <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
             <h4 class="m-0 text-white fw-bold d-flex align-items-center">
-                <i class="bi bi-shield-lock-fill me-2 fs-3 text-warning"></i> NHẬT KÝ HỆ THỐNG
+                <i class="bi bi-gear-fill me-2 fs-3 text-warning"></i> CẤU HÌNH TỔ CHỨC
             </h4>
         </div>
         
@@ -62,119 +60,206 @@
 
     <div class="p-4">
         
-        <div class="card shadow-sm border-0 h-100 mt-1">
-            <div class="card-header bg-white pt-4 pb-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div class="d-flex flex-column">
-                    <h5 class="fw-bold text-dark m-0"><i class="bi bi-activity text-primary me-2"></i>Lịch sử truy cập & Thao tác</h5>
-                    <small class="text-muted mt-1">Lưu trữ các thay đổi dữ liệu để phục vụ công tác tra cứu và bảo mật.</small>
-                </div>
-                
-                <div class="d-flex gap-2 align-items-center flex-wrap">
-                    <input type="date" class="form-control form-control-sm" style="width: 150px;" title="Lọc theo ngày">
-                    <select class="form-select form-select-sm" style="width: 150px;">
-                        <option value="">-- Mọi hành động --</option>
-                        <option value="create">Thêm mới</option>
-                        <option value="update">Cập nhật</option>
-                        <option value="delete">Xóa dữ liệu</option>
-                        <option value="login">Đăng nhập</option>
-                    </select>
-                    <div class="input-group input-group-sm" style="width: 250px;">
-                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
-                        <input type="text" class="form-control border-start-0" placeholder="Tìm theo tên người dùng...">
+        <ul class="nav nav-tabs mb-4 border-bottom border-secondary border-opacity-25" id="orgTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active px-4 py-3" id="dept-tab" data-bs-toggle="tab" data-bs-target="#dept-panel" type="button" role="tab">
+                    <i class="bi bi-house-gear-fill me-2"></i> Quản lý Khoa/Ngành
+                </button>
+            </li>
+            <li class="nav-item ms-2" role="presentation">
+                <button class="nav-link px-4 py-3" id="semester-tab" data-bs-toggle="tab" data-bs-target="#semester-panel" type="button" role="tab">
+                    <i class="bi bi-calendar-event me-2"></i> Quản lý Học kỳ
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="dept-panel" role="tabpanel">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-white pt-3 pb-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-diagram-3 text-primary me-2"></i>Danh sách Khoa/Ngành</h5>
+                        <button class="btn btn-primary btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#deptModal" onclick="openModalMode('#deptModal', 'Thêm Khoa mới', 'bi-building')">
+                            <i class="bi bi-plus-lg me-1"></i> Thêm Khoa mới
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light small text-muted fw-bold">
+                                    <tr>
+                                        <th class="ps-4">ID</th>
+                                        <th>TÊN KHOA/NGÀNH</th>
+                                        <th>NGÀY TẠO</th>
+                                        <th class="text-end pe-4">HÀNH ĐỘNG</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="ps-4 fw-bold">1</td>
+                                        <td class="fw-bold text-dark">Công nghệ thông tin</td>
+                                        <td>20/03/2026</td>
+                                        <td class="text-end pe-4">
+                                            <button class="btn btn-light action-btn text-primary border me-1" data-bs-toggle="modal" data-bs-target="#deptModal" onclick="openModalMode('#deptModal', 'Cập nhật Khoa', 'bi-pencil-square')" title="Sửa">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-light action-btn text-danger border" onclick="confirmDelete('Khoa Công nghệ thông tin')" title="Xóa">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="ps-4 fw-bold">2</td>
+                                        <td class="fw-bold text-dark">Kinh tế - Luật</td>
+                                        <td>21/03/2026</td>
+                                        <td class="text-end pe-4">
+                                            <button class="btn btn-light action-btn text-primary border me-1" data-bs-toggle="modal" data-bs-target="#deptModal" onclick="openModalMode('#deptModal', 'Cập nhật Khoa', 'bi-pencil-square')" title="Sửa">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-light action-btn text-danger border" onclick="confirmDelete('Khoa Kinh tế - Luật')" title="Xóa">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light small text-muted fw-bold">
-                            <tr>
-                                <th class="ps-4">THỜI GIAN</th>
-                                <th>NGƯỜI DÙNG</th>
-                                <th>HÀNH ĐỘNG</th>
-                                <th>ĐỐI TƯỢNG (TABLE)</th>
-                                <th>CHI TIẾT</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="ps-4 text-muted small">22/03/2026<br>09:45:12</td>
-                                <td>
-                                    <div class="fw-bold text-dark">Admin Khoa CNTT</div>
-                                    <div class="small text-muted">admin</div>
-                                </td>
-                                <td><span class="badge badge-action-create"><i class="bi bi-plus-circle me-1"></i>Thêm mới</span></td>
-                                <td class="fw-bold text-secondary">classes</td>
-                                <td class="small">Đã tạo lớp <b>25TH02</b> thành công.</td>
-                            </tr>
-                            
-                            <tr>
-                                <td class="ps-4 text-muted small">21/03/2026<br>15:30:00</td>
-                                <td>
-                                    <div class="fw-bold text-dark">ThS. Nguyễn Hồ Hải</div>
-                                    <div class="small text-muted">teacher</div>
-                                </td>
-                                <td><span class="badge badge-action-update"><i class="bi bi-pencil-square me-1"></i>Cập nhật</span></td>
-                                <td class="fw-bold text-secondary">grades</td>
-                                <td class="small">Nhập điểm môn <b>Cấu trúc dữ liệu</b> cho SV [22050022].</td>
-                            </tr>
 
-                            <tr>
-                                <td class="ps-4 text-muted small">21/03/2026<br>13:15:22</td>
-                                <td>
-                                    <div class="fw-bold text-dark">Phạm Huỳnh Nhật Ý</div>
-                                    <div class="small text-muted">bcs</div>
-                                </td>
-                                <td><span class="badge badge-action-create"><i class="bi bi-person-check me-1"></i>Điểm danh</span></td>
-                                <td class="fw-bold text-secondary">attendance_records</td>
-                                <td class="small">Lưu kết quả điểm danh lớp <b>25TH01</b>. (Vắng: 2)</td>
-                            </tr>
-
-                            <tr>
-                                <td class="ps-4 text-muted small">20/03/2026<br>10:05:40</td>
-                                <td>
-                                    <div class="fw-bold text-dark">Admin Khoa CNTT</div>
-                                    <div class="small text-muted">admin</div>
-                                </td>
-                                <td><span class="badge badge-action-delete"><i class="bi bi-trash me-1"></i>Xóa dữ liệu</span></td>
-                                <td class="fw-bold text-secondary">users</td>
-                                <td class="small">Xóa tài khoản sinh viên ID: <b>1542</b>.</td>
-                            </tr>
-
-                            <tr>
-                                <td class="ps-4 text-muted small">20/03/2026<br>07:30:11</td>
-                                <td>
-                                    <div class="fw-bold text-dark">Nguyễn Văn A</div>
-                                    <div class="small text-muted">student</div>
-                                </td>
-                                <td><span class="badge badge-action-login"><i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập</span></td>
-                                <td class="fw-bold text-secondary">system</td>
-                                <td class="small">Đăng nhập thành công qua Google Auth.</td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="tab-pane fade" id="semester-panel" role="tabpanel">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-white pt-3 pb-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-calendar-event text-success me-2"></i>Danh sách Học kỳ</h5>
+                        <button class="btn btn-success btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#semesterModal" onclick="openModalMode('#semesterModal', 'Cấu hình Học kỳ mới', 'bi-calendar-check')">
+                            <i class="bi bi-plus-lg me-1"></i> Thêm Học kỳ
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light small text-muted fw-bold">
+                                    <tr>
+                                        <th class="ps-4">HỌC KỲ</th>
+                                        <th>NĂM HỌC</th>
+                                        <th>BẮT ĐẦU</th>
+                                        <th>KẾT THÚC</th>
+                                        <th class="text-end pe-4">HÀNH ĐỘNG</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="ps-4 fw-bold text-success">HK2</td>
+                                        <td class="fw-bold text-dark">2025-2026</td>
+                                        <td>01/01/2026</td>
+                                        <td>30/06/2026</td>
+                                        <td class="text-end pe-4">
+                                            <button class="btn btn-light action-btn text-primary border me-1" data-bs-toggle="modal" data-bs-target="#semesterModal" onclick="openModalMode('#semesterModal', 'Cập nhật Học kỳ', 'bi-pencil-square')" title="Sửa">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-light action-btn text-danger border" onclick="confirmDelete('Học kỳ 2 (2025-2026)')" title="Xóa">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="ps-4 fw-bold text-muted">HK1</td>
+                                        <td class="fw-bold text-dark">2025-2026</td>
+                                        <td>15/08/2025</td>
+                                        <td>31/12/2025</td>
+                                        <td class="text-end pe-4">
+                                            <button class="btn btn-light action-btn text-primary border me-1" data-bs-toggle="modal" data-bs-target="#semesterModal" onclick="openModalMode('#semesterModal', 'Cập nhật Học kỳ', 'bi-pencil-square')" title="Sửa">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-light action-btn text-danger border" onclick="confirmDelete('Học kỳ 1 (2025-2026)')" title="Xóa">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
-            
-            <div class="card-footer bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                <small class="text-muted">Đang hiển thị <b>5</b> trên tổng số <b>1,245</b> bản ghi.</small>
-                <nav aria-label="Page navigation">
-                    <ul class="pagination pagination-sm m-0">
-                        <li class="page-item disabled"><a class="page-link" href="#">Trước</a></li>
-                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                        <li class="page-item"><a class="page-link" href="#">2</a></li>
-                        <li class="page-item"><a class="page-link" href="#">3</a></li>
-                        <li class="page-item"><a class="page-link" href="#">Sau</a></li>
-                    </ul>
-                </nav>
+        </div>
+
+    </div>
+</div>
+
+<div class="modal fade" id="deptModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-building me-2"></i>Thêm Khoa mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            
+            <div class="modal-body p-4">
+                <label class="form-label fw-bold">Tên Khoa/Ngành</label>
+                <input type="text" class="form-control form-control-lg" placeholder="Ví dụ: Công nghệ thông tin">
+            </div>
+            <div class="modal-footer border-0 pb-4 px-4">
+                <button class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                <button class="btn btn-primary px-4" onclick="alert('Lưu thông tin thành công!');" data-bs-dismiss="modal">Lưu thông tin</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="semesterModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-calendar-check me-2"></i>Cấu hình Học kỳ mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tên học kỳ</label>
+                    <input type="text" class="form-control" placeholder="VD: HK1, HK2, HK3...">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Năm học</label>
+                    <input type="text" class="form-control" placeholder="VD: 2025-2026">
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="form-label fw-bold text-success">Ngày bắt đầu</label>
+                        <input type="date" class="form-control">
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label fw-bold text-danger">Ngày kết thúc</label>
+                        <input type="date" class="form-control">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pb-4 px-4">
+                <button class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                <button class="btn btn-success px-4" onclick="alert('Đã lưu thông tin học kỳ!');" data-bs-dismiss="modal">Lưu thông tin</button>
+            </div>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../../public/js/script.js"></script>
+
+<script>
+    // Hàm xử lý cảnh báo khi XÓA
+    function confirmDelete(itemName) {
+        if(confirm(`⚠️ CẢNH BÁO: Bạn có chắc chắn muốn xóa [${itemName}] không?\nHành động này không thể hoàn tác!`)) {
+            alert(`✅ Đã xóa ${itemName} thành công!`);
+        }
+    }
+
+    // Hàm xử lý thay đổi tiêu đề Modal khi SỬA hoặc THÊM MỚI
+    function openModalMode(modalId, newTitle, iconClass) {
+        const modal = document.querySelector(modalId);
+        if(modal) {
+            const titleElement = modal.querySelector('.modal-title');
+            titleElement.innerHTML = `<i class="bi ${iconClass} me-2"></i>${newTitle}`;
+        }
+    }
+</script>
 </body>
 </html>
