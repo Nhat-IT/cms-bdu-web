@@ -3,10 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CMS BDU - Kho Tài Liệu</title>
+    <title>CMS BDU - Kho Tài Liệu Lớp</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../../public/css/style.css">
+    <style>
+        .file-link { cursor: pointer; transition: opacity 0.2s; color: inherit; text-decoration: none; }
+        .file-link:hover { opacity: 0.8; }
+        .file-link:hover .file-title { color: #0d6efd; text-decoration: underline; }
+    </style>
 </head>
 <body class="dashboard-body">
 
@@ -17,6 +22,7 @@
         <nav>
             <a href="home.html"><i class="bi bi-grid-1x2-fill"></i> Tổng quan cá nhân</a>
             <a href="my-attendance.html"><i class="bi bi-person-lines-fill"></i> Xem điểm danh</a>
+            <a href="schedule.html"><i class="bi bi-calendar-week"></i> Xem Lịch học</a>
             <a href="documents.html" class="active"><i class="bi bi-folder2-open"></i> Kho Tài liệu lớp</a>
             <a href="my-feedback.html"><i class="bi bi-envelope-paper"></i> Gửi phản hồi</a>
         </nav>
@@ -36,7 +42,7 @@
         <div class="d-flex align-items-center">
             <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
             <h4 class="m-0 text-white fw-bold d-flex align-items-center">
-                <i class="bi bi-folder-fill me-2 fs-3"></i> KHO TÀI LIỆU LỚP
+                <i class="bi bi-folder2-open me-2 fs-3"></i> KHO TÀI LIỆU LỚP
             </h4>
         </div>
         
@@ -47,101 +53,118 @@
             </div>
             <div class="dropdown">
                 <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
-                    <span class="me-2 d-none d-md-inline">Nguyễn Thị C</span>
-                    <i class="bi bi-person-circle fs-3 me-3"></i>
+                    <span class="me-2 d-none d-md-inline fw-bold">Nguyễn Thị C</span>
+                    <i class="bi bi-person-circle fs-3 me-3 text-white"></i>
                 </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow">
+                    <li><a class="dropdown-item" href="#">Hồ sơ cá nhân</a></li>
+                    <li><a class="dropdown-item text-danger" href="../login.html">Đăng xuất</a></li>
+                </ul>
             </div>
         </div>
     </div>
 
     <div class="p-4">
         
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-body">
-                <div class="row g-3 align-items-end"> <div class="col-md-2">
-                        <label class="fw-bold small text-muted mb-1">HỌC KỲ</label>
-                        <select class="form-select border-primary fw-bold text-primary">
-                            <option value="HK1">Học kỳ 1</option>
-                            <option value="HK2" selected>Học kỳ 2</option>
-                            <option value="HK3">Học kỳ 3 (Hè)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="fw-bold small text-muted mb-1">TÌM KIẾM</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                            <input type="text" class="form-control border-start-0" placeholder="Tên tài liệu, môn học...">
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="fw-bold small text-muted mb-1">PHÂN LOẠI</label>
-                        <select class="form-select">
-                            <option selected>Tất cả danh mục</option>
-                            <option>Thông báo Khoa/Trường</option>
-                            <option>Học liệu (Slide/Bài tập)</option>
-                            <option>Biên bản họp lớp</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <button class="btn btn-primary w-100 fw-bold">
-                            <i class="bi bi-filter me-1"></i> Tìm kiếm tài liệu
-                        </button>
-                    </div>
-                </div>
-            </div>
+        <div class="alert alert-info border-0 shadow-sm d-flex align-items-center mb-4">
+            <i class="bi bi-info-circle-fill fs-4 text-info me-3"></i>
+            <div>Đây là kho lưu trữ tài liệu chung của lớp <strong>25TH01</strong> do Giảng viên và Ban Cán Sự đăng tải. Bạn có thể xem trực tiếp hoặc tải về máy tính để ôn tập.</div>
         </div>
 
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-white pt-3 pb-2 border-0">
-                <h5 class="fw-bold text-dark m-0"><i class="bi bi-files me-2 text-primary"></i>Tài liệu lưu trữ</h5>
+            <div class="card-header bg-white pt-3 pb-2 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="fw-bold text-dark m-0"><i class="bi bi-list-ul me-2 text-secondary"></i>Danh sách Tài liệu</h5>
+                
+                <div class="d-flex gap-2 align-items-center">
+                    <select class="form-select form-select-sm w-auto fw-bold text-primary border-primary">
+                        <option value="HK2" selected>Học kỳ 2 (25-26)</option>
+                        <option value="HK1">Học kỳ 1 (25-26)</option>
+                    </select>
+                    <select class="form-select form-select-sm w-auto">
+                        <option selected>Tất cả danh mục</option>
+                        <option>Thông báo</option>
+                        <option>Biên bản</option>
+                        <option>Học liệu</option>
+                    </select>
+                    <div class="input-group input-group-sm" style="width: 250px;">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control border-start-0" placeholder="Tìm tên tài liệu, môn học...">
+                    </div>
+                </div>
             </div>
+            
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle custom-detail-table mb-0">
-                        <thead class="text-muted small fw-bold" style="background-color: #f8f9fa;">
+                        <thead class="text-muted small fw-bold table-light">
                             <tr>
                                 <th class="ps-4 py-3">TÊN TÀI LIỆU</th>
-                                <th class="py-3">PHÂN LOẠI</th>
-                                <th class="py-3">NGÀY ĐĂNG</th>
-                                <th class="py-3">DUNG LƯỢNG</th>
-                                <th class="pe-4 py-3 text-center">HÀNH ĐỘNG</th>
+                                <th class="py-3">DANH MỤC</th>
+                                <th class="py-3">NGƯỜI ĐĂNG</th>
+                                <th class="py-3 text-center">NGÀY ĐĂNG</th>
+                                <th class="py-3 text-center">KÍCH THƯỚC</th>
+                                <th class="pe-4 py-3 text-end">HÀNH ĐỘNG</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td class="ps-4 py-3">
-                                    <div class="d-flex align-items-center">
+                                    <a href="#" class="file-link d-flex align-items-center" onclick="handleFileDownload(event, 'ThongBao_NghiTet.pdf', false)">
                                         <i class="bi bi-file-earmark-pdf-fill fs-3 text-danger me-3"></i>
                                         <div>
-                                            <h6 class="mb-0 fw-bold text-dark">Lịch nghỉ Tết Nguyên Đán 2026</h6>
-                                            <small class="text-muted">Nguồn: Phòng Đào tạo</small>
+                                            <h6 class="mb-0 fw-bold text-dark file-title">Thông báo Lịch nghỉ Tết Nguyên Đán 2026.pdf</h6>
+                                            <small class="text-muted">Đính kèm từ Phòng Đào Tạo</small>
                                         </div>
-                                    </div>
+                                    </a>
                                 </td>
-                                <td><span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1 small">Thông báo</span></td>
-                                <td class="small">15/01/2026</td>
-                                <td class="small text-muted">1.2 MB</td>
-                                <td class="pe-4 text-center">
-                                    <button class="btn btn-sm btn-outline-primary px-3 rounded-pill">
+                                <td><span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">Thông báo</span></td>
+                                <td><span class="badge bg-light text-dark border"><i class="bi bi-person-badge me-1"></i>Lớp Trưởng</span></td>
+                                <td class="text-center text-dark">15/01/2026</td>
+                                <td class="text-center text-muted small">1.2 MB</td>
+                                <td class="pe-4 text-end">
+                                    <button class="btn btn-sm btn-outline-primary fw-bold px-3 rounded-pill shadow-sm" onclick="handleFileDownload(event, 'ThongBao_NghiTet.pdf', true)">
                                         <i class="bi bi-download me-1"></i> Tải về
                                     </button>
                                 </td>
                             </tr>
+                            
                             <tr>
                                 <td class="ps-4 py-3">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-file-earmark-zip-fill fs-3 text-warning me-3"></i>
+                                    <a href="#" class="file-link d-flex align-items-center" onclick="handleFileDownload(event, 'DeCuong_AnNinhCSDL.docx', false)">
+                                        <i class="bi bi-file-earmark-word-fill fs-3 text-primary me-3"></i>
                                         <div>
-                                            <h6 class="mb-0 fw-bold text-dark">Slide + Bài tập An ninh CSDL (Chương 1-3)</h6>
+                                            <h6 class="mb-0 fw-bold text-dark file-title">Đề cương môn An ninh CSDL.docx</h6>
                                             <small class="text-muted">Môn học: An ninh CSDL</small>
                                         </div>
-                                    </div>
+                                    </a>
                                 </td>
-                                <td><span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1 small">Học liệu</span></td>
-                                <td class="small">02/02/2026</td>
-                                <td class="small text-muted">15.4 MB</td>
-                                <td class="pe-4 text-center">
-                                    <button class="btn btn-sm btn-outline-primary px-3 rounded-pill">
+                                <td><span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1">Học liệu</span></td>
+                                <td><span class="badge bg-primary text-white"><i class="bi bi-person-video3 me-1"></i>Giảng Viên</span></td>
+                                <td class="text-center text-dark">12/01/2026</td>
+                                <td class="text-center text-muted small">245 KB</td>
+                                <td class="pe-4 text-end">
+                                    <button class="btn btn-sm btn-outline-primary fw-bold px-3 rounded-pill shadow-sm" onclick="handleFileDownload(event, 'DeCuong_AnNinhCSDL.docx', true)">
+                                        <i class="bi bi-download me-1"></i> Tải về
+                                    </button>
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <td class="ps-4 py-3">
+                                    <a href="#" class="file-link d-flex align-items-center" onclick="handleFileDownload(event, 'Slide_Tuan1.zip', false)">
+                                        <i class="bi bi-file-earmark-zip-fill fs-3 text-warning me-3"></i>
+                                        <div>
+                                            <h6 class="mb-0 fw-bold text-dark file-title">Slide Bài giảng An Ninh CSDL (Tuần 1-5).zip</h6>
+                                            <small class="text-muted">Các bạn tải về giải nén để xem nhé</small>
+                                        </div>
+                                    </a>
+                                </td>
+                                <td><span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1">Học liệu</span></td>
+                                <td><span class="badge bg-light text-dark border"><i class="bi bi-person-badge me-1"></i>Lớp Phó HT</span></td>
+                                <td class="text-center text-dark">02/02/2026</td>
+                                <td class="text-center text-muted small">15.4 MB</td>
+                                <td class="pe-4 text-end">
+                                    <button class="btn btn-sm btn-outline-primary fw-bold px-3 rounded-pill shadow-sm" onclick="handleFileDownload(event, 'Slide_Tuan1.zip', true)">
                                         <i class="bi bi-download me-1"></i> Tải về
                                     </button>
                                 </td>
@@ -150,13 +173,14 @@
                     </table>
                 </div>
             </div>
+            
             <div class="card-footer bg-white border-0 text-center py-3">
                 <nav>
                     <ul class="pagination pagination-sm justify-content-center mb-0">
-                        <li class="page-item disabled"><a class="page-link" href="#">Trước</a></li>
-                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                        <li class="page-item"><a class="page-link" href="#">2</a></li>
-                        <li class="page-item"><a class="page-link" href="#">Tiếp</a></li>
+                        <li class=\"page-item disabled\"><a class=\"page-link\" href=\"#\">Trước</a></li>
+                        <li class=\"page-item active\"><a class=\"page-link\" href=\"#\">1</a></li>
+                        <li class=\"page-item\"><a class=\"page-link\" href=\"#\">2</a></li>
+                        <li class=\"page-item\"><a class=\"page-link\" href=\"#\">Tiếp</a></li>
                     </ul>
                 </nav>
             </div>
@@ -166,6 +190,24 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../public/js/script.js"></script>
+<script>
+    // Logic mở menu mobile
+    document.getElementById('sidebarToggle').addEventListener('click', function() {
+        document.getElementById('sidebar').classList.toggle('active');
+    });
+
+    // Logic tải file/xem trước
+    function handleFileDownload(event, fileName, isDirectDownload) {
+        event.preventDefault(); 
+        const ext = fileName.split('.').pop().toLowerCase();
+        const downloadExts = ['zip', 'rar', 'exe', 'tar'];
+        
+        if (isDirectDownload || downloadExts.includes(ext)) {
+            alert(`⬇️ Đang tải tệp [${fileName}] xuống máy tính của bạn...`); 
+        } else {
+            alert(`👀 Đang mở bản xem trước của tệp [${fileName}] trên Google Drive Viewer...`);
+        }
+    }
+</script>
 </body>
 </html>

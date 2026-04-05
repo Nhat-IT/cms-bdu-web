@@ -17,6 +17,7 @@
         <nav>
             <a href="home.html"><i class="bi bi-grid-1x2-fill"></i> Tổng quan cá nhân</a>
             <a href="my-attendance.html" class="active"><i class="bi bi-person-lines-fill"></i> Xem điểm danh</a>
+            <a href="schedule.html"><i class="bi bi-calendar-week"></i> Xem Lịch học</a>
             <a href="documents.html"><i class="bi bi-folder2-open"></i> Kho Tài liệu lớp</a>
             <a href="my-feedback.html"><i class="bi bi-envelope-paper"></i> Gửi phản hồi</a>
         </nav>
@@ -36,7 +37,7 @@
         <div class="d-flex align-items-center">
             <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
             <h4 class="m-0 text-white fw-bold d-flex align-items-center">
-                <i class="bi bi-calendar-check me-2 fs-3"></i> LỊCH SỬ ĐIỂM DANH
+                <i class="bi bi-person-bounding-box me-2 fs-3"></i> LỊCH SỬ ĐIỂM DANH
             </h4>
         </div>
         
@@ -47,9 +48,13 @@
             </div>
             <div class="dropdown">
                 <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
-                    <span class="me-2 d-none d-md-inline">Nguyễn Thị C</span>
-                    <i class="bi bi-person-circle fs-3 me-3"></i>
+                    <span class="me-2 d-none d-md-inline fw-bold">Nguyễn Thị C</span>
+                    <i class="bi bi-person-circle fs-3 me-3 text-white"></i>
                 </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow">
+                    <li><a class="dropdown-item" href="#">Hồ sơ cá nhân</a></li>
+                    <li><a class="dropdown-item text-danger" href="../login.html">Đăng xuất</a></li>
+                </ul>
             </div>
         </div>
     </div>
@@ -70,26 +75,29 @@
                     <div class="col-md-2">
                         <label class="fw-bold small text-muted mb-1">HỌC KỲ</label>
                         <select class="form-select bg-light">
-                            <option selected>HK2 (2025-2026)</option>
+                            <option selected>HK2 (25-26)</option>
                         </select>
                     </div>
                     <div class="col-md-6 text-md-end mt-md-4">
-                        <span class="badge bg-light text-dark border px-3 py-2 me-2">Tổng số buổi: 15</span>
+                        <span class="badge bg-light text-dark border px-3 py-2 me-2">Tổng buổi: 15</span>
                         <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 me-2">Có mặt: 12</span>
                         <span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-3 py-2">Đã vắng: 3</span>
                     </div>
                 </div>
 
-                <div id="studentSubjectInfo" class="p-3 bg-light rounded border-start border-3 border-primary shadow-sm mt-3">
-                    <div class="row text-dark small">
-                        <div class="col-md-4 mb-2 mb-md-0">
-                            <i class="bi bi-person-badge text-primary me-2"></i>Giảng viên: <strong id="lblStudentTeacher">...</strong>
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <div id="studentSubjectInfo" class="p-2 bg-light rounded border-start border-3 border-primary shadow-sm h-100 d-flex align-items-center">
+                            <div class="row w-100 text-dark small m-0">
+                                <div class="col-md-5 p-0"><i class="bi bi-person-badge text-primary me-2"></i>Giảng viên: <strong>ThS. Dương Quang Sinh</strong></div>
+                                <div class="col-md-7 p-0"><i class="bi bi-calendar2-range text-primary me-2"></i>Thời gian: <strong>12/01/2026 - 05/05/2026</strong></div>
+                            </div>
                         </div>
-                        <div class="col-md-4 mb-2 mb-md-0">
-                            <i class="bi bi-calendar-event text-primary me-2"></i>Bắt đầu: <strong id="lblStudentStart">...</strong>
-                        </div>
-                        <div class="col-md-4">
-                            <i class="bi bi-calendar-check text-primary me-2"></i>Kết thúc: <strong id="lblStudentEnd">...</strong>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="alert alert-danger mb-0 py-2 d-flex align-items-center h-100 shadow-sm border-danger border-opacity-50">
+                            <i class="bi bi-exclamation-triangle-fill fs-4 me-2"></i>
+                            <div class="small"><strong>Cảnh báo:</strong> Bạn đã vắng 3 buổi. Vượt quá 20% sẽ bị cấm thi!</div>
                         </div>
                     </div>
                 </div>
@@ -109,9 +117,9 @@
                                 <th class="ps-4 py-3 text-center">STT</th>
                                 <th class="py-3">NGÀY HỌC</th>
                                 <th class="py-3">BUỔI</th>
-                                <th class="py-3">TRẠNG THÁI</th>
-                                <th class="py-3">GHI CHÚ / MINH CHỨNG</th>
-                                <th class="pe-4 py-3 text-center">HÀNH ĐỘNG</th>
+                                <th class="py-3">TRẠNG THÁI (HỆ THỐNG)</th>
+                                <th class="py-3">FILE MINH CHỨNG</th>
+                                <th class="pe-4 py-3 text-center">XÉT DUYỆT (BCS/GV)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -124,7 +132,7 @@
                                 <td class="pe-4 text-center text-muted">--</td>
                             </tr>
                             
-                            <tr>
+                            <tr class="bg-warning bg-opacity-10">
                                 <td class="ps-4 py-3 text-center">2</td>
                                 <td class="fw-bold text-dark">19/01/2026</td>
                                 <td class="text-dark">Sáng</td>
@@ -133,7 +141,7 @@
                                     <a href="#" class="btn btn-sm btn-light text-primary border"><i class="bi bi-image me-1"></i>giay_kham_benh.jpg</a>
                                 </td>
                                 <td class="pe-4 text-center">
-                                    <span class="text-success small fw-bold"><i class="bi bi-check-all"></i> BCS đã duyệt</span>
+                                    <span class="badge bg-success bg-opacity-25 text-success border border-success px-2 py-1"><i class="bi bi-check-all me-1"></i>Đã duyệt hợp lệ</span>
                                 </td>
                             </tr>
 
@@ -142,13 +150,43 @@
                                 <td class="fw-bold text-danger">02/02/2026</td>
                                 <td class="text-dark">Sáng</td>
                                 <td><span class="badge bg-danger px-3 py-1 rounded-pill"><i class="bi bi-x-circle me-1"></i>Vắng không phép</span></td>
-                                <td class="text-danger small">Chưa có minh chứng!</td>
+                                <td>
+                                    <a href="#" class="btn btn-sm btn-light text-primary border"><i class="bi bi-file-pdf me-1"></i>don_xin_phep.pdf</a>
+                                </td>
                                 <td class="pe-4 text-center">
-                                    <button class="btn btn-sm btn-danger fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#uploadProofModal" onclick="prepareProofUpload('02/02/2026', 'Sáng')">
-                                        <i class="bi bi-cloud-upload me-1"></i> Nộp minh chứng
+                                    <span class="badge bg-warning bg-opacity-25 text-dark border border-warning px-2 py-1" title="Vui lòng chờ BCS hoặc Giảng viên kiểm duyệt file bạn vừa nộp"><i class="bi bi-hourglass-split me-1"></i>Đang chờ duyệt</span>
+                                </td>
+                            </tr>
+
+                            <tr class="bg-danger bg-opacity-10">
+                                <td class="ps-4 py-3 text-center text-danger fw-bold">4</td>
+                                <td class="fw-bold text-danger">16/02/2026</td>
+                                <td class="text-dark">Sáng</td>
+                                <td><span class="badge bg-danger px-3 py-1 rounded-pill"><i class="bi bi-x-circle me-1"></i>Vắng không phép</span></td>
+                                <td class="text-danger small fw-bold"><i class="bi bi-exclamation-triangle me-1"></i>Chưa có minh chứng!</td>
+                                <td class="pe-4 text-center">
+                                    <button class="btn btn-sm btn-danger fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#uploadProofModal" onclick="prepareProofUpload('16/02/2026', 'Sáng')">
+                                        <i class="bi bi-cloud-upload me-1"></i> Nộp bổ sung
                                     </button>
                                 </td>
                             </tr>
+
+                            <tr class="bg-danger bg-opacity-10">
+                                <td class="ps-4 py-3 text-center text-danger fw-bold">5</td>
+                                <td class="fw-bold text-danger">02/03/2026</td>
+                                <td class="text-dark">Sáng</td>
+                                <td><span class="badge bg-danger px-3 py-1 rounded-pill"><i class="bi bi-x-circle me-1"></i>Vắng không phép</span></td>
+                                <td>
+                                    <span class="text-decoration-line-through text-muted small me-2">anh_kham_benh.jpg</span>
+                                </td>
+                                <td class="pe-4 text-center">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <span class="badge bg-danger bg-opacity-25 text-danger border border-danger px-2 py-1 mb-1" title="Ảnh mờ không đọc được chữ, vui lòng chụp lại"><i class="bi bi-x-octagon-fill me-1"></i>Bị từ chối (Ảnh mờ)</span>
+                                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#uploadProofModal"><i class="bi bi-arrow-repeat me-1"></i>Nộp lại</button>
+                                    </div>
+                                </td>
+                            </tr>
+
                         </tbody>
                     </table>
                 </div>
@@ -159,50 +197,63 @@
 </div>
 
 <div class="modal fade" id="uploadProofModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
       <div class="modal-header bg-danger text-white">
         <h5 class="modal-title fw-bold"><i class="bi bi-file-earmark-medical-fill me-2"></i>Nộp Minh Chứng Vắng Học</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body p-4">
         
-        <div class="alert alert-warning small mb-3">
-            <strong>Thông tin buổi vắng:</strong> Môn <span class="fw-bold">An ninh cơ sở dữ liệu</span> - <span id="proofDateInfo" class="fw-bold text-danger">...</span>
+        <div class="alert alert-warning small mb-3 border-warning border-opacity-50">
+            <strong>Thông tin buổi vắng:</strong> Môn <span class="fw-bold">An ninh cơ sở dữ liệu</span> - Ngày <span id="proofDateInfo" class="fw-bold text-danger">16/02/2026 (Sáng)</span>
         </div>
 
         <form id="proofForm">
           <div class="mb-3">
             <label class="form-label fw-bold">Loại minh chứng <span class="text-danger">*</span></label>
-            <select class="form-select" id="proofType" required>
+            <select class="form-select border-danger" id="proofType" required>
                 <option value="kham_benh" selected>Giấy khám bệnh / Viện phí</option>
-                <option value="don_xin_phep">Đơn xin phép có chữ ký GV/Phụ huynh</option>
-                <option value="khac">Lý do khác (Tai nạn, hỏng xe...)</option>
+                <option value="don_xin_phep">Đơn xin phép có chữ ký Phụ huynh</option>
+                <option value="khac">Lý do khác (Có ảnh chứng minh)</option>
             </select>
           </div>
 
           <div class="mb-3">
             <label class="form-label fw-bold">Tải tệp đính kèm <span class="text-danger">*</span></label>
-            <input class="form-control" type="file" id="proofFile" accept=".jpg, .jpeg, .png, .pdf" required>
-            <div class="form-text small">Hỗ trợ ảnh JPG, PNG hoặc file PDF (Tối đa 5MB).</div>
+            <input class="form-control border-danger" type="file" id="proofFile" accept=".jpg, .jpeg, .png, .pdf" required>
+            <div class="form-text small text-muted"><i class="bi bi-info-circle me-1"></i>Hỗ trợ ảnh JPG, PNG hoặc file PDF (Tối đa 5MB). File phải rõ nét.</div>
           </div>
 
           <div class="mb-2">
-            <label class="form-label fw-bold">Lời nhắn cho Ban cán sự (Tùy chọn)</label>
-            <textarea class="form-control" rows="2" placeholder="Ví dụ: Hôm đó mình bị sốt xuất huyết, mong BCS xem xét duyệt giúp mình..."></textarea>
+            <label class="form-label fw-bold">Ghi chú (Tùy chọn)</label>
+            <textarea class="form-control" rows="2" placeholder="Ví dụ: Mình đính kèm ảnh siêu âm có dấu mộc đỏ..."></textarea>
           </div>
         </form>
 
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer bg-light border-0">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-        <button type="button" class="btn btn-danger fw-bold" id="btnSubmitProof"><i class="bi bi-send-fill me-2"></i>Gửi Minh Chứng</button>
+        <button type="button" class="btn btn-danger fw-bold px-4" id="btnSubmitProof" onclick="submitProof()"><i class="bi bi-send-fill me-2"></i>Gửi Minh Chứng</button>
       </div>
     </div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../public/js/script.js"></script>
+<script>
+    document.getElementById('sidebarToggle').addEventListener('click', function() {
+        document.getElementById('sidebar').classList.toggle('active');
+    });
+
+    function prepareProofUpload(date, session) {
+        document.getElementById('proofDateInfo').innerText = `${date} (${session})`;
+    }
+
+    function submitProof() {
+        alert("✅ Đã tải file minh chứng lên thành công!\nVui lòng đợi Ban Cán Sự hoặc Giảng viên xét duyệt.");
+        bootstrap.Modal.getInstance(document.getElementById('uploadProofModal')).hide();
+    }
+</script>
 </body>
 </html>

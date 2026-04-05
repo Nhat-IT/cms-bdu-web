@@ -17,6 +17,7 @@
         <nav>
             <a href="home.html" class="active"><i class="bi bi-grid-1x2-fill"></i> Tổng quan cá nhân</a>
             <a href="my-attendance.html"><i class="bi bi-person-lines-fill"></i> Xem điểm danh</a>
+            <a href="schedule.html"><i class="bi bi-calendar-week"></i> Xem Lịch học</a>
             <a href="documents.html"><i class="bi bi-folder2-open"></i> Kho Tài liệu lớp</a>
             <a href="my-feedback.html"><i class="bi bi-envelope-paper"></i> Gửi phản hồi</a>
         </nav>
@@ -47,8 +48,8 @@
             </div>
             <div class="dropdown">
                 <a href="#" class="d-flex align-items-center text-white text-decoration-none" id="dropdownUser" data-bs-toggle="dropdown">
-                    <span class="me-2 d-none d-md-inline">Nguyễn Thị C</span>
-                    <i class="bi bi-person-circle fs-3 me-3"></i>
+                    <span class="me-2 d-none d-md-inline fw-bold">Nguyễn Thị C</span>
+                    <i class="bi bi-person-circle fs-3 me-3 text-white"></i>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end shadow">
                     <li><a class="dropdown-item" href="#">Hồ sơ cá nhân</a></li>
@@ -62,7 +63,7 @@
         
         <div class="row g-4 mb-4">
             <div class="col-md-3">
-                <div class="card stat-card-custom h-100 p-3">
+                <div class="card stat-card-custom h-100 p-3 shadow-sm border-0 border-start border-4 border-primary">
                     <div class="d-flex align-items-center">
                         <div class="icon-box-custom bg-light-primary me-3 text-primary"><i class="bi bi-journal-bookmark-fill"></i></div>
                         <div>
@@ -73,7 +74,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card stat-card-custom border-left-danger h-100 p-3">
+                <div class="card stat-card-custom h-100 p-3 shadow-sm border-0 border-start border-4 border-danger">
                     <div class="d-flex align-items-center">
                         <div class="icon-box-custom bg-light-danger me-3 text-danger"><i class="bi bi-exclamation-triangle-fill"></i></div>
                         <div>
@@ -84,7 +85,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card stat-card-custom h-100 p-3">
+                <div class="card stat-card-custom h-100 p-3 shadow-sm border-0 border-start border-4 border-warning">
                     <div class="d-flex align-items-center">
                         <div class="icon-box-custom bg-light-warning me-3 text-warning"><i class="bi bi-calendar-x-fill"></i></div>
                         <div>
@@ -95,7 +96,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card stat-card-custom h-100 p-3">
+                <div class="card stat-card-custom h-100 p-3 shadow-sm border-0 border-start border-4 border-success">
                     <div class="d-flex align-items-center">
                         <div class="icon-box-custom bg-light-success me-3 text-success"><i class="bi bi-envelope-check-fill"></i></div>
                         <div>
@@ -110,8 +111,9 @@
         <div class="row g-4">
             <div class="col-lg-5">
                 <div class="card shadow-sm border-0 h-100">
-                    <div class="card-header bg-white pt-3 pb-2 border-0">
+                    <div class="card-header bg-white pt-3 pb-2 border-0 d-flex justify-content-between align-items-center">
                         <h5 class="fw-bold text-dark m-0"><i class="bi bi-calendar-day text-primary me-2"></i>Lịch học hôm nay</h5>
+                        <a href="schedule.html" class="btn btn-sm btn-outline-secondary">Xem toàn bộ lịch</a>
                     </div>
                     <div class="card-body">
                         <div class="p-3 mb-3 bg-light rounded border-start border-4 border-primary shadow-sm">
@@ -151,7 +153,7 @@
                             <div class="progress" style="height: 10px;">
                                 <div class="progress-bar bg-danger progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%;"></div>
                             </div>
-                            <small class="text-danger fw-bold mt-1 d-block"><i class="bi bi-exclamation-circle me-1"></i>Bạn đang ở mức CẤM THI. Vui lòng nộp minh chứng (nếu có)!</small>
+                            <small class="text-danger fw-bold mt-1 d-block"><i class="bi bi-exclamation-circle me-1"></i>Bạn đang ở mức CẤM THI. <a href="my-attendance.html" class="text-danger text-decoration-underline">Vui lòng nộp minh chứng!</a></small>
                         </div>
 
                         <div class="mb-4">
@@ -190,5 +192,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../../public/js/script.js"></script>
+<script>
+    // ĐÃ THÊM: Logic mở menu mobile
+    document.getElementById('sidebarToggle').addEventListener('click', function() {
+        document.getElementById('sidebar').classList.toggle('active');
+    });
+</script>
 </body>
 </html>

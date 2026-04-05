@@ -17,6 +17,7 @@
         <nav>
             <a href="home.html"><i class="bi bi-grid-1x2-fill"></i> Tổng quan cá nhân</a>
             <a href="my-attendance.html"><i class="bi bi-person-lines-fill"></i> Xem điểm danh</a>
+            <a href="schedule.html"><i class="bi bi-calendar-week"></i> Xem Lịch học</a>
             <a href="documents.html"><i class="bi bi-folder2-open"></i> Kho Tài liệu lớp</a>
             <a href="my-feedback.html" class="active"><i class="bi bi-envelope-paper"></i> Gửi phản hồi</a>
         </nav>
@@ -38,19 +39,29 @@
                 <i class="bi bi-chat-dots-fill me-2 fs-3"></i> CỔNG TƯƠNG TÁC SV
             </h4>
         </div>
-        <div class="user-profile d-flex align-items-center text-white">
+        
+        <div class="d-flex align-items-center text-white">
             <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
-                <div class="fs-6">Hỗ trợ trực tuyến</div>
-                <div class="fw-bold text-warning" style="font-size: 0.8rem;">Trạng thái: Đang hoạt động</div>
+                <div class="fs-6">MSSV: <span class="fw-bold">22050111</span></div>
+                <div class="fw-bold text-warning" style="font-size: 0.9rem;">LỚP: 25TH01</div>
             </div>
-            <i class="bi bi-person-circle fs-2"></i>
+            <div class="dropdown">
+                <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
+                    <span class="me-2 d-none d-md-inline fw-bold">Nguyễn Thị C</span>
+                    <i class="bi bi-person-circle fs-3 me-3 text-white"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow">
+                    <li><a class="dropdown-item" href="#">Hồ sơ cá nhân</a></li>
+                    <li><a class="dropdown-item text-danger" href="../login.html">Đăng xuất</a></li>
+                </ul>
+            </div>
         </div>
     </div>
 
     <div class="p-4">
         <div class="row g-4">
             <div class="col-lg-5">
-                <div class="card shadow-sm border-0">
+                <div class="card shadow-sm border-0 h-100">
                     <div class="card-header bg-white pt-4 border-0">
                         <h5 class="fw-bold text-dark"><i class="bi bi-pencil-square text-primary me-2"></i>Gửi phản hồi mới</h5>
                         <p class="text-muted small">Mọi thắc mắc của bạn sẽ được Ban cán sự giải đáp trong 24h.</p>
@@ -84,32 +95,61 @@
             </div>
 
             <div class="col-lg-7">
-                <div class="card shadow-sm border-0">
+                <div class="card shadow-sm border-0 h-100">
                     <div class="card-header bg-white pt-4 border-0 d-flex justify-content-between align-items-center">
                         <h5 class="fw-bold text-dark m-0"><i class="bi bi-clock-history text-secondary me-2"></i>Yêu cầu đã gửi</h5>
-                        <span class="badge bg-light text-dark border">Tổng số: 2</span>
+                        <span class="badge bg-light text-dark border">Tổng số: 3</span>
                     </div>
-                    <div class="card-body">
-                        <div class="p-3 mb-3 border rounded bg-white shadow-xs">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">Đã giải quyết</span>
+                    <div class="card-body" id="feedbackList">
+                        
+                        <div class="p-3 mb-3 border rounded bg-white shadow-sm">
+                            <div class="d-flex justify-content-between mb-2 align-items-center">
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1"><i class="bi bi-check-circle me-1"></i>Đã giải quyết</span>
                                 <small class="text-muted">10/03/2026</small>
                             </div>
                             <h6 class="fw-bold text-dark">Xin nộp bổ sung giấy khám bệnh</h6>
-                            <p class="small text-muted mb-2 text-truncate">Mình gửi kèm file ảnh giấy khám bệnh của tuần trước...</p>
-                            <div class="p-2 bg-light rounded border-start border-3 border-success small">
-                                <strong>BCS trả lời:</strong> Đã check và cập nhật lại điểm danh.
+                            <p class="small text-muted mb-2 text-truncate">Mình gửi kèm file ảnh giấy khám bệnh của tuần trước, do mình đi viện gấp nên chưa kịp xin phép...</p>
+                            <div class="p-2 bg-light rounded border-start border-3 border-success small mb-3">
+                                <strong>BCS trả lời:</strong> Đã check giấy và cập nhật lại điểm danh cho bạn thành "Có phép" rồi nhé.
+                            </div>
+                            <div class="text-end border-top pt-2 mt-2">
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewDetails('Xin nộp bổ sung giấy khám bệnh', 'Đã giải quyết', 'Mình gửi kèm file ảnh giấy khám bệnh của tuần trước, do mình đi viện gấp nên chưa kịp xin phép...', 'Đã check giấy và cập nhật lại điểm danh cho bạn thành Có phép rồi nhé.')">
+                                    <i class="bi bi-eye me-1"></i>Xem chi tiết
+                                </button>
                             </div>
                         </div>
 
-                        <div class="p-3 border rounded bg-white">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 py-1">Đang chờ xử lý</span>
-                                <small class="text-muted">Hôm nay</small>
+                        <div class="p-3 mb-3 border rounded bg-white shadow-sm" id="fb-item-2">
+                            <div class="d-flex justify-content-between mb-2 align-items-center">
+                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 py-1 text-dark"><i class="bi bi-hourglass-split me-1"></i>Đang chờ xử lý</span>
+                                <small class="text-muted">Hôm nay, 08:30</small>
                             </div>
-                            <h6 class="fw-bold text-dark">Thắc mắc số buổi vắng môn An ninh CSDL</h6>
-                            <p class="small text-muted mb-0">Chào Ban cán sự, mình thấy trên hệ thống báo mình vắng 2 buổi nhưng thực tế...</p>
+                            <h6 class="fw-bold text-dark" id="fb-title-2">Thắc mắc số buổi vắng môn An ninh CSDL</h6>
+                            <p class="small text-muted mb-3 text-truncate" id="fb-content-2">Chào Ban cán sự, mình thấy trên hệ thống báo mình vắng 2 buổi nhưng thực tế...</p>
+                            <div class="text-end border-top pt-2 mt-2">
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="viewDetails('Thắc mắc số buổi vắng môn An ninh CSDL', 'Chờ xử lý', 'Chào Ban cán sự, mình thấy trên hệ thống báo mình vắng 2 buổi nhưng thực tế mình chỉ vắng 1 buổi vào tuần trước. Nhờ kiểm tra lại.')"><i class="bi bi-eye"></i> Xem</button>
+                                <button class="btn btn-sm btn-outline-success me-1" onclick="openEditModal(2, 'Thắc mắc điểm danh', 'Chào Ban cán sự, mình thấy trên hệ thống báo mình vắng 2 buổi nhưng thực tế mình chỉ vắng 1 buổi vào tuần trước. Nhờ kiểm tra lại.')"><i class="bi bi-pencil"></i> Sửa</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteFeedback(2)"><i class="bi bi-trash"></i> Xóa</button>
+                            </div>
                         </div>
+
+                        <div class="p-3 border rounded bg-white shadow-sm" id="fb-item-3">
+                            <div class="d-flex justify-content-between mb-2 align-items-center">
+                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 py-1 text-dark"><i class="bi bi-hourglass-split me-1"></i>Đang chờ xử lý</span>
+                                <div class="text-end">
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border me-2" title="Yêu cầu này đã được chỉnh sửa"><i class="bi bi-pencil-square me-1"></i>Đã sửa</span>
+                                    <small class="text-muted">Hôm qua</small>
+                                </div>
+                            </div>
+                            <h6 class="fw-bold text-dark">Góp ý về tài liệu tham khảo</h6>
+                            <p class="small text-muted mb-3 text-truncate">Link file bài giảng tuần 2 môn Web bị lỗi Permission Denied không tải được...</p>
+                            <div class="text-end border-top pt-2 mt-2">
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="viewDetails('Góp ý về tài liệu tham khảo', 'Chờ xử lý', 'Link file bài giảng tuần 2 môn Web bị lỗi Permission Denied không tải được, nhờ BCS mở lại quyền truy cập nhé.')"><i class="bi bi-eye"></i> Xem</button>
+                                <button class="btn btn-sm btn-outline-secondary me-1" disabled title="Bạn chỉ được phép sửa 1 lần duy nhất."><i class="bi bi-pencil"></i> Sửa</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteFeedback(3)"><i class="bi bi-trash"></i> Xóa</button>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -117,17 +157,180 @@
     </div>
 </div>
 
+<div class="modal fade" id="viewDetailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-card-text me-2"></i>Chi Tiết Phản Hồi</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="mb-3 d-flex justify-content-between align-items-center">
+            <span class="badge bg-light text-dark border px-2 py-1" id="viewStatus">Trạng thái</span>
+            <small class="text-muted"><i class="bi bi-clock me-1"></i>Thời gian gửi: Gần đây</small>
+        </div>
+        <h6 class="fw-bold text-dark mb-3" id="viewTitle">Chủ đề phản hồi</h6>
+        <div class="p-3 bg-light rounded border mb-3 text-dark" style="font-size: 0.95rem; line-height: 1.6;" id="viewContent">
+            Nội dung chi tiết...
+        </div>
+        <div id="viewBcsReplyWrapper" class="d-none">
+            <label class="fw-bold text-success small mb-2"><i class="bi bi-reply-fill me-1"></i>Phản hồi từ Ban Cán Sự:</label>
+            <div class="p-3 bg-success bg-opacity-10 border border-success border-opacity-50 rounded text-dark small" id="viewBcsReply">
+            </div>
+        </div>
+      </div>
+      <div class="modal-footer bg-light border-0">
+        <button type="button" class="btn btn-secondary fw-bold px-4" data-bs-dismiss="modal">Đóng</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="editFeedbackModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Chỉnh Sửa Phản Hồi</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        
+        <div class="alert alert-warning small border-warning border-opacity-50 py-2 d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill fs-4 text-warning me-3"></i>
+            <div>
+                <strong>Lưu ý quan trọng:</strong> Hệ thống chỉ cho phép chỉnh sửa nội dung phản hồi <strong>1 lần duy nhất</strong> trước khi BCS duyệt.
+            </div>
+        </div>
+
+        <form id="editForm">
+            <input type="hidden" id="editFeedbackId">
+            <div class="mb-3">
+                <label class="form-label fw-bold">Chủ đề <span class="text-danger">*</span></label>
+                <select class="form-select border-success" id="editSubject" required>
+                    <option value="Thắc mắc điểm danh">Thắc mắc điểm danh</option>
+                    <option value="Nộp minh chứng bổ sung">Nộp minh chứng bổ sung</option>
+                    <option value="Góp ý tài liệu học tập">Góp ý tài liệu học tập</option>
+                    <option value="Vấn đề khác">Vấn đề khác</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Nội dung chi tiết <span class="text-danger">*</span></label>
+                <textarea class="form-control" rows="5" id="editContent" required></textarea>
+            </div>
+            <div class="mb-2">
+                <label class="form-label fw-bold">Cập nhật ảnh đính kèm (Tùy chọn)</label>
+                <input type="file" class="form-control" accept="image/*">
+                <small class="text-muted">Bỏ trống nếu bạn muốn giữ nguyên ảnh cũ.</small>
+            </div>
+        </form>
+      </div>
+      <div class="modal-footer bg-light border-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+        <button type="button" class="btn btn-success fw-bold px-4" onclick="submitEditFeedback()"><i class="bi bi-save me-1"></i>Lưu Thay Đổi</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../public/js/script.js"></script>
 <script>
-    // Logic giả lập gửi form thành công
+    // Toggle sidebar
+    document.getElementById('sidebarToggle').addEventListener('click', function() {
+        document.getElementById('sidebar').classList.toggle('active');
+    });
+
+    // 1. Logic Gửi form Mới
     const feedbackForm = document.getElementById('studentFeedbackForm');
     if(feedbackForm) {
         feedbackForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            alert('Yêu cầu của bạn đã được gửi đến Ban cán sự lớp thành công!');
+            alert('✅ Yêu cầu của bạn đã được gửi đến Ban cán sự lớp thành công!');
             this.reset();
         });
+    }
+
+    // 2. Logic Xem Chi Tiết
+    function viewDetails(title, status, content, bcsReply = null) {
+        document.getElementById('viewTitle').innerText = title;
+        document.getElementById('viewContent').innerText = content;
+        
+        let statusBadge = document.getElementById('viewStatus');
+        if(status === 'Đã giải quyết') {
+            statusBadge.className = 'badge bg-success bg-opacity-10 text-success border border-success px-3 py-2';
+            statusBadge.innerHTML = '<i class="bi bi-check-circle me-1"></i> Đã giải quyết';
+        } else {
+            statusBadge.className = 'badge bg-warning bg-opacity-10 text-warning border border-warning px-3 py-2 text-dark';
+            statusBadge.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Đang chờ xử lý';
+        }
+
+        let replyWrapper = document.getElementById('viewBcsReplyWrapper');
+        if(bcsReply) {
+            replyWrapper.classList.remove('d-none');
+            document.getElementById('viewBcsReply').innerText = bcsReply;
+        } else {
+            replyWrapper.classList.add('d-none');
+        }
+
+        var myModal = new bootstrap.Modal(document.getElementById('viewDetailModal'));
+        myModal.show();
+    }
+
+    // 3. Logic Mở Form Sửa
+    function openEditModal(id, subject, content) {
+        document.getElementById('editFeedbackId').value = id;
+        document.getElementById('editSubject').value = subject;
+        document.getElementById('editContent').value = content;
+        
+        var myModal = new bootstrap.Modal(document.getElementById('editFeedbackModal'));
+        myModal.show();
+    }
+
+    // 4. Logic Lưu Form Sửa (Chỉ 1 lần)
+    function submitEditFeedback() {
+        const id = document.getElementById('editFeedbackId').value;
+        // Đóng Modal
+        bootstrap.Modal.getInstance(document.getElementById('editFeedbackModal')).hide();
+        
+        // Cập nhật giao diện bên ngoài để mô phỏng "Chỉ được sửa 1 lần"
+        alert('✅ Đã cập nhật nội dung phản hồi thành công!');
+        
+        const card = document.getElementById('fb-item-' + id);
+        if(card) {
+            // Cập nhật text hiển thị
+            card.querySelector('h6').innerText = document.getElementById('editSubject').value;
+            card.querySelector('p').innerText = document.getElementById('editContent').value;
+            
+            // Xóa nút Sửa và thêm tag "Đã sửa"
+            const actionDiv = card.querySelector('.text-end.border-top');
+            actionDiv.innerHTML = `
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="viewDetails('${document.getElementById('editSubject').value}', 'Chờ xử lý', '${document.getElementById('editContent').value}')"><i class="bi bi-eye"></i> Xem</button>
+                <button class="btn btn-sm btn-outline-secondary me-1" disabled title="Bạn chỉ được phép sửa 1 lần duy nhất."><i class="bi bi-pencil"></i> Sửa</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteFeedback(${id})"><i class="bi bi-trash"></i> Xóa</button>
+            `;
+            
+            // Thêm badge "Đã sửa" lên header của card
+            const headerDiv = card.querySelector('.d-flex.justify-content-between');
+            const timeSmall = headerDiv.querySelector('small.text-muted');
+            const newHeaderHtml = `
+                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 py-1 text-dark"><i class="bi bi-hourglass-split me-1"></i>Đang chờ xử lý</span>
+                <div class="text-end">
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary border me-2" title="Yêu cầu này đã được chỉnh sửa"><i class="bi bi-pencil-square me-1"></i>Đã sửa</span>
+                    <small class="text-muted">Vừa xong</small>
+                </div>
+            `;
+            headerDiv.innerHTML = newHeaderHtml;
+        }
+    }
+
+    // 5. Logic Xóa
+    function deleteFeedback(id) {
+        if(confirm('⚠️ CẢNH BÁO:\nBạn có chắc chắn muốn XÓA yêu cầu này không?\nHành động này không thể hoàn tác!')) {
+            const card = document.getElementById('fb-item-' + id);
+            if(card) {
+                card.style.display = 'none'; // Ẩn card đi để mô phỏng xóa
+                alert('🗑️ Yêu cầu đã được xóa khỏi hệ thống!');
+            }
+        }
     }
 </script>
 </body>
