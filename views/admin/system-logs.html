@@ -21,7 +21,7 @@
         <div class="text-center mb-3 text-white-50 small fw-bold">QUẢN TRỊ HỆ THỐNG</div>
         <nav>
             <a href="home.html"><i class="bi bi-speedometer2"></i> Tổng quan hệ thống</a>
-            <a href="org-settings.html"><i class="bi bi-diagram-3"></i> Cấu hình Tổ chức</a>
+            <a href="org-settings.html"><i class="bi bi-gear-wide-connected"></i> Cấu hình Học vụ</a>
             <a href="accounts.html"><i class="bi bi-people"></i> Quản lý Tài khoản</a>
             <a href="classes-subjects.html"><i class="bi bi-building"></i> Quản lý Lớp & Môn</a>
             <a href="assignments.html"><i class="bi bi-diagram-3-fill"></i> Phân công Giảng dạy</a>
@@ -49,9 +49,19 @@
         
         <div class="d-flex align-items-center text-white">
             <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
-                <div class="fs-6">Quản trị viên: <span class="fw-bold text-danger">Admin Khoa CNTT</span></div>
+                <div class="fs-6">Quản trị viên: <span class="fw-bold text-warning">Admin Khoa CNTT</span></div>
             </div>
-            <i class="bi bi-person-badge-fill fs-2"></i>
+            
+            <div class="dropdown">
+                <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
+                    <i class="bi bi-person-circle fs-2"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
+                    <li><a class="dropdown-item fw-bold" href="admin-profile.html"><i class="bi bi-person-vcard text-primary me-2"></i>Hồ sơ cá nhân</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item fw-bold text-danger" href="../login.html"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
+                </ul>
+            </div>
         </div>
     </div>
 
@@ -105,7 +115,6 @@
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white pt-3 pb-2 border-0 d-flex justify-content-between align-items-center">
                 <h5 class="fw-bold text-dark m-0"><i class="bi bi-list-columns-reverse me-2 text-primary"></i>Chi tiết Nhật ký hệ thống</h5>
-                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-3 py-2 rounded-pill"><i class="bi bi-record-circle-fill me-1"></i>Đang ghi hình Live</span>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
