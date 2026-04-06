@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CMS BDU - Lịch & Điểm danh</title>
+    <title>CMS BDU - Lịch & Điểm danh Giảng viên</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../../public/css/style.css">
@@ -16,17 +16,19 @@
         .nav-tabs .nav-link { color: #6c757d; border: none; font-size: 1.05rem;}
         .nav-tabs .nav-link:hover { color: #0d6efd; border-color: transparent; }
 
-        /* Chỉnh style cho các nút điểm danh */
-        .btn-check:checked + .btn-outline-success { background-color: #198754; color: white; border-color: #198754; }
-        .btn-check:checked + .btn-outline-warning { background-color: #ffc107; color: black; border-color: #ffc107; font-weight: bold;}
-        .btn-check:checked + .btn-outline-danger { background-color: #dc3545; color: white; border-color: #dc3545; }
-        .btn-group-sm > .btn { padding: 0.25rem 0.75rem; font-size: 0.875rem; }
-        
         /* Cấu trúc lịch dạy */
         .schedule-table th { background-color: #f8f9fa; text-align: center; vertical-align: middle; }
         .schedule-table td { width: 14.28%; vertical-align: top; height: 120px; border: 1px solid #dee2e6;}
         .class-card { transition: transform 0.2s; cursor: pointer; }
         .class-card:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
+
+        /* Style điểm danh chuẩn BCS */
+        .status-select.val-1 { color: #198754; font-weight: bold; }
+        .status-select.val-2 { color: #ffc107; font-weight: bold; }
+        .status-select.val-3 { color: #dc3545; font-weight: bold; }
+        .fixed-info-box { min-height: 42px; display: flex; align-items: center; }
+        #attendanceTable { table-layout: fixed; width: 100%; }
+        #attendanceTable th, #attendanceTable td { vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     </style>
 </head>
 <body class="dashboard-body">
@@ -65,7 +67,17 @@
                 <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
                     <div class="fs-6">Giảng viên: <b class="text-info">ThS. Nguyễn Hồ Hải</b></div>
                 </div>
-                <img src="../../public/images/avatar-placeholder.png" alt="Avatar" class="rounded-circle bg-white" width="40" height="40">
+                
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
+                        <img src="https://ui-avatars.com/api/?name=H+H&background=0dcaf0&color=fff" id="headerAvatar" alt="Avatar" class="rounded-circle border border-white" width="40" height="40">
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
+                        <li><a class="dropdown-item fw-bold" href="teacher-profile.html"><i class="bi bi-person-vcard text-info me-2"></i>Hồ sơ cá nhân</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item fw-bold text-danger" href="../login.html"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
 
@@ -79,7 +91,7 @@
                 </li>
                 <li class="nav-item ms-2" role="presentation">
                     <button class="nav-link px-4 py-3" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendance-panel" type="button" role="tab">
-                        <i class="bi bi-person-check me-2"></i> Điểm danh Sinh viên
+                        <i class="bi bi-person-check me-2"></i> Điểm danh Lớp học
                     </button>
                 </li>
             </ul>
@@ -89,20 +101,14 @@
                     <div class="card shadow-sm border-0 h-100">
                         <div class="card-header bg-white pt-3 pb-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-3">
                             <h5 class="fw-bold text-dark m-0"><i class="bi bi-calendar3 text-primary me-2"></i>Lịch giảng dạy</h5>
-                            
                             <div class="d-flex align-items-center gap-2 flex-wrap">
                                 <select class="form-select form-select-sm border-primary fw-bold text-primary" style="width: auto; background-color: #f8f9fa;">
                                     <option value="hk2_2526" selected>Học kỳ 2 - Năm học 2025 - 2026</option>
-                                    <option value="hk1_2526">Học kỳ 1 - Năm học 2025 - 2026</option>
                                 </select>
-                                
                                 <div class="d-flex align-items-center gap-1">
                                     <button class="btn btn-sm btn-outline-secondary px-2" title="Tuần trước" onclick="alert('Lùi về Tuần 28')"><i class="bi bi-chevron-left"></i></button>
                                     <select class="form-select form-select-sm border-success fw-bold text-success" style="width: auto; background-color: #f8f9fa;">
-                                        <option value="w28">Tuần 28 [Từ ngày 16/03/2026 đến 22/03/2026]</option>
                                         <option value="w29" selected>Tuần 29 [Từ ngày 23/03/2026 đến 29/03/2026]</option>
-                                        <option value="w30">Tuần 30 [Từ ngày 30/03/2026 đến 05/04/2026]</option>
-                                        <option value="w31">Tuần 31 [Từ ngày 06/04/2026 đến 12/04/2026]</option>
                                     </select>
                                     <button class="btn btn-sm btn-outline-secondary px-2" title="Tuần tới" onclick="alert('Tiến tới Tuần 30')"><i class="bi bi-chevron-right"></i></button>
                                 </div>
@@ -126,7 +132,7 @@
                                         <tr>
                                             <td></td>
                                             <td class="bg-light">
-                                                <div class="class-card bg-primary bg-opacity-10 border border-primary rounded p-2 text-start h-100 shadow-sm" onclick="goToAttendance('25TH01', '2026-03-24')">
+                                                <div class="class-card bg-primary bg-opacity-10 border border-primary rounded p-2 text-start h-100 shadow-sm" onclick="goToAttendance('CSDL', '01', '2026-03-24')">
                                                     <div class="fw-bold text-primary mb-1">25TH01</div>
                                                     <div class="small fw-bold text-dark lh-sm mb-2">An ninh Cơ sở dữ liệu</div>
                                                     <div class="small text-muted mb-1"><i class="bi bi-clock me-1"></i> Sáng (Tiết 1-3)</div>
@@ -134,12 +140,9 @@
                                                     <button class="btn btn-sm btn-primary w-100 mt-2 fw-bold"><i class="bi bi-person-check me-1"></i>Điểm danh</button>
                                                 </div>
                                             </td>
-                                            <td></td><td></td><td></td><td></td><td></td>
-                                        </tr>
-                                        <tr>
-                                            <td></td><td></td><td></td>
+                                            <td></td><td></td>
                                             <td class="bg-light">
-                                                <div class="class-card bg-success bg-opacity-10 border border-success rounded p-2 text-start h-100 shadow-sm" onclick="goToAttendance('24CNTT02', '2026-03-26')">
+                                                <div class="class-card bg-success bg-opacity-10 border border-success rounded p-2 text-start h-100 shadow-sm" onclick="goToAttendance('CTDL', '01', '2026-03-27')">
                                                     <div class="fw-bold text-success mb-1">24CNTT02</div>
                                                     <div class="small fw-bold text-dark lh-sm mb-2">Cấu trúc DL & Giải thuật</div>
                                                     <div class="small text-muted mb-1"><i class="bi bi-clock me-1"></i> Chiều (Tiết 7-9)</div>
@@ -147,7 +150,7 @@
                                                     <button class="btn btn-sm btn-success w-100 mt-2 fw-bold"><i class="bi bi-person-check me-1"></i>Điểm danh</button>
                                                 </div>
                                             </td>
-                                            <td></td><td></td><td></td>
+                                            <td></td><td></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -157,258 +160,376 @@
                 </div>
 
                 <div class="tab-pane fade" id="attendance-panel" role="tabpanel">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-header bg-white p-4 border-bottom border-secondary border-opacity-10 d-flex justify-content-between align-items-center flex-wrap gap-3">
-                            <div class="d-flex align-items-end gap-3 flex-wrap">
-                                <div>
-                                    <label class="form-label small fw-bold text-muted mb-1">Lớp học phần đang chọn <span class="text-danger">*</span></label>
-                                    <select class="form-select border-success fw-bold text-dark" style="width: 250px;" id="classSelect">
-                                        <option value="25TH01">25TH01 - An ninh CSDL</option>
-                                        <option value="24CNTT02">24CNTT02 - Cấu trúc DL</option>
+                    
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-2">
+                                    <label class="fw-bold small text-muted mb-1">HỌC KỲ</label>
+                                    <select class="form-select border-primary bg-light fw-bold text-primary" id="filterSemester">
+                                        <option value="HK1">Học kỳ 1</option>
+                                        <option value="HK2" selected>Học kỳ 2 (25-26)</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label class="form-label small fw-bold text-muted mb-1">Ngày điểm danh <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control border-success fw-bold" id="dateSelect" value="2026-03-24">
+                                <div class="col-md-4">
+                                    <label class="fw-bold small text-muted mb-1">MÔN HỌC <span class="text-danger">*</span></label>
+                                    <select class="form-select border-primary fw-bold text-dark" id="subjectSelect" onchange="onSubjectChange()">
+                                        </select>
                                 </div>
-                                <button class="btn btn-outline-secondary" onclick="alert('Đang tải lại danh sách...')"><i class="bi bi-arrow-clockwise"></i></button>
+                                <div class="col-md-2">
+                                    <label class="fw-bold small text-muted mb-1">NHÓM <span class="text-danger">*</span></label>
+                                    <select class="form-select border-primary fw-bold text-dark" id="groupSelect" onchange="onGroupChange()">
+                                        </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="fw-bold small text-muted mb-1">NGÀY HỌC <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control border-primary fw-bold" id="attendanceDate" value="2026-03-24">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="fw-bold small text-muted mb-1">BUỔI <span class="text-danger">*</span></label>
+                                    <select class="form-select border-primary fw-bold text-dark" id="attendanceSession" onchange="checkSessionReason()">
+                                        <option value="Sáng">Sáng</option>
+                                        <option value="Chiều">Chiều</option>
+                                        <option value="Tối">Tối</option>
+                                    </select>
+                                </div>
                             </div>
                             
-                            <div class="d-flex gap-3 bg-light p-2 rounded border">
-                                <div class="text-center px-2 border-end">
-                                    <span class="d-block small text-muted fw-bold">SĨ SỐ</span>
-                                    <span class="fs-5 fw-bold text-dark" id="totalCount">4</span>
+                            <div class="row g-3 mt-1 align-items-center">
+                                <div class="col-md-8">
+                                    <div class="p-2 bg-light rounded text-dark small border-start border-3 border-primary fixed-info-box" id="subjectInfoBox">
+                                        <div class="row g-2 w-100 m-0">
+                                            <div class="col-12 p-0"><i class="bi bi-calendar2-range text-primary me-1"></i>Khung thời gian học mặc định: <strong id="lblTime">...</strong></div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="text-center px-2 border-end">
-                                    <span class="d-block small text-muted fw-bold text-success">CÓ MẶT</span>
-                                    <span class="fs-5 fw-bold text-success" id="countPresent">3</span>
-                                </div>
-                                <div class="text-center px-2">
-                                    <span class="d-block small text-muted fw-bold text-danger">VẮNG</span>
-                                    <span class="fs-5 fw-bold text-danger" id="countAbsent">1</span>
+                                <div class="col-md-4 invisible" id="sessionReasonDiv">
+                                    <input type="text" class="form-control border-warning bg-warning bg-opacity-10" id="sessionReason" placeholder="Nhập lý do đổi buổi (*Bắt buộc)">
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="bg-white px-4 py-2 border-bottom d-flex justify-content-end">
-                            <button class="btn btn-sm btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#addStudentModal">
-                                <i class="bi bi-person-plus-fill me-1"></i> Bổ sung Sinh viên vào danh sách
-                            </button>
-                        </div>
-
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0" id="attendanceTable">
-                                    <thead class="table-light small text-muted fw-bold">
-                                        <tr>
-                                            <th class="ps-4" style="width: 60px;">STT</th>
-                                            <th style="width: 120px;">MSSV</th>
-                                            <th>HỌ VÀ TÊN SINH VIÊN</th>
-                                            <th>LỚP</th>
-                                            <th class="text-center" style="width: 300px;">TRẠNG THÁI ĐIỂM DANH</th>
-                                            <th>GHI CHÚ / MINH CHỨNG</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td class="ps-4 text-muted">1</td>
-                                            <td class="fw-bold text-dark">22050022</td>
-                                            <td class="fw-bold">Phạm Huỳnh Nhật Ý</td>
-                                            <td class="text-muted small">25TH01</td>
-                                            <td class="text-center">
-                                                <div class="btn-group btn-group-sm w-100" role="group">
-                                                    <input type="radio" class="btn-check" name="status_22050022" id="present_22050022" value="1" autocomplete="off" checked onchange="updateCounts()">
-                                                    <label class="btn btn-outline-success" for="present_22050022">Có mặt</label>
-                                                    <input type="radio" class="btn-check" name="status_22050022" id="leave_22050022" value="2" autocomplete="off" onchange="updateCounts()">
-                                                    <label class="btn btn-outline-warning" for="leave_22050022">Phép</label>
-                                                    <input type="radio" class="btn-check" name="status_22050022" id="absent_22050022" value="3" autocomplete="off" onchange="updateCounts()">
-                                                    <label class="btn btn-outline-danger" for="absent_22050022">K.Phép</label>
-                                                </div>
-                                            </td>
-                                            <td><input type="text" class="form-control form-control-sm border-0 bg-light" placeholder="Nhập ghi chú..."></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="ps-4 text-muted">2</td>
-                                            <td class="fw-bold text-dark">22050111</td>
-                                            <td class="fw-bold">Nguyễn Văn A</td>
-                                            <td class="text-muted small">25TH01</td>
-                                            <td class="text-center">
-                                                <div class="btn-group btn-group-sm w-100" role="group">
-                                                    <input type="radio" class="btn-check" name="status_22050111" id="present_22050111" value="1" autocomplete="off" checked onchange="updateCounts()">
-                                                    <label class="btn btn-outline-success" for="present_22050111">Có mặt</label>
-                                                    <input type="radio" class="btn-check" name="status_22050111" id="leave_22050111" value="2" autocomplete="off" onchange="updateCounts()">
-                                                    <label class="btn btn-outline-warning" for="leave_22050111">Phép</label>
-                                                    <input type="radio" class="btn-check" name="status_22050111" id="absent_22050111" value="3" autocomplete="off" onchange="updateCounts()">
-                                                    <label class="btn btn-outline-danger" for="absent_22050111">K.Phép</label>
-                                                </div>
-                                            </td>
-                                            <td><input type="text" class="form-control form-control-sm border-0 bg-light" placeholder="Nhập ghi chú..."></td>
-                                        </tr>
-                                        <tr class="bg-warning bg-opacity-10">
-                                            <td class="ps-4 text-muted">3</td>
-                                            <td class="fw-bold text-dark">22050222</td>
-                                            <td class="fw-bold">Trần Thị B</td>
-                                            <td class="text-muted small">25TH01</td>
-                                            <td class="text-center">
-                                                <div class="btn-group btn-group-sm w-100" role="group">
-                                                    <input type="radio" class="btn-check" name="status_22050222" id="present_22050222" value="1" autocomplete="off" onchange="updateCounts()">
-                                                    <label class="btn btn-outline-success" for="present_22050222">Có mặt</label>
-                                                    <input type="radio" class="btn-check" name="status_22050222" id="leave_22050222" value="2" autocomplete="off" checked onchange="updateCounts()">
-                                                    <label class="btn btn-outline-warning" for="leave_22050222">Phép</label>
-                                                    <input type="radio" class="btn-check" name="status_22050222" id="absent_22050222" value="3" autocomplete="off" onchange="updateCounts()">
-                                                    <label class="btn btn-outline-danger" for="absent_22050222">K.Phép</label>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <i class="bi bi-file-medical-fill text-danger fs-5 me-2" title="Đã nộp giấy phép"></i>
-                                                    <span class="badge bg-success small">Đã duyệt phép</span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white pt-3 pb-2 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-3">
+                                <h5 class="fw-bold text-dark m-0"><i class="bi bi-list-check me-2 text-primary"></i>Danh sách Sinh viên</h5>
+                                <div class="input-group input-group-sm" style="width: 250px;">
+                                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                                    <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Tìm MSSV, Họ tên..." onkeyup="filterTable()">
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-primary fw-bold" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                                    <i class="bi bi-person-plus-fill me-1"></i>Thêm SV
+                                </button>
+                                <button class="btn btn-sm btn-success fw-bold shadow-sm" onclick="exportToExcel()">
+                                    <i class="bi bi-file-earmark-excel-fill me-1"></i>Xuất Excel
+                                </button>
                             </div>
                         </div>
                         
-                        <div class="card-footer bg-white p-4 border-top text-end">
-                            <button class="btn btn-outline-secondary me-2"><i class="bi bi-arrow-counterclockwise me-1"></i>Hủy bỏ</button>
-                            <button class="btn btn-success px-5 fw-bold" onclick="saveAttendance()"><i class="bi bi-floppy-fill me-2"></i>Lưu Điểm Danh</button>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle custom-detail-table" id="attendanceTable">
+                                    <thead class="table-light text-muted small fw-bold">
+                                        <tr>
+                                            <th class="text-center" style="width: 60px;">STT</th>
+                                            <th style="width: 110px;">MSSV</th>
+                                            <th style="width: 220px;">HỌ VÀ TÊN</th>
+                                            <th style="width: 110px;">NGÀY SINH</th>
+                                            <th style="width: 100px;">LỚP</th>
+                                            <th style="width: 180px;">TRẠNG THÁI</th>
+                                            <th>GHI CHÚ / MINH CHỨNG</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="studentTableBody">
+                                        </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white p-3 d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-primary" id="studentCountText">Sĩ số: <span id="totalCount" class="text-dark">0</span> | Có mặt: <span id="presentCount" class="text-success">0</span> | Vắng: <span id="absentCount" class="text-danger">0</span></span>
+                            <button class="btn btn-primary px-5 fw-bold shadow-sm" onclick="alert('✅ Đã lưu dữ liệu điểm danh vào hệ thống!')"><i class="bi bi-floppy-fill me-2"></i>Lưu Điểm Danh</button>
                         </div>
                     </div>
                 </div>
-            </div>
 
+            </div>
         </div>
     </div>
 
-    <div class="modal fade" id="addStudentModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-person-plus-fill me-2"></i>Bổ sung Sinh viên</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-4 bg-light">
-                    <div class="alert alert-info border-0 py-2 small">
-                        <i class="bi bi-info-circle-fill me-1"></i> Sinh viên được thêm sẽ được lưu vào hệ thống và tự động đánh dấu <b>"Có mặt"</b> trong buổi học này.
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-6">
-                            <label class="form-label fw-bold">MSSV (Username) <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="newMSSV" placeholder="VD: 25050123" required>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label fw-bold">Lớp hành chính <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="newClass" placeholder="VD: 25TH01" value="25TH01">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Họ và Tên <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="newFullName" placeholder="Nhập đầy đủ họ tên..." required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Email <span class="text-danger">*</span></label>
-                        <input type="email" class="form-control" id="newEmail" placeholder="...student.bdu.edu.vn" required>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 pb-4 px-4 bg-light">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button class="btn btn-primary px-4 fw-bold" onclick="addStudentToTable()"><i class="bi bi-plus-circle me-1"></i>Thêm vào danh sách</button>
-                </div>
+    <div class="modal fade" id="addStudentModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title fw-bold"><i class="bi bi-person-plus-fill me-2"></i>Thêm sinh viên bị sót</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-4">
+            <div class="alert alert-info small border-0 py-2">
+                <i class="bi bi-info-circle-fill me-1"></i> Sinh viên được thêm sẽ mặc định <b>"Có mặt"</b> và lưu vào danh sách nhóm hiện tại.
             </div>
+            <form id="addStudentForm">
+              <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Mã số (MSSV) <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="newMssv" required>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Lớp học <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="newClass" placeholder="VD: 25TH01" required>
+                  </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Họ và Tên Sinh viên <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="newFullName" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label fw-bold">Ngày sinh</label>
+                <input type="date" class="form-control" id="newDob">
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer border-0 pb-4 px-4 bg-light">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+            <button type="button" class="btn btn-primary fw-bold" onclick="addStudentToTable()"><i class="bi bi-plus-circle me-1"></i>Thêm vào danh sách</button>
+          </div>
         </div>
+      </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function goToAttendance(classId, date) {
+        function goToAttendance(subjectKey, groupKey, date) {
             const triggerEl = document.querySelector('#attendance-tab');
             const tab = new bootstrap.Tab(triggerEl);
             tab.show();
-            document.getElementById('classSelect').value = classId;
-            document.getElementById('dateSelect').value = date;
+            
+            document.getElementById('subjectSelect').value = subjectKey;
+            onSubjectChange(); 
+            document.getElementById('groupSelect').value = groupKey;
+            onGroupChange();   
+            document.getElementById('attendanceDate').value = date;
+            
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            updateCounts();
         }
 
-        function updateCounts() {
-            let presentCount = 0;
-            let absentCount = 0;
+        const mockDB = {
+            "CSDL": {
+                name: "An ninh Cơ sở dữ liệu",
+                groups: {
+                    "01": { 
+                        start: "16/01/2026", end: "05/05/2026", session: "Sáng",
+                        students: [
+                            { mssv: "22050001", name: "Nguyễn Văn A", dob: "15/04/2004", cls: "25TH01", status: "1", note: "" },
+                            { mssv: "22050022", name: "Trần Vũ Gia Huy", dob: "22/08/2004", cls: "25TH01", status: "2", note: "Đã nộp phép" },
+                            { mssv: "22050089", name: "Phan Đình Luyến", dob: "10/11/2004", cls: "25TH01", status: "3", note: "" },
+                            { mssv: "22050111", name: "Nguyễn Thị C", dob: "01/01/2004", cls: "25TH01", status: "1", note: "" }
+                        ]
+                    }
+                }
+            },
+            "CTDL": {
+                name: "Cấu trúc dữ liệu & Giải thuật",
+                groups: {
+                    "01": { 
+                        start: "18/01/2026", end: "10/05/2026", session: "Chiều",
+                        students: [
+                            { mssv: "22050201", name: "Hoàng Thanh D", dob: "12/12/2004", cls: "24CNTT02", status: "1", note: "" },
+                            { mssv: "22050333", name: "Lê Văn C", dob: "20/05/2004", cls: "24CNTT02", status: "3", note: "Nghỉ không phép" }
+                        ]
+                    }
+                }
+            }
+        };
+
+        let currentDefaultSession = "Sáng";
+
+        function initDropdowns() {
+            const subjectSelect = document.getElementById('subjectSelect');
+            subjectSelect.innerHTML = '';
+            for (const subjKey in mockDB) {
+                const option = document.createElement('option');
+                option.value = subjKey;
+                option.text = mockDB[subjKey].name;
+                subjectSelect.appendChild(option);
+            }
+            onSubjectChange(); 
+        }
+
+        function onSubjectChange() {
+            const subjKey = document.getElementById('subjectSelect').value;
+            const groupSelect = document.getElementById('groupSelect');
+            groupSelect.innerHTML = '';
             
-            const tbody = document.querySelector('#attendanceTable tbody');
-            const radios = tbody.querySelectorAll('input[type="radio"]:checked');
+            const groups = mockDB[subjKey].groups;
+            for (const groupKey in groups) {
+                const option = document.createElement('option');
+                option.value = groupKey;
+                option.text = "Nhóm " + groupKey;
+                groupSelect.appendChild(option);
+            }
+            onGroupChange();
+        }
+
+        function onGroupChange() {
+            const subjKey = document.getElementById('subjectSelect').value;
+            const groupKey = document.getElementById('groupSelect').value;
+            const groupData = mockDB[subjKey].groups[groupKey];
+
+            // Cập nhật thời gian
+            document.getElementById('lblTime').innerText = groupData.start + " - " + groupData.end;
             
-            radios.forEach(radio => {
-                const tr = radio.closest('tr');
-                if(radio.value === '1') {
-                    presentCount++;
-                    tr.className = ""; 
-                } else if(radio.value === '2') {
-                    absentCount++;
-                    tr.className = "bg-warning bg-opacity-10"; 
-                } else if(radio.value === '3') {
-                    absentCount++;
-                    tr.className = "bg-danger bg-opacity-10"; 
+            currentDefaultSession = groupData.session;
+            document.getElementById('attendanceSession').value = currentDefaultSession;
+            checkSessionReason();
+
+            renderStudentList(groupData.students);
+        }
+
+        function renderStudentList(students) {
+            const tbody = document.getElementById('studentTableBody');
+            tbody.innerHTML = '';
+            
+            students.forEach((sv, index) => {
+                const tr = document.createElement('tr');
+                tr.className = `student-row ${sv.status === '2' ? 'bg-warning bg-opacity-10' : sv.status === '3' ? 'bg-danger bg-opacity-10' : ''}`;
+                
+                const badgeHtml = sv.status === '2' ? `<span class="badge bg-warning text-dark border border-warning"><i class="bi bi-file-medical-fill me-1"></i>${sv.note}</span>` 
+                                : `<input type="text" class="form-control form-control-sm bg-light border-0" placeholder="Ghi chú..." value="${sv.note}">`;
+
+                tr.innerHTML = `
+                    <td class="text-center stt-col text-muted">${index + 1}</td>
+                    <td class="fw-bold text-dark mssv-cell">${sv.mssv}</td>
+                    <td class="fw-bold ${sv.status === '3' ? 'text-danger' : 'text-dark'} student-name name-cell">${sv.name}</td>
+                    <td>${sv.dob}</td>
+                    <td>${sv.cls}</td>
+                    <td>
+                        <select class="form-select form-select-sm status-select val-${sv.status}" onchange="updateColor(this)">
+                            <option value="1" ${sv.status === '1' ? 'selected' : ''}>Có mặt</option>
+                            <option value="2" ${sv.status === '2' ? 'selected' : ''}>Vắng có phép</option>
+                            <option value="3" ${sv.status === '3' ? 'selected' : ''}>Vắng không phép</option>
+                        </select>
+                    </td>
+                    <td>${badgeHtml}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            recalculateAttendance();
+        }
+
+        document.addEventListener('DOMContentLoaded', initDropdowns);
+
+        function checkSessionReason() {
+            const selectedSession = document.getElementById('attendanceSession').value;
+            const reasonDiv = document.getElementById('sessionReasonDiv');
+            if(selectedSession !== currentDefaultSession) {
+                reasonDiv.classList.remove('invisible');
+                document.getElementById('sessionReason').required = true;
+            } else {
+                reasonDiv.classList.add('invisible');
+                document.getElementById('sessionReason').required = false;
+            }
+        }
+
+        function updateColor(selectElement) {
+            const tr = selectElement.closest('tr');
+            selectElement.classList.remove('val-1', 'val-2', 'val-3');
+            tr.classList.remove('bg-warning', 'bg-danger', 'bg-opacity-10');
+            tr.querySelector('.student-name').classList.remove('text-danger');
+            tr.querySelector('.student-name').classList.add('text-dark');
+
+            if (selectElement.value === '1') {
+                selectElement.classList.add('val-1');
+            } else if (selectElement.value === '2') {
+                selectElement.classList.add('val-2');
+                tr.classList.add('bg-warning', 'bg-opacity-10');
+            } else if (selectElement.value === '3') {
+                selectElement.classList.add('val-3');
+                tr.classList.add('bg-danger', 'bg-opacity-10');
+                tr.querySelector('.student-name').classList.remove('text-dark');
+                tr.querySelector('.student-name').classList.add('text-danger');
+            }
+            recalculateAttendance();
+        }
+
+        function recalculateAttendance() {
+            const selects = document.querySelectorAll('.status-select');
+            let present = 0; let absent = 0;
+            selects.forEach(select => { 
+                const row = select.closest('tr');
+                if (row.style.display !== "none") {
+                    if(select.value === '1') present++; else absent++; 
                 }
             });
-
-            document.getElementById('countPresent').innerText = presentCount;
-            document.getElementById('countAbsent').innerText = absentCount;
-            document.getElementById('totalCount').innerText = presentCount + absentCount;
+            document.getElementById('totalCount').innerText = present + absent;
+            document.getElementById('presentCount').innerText = present;
+            document.getElementById('absentCount').innerText = absent;
         }
 
-        document.addEventListener('DOMContentLoaded', updateCounts);
+        function filterTable() {
+            const input = document.getElementById("searchInput").value.toLowerCase();
+            const rows = document.querySelectorAll("#attendanceTable tbody .student-row");
+            rows.forEach(row => {
+                const mssv = row.querySelector(".mssv-cell").innerText.toLowerCase();
+                const name = row.querySelector(".name-cell").innerText.toLowerCase();
+                if(mssv.includes(input) || name.includes(input)) row.style.display = "";
+                else row.style.display = "none";
+            });
+            recalculateAttendance();
+        }
 
         function addStudentToTable() {
-            const mssv = document.getElementById('newMSSV').value;
+            const mssv = document.getElementById('newMssv').value;
             const name = document.getElementById('newFullName').value;
-            const className = document.getElementById('newClass').value;
-            const email = document.getElementById('newEmail').value;
+            const dob = document.getElementById('newDob').value || "Chưa cập nhật";
+            const cls = document.getElementById('newClass').value;
 
-            if(!mssv || !name || !email) {
-                alert("Vui lòng nhập đầy đủ MSSV, Họ tên và Email!");
-                return;
-            }
+            if(!mssv || !name || !cls) { alert("Vui lòng nhập MSSV, Họ Tên và Lớp học!"); return; }
 
             const tbody = document.querySelector('#attendanceTable tbody');
             const rowCount = tbody.querySelectorAll('tr').length + 1;
             
+            let formattedDob = dob;
+            if(dob !== "Chưa cập nhật") {
+                const parts = dob.split('-');
+                formattedDob = `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+
             const tr = document.createElement('tr');
+            tr.className = "student-row";
             tr.innerHTML = `
-                <td class="ps-4 text-muted">${rowCount}</td>
-                <td class="fw-bold text-dark">${mssv}</td>
-                <td class="fw-bold text-primary">${name} <span class="badge bg-primary ms-2 small">Mới thêm</span></td>
-                <td class="text-muted small">${className}</td>
-                <td class="text-center">
-                    <div class="btn-group btn-group-sm w-100" role="group">
-                        <input type="radio" class="btn-check" name="status_${mssv}" id="present_${mssv}" value="1" autocomplete="off" checked onchange="updateCounts()">
-                        <label class="btn btn-outline-success" for="present_${mssv}">Có mặt</label>
-                        <input type="radio" class="btn-check" name="status_${mssv}" id="leave_${mssv}" value="2" autocomplete="off" onchange="updateCounts()">
-                        <label class="btn btn-outline-warning" for="leave_${mssv}">Phép</label>
-                        <input type="radio" class="btn-check" name="status_${mssv}" id="absent_${mssv}" value="3" autocomplete="off" onchange="updateCounts()">
-                        <label class="btn btn-outline-danger" for="absent_${mssv}">K.Phép</label>
-                    </div>
+                <td class="text-center stt-col text-muted">${rowCount}</td>
+                <td class="fw-bold text-dark mssv-cell">${mssv}</td>
+                <td class="fw-bold text-primary student-name name-cell">${name} <span class="badge bg-primary ms-1 small">Mới</span></td>
+                <td>${formattedDob}</td>
+                <td>${cls}</td>
+                <td>
+                    <select class="form-select form-select-sm status-select val-1" onchange="updateColor(this)">
+                        <option value="1" selected>Có mặt</option>
+                        <option value="2">Vắng có phép</option>
+                        <option value="3">Vắng không phép</option>
+                    </select>
                 </td>
-                <td><input type="text" class="form-control form-control-sm border-0 bg-light" placeholder="Nhập ghi chú..."></td>
+                <td><input type="text" class="form-control form-control-sm bg-light border-0" placeholder="Ghi chú..."></td>
             `;
 
             tbody.appendChild(tr);
-
-            const modalEl = document.getElementById('addStudentModal');
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            modal.hide();
-
-            document.getElementById('newMSSV').value = '';
-            document.getElementById('newFullName').value = '';
-            document.getElementById('newEmail').value = '';
-
-            updateCounts(); 
-            alert(`✅ Đã thêm ${name} vào hệ thống DB và danh sách điểm danh!`);
+            bootstrap.Modal.getInstance(document.getElementById('addStudentModal')).hide();
+            document.getElementById('addStudentForm').reset();
+            
+            document.getElementById("searchInput").value = "";
+            filterTable();
         }
 
-        function saveAttendance() {
-            alert(`✅ Đã lưu kết quả điểm danh vào cơ sở dữ liệu thành công!`);
+        function exportToExcel() {
+            const subjName = document.getElementById('subjectSelect').options[document.getElementById('subjectSelect').selectedIndex].text;
+            const group = document.getElementById('groupSelect').value;
+            const date = document.getElementById('attendanceDate').value;
+            
+            alert(`📥 Đã xuất file Excel thành công!\n\nThông tin Header file:\n- Môn học: ${subjName}\n- Mã môn học: [Từ CSDL]\n- Nhóm: ${group}\n- Ngày học: ${date}\n- Cột: STT | MSSV | Họ và tên | Ngày sinh | Lớp | Trạng thái`);
         }
     </script>
 </body>
