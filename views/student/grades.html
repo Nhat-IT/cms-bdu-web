@@ -3,82 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CMS BDU - Cổng Sinh Viên</title>
+    <title>CMS BDU - Kết Quả Học Tập</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../../public/css/style.css">
     <style>
-        /* Hiệu ứng khi di chuột vào khối thông tin cá nhân */
-        .profile-trigger { display: block; color: inherit; text-decoration: none; transition: all 0.2s ease; border-radius: 10px; padding: 5px; }
-        .profile-trigger:hover { background-color: rgba(255, 255, 255, 0.1); opacity: 0.9; }
-
-        /* TỐI ƯU SIDEBAR CHỐNG TRÀN MÀN HÌNH */
-        .sidebar { overflow: hidden; } /* Cố định toàn bộ khung Sidebar */
+        /* ==========================================
+           TỐI ƯU GIAO DIỆN SIDEBAR TWO-TONE
+           ========================================== */
+        .sidebar { 
+            width: 260px; 
+            background: linear-gradient(180deg, #4e71aa 0%, #0e255b 100%);
+            box-shadow: 4px 0 15px rgba(0,0,0,0.1); 
+            transition: all 0.3s ease; 
+            z-index: 1000; 
+            position: fixed; 
+            top: 0; left: 0; 
+            height: 100vh; 
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
         
-        /* Khu vực Menu ở giữa có thể cuộn độc lập */
+        .brand-container {
+            background-color: #ffffff;
+            height: 70px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            z-index: 10;
+        }
+
+        .sidebar.collapsed { width: 85px; }
+        .sidebar.collapsed .hide-on-collapse { display: none !important; }
+        .sidebar.collapsed .nav-link { justify-content: center; padding: 12px 0; margin: 5px 10px; }
+        .sidebar.collapsed .nav-link i { margin-right: 0 !important; font-size: 1.3rem; }
+        
+        .sidebar.collapsed .brand-container a { justify-content: center; width: 100%; }
+        .sidebar.collapsed .brand-container a i { margin-right: 0 !important; }
+
+        .sidebar.collapsed .profile-container { 
+            padding: 20px 0 15px; 
+            display: flex; 
+            justify-content: center; 
+        }
+        .sidebar.collapsed .profile-trigger {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 5px;
+        }
+        .sidebar.collapsed .profile-trigger img { 
+            width: 40px; 
+            height: 40px;
+            margin-bottom: 0 !important; 
+        }
+        
+        .main-content { margin-left: 260px; transition: all 0.3s ease; background-color: #f4f6f9; min-height: 100vh; padding-bottom: 50px; }
+        .main-content.expanded { margin-left: 85px; }
+
         .sidebar-scrollable { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 10px; }
-        
-        /* Tùy chỉnh thanh cuộn (Scrollbar) cho khu vực Menu mượt và đẹp */
         .sidebar-scrollable::-webkit-scrollbar { width: 4px; }
-        .sidebar-scrollable::-webkit-scrollbar-track { background: transparent; }
-        .sidebar-scrollable::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
-        .sidebar-scrollable::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
+        .sidebar-scrollable::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+        .sidebar-scrollable::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
 
-        /* Box Thống kê (Cards) */
-        .stat-card-custom { border-radius: 8px; border: none; transition: transform 0.2s; }
-        .stat-card-custom:hover { transform: translateY(-3px); box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1) !important; }
-        .icon-box-custom { width: 48px; height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
-        .bg-light-primary { background-color: rgba(13, 110, 253, 0.1); }
-        .bg-light-success { background-color: rgba(25, 135, 84, 0.1); }
-        .bg-light-warning { background-color: rgba(255, 193, 7, 0.1); }
-        .bg-light-danger { background-color: rgba(220, 53, 69, 0.1); }
+        .sidebar .nav-link {
+            color: #94a3b8; 
+            font-weight: 500; padding: 10px 15px; border-radius: 8px; margin: 4px 15px;
+            transition: all 0.2s ease; display: flex; align-items: center; text-decoration: none;
+        }
+        .sidebar .nav-link:hover { background-color: rgba(255,255,255,0.05); color: #ffffff; transform: translateX(3px); }
+        .sidebar .nav-link.active { 
+            background-color: #0d6efd; 
+            color: #ffffff; 
+            font-weight: bold; 
+            box-shadow: 0 4px 10px rgba(13, 110, 253, 0.4); 
+        }
+        .sidebar .nav-link i { font-size: 1.1rem; margin-right: 12px; }
+
+        .logout-btn { color: #f87171 !important; }
+        .logout-btn:hover { background-color: rgba(239, 68, 68, 0.1) !important; color: #fca5a5 !important; }
+
+        .profile-container { padding: 20px 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .profile-trigger { display: block; color: inherit; text-decoration: none; transition: all 0.2s ease; border-radius: 10px; padding: 5px; }
+        .profile-trigger:hover { background-color: rgba(255, 255, 255, 0.05); }
+
+        .top-navbar-blue { height: 70px; background-color: #0d6efd; } 
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); width: 260px; }
+            .sidebar.active { transform: translateX(0); }
+            .sidebar.active .hide-on-collapse { display: block !important; }
+            .main-content, .main-content.expanded { margin-left: 0; }
+        }
+
+        /* CSS Bảng Điểm */
+        .grade-card { border-radius: 12px; overflow: hidden; }
+        .table-grades thead { background-color: #f8f9fa; }
+        .table-grades th { font-weight: 700; color: #495057; border-bottom: 2px solid #dee2e6; padding: 12px; }
+        .table-grades td { padding: 15px 12px; vertical-align: middle; }
+        .score-box { font-weight: bold; font-size: 1.05rem; }
+        .grade-a { color: #198754; }
+        .grade-b { color: #0d6efd; }
+        .grade-c { color: #fd7e14; }
+        .grade-f { color: #dc3545; }
+        
+        .btn-detail { font-size: 0.85rem; border-radius: 6px; }
     </style>
 </head>
 <body class="dashboard-body">
 
-<div class="sidebar d-flex flex-column" id="sidebar" style="height: 100vh;">
+<div class="sidebar" id="sidebar">
     
-    <div class="flex-shrink-0">
-        <div class="brand pt-3 pb-1">CMS BDU</div>
-        <div class="text-center mb-2 text-white-50 small fw-bold">CỔNG SINH VIÊN</div>
-        
-        <div class="text-center mt-2 mb-2 px-2">
-            <a href="student-profile.html" class="profile-trigger" title="Xem hồ sơ cá nhân">
-                <img src="https://ui-avatars.com/api/?name=Thi+C&background=17a2b8&color=fff" class="rounded-circle border border-2 border-white mb-2" width="55" alt="Avatar">
-                <div class="text-white fw-bold fs-6">Nguyễn Thị C</div>
+    <div class="brand-container flex-shrink-0">
+        <a href="home.html" class="text-decoration-none text-primary d-flex align-items-center">
+            <i class="bi bi-mortarboard-fill fs-2 me-2"></i>
+            <span class="fs-4 fw-bold hide-on-collapse">CMS BDU</span>
+        </a>
+    </div>
+    
+    <div class="profile-container text-center flex-shrink-0">
+        <a href="student-profile.html" class="profile-trigger" title="Xem hồ sơ cá nhân">
+            <img src="https://ui-avatars.com/api/?name=Nhat+Y&background=0d6efd&color=fff" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar">
+            <div class="hide-on-collapse">
+                <div class="text-white fw-bold fs-6">Phạm Huỳnh Nhật Ý</div>
                 <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">MSSV: 22050111</div>
-            </a>
-            <span class="badge bg-warning text-dark mt-1" style="font-size: 0.75rem;">LỚP: 25TH01</span>
-        </div>
+            </div>
+        </a>
+        <span class="badge bg-primary bg-opacity-25 text-info border border-info border-opacity-50 mt-1 hide-on-collapse" style="font-size: 0.75rem;">LỚP: 25TH01</span>
     </div>
 
-    <div class="sidebar-scrollable mt-3 w-100">
-        <nav class="d-flex flex-column gap-1">
-            <a href="home.html" class="active"><i class="bi bi-grid-1x2-fill"></i> Tổng quan cá nhân</a>
-            <a href="my-attendance.html"><i class="bi bi-person-lines-fill"></i> Xem điểm danh</a>
-            <a href="schedule.html"><i class="bi bi-calendar-week"></i> Xem Lịch học</a>
-            <a href="assignments.html"><i class="bi bi-journal-text"></i> Bài tập của tôi</a>
-            <a href="grades.html"><i class="bi bi-bar-chart-fill"></i> Kết quả học tập</a>
-            <a href="documents.html"><i class="bi bi-folder2-open"></i> Kho Tài liệu lớp</a>
-            <a href="my-feedback.html"><i class="bi bi-envelope-paper"></i> Gửi phản hồi</a>
+    <div class="sidebar-scrollable w-100">
+        <nav class="d-flex flex-column mt-3">
+            <div class="px-4 mb-2 small text-white-50 fw-bold hide-on-collapse" style="font-size: 0.7rem; letter-spacing: 1px;">HỌC VỤ</div>
+            
+            <a href="home.html" class="nav-link" title="Tổng quan cá nhân">
+                <i class="bi bi-grid-1x2-fill"></i> <span class="hide-on-collapse">Tổng quan cá nhân</span>
+            </a>
+            <a href="my-attendance.html" class="nav-link" title="Xem điểm danh">
+                <i class="bi bi-person-lines-fill"></i> <span class="hide-on-collapse">Xem điểm danh</span>
+            </a>
+            <a href="schedule.html" class="nav-link" title="Xem Lịch học">
+                <i class="bi bi-calendar-week"></i> <span class="hide-on-collapse">Xem Lịch học</span>
+            </a>
+            <a href="assignments.html" class="nav-link" title="Bài tập của tôi">
+                <i class="bi bi-journal-text"></i> <span class="hide-on-collapse">Bài tập của tôi</span>
+            </a>
+            <a href="grades.html" class="nav-link active" title="Kết quả học tập">
+                <i class="bi bi-bar-chart-fill"></i> <span class="hide-on-collapse">Kết quả học tập</span>
+            </a>
+            <a href="documents.html" class="nav-link" title="Kho Tài liệu lớp">
+                <i class="bi bi-folder2-open"></i> <span class="hide-on-collapse">Kho Tài liệu lớp</span>
+            </a>
+            
+            <div class="px-4 mt-3 mb-2 small text-white-50 fw-bold hide-on-collapse" style="font-size: 0.7rem; letter-spacing: 1px;">TƯƠNG TÁC</div>
+            <a href="my-feedback.html" class="nav-link" title="Gửi phản hồi">
+                <i class="bi bi-envelope-paper"></i> <span class="hide-on-collapse">Gửi phản hồi</span>
+            </a>
         </nav>
     </div>
     
-    <div class="mt-auto mb-3 px-3 flex-shrink-0 pt-3 border-top border-secondary border-opacity-50">
-        <a href="../login.html" class="text-danger d-flex align-items-center text-decoration-none py-2 px-3 rounded hover-logout" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?');">
-            <i class="bi bi-box-arrow-left me-2 fs-5"></i> <span class="fw-bold">Đăng xuất</span>
+    <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
+        <a href="../login.html" class="nav-link logout-btn" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?');" title="Đăng xuất">
+            <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
         </a>
     </div>
 </div>
 
-<div class="main-content" id="mainContent" style="padding: 0; background-color: #f4f6f9; min-height: 100vh;">
+<div class="main-content" id="mainContent">
     
-    <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 py-3">
+    <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 shadow-sm">
         <div class="d-flex align-items-center">
-            <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
-            <h4 class="m-0 text-white fw-bold d-flex align-items-center">
-                <i class="bi bi-mortarboard-fill me-2 fs-3"></i> TỔNG QUAN HỌC TẬP
-            </h4>
+            <button class="btn btn-outline-light me-3 border-0" id="sidebarToggle"><i class="bi bi-list fs-3"></i></button>
+            <h5 class="m-0 text-white fw-bold d-flex align-items-center">
+                QUẢN LÝ ĐIỂM
+            </h5>
         </div>
         
         <div class="d-flex align-items-center text-white">
@@ -88,129 +188,76 @@
         </div>
     </div>
 
-    <div class="p-4">
-        
-        <div class="row g-4 mb-4">
-            <div class="col-md-3">
-                <div class="card stat-card-custom h-100 p-3 shadow-sm border-0 border-start border-4 border-primary">
-                    <div class="d-flex align-items-center">
-                        <div class="icon-box-custom bg-light-primary me-3 text-primary"><i class="bi bi-journal-bookmark-fill"></i></div>
-                        <div>
-                            <p class="text-muted fw-bold mb-1" style="font-size: 0.8rem;">MÔN ĐANG HỌC</p>
-                            <h3 class="mb-0 fw-bold text-dark">5</h3>
-                        </div>
+    <div class="p-4 pt-4">
+
+        <div class="col-12">
+            <div class="card grade-card shadow-sm border-0 h-100">
+                <div class="card-header bg-white pt-4 pb-3 border-0 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-bar-chart-fill text-primary me-2"></i>Chi Tiết Điểm Các Học Phần</h5>
+                        <p class="text-muted small mb-0 mt-1">Bảng tổng hợp điểm thành phần và chuyên cần của sinh viên.</p>
                     </div>
+                    <select class="form-select w-auto border-secondary text-primary fw-bold shadow-sm">
+                        <option value="HK2" selected>Học kỳ 2 (2025 - 2026)</option>
+                        <option value="HK1">Học kỳ 1 (2025 - 2026)</option>
+                    </select>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card stat-card-custom h-100 p-3 shadow-sm border-0 border-start border-4 border-danger">
-                    <div class="d-flex align-items-center">
-                        <div class="icon-box-custom bg-light-danger me-3 text-danger"><i class="bi bi-exclamation-triangle-fill"></i></div>
-                        <div>
-                            <p class="text-danger fw-bold mb-1" style="font-size: 0.8rem;">MÔN CẢNH BÁO</p>
-                            <h3 class="mb-0 fw-bold text-danger">1</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card stat-card-custom h-100 p-3 shadow-sm border-0 border-start border-4 border-warning">
-                    <div class="d-flex align-items-center">
-                        <div class="icon-box-custom bg-light-warning me-3 text-warning"><i class="bi bi-calendar-x-fill"></i></div>
-                        <div>
-                            <p class="text-muted fw-bold mb-1" style="font-size: 0.8rem;">TỔNG BUỔI VẮNG</p>
-                            <h3 class="mb-0 fw-bold text-dark">4</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card stat-card-custom h-100 p-3 shadow-sm border-0 border-start border-4 border-success">
-                    <div class="d-flex align-items-center">
-                        <div class="icon-box-custom bg-light-success me-3 text-success"><i class="bi bi-envelope-check-fill"></i></div>
-                        <div>
-                            <p class="text-muted fw-bold mb-1" style="font-size: 0.8rem;">PHẢN HỒI ĐÃ XỬ LÝ</p>
-                            <h3 class="mb-0 fw-bold text-dark">2</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row g-4">
-            <div class="col-lg-5">
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-header bg-white pt-3 pb-2 border-0 d-flex justify-content-between align-items-center">
-                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-calendar-day text-primary me-2"></i>Lịch học hôm nay</h5>
-                        <a href="schedule.html" class="btn btn-sm btn-outline-secondary">Xem toàn bộ lịch</a>
-                    </div>
-                    <div class="card-body">
-                        <div class="p-3 mb-3 bg-light rounded border-start border-4 border-primary shadow-sm">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="badge bg-primary px-2 py-1"><i class="bi bi-clock me-1"></i>Sáng - 12/03/2026</span>
-                                <span class="text-muted small fw-bold"><i class="bi bi-geo-alt-fill me-1 text-danger"></i>Phòng A201</span>
-                            </div>
-                            <h6 class="fw-bold text-dark mb-1">Cơ sở dữ liệu</h6>
-                            <p class="text-muted small mb-0"><i class="bi bi-person-badge text-primary me-1"></i>GV: ThS. Nguyễn Văn X</p>
-                        </div>
-
-                        <div class="p-4 text-center border rounded border-dashed bg-white mt-4">
-                            <i class="bi bi-cup-hot text-muted fs-1 mb-2"></i>
-                            <h6 class="text-muted fw-bold">Chiều nay bạn được nghỉ!</h6>
-                            <p class="small text-muted mb-0">Hãy dành thời gian ôn bài nhé.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-7">
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-header bg-white pt-3 pb-2 border-0 d-flex justify-content-between align-items-center">
-                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-activity text-danger me-2"></i>Tình trạng Chuyên cần</h5>
-                        <a href="my-attendance.html" class="btn btn-sm btn-outline-primary">Xem chi tiết</a>
-                    </div>
-                    <div class="card-body">
-                        
-                        <div class="mb-4">
-                            <div class="d-flex justify-content-between align-items-end mb-1">
-                                <div>
-                                    <h6 class="fw-bold text-danger mb-0">An ninh cơ sở dữ liệu</h6>
-                                    <small class="text-muted">Giới hạn vắng: 3 buổi</small>
-                                </div>
-                                <span class="fw-bold text-danger">Đã vắng 3/3</span>
-                            </div>
-                            <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-danger progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%;"></div>
-                            </div>
-                            <small class="text-danger fw-bold mt-1 d-block"><i class="bi bi-exclamation-circle me-1"></i>Bạn đang ở mức CẤM THI. <a href="my-attendance.html" class="text-danger text-decoration-underline">Vui lòng nộp minh chứng!</a></small>
-                        </div>
-
-                        <div class="mb-4">
-                            <div class="d-flex justify-content-between align-items-end mb-1">
-                                <div>
-                                    <h6 class="fw-bold text-dark mb-0">Chuyên đề 2</h6>
-                                    <small class="text-muted">Giới hạn vắng: 4 buổi</small>
-                                </div>
-                                <span class="fw-bold text-warning">Đã vắng 2/4</span>
-                            </div>
-                            <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-warning" role="progressbar" style="width: 50%;"></div>
-                            </div>
-                        </div>
-
-                        <div class="mb-2">
-                            <div class="d-flex justify-content-between align-items-end mb-1">
-                                <div>
-                                    <h6 class="fw-bold text-dark mb-0">Lập trình Web</h6>
-                                    <small class="text-muted">Giới hạn vắng: 3 buổi</small>
-                                </div>
-                                <span class="fw-bold text-success">Đã vắng 0/3</span>
-                            </div>
-                            <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-success" role="progressbar" style="width: 0%;"></div>
-                            </div>
-                        </div>
-
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-grades mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4">HỌC PHẦN</th>
+                                    <th class="text-center" title="Bài tập (20%)">BT (20%)</th>
+                                    <th class="text-center" title="Giữa kỳ (30%)">GK (30%)</th>
+                                    <th class="text-center" title="Cuối kỳ (50%)">CK (50%)</th>
+                                    <th class="text-center" title="Tổng kết">TỔNG</th>
+                                    <th class="text-center">CHỮ</th>
+                                    <th class="text-center pe-4">CHI TIẾT</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="ps-4 fw-bold text-dark">An ninh cơ sở dữ liệu</td>
+                                    <td class="text-center text-muted">8.5</td>
+                                    <td class="text-center text-muted">8.0</td>
+                                    <td class="text-center text-muted">7.5</td>
+                                    <td class="text-center fw-bold score-box text-primary">7.9</td>
+                                    <td class="text-center fw-bold grade-b">B+</td>
+                                    <td class="text-center pe-4">
+                                        <button class="btn btn-outline-primary btn-detail px-3" onclick="openDetailModal('An ninh cơ sở dữ liệu', '1/3', [8.0, 8.5, 9.0])">
+                                            <i class="bi bi-eye-fill me-1"></i> Xem
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="ps-4 fw-bold text-dark">Lập trình Web nâng cao</td>
+                                    <td class="text-center text-muted">9.0</td>
+                                    <td class="text-center text-muted">8.5</td>
+                                    <td class="text-center text-muted">9.0</td>
+                                    <td class="text-center fw-bold score-box text-primary">8.9</td>
+                                    <td class="text-center fw-bold grade-a">A</td>
+                                    <td class="text-center pe-4">
+                                        <button class="btn btn-outline-primary btn-detail px-3" onclick="openDetailModal('Lập trình Web nâng cao', '0/3', [9.0, 9.0, 9.0])">
+                                            <i class="bi bi-eye-fill me-1"></i> Xem
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="ps-4 fw-bold text-dark">Nhập môn khoa học dữ liệu</td>
+                                    <td class="text-center text-muted">7.0</td>
+                                    <td class="text-center text-muted">6.5</td>
+                                    <td class="text-center text-muted">8.0</td>
+                                    <td class="text-center fw-bold score-box text-primary">7.4</td>
+                                    <td class="text-center fw-bold grade-b">B</td>
+                                    <td class="text-center pe-4">
+                                        <button class="btn btn-outline-primary btn-detail px-3" onclick="openDetailModal('Nhập môn khoa học dữ liệu', '2/4', [7.5, 6.0, 7.5])">
+                                            <i class="bi bi-eye-fill me-1"></i> Xem
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -219,12 +266,83 @@
     </div>
 </div>
 
+<div class="modal fade" id="subjectDetailModal" tabindex="-1" aria-labelledby="subjectDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white border-bottom-0 pb-3">
+                <h5 class="modal-title fw-bold" id="subjectDetailModalLabel">Chi tiết môn học</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-3">
+                        <h6 class="fw-bold text-dark mb-3 border-bottom pb-2">
+                            <i class="bi bi-calendar2-x text-danger me-2"></i>Tình trạng Chuyên cần
+                        </h6>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted fw-bold">Tổng số buổi vắng:</span>
+                            <span class="badge bg-danger fs-6" id="modalAbsence">0/3</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-3">
+                        <h6 class="fw-bold text-dark mb-3 border-bottom pb-2">
+                            <i class="bi bi-journal-check text-success me-2"></i>Chi tiết Điểm Bài tập (20%)
+                        </h6>
+                        <ul class="list-group list-group-flush" id="modalBTList">
+                            </ul>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer border-top-0 pt-0 bg-light justify-content-center">
+                <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Logic mở menu mobile
+    // Mở rộng/Thu gọn Sidebar
     document.getElementById('sidebarToggle').addEventListener('click', function() {
-        document.getElementById('sidebar').classList.toggle('active');
+        if (window.innerWidth <= 768) {
+            document.getElementById('sidebar').classList.toggle('active');
+        } else {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.getElementById('mainContent').classList.toggle('expanded');
+        }
     });
+
+    // Xử lý Modal hiển thị chi tiết
+    function openDetailModal(subjectName, absenceRate, scores) {
+        // Cập nhật tiêu đề Modal
+        document.getElementById('subjectDetailModalLabel').innerText = subjectName;
+        
+        // Cập nhật chuyên cần
+        document.getElementById('modalAbsence').innerText = absenceRate;
+
+        // Cập nhật list điểm bài tập
+        const listContainer = document.getElementById('modalBTList');
+        listContainer.innerHTML = ''; // Reset list
+
+        scores.forEach((score, index) => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent';
+            li.innerHTML = `
+                <span class="text-dark fw-bold small">Bài tập / Lab ${index + 1}</span>
+                <span class="badge bg-primary rounded-pill px-3 py-2">${score.toFixed(1)}</span>
+            `;
+            listContainer.appendChild(li);
+        });
+
+        // Hiển thị modal
+        var myModal = new bootstrap.Modal(document.getElementById('subjectDetailModal'));
+        myModal.show();
+    }
 </script>
 </body>
 </html>
