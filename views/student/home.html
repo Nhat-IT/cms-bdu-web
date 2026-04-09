@@ -37,12 +37,33 @@
             z-index: 10;
         }
 
-        /* Trạng thái thu gọn (Collapsed) */
+        /* Trạng thái thu gọn (Collapsed) - ĐÃ FIX CĂN CHỈNH */
         .sidebar.collapsed { width: 85px; }
         .sidebar.collapsed .hide-on-collapse { display: none !important; }
         .sidebar.collapsed .nav-link { justify-content: center; padding: 12px 0; margin: 5px 10px; }
         .sidebar.collapsed .nav-link i { margin-right: 0 !important; font-size: 1.3rem; }
-        .sidebar.collapsed .profile-trigger img { width: 45px; margin-bottom: 0 !important; }
+        
+        /* Fix icon Logo trên cùng cho thẳng hàng */
+        .sidebar.collapsed .brand-container a { justify-content: center; width: 100%; }
+        .sidebar.collapsed .brand-container a i { margin-right: 0 !important; }
+
+        /* Fix Avatar cho thẳng hàng */
+        .sidebar.collapsed .profile-container { 
+            padding: 20px 0 15px; 
+            display: flex; 
+            justify-content: center; 
+        }
+        .sidebar.collapsed .profile-trigger {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 5px;
+        }
+        .sidebar.collapsed .profile-trigger img { 
+            width: 40px; 
+            height: 40px;
+            margin-bottom: 0 !important; 
+        }
         
         /* Nội dung chính linh hoạt theo Sidebar */
         .main-content { margin-left: 260px; transition: all 0.3s ease; background-color: #f4f6f9; min-height: 100vh; padding-bottom: 50px; }
@@ -112,9 +133,9 @@
     
     <div class="profile-container text-center flex-shrink-0">
         <a href="student-profile.html" class="profile-trigger" title="Xem hồ sơ cá nhân">
-            <img src="https://ui-avatars.com/api/?name=Thi+C&background=0d6efd&color=fff" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar">
+            <img src="https://ui-avatars.com/api/?name=Nhat+Y&background=0d6efd&color=fff" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar">
             <div class="hide-on-collapse">
-                <div class="text-white fw-bold fs-6">Nguyễn Thị C</div>
+                <div class="text-white fw-bold fs-6">Phạm Huỳnh Nhật Ý</div>
                 <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">MSSV: 22050111</div>
             </div>
         </a>

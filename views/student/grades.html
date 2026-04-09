@@ -9,10 +9,11 @@
     <link rel="stylesheet" href="../../public/css/style.css">
     <style>
         /* ==========================================
-           TỐI ƯU GIAO DIỆN SIDEBAR TWO-TONE
+           TỐI ƯU GIAO DIỆN SIDEBAR TWO-TONE (XU HƯỚNG)
            ========================================== */
         .sidebar { 
             width: 260px; 
+            /* Phần dưới sử dụng dải màu Deep Slate Gradient cực kỳ sang trọng */
             background: linear-gradient(180deg, #4e71aa 0%, #0e255b 100%);
             box-shadow: 4px 0 15px rgba(0,0,0,0.1); 
             transition: all 0.3s ease; 
@@ -25,9 +26,10 @@
             flex-direction: column;
         }
         
+        /* Box Logo Nền Trắng Cố Định */
         .brand-container {
             background-color: #ffffff;
-            height: 70px; 
+            height: 70px; /* Độ cao cố định để bằng với Top Navbar */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -35,41 +37,26 @@
             z-index: 10;
         }
 
+        /* Trạng thái thu gọn (Collapsed) */
         .sidebar.collapsed { width: 85px; }
         .sidebar.collapsed .hide-on-collapse { display: none !important; }
         .sidebar.collapsed .nav-link { justify-content: center; padding: 12px 0; margin: 5px 10px; }
         .sidebar.collapsed .nav-link i { margin-right: 0 !important; font-size: 1.3rem; }
+        .sidebar.collapsed .profile-trigger img { width: 45px; margin-bottom: 0 !important; }
         
-        .sidebar.collapsed .brand-container a { justify-content: center; width: 100%; }
-        .sidebar.collapsed .brand-container a i { margin-right: 0 !important; }
-
-        .sidebar.collapsed .profile-container { 
-            padding: 20px 0 15px; 
-            display: flex; 
-            justify-content: center; 
-        }
-        .sidebar.collapsed .profile-trigger {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 5px;
-        }
-        .sidebar.collapsed .profile-trigger img { 
-            width: 40px; 
-            height: 40px;
-            margin-bottom: 0 !important; 
-        }
-        
+        /* Nội dung chính linh hoạt theo Sidebar */
         .main-content { margin-left: 260px; transition: all 0.3s ease; background-color: #f4f6f9; min-height: 100vh; padding-bottom: 50px; }
         .main-content.expanded { margin-left: 85px; }
 
+        /* Vùng thanh cuộn tàng hình cho Menu */
         .sidebar-scrollable { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 10px; }
         .sidebar-scrollable::-webkit-scrollbar { width: 4px; }
         .sidebar-scrollable::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
         .sidebar-scrollable::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
 
+        /* Style Menu Links (Nổi bật trên nền tối) */
         .sidebar .nav-link {
-            color: #94a3b8; 
+            color: #94a3b8; /* Màu xám sáng */
             font-weight: 500; padding: 10px 15px; border-radius: 8px; margin: 4px 15px;
             transition: all 0.2s ease; display: flex; align-items: center; text-decoration: none;
         }
@@ -82,15 +69,19 @@
         }
         .sidebar .nav-link i { font-size: 1.1rem; margin-right: 12px; }
 
+        /* Style Logout Button */
         .logout-btn { color: #f87171 !important; }
         .logout-btn:hover { background-color: rgba(239, 68, 68, 0.1) !important; color: #fca5a5 !important; }
 
+        /* Khối Profile */
         .profile-container { padding: 20px 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .profile-trigger { display: block; color: inherit; text-decoration: none; transition: all 0.2s ease; border-radius: 10px; padding: 5px; }
         .profile-trigger:hover { background-color: rgba(255, 255, 255, 0.05); }
 
-        .top-navbar-blue { height: 70px; background-color: #0d6efd; } 
+        /* Top Navbar điều chỉnh cho ăn khớp */
+        .top-navbar-blue { height: 70px; background-color: #0d6efd; } /* Cùng chiều cao với Brand Container */
 
+        /* Responsive Mobile */
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); width: 260px; }
             .sidebar.active { transform: translateX(0); }
@@ -225,7 +216,7 @@
                                     <td class="text-center fw-bold score-box text-primary">7.9</td>
                                     <td class="text-center fw-bold grade-b">B+</td>
                                     <td class="text-center pe-4">
-                                        <button class="btn btn-outline-primary btn-detail px-3" onclick="openDetailModal('An ninh cơ sở dữ liệu', '1/3', [8.0, 8.5, 9.0])">
+                                        <button class="btn btn-outline-primary btn-detail px-3" onclick='openDetailModal("An ninh cơ sở dữ liệu", "1/3", [{"name": "Báo cáo giữa kỳ - Chương 1,2", "score": 8.0}, {"name": "Thực hành Lab 1 trên Server", "score": 8.5}, {"name": "Tiểu luận cuối môn", "score": 9.0}])'>
                                             <i class="bi bi-eye-fill me-1"></i> Xem
                                         </button>
                                     </td>
@@ -238,7 +229,7 @@
                                     <td class="text-center fw-bold score-box text-primary">8.9</td>
                                     <td class="text-center fw-bold grade-a">A</td>
                                     <td class="text-center pe-4">
-                                        <button class="btn btn-outline-primary btn-detail px-3" onclick="openDetailModal('Lập trình Web nâng cao', '0/3', [9.0, 9.0, 9.0])">
+                                        <button class="btn btn-outline-primary btn-detail px-3" onclick='openDetailModal("Lập trình Web nâng cao", "0/3", [{"name": "Bài tập cá nhân Tuần 1", "score": 9.0}, {"name": "Đồ án Website bán hàng (Phase 1)", "score": 9.0}, {"name": "Đồ án Website bán hàng (Phase 2)", "score": 9.0}])'>
                                             <i class="bi bi-eye-fill me-1"></i> Xem
                                         </button>
                                     </td>
@@ -251,7 +242,7 @@
                                     <td class="text-center fw-bold score-box text-primary">7.4</td>
                                     <td class="text-center fw-bold grade-b">B</td>
                                     <td class="text-center pe-4">
-                                        <button class="btn btn-outline-primary btn-detail px-3" onclick="openDetailModal('Nhập môn khoa học dữ liệu', '2/4', [7.5, 6.0, 7.5])">
+                                        <button class="btn btn-outline-primary btn-detail px-3" onclick='openDetailModal("Nhập môn khoa học dữ liệu", "2/4", [{"name": "Crawl dữ liệu Shopee", "score": 7.5}, {"name": "Phân tích và Trực quan hóa EDA", "score": 6.0}, {"name": "Xây dựng Model Dự đoán", "score": 7.5}])'>
                                             <i class="bi bi-eye-fill me-1"></i> Xem
                                         </button>
                                     </td>
@@ -317,8 +308,8 @@
         }
     });
 
-    // Xử lý Modal hiển thị chi tiết
-    function openDetailModal(subjectName, absenceRate, scores) {
+    // Xử lý Modal hiển thị chi tiết (Cập nhật để render tên bài tập cụ thể)
+    function openDetailModal(subjectName, absenceRate, assignments) {
         // Cập nhật tiêu đề Modal
         document.getElementById('subjectDetailModalLabel').innerText = subjectName;
         
@@ -329,12 +320,13 @@
         const listContainer = document.getElementById('modalBTList');
         listContainer.innerHTML = ''; // Reset list
 
-        scores.forEach((score, index) => {
+        // Duyệt qua mảng object để lấy Tên và Điểm
+        assignments.forEach((item) => {
             const li = document.createElement('li');
             li.className = 'list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent';
             li.innerHTML = `
-                <span class="text-dark fw-bold small">Bài tập / Lab ${index + 1}</span>
-                <span class="badge bg-primary rounded-pill px-3 py-2">${score.toFixed(1)}</span>
+                <span class="text-dark fw-bold small">${item.name}</span>
+                <span class="badge bg-primary rounded-pill px-3 py-2">${item.score.toFixed(1)}</span>
             `;
             listContainer.appendChild(li);
         });
