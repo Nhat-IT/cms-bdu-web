@@ -206,6 +206,84 @@
     background-color: #0d6efd;
 }
 
+/* Giao diện dùng chung Student: Popup thông báo từ icon chuông */
+.student-notify-wrapper {
+    position: relative;
+}
+
+.student-notify-dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: min(380px, 92vw);
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid rgba(13, 110, 253, 0.18);
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.22);
+    overflow: hidden;
+    z-index: 2000;
+    display: none;
+}
+
+.student-notify-dropdown.show {
+    display: block;
+}
+
+.student-notify-header {
+    padding: 12px 14px;
+    background: linear-gradient(180deg, #f8fbff, #ffffff);
+    border-bottom: 1px solid #edf2ff;
+}
+
+.student-notify-item {
+    display: block;
+    padding: 10px 14px;
+    text-decoration: none;
+    color: #212529;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background-color 0.18s ease;
+}
+
+.student-notify-item:hover {
+    background-color: #f8fbff;
+}
+
+.student-notify-item:last-child {
+    border-bottom: none;
+}
+
+.student-notify-source {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.student-notify-time {
+    font-size: 0.78rem;
+    color: #6c757d;
+}
+
+.student-notify-title {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: #1f2937;
+}
+
+.student-notify-footer {
+    padding: 10px 14px;
+    border-top: 1px solid #edf2ff;
+    background: #ffffff;
+}
+
+.student-notify-view-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
 /* Giao diện dùng chung Student: Hiển thị trên mobile */
 @media (max-width: 768px) {
     .sidebar {
@@ -224,5 +302,10 @@
     .main-content,
     .main-content.expanded {
         margin-left: 0;
+    }
+
+    .student-notify-dropdown {
+        right: -6px;
+        width: min(360px, 94vw);
     }
 }
