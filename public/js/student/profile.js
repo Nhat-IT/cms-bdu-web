@@ -1,14 +1,4 @@
-// Logic Mở rộng/Thu gọn Sidebar
-document.getElementById('sidebarToggle').addEventListener('click', function() {
-    if (window.innerWidth <= 768) {
-        document.getElementById('sidebar').classList.toggle('active');
-    } else {
-        document.getElementById('sidebar').classList.toggle('collapsed');
-        document.getElementById('mainContent').classList.toggle('expanded');
-    }
-});
-
-// --- LOGIC UPLOAD AVATAR ---
+// Trang hồ sơ sinh viên: xử lý tải ảnh đại diện và các thao tác hồ sơ.
 document.getElementById('avatarUploadInput').addEventListener('change', function(event) {
     const file = event.target.files[0];
     if (file) {

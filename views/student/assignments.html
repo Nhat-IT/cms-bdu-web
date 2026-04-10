@@ -7,98 +7,10 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../../public/css/style.css">
+    <!-- CSS dùng chung cho Student -->
+    <link rel="stylesheet" href="../../public/css/student/student-layout.css">
     <style>
-        /* ==========================================
-           TỐI ƯU GIAO DIỆN SIDEBAR TWO-TONE (XU HƯỚNG)
-           ========================================== */
-        .sidebar { 
-            width: 260px; 
-            background: linear-gradient(180deg, #4e71aa 0%, #0e255b 100%);
-            box-shadow: 4px 0 15px rgba(0,0,0,0.1); 
-            transition: all 0.3s ease; 
-            z-index: 1000; 
-            position: fixed; 
-            top: 0; left: 0; 
-            height: 100vh; 
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .brand-container {
-            background-color: #ffffff;
-            height: 70px; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            z-index: 10;
-        }
-
-        .sidebar.collapsed { width: 85px; }
-        .sidebar.collapsed .hide-on-collapse { display: none !important; }
-        .sidebar.collapsed .nav-link { justify-content: center; padding: 12px 0; margin: 5px 10px; }
-        .sidebar.collapsed .nav-link i { margin-right: 0 !important; font-size: 1.3rem; }
-        
-        .sidebar.collapsed .brand-container a { justify-content: center; width: 100%; }
-        .sidebar.collapsed .brand-container a i { margin-right: 0 !important; }
-
-        .sidebar.collapsed .profile-container { 
-            padding: 20px 0 15px; 
-            display: flex; 
-            justify-content: center; 
-        }
-        .sidebar.collapsed .profile-trigger {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 5px;
-        }
-        .sidebar.collapsed .profile-trigger img { 
-            width: 40px; 
-            height: 40px;
-            margin-bottom: 0 !important; 
-        }
-        
-        .main-content { margin-left: 260px; transition: all 0.3s ease; background-color: #f4f6f9; min-height: 100vh; padding-bottom: 50px; }
-        .main-content.expanded { margin-left: 85px; }
-
-        .sidebar-scrollable { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 10px; }
-        .sidebar-scrollable::-webkit-scrollbar { width: 4px; }
-        .sidebar-scrollable::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
-        .sidebar-scrollable::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
-
-        .sidebar .nav-link {
-            color: #94a3b8; 
-            font-weight: 500; padding: 10px 15px; border-radius: 8px; margin: 4px 15px;
-            transition: all 0.2s ease; display: flex; align-items: center; text-decoration: none;
-        }
-        .sidebar .nav-link:hover { background-color: rgba(255,255,255,0.05); color: #ffffff; transform: translateX(3px); }
-        .sidebar .nav-link.active { 
-            background-color: #0d6efd; 
-            color: #ffffff; 
-            font-weight: bold; 
-            box-shadow: 0 4px 10px rgba(13, 110, 253, 0.4); 
-        }
-        .sidebar .nav-link i { font-size: 1.1rem; margin-right: 12px; }
-
-        .logout-btn { color: #f87171 !important; }
-        .logout-btn:hover { background-color: rgba(239, 68, 68, 0.1) !important; color: #fca5a5 !important; }
-
-        .profile-container { padding: 20px 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .profile-trigger { display: block; color: inherit; text-decoration: none; transition: all 0.2s ease; border-radius: 10px; padding: 5px; }
-        .profile-trigger:hover { background-color: rgba(255, 255, 255, 0.05); }
-
-        .top-navbar-blue { height: 70px; background-color: #0d6efd; } 
-
-        @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); width: 260px; }
-            .sidebar.active { transform: translateX(0); }
-            .sidebar.active .hide-on-collapse { display: block !important; }
-            .main-content, .main-content.expanded { margin-left: 0; }
-        }
-
-        /* Classroom Style Adjustments */
+/* Classroom Style Adjustments */
         .assignment-icon-bg { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
         .assignment-card { transition: box-shadow 0.2s; cursor: pointer; border-left: 4px solid transparent; }
         .assignment-card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-left-color: #0d6efd; }
@@ -116,6 +28,12 @@
         .material-card { border: 1px solid #e0e0e0; border-radius: 8px; display: flex; overflow: hidden; max-width: 400px; cursor: pointer; transition: background 0.2s; }
         .material-card:hover { background-color: #f1f3f4; }
         .material-icon { width: 60px; display: flex; align-items: center; justify-content: center; border-right: 1px solid #e0e0e0; font-size: 1.5rem; }
+
+        /* Chi tiết bài tập: ô nhận xét riêng tư tự giãn theo nội dung */
+        .auto-grow-textarea {
+            min-height: calc(1.5em + 0.75rem + 2px);
+            overflow: hidden;
+        }
     </style>
 </head>
 <body class="dashboard-body">
@@ -137,7 +55,7 @@
                 <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">MSSV: 22050111</div>
             </div>
         </a>
-        <span class="badge bg-primary bg-opacity-25 text-info border border-info border-opacity-50 mt-1 hide-on-collapse" style="font-size: 0.75rem;">LỚP: 25TH01</span>
+        <span class="badge student-class-badge mt-1 hide-on-collapse">LỚP: 25TH01</span>
     </div>
 
     <div class="sidebar-scrollable w-100">
@@ -377,7 +295,7 @@
                         <div class="d-flex align-items-start mt-3">
                             <img src="https://ui-avatars.com/api/?name=Thi+C&background=17a2b8&color=fff" class="rounded-circle me-2 mt-1 border" width="32" alt="Avatar">
                             <div class="input-group">
-                                <textarea class="form-control bg-light border-secondary border-opacity-25" rows="1" placeholder="Thêm nhận xét riêng tư..." style="font-size: 0.9rem; resize: none;"></textarea>
+                                <textarea class="form-control bg-light border-secondary border-opacity-25 auto-grow-textarea" rows="1" placeholder="Thêm nhận xét riêng tư..." style="font-size: 0.9rem; resize: none;"></textarea>
                                 <button class="btn btn-light border"><i class="bi bi-send-fill text-primary"></i></button>
                             </div>
                         </div>
@@ -409,18 +327,10 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- JS dùng chung cho Student -->
+<script src="../../public/js/student/student-layout.js"></script>
 <script>
-    // Logic Mở rộng/Thu gọn Sidebar
-    document.getElementById('sidebarToggle').addEventListener('click', function() {
-        if (window.innerWidth <= 768) {
-            document.getElementById('sidebar').classList.toggle('active');
-        } else {
-            document.getElementById('sidebar').classList.toggle('collapsed');
-            document.getElementById('mainContent').classList.toggle('expanded');
-        }
-    });
-
-    // --- LOGIC TÌM KIẾM MÔN HỌC ---
+// --- LOGIC TÌM KIẾM MÔN HỌC ---
     function filterSubjects() {
         const input = document.getElementById("subjectFilter").value.toLowerCase();
         const subjectGroups = document.querySelectorAll(".subject-group");
@@ -443,9 +353,22 @@
     const btnUnsubmit = document.getElementById('btnUnsubmit');
     const workStatusText = document.getElementById('workStatusText');
     const teacherFeedbackDiv = document.getElementById('teacherFeedbackDiv');
+    const autoGrowTextareas = document.querySelectorAll('.auto-grow-textarea');
 
     let submittedItems = [];
     let currentMode = 'pending'; 
+
+    function autoGrowTextarea(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+
+    autoGrowTextareas.forEach((textarea) => {
+        autoGrowTextarea(textarea);
+        textarea.addEventListener('input', function () {
+            autoGrowTextarea(textarea);
+        });
+    });
 
     function openAssignmentDetail(status) {
         currentMode = status;
