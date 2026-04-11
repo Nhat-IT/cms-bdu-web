@@ -1,0 +1,13 @@
+        .action-btn { padding: 0.2rem 0.5rem; font-size: 0.875rem; border-radius: 4px; }
+        
+        /* Icon File Styles */
+        .file-icon { font-size: 2rem; line-height: 1; }
+        .icon-pdf { color: #dc3545; }
+        .icon-word { color: #0d6efd; }
+        .icon-excel { color: #198754; }
+        .icon-ppt { color: #fd7e14; }
+        .icon-zip { color: #ffc107; }
+        
+        .file-link { cursor: pointer; transition: opacity 0.2s; color: inherit; text-decoration: none; }
+        .file-link:hover { opacity: 0.8; }
+        .file-link:hover .file-title { color: #0d6efd; text-decoration: underline; }

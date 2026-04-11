@@ -7,23 +7,20 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../../public/css/style.css">
-    <style>
-        .sidebar-teacher { background-color: #1e293b; position: fixed; top: 0; left: 0; width: 250px; height: 100vh; z-index: 1000; }
-        .main-content { margin-left: 250px; min-height: 100vh; background-color: #f1f5f9; }
-        .top-navbar-teacher { background-color: #0f172a !important; color: white; }
-        .action-btn { padding: 0.2rem 0.5rem; font-size: 0.875rem; border-radius: 4px; }
-        .nav-tabs .nav-link.active { font-weight: bold; border-bottom: 3px solid #0d6efd; color: #0d6efd; background-color: transparent;}
-        .nav-tabs .nav-link { color: #6c757d; border: none; font-size: 1.05rem;}
-        .nav-tabs .nav-link:hover { color: #0d6efd; border-color: transparent; }
-        .file-link { cursor: pointer; transition: opacity 0.2s; }
-        .file-link:hover { opacity: 0.7; text-decoration: underline !important; }
-    </style>
+    <link rel="stylesheet" href="../../public/css/layout.css">
+    <link rel="stylesheet" href="../../public/css/teacher/teacher-layout.css">
+    <link rel="stylesheet" href="../../public/css/teacher/class-assignments.css">
 </head>
 <body class="dashboard-body">
 
     <div class="sidebar sidebar-teacher d-flex flex-column" id="sidebar">
         <div>
-            <div class="brand text-white text-center py-3 fs-4 fw-bold border-bottom border-secondary border-opacity-25">CMS TEACHER</div>
+            <div class="brand text-center py-3 border-bottom border-secondary border-opacity-25">
+                <a href="home.html" class="text-decoration-none text-primary d-inline-flex align-items-center fw-bold fs-4">
+                    <i class="bi bi-mortarboard-fill fs-2 me-2"></i>
+                    <span class="brand-label">CMS BDU</span>
+                </a>
+            </div>
             <div class="text-start mt-3 mb-2 ms-3 text-white-50 small fw-bold">MENU GIẢNG VIÊN</div>
             <nav class="nav flex-column ps-2 pe-2">
                 <a href="home.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-speedometer2 me-2"></i> Tổng quan</a>
@@ -35,6 +32,7 @@
                     <span class="badge bg-danger rounded-pill">3</span>
                 </a>
                 <a href="documents.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-folder2-open me-2"></i> Kho tài liệu</a>
+                <a href="announcements.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-megaphone-fill me-2"></i> Đăng bảng tin</a>
             </nav>
         </div>
         
@@ -331,72 +329,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // XỬ LÝ SỰ KIỆN CLICK VÀO FILE
-        function handleFileClick(event, fileName, fileUrl) {
-            event.preventDefault(); // Ngăn chặn chuyển trang mặc định của thẻ <a>
-            
-            // Lấy đuôi file (extension)
-            const ext = fileName.split('.').pop().toLowerCase();
-            
-            // Danh sách các định dạng file nén hoặc file chạy -> Bắt buộc tải xuống
-            const downloadExts = ['zip', 'rar', '7z', 'tar', 'gz', 'exe'];
-            
-            if (downloadExts.includes(ext)) {
-                // Hành vi 1: Tải xuống trực tiếp
-                if(confirm(`📦 Tệp [${fileName}] là tệp nén.\nBấm OK để tải xuống thiết bị của bạn.`)) {
-                    // Mô phỏng tải xuống. Thực tế sẽ dùng window.location.href = fileUrl;
-                    alert('⬇️ Đang tải tệp xuống...'); 
-                }
-            } else {
-                // Hành vi 2: Xem trực tiếp bằng Google Drive Viewer
-                if(confirm(`👀 Mở tệp [${fileName}] trong trình xem trước?`)) {
-                    // Nếu là PDF thì trình duyệt đọc được ngay. 
-                    // Nếu là DOCX, XLSX thì dùng Google Viewer đọc giùm.
-                    let viewerUrl = fileUrl;
-                    if(ext === 'doc' || ext === 'docx' || ext === 'xls' || ext === 'xlsx' || ext === 'ppt' || ext === 'pptx') {
-                        viewerUrl = `https://drive.google.com/viewerng/viewer?url=${encodeURIComponent(fileUrl)}`;
-                    }
-                    window.open(viewerUrl, '_blank');
-                }
-            }
-        }
-
-        // JS Xử lý Modal Thêm/Sửa Bài Tập
-        function openAssignmentModal(mode, title = '', classId = '', deadline = '', desc = '') {
-            const modalTitle = document.getElementById('assignmentModalTitle');
-            const submitBtn = document.getElementById('assignmentModalSubmitBtn');
-
-            if(mode === 'add') {
-                modalTitle.innerHTML = '<i class="bi bi-journal-plus me-2"></i>Tạo Bài tập mới';
-                submitBtn.innerText = 'Giao bài tập';
-                document.getElementById('modalAssignTitle').value = '';
-                document.getElementById('modalAssignClass').value = '';
-                document.getElementById('modalAssignDeadline').value = '';
-                document.getElementById('modalAssignDesc').value = '';
-                document.getElementById('assignmentFile').value = '';
-            } else {
-                modalTitle.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Cập nhật Bài tập';
-                submitBtn.innerText = 'Lưu thay đổi';
-                document.getElementById('modalAssignTitle').value = title;
-                document.getElementById('modalAssignClass').value = classId;
-                document.getElementById('modalAssignDeadline').value = deadline;
-                document.getElementById('modalAssignDesc').value = desc;
-            }
-        }
-
-        function confirmDeleteAssignment(title) {
-            if(confirm(`⚠️ CẢNH BÁO: Bạn có chắc chắn muốn xóa bài tập [${title}]?\nTOÀN BỘ bài nộp của sinh viên cho bài tập này cũng sẽ bị xóa vĩnh viễn!`)) {
-                alert(`✅ Đã xóa bài tập thành công!`);
-            }
-        }
-
-        function openGradeModal(studentId, studentName, score, feedback) {
-            document.getElementById('modalStudentId').innerText = 'MSSV: ' + studentId;
-            document.getElementById('modalStudentName').innerText = studentName;
-            document.getElementById('modalScoreInput').value = score;
-            document.getElementById('modalFeedbackInput').value = feedback;
-        }
-    </script>
+    <script src="../../public/js/script.js"></script>
+<script src="../../public/js/teacher/teacher-layout.js"></script>
+    
+    <script src="../../public/js/teacher/class-assignments.js"></script>
 </body>
 </html>

@@ -1,0 +1,58 @@
+/* ==========================================
+           TÙY CHỈNH BẢNG THỜI KHÓA BIỂU
+           ========================================== */
+        .schedule-table-wrapper {
+            overflow-x: auto;
+        }
+        .schedule-table { 
+            min-width: 1000px; 
+            border-collapse: collapse; 
+            border: 2px solid #b71c1c; 
+        }
+        .schedule-table th, .schedule-table td { border: 1px solid #dee2e6; }
+        .schedule-table th { background-color: #f8f9fa; text-align: center; vertical-align: middle; padding: 10px; font-size: 0.85rem; }
+        .schedule-table td { width: 13.5%; vertical-align: top; padding: 0; position: relative; height: 40px; }
+        
+        .edge-col { 
+            background-color: #b71c1c !important; 
+            color: #ffffff !important; 
+            text-align: center !important; 
+            vertical-align: middle !important; 
+            font-weight: bold; 
+            width: 85px !important; 
+            min-width: 85px !important;
+            max-width: 85px !important;
+            font-size: 0.85rem; 
+        }
+        
+        .subject-block {
+            background-color: #dbeafe;
+            border: 1px solid #dc3545;
+            padding: 8px;
+            height: 100%;
+            width: 100%;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            color: #000;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5);
+            transition: all 0.2s ease;
+        }
+        .subject-block:hover { 
+            background-color: #bfdbfe; 
+            cursor: pointer; 
+            transform: scale(0.99);
+        }
+        .subject-title { font-weight: bold; margin-bottom: 4px; font-size: 0.85rem; }
+        
+        .week-nav-btn { cursor: pointer; padding: 0 10px; font-weight: bold; color: #495057; transition: color 0.2s; }
+        .week-nav-btn:hover { color: #dc3545 !important; } 
+
+        /* Chế độ In ấn (Print) */
+        @media print {
+            .sidebar, .top-navbar-blue, .filter-section { display: none !important; }
+            .main-content { margin-left: 0 !important; padding: 0 !important; }
+            .card { border: none !important; box-shadow: none !important; }
+            .schedule-table { border: 2px solid #000; }
+            .subject-block { border: 1px solid #000; background-color: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .edge-col { background-color: #333 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }

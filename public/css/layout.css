@@ -1,51 +1,138 @@
 /* ==========================================
-   LAYOUT.CSS - GIAO DIỆN DÙNG CHUNG
+   LAYOUT.CSS - MENU DUNG CHUNG TOAN HE THONG
    ========================================== */
-.sidebar { width: 260px; background: linear-gradient(180deg, #4e71aa 0%, #0e255b 100%); box-shadow: 4px 0 15px rgba(0,0,0,0.1); transition: all 0.3s ease; z-index: 1000; position: fixed; top: 0; left: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-.brand-container { background-color: #ffffff; height: 70px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15); z-index: 10; }
-.sidebar.collapsed { width: 85px; }
-.sidebar.collapsed .hide-on-collapse { display: none !important; }
-.sidebar.collapsed .nav-link { justify-content: center; padding: 12px 0; margin: 5px 10px; }
-.sidebar.collapsed .nav-link i { margin-right: 0 !important; font-size: 1.3rem; }
-.sidebar.collapsed .brand-container a { justify-content: center; width: 100%; }
-.sidebar.collapsed .brand-container a i { margin-right: 0 !important; }
-.sidebar.collapsed .profile-container { padding: 20px 0 15px; display: flex; justify-content: center; }
-.sidebar.collapsed .profile-trigger { display: flex; justify-content: center; align-items: center; padding: 5px; }
-.sidebar.collapsed .profile-trigger img { width: 40px; height: 40px; margin-bottom: 0 !important; }
 
-.main-content { margin-left: 260px; transition: all 0.3s ease; background-color: #f4f6f9; min-height: 100vh; padding-bottom: 50px; }
-.main-content.expanded { margin-left: 85px; }
+:root {
+    --cms-sidebar-width: 260px;
+    --cms-sidebar-collapsed-width: 86px;
+}
 
-.sidebar-scrollable { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 10px; }
-.sidebar-scrollable::-webkit-scrollbar { width: 4px; }
-.sidebar-scrollable::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
-.sidebar-scrollable::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+.sidebar {
+    width: var(--cms-sidebar-width);
+    transition: width 0.3s ease, transform 0.3s ease;
+    will-change: width, transform;
+}
 
-.sidebar .nav-link { color: #e2e8f0; font-weight: 500; padding: 10px 15px; border-radius: 8px; margin: 4px 15px; transition: all 0.2s ease; display: flex; align-items: center; text-decoration: none; }
-.sidebar .nav-link:hover { background-color: rgba(255,255,255,0.05); color: #ffffff; transform: translateX(3px); }
-.sidebar .nav-link.active { background-color: #0d6efd; color: #ffffff; font-weight: bold; box-shadow: 0 4px 10px rgba(13, 110, 253, 0.4); }
-.sidebar .nav-link i { font-size: 1.1rem; margin-right: 12px; }
+.main-content,
+#mainContent {
+    margin-left: var(--cms-sidebar-width);
+    transition: margin-left 0.3s ease;
+}
 
-.logout-btn { color: #f87171 !important; }
-.logout-btn:hover { background-color: rgba(239, 68, 68, 0.1) !important; color: #fca5a5 !important; }
-.profile-container { padding: 20px 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.profile-trigger { display: block; color: inherit; text-decoration: none; transition: all 0.2s ease; border-radius: 10px; padding: 5px; }
-.profile-trigger:hover { background-color: rgba(255, 255, 255, 0.05); }
+.main-content.expanded,
+#mainContent.expanded {
+    margin-left: var(--cms-sidebar-collapsed-width);
+}
 
-.top-navbar-blue { height: 70px; background-color: #0d6efd; }
+.sidebar.collapsed {
+    width: var(--cms-sidebar-collapsed-width);
+}
 
-/* Dashboard Thống Kê (Dùng chung cho Home, Grades...) */
-.stat-card-custom { border-radius: 8px; border: none; transition: transform 0.2s; }
-.stat-card-custom:hover { transform: translateY(-3px); box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1) !important; }
-.icon-box-custom { width: 48px; height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
-.bg-light-primary { background-color: rgba(13, 110, 253, 0.1); }
-.bg-light-success { background-color: rgba(25, 135, 84, 0.1); }
-.bg-light-warning { background-color: rgba(255, 193, 7, 0.1); }
-.bg-light-danger { background-color: rgba(220, 53, 69, 0.1); }
+.sidebar.collapsed .hide-on-collapse,
+.sidebar.collapsed .brand-label,
+.sidebar.collapsed .small.fw-bold,
+.sidebar.collapsed .hover-logout span {
+    display: none !important;
+}
+
+.sidebar.collapsed .nav-link,
+.sidebar.collapsed nav a {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 0;
+    margin: 5px 10px;
+}
+
+.sidebar.collapsed .nav-link i,
+.sidebar.collapsed nav a i,
+.sidebar.collapsed .hover-logout i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0 !important;
+}
+
+.sidebar.collapsed .hover-logout {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+}
+
+.sidebar.collapsed .brand i {
+    margin-right: 0 !important;
+}
+
+.sidebar.collapsed .brand {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.sidebar.collapsed .brand a {
+    width: 100%;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.sidebar-admin.collapsed nav a {
+    font-size: 0;
+    line-height: 1;
+}
+
+.sidebar-admin.collapsed nav a i {
+    font-size: 1.2rem;
+}
+
+.sidebar .brand .brand-label {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.sidebar nav a,
+.sidebar .nav-link {
+    font-size: 0.95rem;
+}
+
+.sidebar-admin nav a:hover,
+.sidebar-admin nav a.active,
+.sidebar-admin .nav-link:hover,
+.sidebar-admin .nav-link.active {
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+    border-left: none !important;
+    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.4);
+}
+
+.sidebar nav a:hover,
+.sidebar .nav-link:hover {
+    border-left: none !important;
+}
+
+.top-navbar-admin h4,
+.top-navbar-blue h4,
+.top-navbar-teacher h4 {
+    font-size: 1.1rem;
+}
 
 @media (max-width: 768px) {
-    .sidebar { transform: translateX(-100%); width: 260px; }
-    .sidebar.active { transform: translateX(0); }
-    .sidebar.active .hide-on-collapse { display: block !important; }
-    .main-content, .main-content.expanded { margin-left: 0; }
+    .sidebar {
+        transform: translateX(-100%);
+        width: var(--cms-sidebar-width);
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .main-content,
+    .main-content.expanded,
+    #mainContent,
+    #mainContent.expanded {
+        margin-left: 0 !important;
+    }
 }

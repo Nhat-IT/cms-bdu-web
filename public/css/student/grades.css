@@ -1,0 +1,12 @@
+/* CSS Bảng Điểm */
+        .grade-card { border-radius: 12px; overflow: hidden; }
+        .table-grades thead { background-color: #f8f9fa; }
+        .table-grades th { font-weight: 700; color: #495057; border-bottom: 2px solid #dee2e6; padding: 12px; }
+        .table-grades td { padding: 15px 12px; vertical-align: middle; }
+        .score-box { font-weight: bold; font-size: 1.05rem; }
+        .grade-a { color: #198754; }
+        .grade-b { color: #0d6efd; }
+        .grade-c { color: #fd7e14; }
+        .grade-f { color: #dc3545; }
+        
+        .btn-detail { font-size: 0.85rem; border-radius: 6px; }

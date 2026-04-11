@@ -93,6 +93,7 @@
     transition: all 0.3s ease;
     background-color: #f4f6f9;
     min-height: 100vh;
+    padding-top: 70px;
     padding-bottom: 50px;
 }
 
@@ -204,6 +205,15 @@
 .top-navbar-blue {
     height: 70px;
     background-color: #0d6efd;
+    position: fixed;
+    top: 0;
+    left: 260px;
+    right: 0;
+    z-index: 1020;
+}
+
+.main-content.expanded .top-navbar-blue {
+    left: 85px;
 }
 
 /* Giao diện dùng chung Student: Popup thông báo từ icon chuông */
@@ -302,6 +312,11 @@
     .main-content,
     .main-content.expanded {
         margin-left: 0;
+    }
+
+    .top-navbar-blue,
+    .main-content.expanded .top-navbar-blue {
+        left: 0;
     }
 
     .student-notify-dropdown {

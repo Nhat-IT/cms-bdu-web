@@ -9,14 +9,14 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    sidebarToggle.addEventListener('click', function () {
-        if (window.innerWidth <= 768) {
-            sidebar.classList.toggle('active');
-        } else {
-            sidebar.classList.toggle('collapsed');
-            mainContent.classList.toggle('expanded');
-        }
-    });
+    if (window.CMSMenu && typeof window.CMSMenu.init === 'function') {
+        window.CMSMenu.init({
+            toggleElement: sidebarToggle,
+            sidebarElement: sidebar,
+            mainContentElement: mainContent,
+            topNavbarSelector: '.top-navbar-blue'
+        });
+    }
 
     if (!bellLink) {
         return;

@@ -1,0 +1,8 @@
+        .status-select.val-1 { color: #198754; font-weight: bold; }
+        .status-select.val-2 { color: #ffc107; font-weight: bold; }
+        .status-select.val-3 { color: #dc3545; font-weight: bold; }
+        
+        /* CSS Khóa cứng layout chống xê dịch */
+        .fixed-info-box { min-height: 42px; display: flex; align-items: center; }
+        #attendanceTable { table-layout: fixed; width: 100%; }
+        #attendanceTable th, #attendanceTable td { vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

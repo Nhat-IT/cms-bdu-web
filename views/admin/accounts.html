@@ -7,10 +7,15 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../../public/css/style.css">
+    <link rel="stylesheet" href="../../public/css/layout.css">
     <style>
-        .sidebar-admin { background-color: #1e293b; }
-        .top-navbar-admin { background-color: #0f172a; }
-        .action-btn { padding: 0.2rem 0.5rem; font-size: 0.875rem; border-radius: 4px; }
+        .sidebar-admin { background: linear-gradient(180deg, #4e71aa 0%, #0e255b 100%) !important; }
+        .sidebar-admin .brand { background-color: #ffffff !important; color: #0d6efd !important; }
+        .top-navbar-admin { background-color: #0d6efd !important; }
+                .sidebar-admin .brand .brand-label { font-size: 1.5rem; }
+        .sidebar-admin nav a { font-size: 0.95rem; }
+        .top-navbar-admin h4 { font-size: 1.1rem; }
+.action-btn { padding: 0.2rem 0.5rem; font-size: 0.875rem; border-radius: 4px; }
         .table-avatar { width: 35px; height: 35px; object-fit: cover; border-radius: 50%; }
         /* Style cho Checkbox Vai trò */
         .role-checkbox-group .form-check-input:checked { background-color: #0d6efd; border-color: #0d6efd; }
@@ -21,7 +26,12 @@
 
 <div class="sidebar sidebar-admin d-flex flex-column" id="sidebar" style="height: 100vh;">
     <div>
-        <div class="brand text-white">CMS ADMIN</div>
+        <div class="brand text-center py-3 border-bottom border-secondary border-opacity-25">
+            <a href="home.html" class="text-decoration-none text-primary d-inline-flex align-items-center fw-bold fs-4">
+                <i class="bi bi-mortarboard-fill fs-2 me-2"></i>
+                <span class="brand-label">CMS ADMIN</span>
+            </a>
+        </div>
         <div class="text-center mb-3 text-white-50 small fw-bold">QUẢN TRỊ KHOA CNTT</div>
         <nav>
             <a href="home.html"><i class="bi bi-speedometer2"></i> Tổng quan hệ thống</a>
@@ -343,6 +353,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../public/js/script.js"></script>
 
 <script>
     document.getElementById('sidebarToggle').addEventListener('click', function() {

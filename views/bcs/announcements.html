@@ -7,75 +7,20 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../../public/css/style.css">
+    <link rel="stylesheet" href="../../public/css/layout.css">
     <link rel="stylesheet" href="../../public/css/bcs/bcs-layout.css">
-    <style>
-        .announcement-card {
-            border: 1px solid rgba(13, 110, 253, 0.08);
-            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
-        }
-
-        .announcement-pill {
-            background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(13, 110, 253, 0.02));
-            color: #0d6efd;
-            border: 1px solid rgba(13, 110, 253, 0.12);
-        }
-
-        .announcement-empty {
-            background: linear-gradient(135deg, #f8fbff, #eef5ff);
-            border: 1px dashed rgba(13, 110, 253, 0.2);
-        }
-
-        .announcement-item:hover {
-            background-color: #f8faff;
-        }
-
-        .panel-toggle {
-            border: 1px dashed rgba(13, 110, 253, 0.25);
-            background: #f8fbff;
-        }
-
-        .process-panel .step-card {
-            background: linear-gradient(180deg, #ffffff, #f8fbff);
-            border: 1px solid rgba(13, 110, 253, 0.08);
-        }
-
-        .announcements-header {
-            position: sticky;
-            top: 0;
-            z-index: 1050;
-        }
-
-        .announcements-scope-banner {
-            position: sticky;
-            top: 70px;
-            z-index: 1040;
-        }
-
-        .schedule-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .schedule-label {
-            font-size: 0.82rem;
-            font-weight: 700;
-            color: #4b5563;
-            margin-bottom: 6px;
-        }
-
-        @media (max-width: 768px) {
-            .schedule-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="../../public/css/bcs/announcements.css">
 </head>
 <body class="dashboard-body">
 
 <div class="sidebar d-flex flex-column" id="sidebar" style="height: 100vh;">
     <div>
-        <div class="brand">CMS BDU</div>
+        <div class="brand">
+            <a href="home.html" class="fw-bold">
+                <i class="bi bi-mortarboard-fill fs-2 me-2"></i>
+                <span class="brand-label">CMS BDU</span>
+            </a>
+        </div>
         <div class="bcs-profile-container text-center flex-shrink-0">
             <a href="#" class="bcs-profile-trigger" title="Xem hồ sơ ban cán sự">
                 <img src="https://ui-avatars.com/api/?name=Nhat+Y&background=0d6efd&color=fff" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar BCS">
@@ -561,185 +506,9 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../public/js/script.js"></script>
 <script src="../../public/js/bcs/bcs-layout.js"></script>
-<script>
-    let newsModal;
 
-    document.addEventListener('DOMContentLoaded', function () {
-        newsModal = new bootstrap.Modal(document.getElementById('newsModal'));
-
-        document.getElementById('newsSource').addEventListener('change', function () {
-            handleSourceSelection('newsSource', 'customNewsSourceWrap', 'customNewsSource');
-        });
-
-        document.getElementById('modalSourceInput').addEventListener('change', function () {
-            handleSourceSelection('modalSourceInput', 'customModalSourceWrap', 'customModalSource');
-        });
-
-        document.getElementById('newsCategory').addEventListener('change', function () {
-            handleCategorySelection('newsCategory', 'customNewsCategoryWrap', 'customNewsCategory');
-        });
-
-        document.getElementById('modalCategoryInput').addEventListener('change', function () {
-            handleCategorySelection('modalCategoryInput', 'customModalCategoryWrap', 'customModalCategory');
-        });
-
-        document.getElementById('publishNow').addEventListener('change', function () {
-            handlePublishMode('publishNow', 'schedulePublishWrap', ['schedulePublishDate', 'schedulePublishTime']);
-        });
-
-        document.getElementById('publishSchedule').addEventListener('change', function () {
-            handlePublishMode('publishNow', 'schedulePublishWrap', ['schedulePublishDate', 'schedulePublishTime']);
-        });
-
-        document.getElementById('modalPublishNow').addEventListener('change', function () {
-            handlePublishMode('modalPublishNow', 'modalSchedulePublishWrap', ['modalSchedulePublishDate', 'modalSchedulePublishTime']);
-        });
-
-        document.getElementById('modalPublishSchedule').addEventListener('change', function () {
-            handlePublishMode('modalPublishNow', 'modalSchedulePublishWrap', ['modalSchedulePublishDate', 'modalSchedulePublishTime']);
-        });
-
-        handleSourceSelection('newsSource', 'customNewsSourceWrap', 'customNewsSource');
-        handleSourceSelection('modalSourceInput', 'customModalSourceWrap', 'customModalSource');
-        handleCategorySelection('newsCategory', 'customNewsCategoryWrap', 'customNewsCategory');
-        handleCategorySelection('modalCategoryInput', 'customModalCategoryWrap', 'customModalCategory');
-        handlePublishMode('publishNow', 'schedulePublishWrap', ['schedulePublishDate', 'schedulePublishTime']);
-        handlePublishMode('modalPublishNow', 'modalSchedulePublishWrap', ['modalSchedulePublishDate', 'modalSchedulePublishTime']);
-    });
-
-    function handleSourceSelection(selectId, wrapId, inputId) {
-        const sourceSelect = document.getElementById(selectId);
-        const customWrap = document.getElementById(wrapId);
-        const customInput = document.getElementById(inputId);
-        const isCustom = sourceSelect.value === 'Khac';
-
-        customWrap.classList.toggle('d-none', !isCustom);
-        customInput.required = isCustom;
-
-        if (!isCustom) {
-            customInput.value = '';
-        }
-    }
-
-    function handleCategorySelection(selectId, wrapId, inputId) {
-        const categorySelect = document.getElementById(selectId);
-        const customWrap = document.getElementById(wrapId);
-        const customInput = document.getElementById(inputId);
-        const isCustom = categorySelect.value === 'Khac';
-
-        customWrap.classList.toggle('d-none', !isCustom);
-        customInput.required = isCustom;
-
-        if (!isCustom) {
-            customInput.value = '';
-        }
-    }
-
-    function handlePublishMode(nowRadioId, wrapId, inputIds) {
-        const isNow = document.getElementById(nowRadioId).checked;
-        const scheduleWrap = document.getElementById(wrapId);
-        const scheduleInputs = inputIds.map(id => document.getElementById(id));
-
-        scheduleWrap.classList.toggle('d-none', isNow);
-        scheduleInputs.forEach(input => {
-            input.required = !isNow;
-        });
-
-        if (isNow) {
-            scheduleInputs.forEach(input => {
-                input.value = '';
-            });
-        }
-    }
-
-    function confirmAction(actionText, onConfirm) {
-        if (confirm('Bạn có chắc chắn muốn ' + actionText + '?')) {
-            onConfirm();
-        }
-    }
-
-    function saveDraft() {
-        confirmAction('lưu bản tin vào nháp', function () {
-            alert('Đã lưu bản tin vào nháp.');
-        });
-    }
-
-    function formatScheduleDateTimeVi(dateStr, timeStr) {
-        const [year, month, day] = dateStr.split('-');
-        return day + '/' + month + '/' + year + ' ' + timeStr;
-    }
-
-    function publishNews() {
-        confirmAction('đăng bản tin và đẩy thông báo đến sinh viên', function () {
-            const isPinned = document.getElementById('pinPost').checked;
-            const isNow = document.getElementById('publishNow').checked;
-            const scheduleDate = document.getElementById('schedulePublishDate').value;
-            const scheduleTime = document.getElementById('schedulePublishTime').value;
-            const pinText = isPinned ? ' Bài đăng đã được ghim.' : '';
-
-            if (!isNow && (!scheduleDate || !scheduleTime)) {
-                alert('Vui lòng chọn đầy đủ ngày và giờ đăng.');
-                return;
-            }
-
-            const publishText = isNow
-                ? 'Đã đăng bản tin và đẩy thông báo đến sinh viên.'
-                : 'Đã hẹn đăng bản tin vào: ' + formatScheduleDateTimeVi(scheduleDate, scheduleTime) + '.';
-
-            alert(publishText + pinText);
-        });
-    }
-
-    function togglePin(title) {
-        confirmAction('ghim bài đăng "' + title + '"', function () {
-            alert('Đã ghim bài đăng: ' + title);
-        });
-    }
-
-    function confirmDelete(title) {
-        confirmAction('xóa bản tin "' + title + '"', function () {
-            alert('Đã xóa bản tin: ' + title);
-        });
-    }
-
-    function openViewModal(title) {
-        alert('Mở chi tiết bản tin: ' + title);
-    }
-
-    function openEditModal(title, source, scope, category, content) {
-        document.getElementById('newsModalTitle').innerHTML = '<i class="bi bi-pencil-square me-2"></i>Chỉnh sửa bản tin';
-        document.getElementById('modalTitleInput').value = title;
-
-        const modalSource = document.getElementById('modalSourceInput');
-        const knownSources = Array.from(modalSource.options).map(option => option.value);
-
-        if (knownSources.includes(source)) {
-            modalSource.value = source;
-            document.getElementById('customModalSource').value = '';
-        } else {
-            modalSource.value = 'Khac';
-            document.getElementById('customModalSource').value = source;
-        }
-
-        handleSourceSelection('modalSourceInput', 'customModalSourceWrap', 'customModalSource');
-
-        const modalCategory = document.getElementById('modalCategoryInput');
-        const knownCategories = Array.from(modalCategory.options).map(option => option.value);
-
-        if (knownCategories.includes(category)) {
-            modalCategory.value = category;
-            document.getElementById('customModalCategory').value = '';
-        } else {
-            modalCategory.value = 'Khac';
-            document.getElementById('customModalCategory').value = category;
-        }
-
-        handleCategorySelection('modalCategoryInput', 'customModalCategoryWrap', 'customModalCategory');
-        document.getElementById('modalScopeInput').value = scope;
-        document.getElementById('modalContentInput').value = content;
-        newsModal.show();
-    }
-</script>
+    <script src="../../public/js/bcs/announcements.js"></script>
 </body>
 </html>

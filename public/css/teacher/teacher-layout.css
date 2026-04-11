@@ -1,0 +1,386 @@
+/* Shared Teacher layout: sidebar behavior mirrors student pages */
+.sidebar-teacher {
+    width: 260px;
+    background: linear-gradient(180deg, #4e71aa 0%, #0e255b 100%);
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-teacher > div:first-child {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.sidebar-teacher > div:last-child {
+    flex: 0 0 auto;
+}
+
+.teacher-menu-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable;
+}
+
+.teacher-menu-scroll > .text-start.small.fw-bold {
+    flex: 0 0 auto;
+}
+
+.teacher-menu-scroll .nav {
+    display: flex;
+    flex-direction: column !important;
+    flex-wrap: nowrap;
+    width: 100%;
+}
+
+.teacher-menu-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.teacher-menu-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+}
+
+.sidebar-teacher .brand {
+    background-color: #ffffff;
+    color: #0d6efd !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-teacher .brand a {
+    color: #0d6efd !important;
+    border-radius: 10px;
+    padding: 6px 10px;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sidebar-teacher .brand a:hover {
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 14px rgba(13, 110, 253, 0.25);
+}
+
+.teacher-profile-container {
+    text-align: center;
+    padding: 14px 10px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.teacher-profile-trigger {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    text-decoration: none;
+    color: inherit;
+    border-radius: 10px;
+    padding: 10px 6px;
+    transition: all 0.2s ease;
+}
+
+.teacher-profile-trigger:hover {
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+}
+
+.teacher-profile-meta {
+    text-align: center;
+    min-width: 0;
+}
+
+.teacher-profile-name {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.9rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.teacher-profile-role {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.76rem;
+}
+
+.teacher-role-badge {
+    display: inline-block;
+    margin-top: 8px;
+    margin-left: 0;
+    font-size: 0.7rem;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.42) !important;
+}
+
+.sidebar-teacher nav {
+    flex: 0 0 auto;
+    min-height: auto;
+    max-height: none;
+    overflow: visible;
+    padding-bottom: 10px;
+}
+
+.sidebar-teacher .nav-link {
+    color: #e2e8f0 !important;
+    font-weight: 500;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin: 4px 12px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.sidebar-teacher .nav-link > span:first-child {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-teacher .nav-link .badge {
+    flex-shrink: 0;
+}
+
+.sidebar-teacher .nav-link.justify-content-between {
+    gap: 10px;
+}
+
+.sidebar-teacher .nav-link.justify-content-between > span:first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.25;
+}
+
+.sidebar-teacher .nav-link.justify-content-between .badge {
+    margin-left: 8px;
+}
+
+.sidebar-teacher .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff !important;
+    transform: none;
+}
+
+.sidebar-teacher .nav-link.active {
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.4);
+}
+
+.sidebar-teacher .nav-link i {
+    font-size: 1.1rem;
+}
+
+.sidebar-teacher .hover-logout {
+    color: #f87171 !important;
+}
+
+.sidebar-teacher .hover-logout:hover {
+    background-color: rgba(239, 68, 68, 0.12);
+    color: #fca5a5 !important;
+}
+
+.main-content {
+    margin-left: 260px;
+    transition: all 0.3s ease;
+    min-height: 100vh;
+    background-color: #f1f5f9;
+    padding-top: 70px;
+}
+
+.main-content.expanded {
+    margin-left: 85px;
+}
+
+.top-navbar-teacher {
+    height: 70px;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    background-color: #0d6efd !important;
+    color: #ffffff;
+    position: fixed;
+    top: 0;
+    left: 260px;
+    right: 0;
+    z-index: 1020;
+}
+
+.main-content.expanded .top-navbar-teacher {
+    left: 85px;
+}
+
+.top-navbar-teacher h4 {
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.teacher-header-notify {
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.teacher-header-notify i {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid rgba(255, 255, 255, 0.55);
+    border-radius: 999px;
+}
+
+.teacher-header-notify i > span {
+    border-color: #dbeafe !important;
+}
+
+.teacher-header-notify:hover {
+    color: #ffffff;
+    opacity: 0.9;
+}
+
+.teacher-menu-toggle {
+    border: 1.5px solid rgba(255, 255, 255, 0.55);
+    border-radius: 999px;
+    color: #ffffff;
+    background: transparent;
+    line-height: 1;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.teacher-menu-toggle:hover {
+    color: #8ec5ff;
+    border-color: #bfdbfe;
+}
+
+.sidebar-teacher.collapsed {
+    width: 85px;
+}
+
+.sidebar-teacher.collapsed .brand {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.sidebar-teacher.collapsed .brand a {
+    padding: 6px;
+}
+
+.sidebar-teacher.collapsed .brand .brand-label {
+    display: none;
+}
+
+.sidebar-teacher.collapsed .brand a i {
+    margin-right: 0 !important;
+    font-size: 1.6rem !important;
+}
+
+.sidebar-teacher.collapsed .text-start,
+.sidebar-teacher.collapsed hr,
+.sidebar-teacher.collapsed .badge,
+.sidebar-teacher.collapsed .hover-logout span {
+    display: none !important;
+}
+
+.sidebar-teacher.collapsed .nav-link {
+    justify-content: center !important;
+    padding: 12px 0;
+    margin: 5px 10px;
+    font-size: 0;
+}
+
+.sidebar-teacher.collapsed .nav-link span {
+    display: inline-flex !important;
+    align-items: center;
+    font-size: 0;
+}
+
+.sidebar-teacher.collapsed .nav-link i {
+    margin-right: 0 !important;
+    font-size: 1.3rem;
+}
+
+.sidebar-teacher.collapsed .nav-link span i {
+    font-size: 1.3rem;
+}
+
+.sidebar-teacher.collapsed .nav-link.justify-content-between {
+    justify-content: center !important;
+}
+
+.sidebar-teacher.collapsed .teacher-profile-container {
+    display: flex;
+    justify-content: center;
+    padding: 14px 0 12px;
+}
+
+.sidebar-teacher.collapsed .teacher-profile-trigger {
+    justify-content: center;
+    padding: 6px;
+}
+
+.sidebar-teacher.collapsed .teacher-profile-meta,
+.sidebar-teacher.collapsed .teacher-role-badge {
+    display: none;
+}
+
+.sidebar-teacher.collapsed .hover-logout {
+    justify-content: center;
+}
+
+.sidebar-teacher.collapsed .hover-logout i {
+    margin-right: 0 !important;
+}
+
+@media (max-width: 768px) {
+    .sidebar-teacher {
+        transform: translateX(-100%);
+    }
+
+    .sidebar-teacher.active {
+        transform: translateX(0);
+    }
+
+    .main-content,
+    .main-content.expanded {
+        margin-left: 0;
+    }
+
+    .top-navbar-teacher,
+    .main-content.expanded .top-navbar-teacher {
+        left: 0;
+    }
+}
