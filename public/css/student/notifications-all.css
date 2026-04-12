@@ -1,19 +1,19 @@
-/* Mo ta: Giao dien danh sach thong bao cua sinh vien (item, uu tien, hover). */
+/* Mô tả: Giao diện danh sách thông báo cua sinh viên (item, uu tien, hover). */
 
         .notify-item {
-            /* Tung thong bao trong danh sach */
+            /* Từng thông báo trong danh sách */
             border-left: 4px solid transparent;
             transition: all 0.2s ease;
         }
 
         .notify-item:hover {
-            /* Hover: doi nen va vien trai de nhan manh */
+            /* Hover: doi nen va vien trai de nhãn manh */
             background: #f8fbff;
             border-left-color: #0d6efd;
         }
 
         .source-badge {
-            /* Badge nguon thong bao (he thong, hoc vu, mon hoc...) */
+            /* Badge nguồn thông báo (hệ thống, học vụ, mon hoc...) */
             font-size: 0.74rem;
             font-weight: 700;
             letter-spacing: 0.02em;

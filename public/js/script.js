@@ -4,7 +4,7 @@
     function getElements(options) {
         const sidebar = options.sidebarElement || document.querySelector(options.sidebarSelector || '#sidebar');
         const mainContent = options.mainContentElement || document.querySelector(options.mainContentSelector || '#mainContent, .main-content');
-        const topNavbar = options.topNavbarElement || document.querySelector(options.topNavbarSelector || '.top-navbar-admin, .top-navbar-blue, .top-navbar-teacher');
+        const topNavbar = options.topNavbarElement || document.querySelector(options.topNavbarSelector || '.top-navbar-admin, .top-navbar-blue');
         const toggle = options.toggleElement || document.querySelector(options.toggleSelector || '#sidebarToggle, #sidebarToggleTeacher');
 
         return { sidebar, mainContent, topNavbar, toggle };

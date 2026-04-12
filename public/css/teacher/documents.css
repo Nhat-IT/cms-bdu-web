@@ -1,20 +1,20 @@
-/* Mo ta: Giao dien tai lieu giang vien (nut thao tac, icon tep, danh sach tai lieu). */
+/* Mô tả: Giao diện tai lieu giang vien (nut thao tac, icon tệp, danh sach tai lieu). */
 
         .action-btn { padding: 0.2rem 0.5rem; font-size: 0.875rem; border-radius: 4px; }
-        /* Nut thao tac trong danh sach tai lieu */
+        /* Nút thao tác trong danh sach tai lieu */
         
         /* Kiểu hiển thị biểu tượng tệp */
         .file-icon { font-size: 2rem; line-height: 1; }
-        /* Kich thuoc icon tep */
+        /* Kich thuoc icon tệp */
         .icon-pdf { color: #dc3545; }
         .icon-word { color: #0d6efd; }
         .icon-excel { color: #198754; }
         .icon-ppt { color: #fd7e14; }
         .icon-zip { color: #ffc107; }
-        /* Ma mau theo loai tep */
+        /* Mã màu theo loại tệp */
         
         .file-link { cursor: pointer; transition: opacity 0.2s; color: inherit; text-decoration: none; }
-        /* Link tep tai lieu */
+        /* Link tệp tài liệu */
         .file-link:hover { opacity: 0.8; }
         .file-link:hover .file-title { color: #0d6efd; text-decoration: underline; }
-        /* Hover vao tieu de file */
+        /* Hover vào tiêu đề file */

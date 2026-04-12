@@ -1,9 +1,9 @@
-/* Mo ta: Giao dien tai lieu sinh vien (tep dinh kem, lien ket, icon tep). */
+/* Mô tả: Giao diện tai lieu sinh viên (tệp đính kèm, lien ket, icon tệp). */
 
 /* Liên kết tệp */
         .file-link { cursor: pointer; transition: opacity 0.2s; color: inherit; text-decoration: none; }
-        /* Link mo file tai lieu */
+        /* Link mở file tài liệu */
         .file-link:hover { opacity: 0.8; }
-        /* Giam do dam khi hover de tao phan hoi */
+        /* Giảm độ đậm khi hover de tạo phản hồi */
         .file-link:hover .file-title { color: #0d6efd; text-decoration: underline; }
-        /* To dam tieu de file khi hover */
+        /* Tô đậm tiêu đề file khi hover */

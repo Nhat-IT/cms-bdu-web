@@ -2,9 +2,9 @@
 document.addEventListener('DOMContentLoaded', function () {
     const sidebar = document.getElementById('sidebar');
     const mainContent = document.querySelector('.main-content');
-    const topNavbar = document.querySelector('.top-navbar-teacher');
+    const topNavbar = document.querySelector('.top-navbar-blue');
 
-    if (!sidebar || !mainContent || !topNavbar || !sidebar.classList.contains('sidebar-teacher')) {
+    if (!sidebar || !mainContent || !topNavbar) {
         return;
     }
 
@@ -15,15 +15,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const pageTitle = topNavbar.querySelector('h4');
 
     const sidebarTopWrapper = sidebar.querySelector(':scope > div');
-    const sidebarBrand = sidebarTopWrapper ? sidebarTopWrapper.querySelector('.brand') : null;
+    const sidebarBrand = sidebarTopWrapper
+        ? sidebarTopWrapper.querySelector('.brand-container, .brand')
+        : null;
 
-    if (sidebarTopWrapper && sidebarBrand && !sidebar.querySelector('.teacher-profile-container')) {
+    if (sidebarTopWrapper && sidebarBrand && !sidebar.querySelector('.menu-profile-container')) {
         const profileContainer = document.createElement('div');
-        profileContainer.className = 'teacher-profile-container';
+        profileContainer.className = 'menu-profile-container';
 
         const profileLink = document.createElement('a');
         profileLink.href = 'teacher-profile.html';
-        profileLink.className = 'teacher-profile-trigger';
+        profileLink.className = 'menu-profile-trigger';
         profileLink.title = 'Xem ho so giang vien';
 
         const avatar = document.createElement('img');
@@ -34,14 +36,14 @@ document.addEventListener('DOMContentLoaded', function () {
         avatar.height = 42;
 
         const meta = document.createElement('div');
-        meta.className = 'teacher-profile-meta';
+        meta.className = 'menu-profile-meta';
 
         const name = document.createElement('div');
-        name.className = 'teacher-profile-name';
+        name.className = 'menu-profile-name';
         name.textContent = profileName;
 
         const role = document.createElement('div');
-        role.className = 'teacher-profile-role';
+        role.className = 'menu-profile-role';
         role.textContent = 'Giang vien';
 
         meta.appendChild(name);
@@ -51,20 +53,20 @@ document.addEventListener('DOMContentLoaded', function () {
         profileContainer.appendChild(profileLink);
 
         const badge = document.createElement('span');
-        badge.className = 'badge teacher-role-badge';
+        badge.className = 'badge menu-profile-badge';
         badge.textContent = 'KHOA CNTT';
         profileContainer.appendChild(badge);
 
         sidebarBrand.insertAdjacentElement('afterend', profileContainer);
     }
 
-    if (sidebarTopWrapper && !sidebarTopWrapper.querySelector('.teacher-menu-scroll')) {
+    if (sidebarTopWrapper && !sidebarTopWrapper.querySelector('.menu-scroll')) {
         const menuHeading = sidebarTopWrapper.querySelector('.text-start.small.fw-bold');
         const menuNav = sidebarTopWrapper.querySelector('nav.nav');
 
         if (menuHeading && menuNav) {
             const menuScroll = document.createElement('div');
-            menuScroll.className = 'teacher-menu-scroll';
+            menuScroll.className = 'menu-scroll';
             menuHeading.parentNode.insertBefore(menuScroll, menuHeading);
             menuScroll.appendChild(menuHeading);
             menuScroll.appendChild(menuNav);
@@ -84,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     let toggleButton = document.getElementById('sidebarToggleTeacher');
-    let leftGroup = topNavbar.querySelector('.teacher-header-left');
+    let leftGroup = topNavbar.querySelector('.menu-header-left');
 
     if (!leftGroup) {
         if (!pageTitle) {
@@ -92,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         leftGroup = document.createElement('div');
-        leftGroup.className = 'd-flex align-items-center teacher-header-left';
+        leftGroup.className = 'd-flex align-items-center menu-header-left';
 
         topNavbar.prepend(leftGroup);
         leftGroup.appendChild(pageTitle);
@@ -102,20 +104,20 @@ document.addEventListener('DOMContentLoaded', function () {
         toggleButton = document.createElement('button');
         toggleButton.type = 'button';
         toggleButton.id = 'sidebarToggleTeacher';
-        toggleButton.className = 'teacher-menu-toggle btn me-2';
+        toggleButton.className = 'menu-toggle btn me-2';
         toggleButton.setAttribute('aria-label', 'Toggle sidebar menu');
         toggleButton.innerHTML = '<i class="bi bi-list fs-3"></i>';
 
         leftGroup.prepend(toggleButton);
     }
 
-    if (!topNavbar.querySelector('.teacher-header-right')) {
+    if (!topNavbar.querySelector('.menu-header-right')) {
         const rightGroup = document.createElement('div');
-        rightGroup.className = 'd-flex align-items-center text-white teacher-header-right';
+        rightGroup.className = 'd-flex align-items-center text-white menu-header-right';
 
         const bell = document.createElement('a');
         bell.href = 'approve-evidences.html';
-        bell.className = 'teacher-header-notify';
+        bell.className = 'menu-header-notify';
         bell.title = 'Xem thong bao va minh chung cho duyet';
         bell.innerHTML = '<i class="bi bi-bell fs-5 text-white position-relative">' +
             '<span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>' +

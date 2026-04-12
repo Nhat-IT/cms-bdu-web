@@ -1,14 +1,14 @@
-/* Mo ta: Giao dien diem danh BCS (trang thai, hop thong tin, bang danh sach). */
+/* Mô tả: Giao diện diem danh BCS (trạng thái, hop thong tin, bang danh sach). */
 
         .status-select.val-1 { color: #198754; font-weight: bold; }
-        /* Mau trang thai: 1 = co mat */
+        /* Mau trạng thái: 1 = có mặt */
         .status-select.val-2 { color: #ffc107; font-weight: bold; }
-        /* Mau trang thai: 2 = di muon/vang co phep */
+        /* Mau trạng thái: 2 = đi muộn/vắng có phép */
         .status-select.val-3 { color: #dc3545; font-weight: bold; }
-        /* Mau trang thai: 3 = vang khong phep */
+        /* Mau trạng thái: 3 = vắng không phép */
         
         /* CSS Khóa cứng layout chống xê dịch */
         .fixed-info-box { min-height: 42px; display: flex; align-items: center; }
-        /* Khoa bo cuc bang diem danh khong bi xo dong */
+        /* Khóa bố cục bảng điểm danh không bị xô dòng */
         #attendanceTable { table-layout: fixed; width: 100%; }
         #attendanceTable th, #attendanceTable td { vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

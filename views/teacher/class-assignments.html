@@ -13,14 +13,15 @@
 </head>
 <body class="dashboard-body">
 
-    <div class="sidebar sidebar-teacher d-flex flex-column" id="sidebar">
+    <div class="sidebar" id="sidebar">
         <div>
-            <div class="brand text-center py-3 border-bottom border-secondary border-opacity-25">
-                <a href="home.html" class="text-decoration-none text-primary d-inline-flex align-items-center fw-bold fs-4">
+            <div class="brand-container flex-shrink-0">
+                <a href="home.html" class="text-decoration-none text-primary d-flex align-items-center">
                     <i class="bi bi-mortarboard-fill fs-2 me-2"></i>
-                    <span class="brand-label">CMS BDU</span>
+                    <span class="fs-4 fw-bold hide-on-collapse">CMS BDU</span>
                 </a>
             </div>
+            <div class="sidebar-scrollable w-100">
             <nav class="nav flex-column ps-2 pe-2">
                 <a href="home.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-speedometer2 me-2"></i> Tổng quan</a>
                 <a href="attendance.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-calendar-check me-2"></i> Lịch & Điểm danh</a>
@@ -33,18 +34,18 @@
                 <a href="documents.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-folder2-open me-2"></i> Kho tài liệu</a>
                 <a href="announcements.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-megaphone-fill me-2"></i> Đăng bảng tin</a>
             </nav>
+            </div>
         </div>
         
-        <div class="mt-auto mb-3 px-3">
-            <hr class="text-secondary border-opacity-50">
-            <a href="../login.html" class="nav-link logout-btn">
-                <i class="bi bi-box-arrow-left me-2 fs-5"></i> <span class="fw-bold">Đăng xuất</span>
+        <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
+            <a href="../login.html" class="nav-link logout-btn" title="Đăng xuất">
+                <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
             </a>
         </div>
     </div>
 
     <div class="main-content">
-        <div class="top-navbar-teacher d-flex justify-content-between align-items-center px-4 py-3 shadow-sm mb-4">
+        <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 py-3 shadow-sm mb-4">
             <h4 class="m-0 fw-bold d-flex align-items-center text-white">
                 <i class="bi bi-journal-text me-2 fs-3 text-warning"></i> QUẢN LÝ BÀI TẬP
             </h4>

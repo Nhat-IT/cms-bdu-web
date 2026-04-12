@@ -1,14 +1,14 @@
-/* Mo ta: Giao dien quan ly bai tap lop hoc (tab, nut thao tac, tep dinh kem). */
+/* Mô tả: Giao diện quan ly bài tập lop hoc (tab, nut thao tac, tệp đính kèm). */
 
         .action-btn { padding: 0.2rem 0.5rem; font-size: 0.875rem; border-radius: 4px; }
-        /* Nut thao tac nhanh trong bang bai tap */
+        /* Nút thao tác nhãnh trong bảng bài tập */
         .nav-tabs .nav-link.active { font-weight: bold; border-bottom: 3px solid #0d6efd; color: #0d6efd; background-color: transparent;}
-        /* Tab dang duoc chon */
+        /* Tab đang được chọn */
         .nav-tabs .nav-link { color: #6c757d; border: none; font-size: 1.05rem;}
-        /* Tab mac dinh */
+        /* Tab mặc định */
         .nav-tabs .nav-link:hover { color: #0d6efd; border-color: transparent; }
-        /* Mau tab khi hover */
+        /* Màu tab khi hover */
         .file-link { cursor: pointer; transition: opacity 0.2s; }
-        /* Link tep dinh kem bai tap */
+        /* Link tệp đính kèm bài tập */
         .file-link:hover { opacity: 0.7; text-decoration: underline !important; }
-        /* Hover link tep de nhan ro co the click */
+        /* Hover link tep de nhãn ro co the click */

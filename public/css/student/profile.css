@@ -1,8 +1,8 @@
-/* Mo ta: Giao dien ho so sinh vien (header, avatar, thong tin tai khoan). */
+/* Mô tả: Giao diện ho so sinh viên (header, avatar, thông tin tài khoản). */
 
 /* Trang hồ sơ sinh viên: phần đầu thẻ hồ sơ */
 .profile-header-bg {
-    /* Nen dau card ho so */
+    /* Nền đầu card hồ sơ */
     background: linear-gradient(135deg, #60a5fa 0%, #0d6efd 100%);
     height: 120px;
     border-radius: 0.75rem 0.75rem 0 0;
@@ -10,7 +10,7 @@
 
 /* Trang hồ sơ sinh viên: khối avatar */
 .avatar-wrapper {
-    /* Khung avatar voi bong do va vien mem */
+    /* Khung avatar với bóng đổ và viền mềm */
     position: relative;
     display: inline-flex;
     align-items: center;
@@ -24,7 +24,7 @@
 }
 
 .profile-avatar {
-    /* Avatar chinh cua sinh vien */
+    /* Avatar chinh cua sinh viên */
     width: 120px;
     height: 120px;
     object-fit: cover;
@@ -35,7 +35,7 @@
 }
 
 .avatar-edit-btn {
-    /* Nut camera de doi anh dai dien */
+    /* Nut camera de doi ảnh đại diện */
     position: absolute;
     bottom: 8px;
     right: 2px;
@@ -54,7 +54,7 @@
 }
 
 .avatar-edit-btn:hover {
-    /* Hieu ung hover nut doi avatar */
+    /* Hiệu ứng hover nút đổi avatar */
     background: #eff6ff;
     color: #0a58ca;
     transform: scale(1.08);

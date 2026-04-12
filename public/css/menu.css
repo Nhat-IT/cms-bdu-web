@@ -1,0 +1,342 @@
+/*
+    MENU CHUNG - DÙNG CHO TEACHER / BCS / STUDENT
+    Mục tiêu: gom toàn bộ style sidebar menu dùng chung vào 1 file để đồng bộ.
+*/
+
+:root {
+    --cms-sidebar-width: 260px;
+    --cms-sidebar-collapsed-width: 86px;
+    --cms-header-height: 70px;
+}
+
+/* Khung sidebar dùng chung cho các vai trò */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    width: var(--cms-sidebar-width);
+    background: linear-gradient(180deg, #4e71aa 0%, #0e255b 100%);
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+    transition: width 0.3s ease, transform 0.3s ease;
+    will-change: width, transform;
+}
+
+.sidebar > div:first-child {
+    /* Vùng nội dung chính trong sidebar (logo + menu) */
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.sidebar > div:last-child {
+    /* Vùng chân sidebar, thường chứa nút đăng xuất */
+    flex: 0 0 auto;
+    margin-top: auto;
+    position: sticky;
+    bottom: 0;
+    background: inherit;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sidebar > div:last-child .hover-logout,
+.sidebar > div:last-child .logout-btn {
+    /* Chuẩn hóa kích thước và căn giữa nút đăng xuất */
+    width: 100%;
+    padding-top: 0.6rem !important;
+    padding-bottom: 0.6rem !important;
+    padding-left: 0.9rem !important;
+    padding-right: 0.9rem !important;
+    border-radius: 10px;
+    justify-content: center;
+    text-align: center;
+}
+
+.sidebar > div:last-child hr {
+    /* Đường kẻ phân tách menu và vùng chân */
+    width: 100%;
+}
+
+.sidebar > div:last-child .hover-logout i,
+.sidebar > div:last-child .logout-btn i {
+    /* Cỡ icon trong nút đăng xuất */
+    font-size: 1.25rem !important;
+}
+
+.sidebar > div:last-child .hover-logout span,
+.sidebar > div:last-child .logout-btn span {
+    /* Cỡ chữ và độ đậm của nhãn nút đăng xuất */
+    font-size: 1.02rem;
+    font-weight: 700;
+}
+
+/* Logo/brand của menu */
+.sidebar .brand,
+.sidebar .brand-container {
+    background-color: #ffffff;
+    color: #0d6efd !important;
+    flex: 0 0 var(--cms-header-height);
+    height: var(--cms-header-height);
+    min-height: var(--cms-header-height);
+    max-height: var(--cms-header-height);
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.sidebar .brand a,
+.sidebar .brand-container a {
+    /* Vùng click toàn phần cho logo/brand */
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    color: #0d6efd !important;
+    text-decoration: none;
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sidebar .brand a:hover,
+.sidebar .brand-container a:hover {
+    /* Hiệu ứng hover cho logo/brand */
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 14px rgba(13, 110, 253, 0.25);
+}
+
+/* Danh sách menu dùng chung */
+.sidebar nav {
+    /* Danh sách điều hướng chính, có thể cuộn dọc */
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 10px;
+}
+
+.sidebar .sidebar-scrollable {
+    /* Wrapper cuộn bổ sung cho sidebar (nếu trang có cấu trúc riêng) */
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.sidebar .sidebar-scrollable nav {
+    /* Tránh xung đột overflow khi nav nằm trong wrapper cuộn */
+    overflow: visible;
+}
+
+.sidebar nav::-webkit-scrollbar,
+.sidebar .sidebar-scrollable::-webkit-scrollbar {
+    /* Độ rộng thanh cuộn */
+    width: 4px;
+}
+
+.sidebar nav::-webkit-scrollbar-thumb,
+.sidebar .sidebar-scrollable::-webkit-scrollbar-thumb {
+    /* Màu thanh kéo của scrollbar */
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+}
+
+.sidebar nav a,
+.sidebar .nav-link {
+    /* Kiểu chung cho item menu */
+    color: #e2e8f0 !important;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin: 4px 12px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    border-left: none !important;
+}
+
+.sidebar nav a i,
+.sidebar .nav-link i {
+    /* Chuẩn hóa cột icon để menu thẳng hàng */
+    font-size: 1.1rem;
+    width: 1.25rem;
+    min-width: 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin-right: 12px;
+}
+
+.sidebar nav a:hover,
+.sidebar nav a.active,
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+    /* Trạng thái hover/active của item menu */
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+    border-left: none !important;
+    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.4);
+}
+
+/* Nút đăng xuất dùng chung */
+.sidebar .hover-logout,
+.sidebar .logout-btn {
+    color: #f87171 !important;
+    background-color: rgba(239, 68, 68, 0.08) !important;
+    border: 1px solid rgba(248, 113, 113, 0.35) !important;
+}
+
+.sidebar .hover-logout:hover,
+.sidebar .logout-btn:hover {
+    background-color: rgba(239, 68, 68, 0.16) !important;
+    color: #fca5a5 !important;
+    border-color: rgba(252, 165, 165, 0.5) !important;
+    box-shadow: 0 6px 14px rgba(239, 68, 68, 0.22);
+}
+
+/* Canh nội dung chính theo độ rộng sidebar */
+.main-content,
+#mainContent {
+    /* Căn lề trái nội dung theo độ rộng sidebar mở */
+    margin-left: var(--cms-sidebar-width);
+    transition: margin-left 0.3s ease;
+}
+
+.main-content.expanded,
+#mainContent.expanded {
+    /* Khi sidebar thu gọn, nội dung dịch trái tương ứng */
+    margin-left: var(--cms-sidebar-collapsed-width);
+}
+
+/* Trạng thái thu gọn sidebar */
+.sidebar.collapsed {
+    /* Độ rộng sidebar ở chế độ thu gọn */
+    width: var(--cms-sidebar-collapsed-width);
+}
+
+.sidebar.collapsed .hide-on-collapse,
+.sidebar.collapsed .brand-label,
+.sidebar.collapsed .small.fw-bold,
+.sidebar.collapsed .hover-logout span,
+.sidebar.collapsed .logout-btn span {
+    /* Ẩn các phần chữ khi sidebar thu gọn */
+    display: none !important;
+}
+
+.sidebar.collapsed .nav-link,
+.sidebar.collapsed nav a {
+    /* Căn giữa item menu khi thu gọn (chỉ còn icon) */
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 0 !important;
+    font-size: 0;
+    line-height: 1;
+    padding: 12px 0;
+    margin: 5px 10px;
+}
+
+.sidebar.collapsed .nav-link i,
+.sidebar.collapsed nav a i,
+.sidebar.collapsed .hover-logout i,
+.sidebar.collapsed .logout-btn i {
+    /* Chuẩn hóa kích thước icon ở trạng thái thu gọn */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.3rem;
+    min-width: 1.3rem;
+    margin-right: 0 !important;
+}
+
+.sidebar.collapsed .hover-logout,
+.sidebar.collapsed .logout-btn {
+    /* Giữ nút đăng xuất căn giữa khi thu gọn */
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+}
+
+.sidebar.collapsed .brand,
+.sidebar.collapsed .brand-container {
+    /* Căn giữa vùng logo khi sidebar thu gọn */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: var(--cms-header-height);
+    min-height: var(--cms-header-height);
+    max-height: var(--cms-header-height);
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+.sidebar.collapsed .brand i,
+.sidebar.collapsed .brand-container i {
+    /* Bỏ khoảng cách phải của icon logo khi thu gọn */
+    margin-right: 0 !important;
+}
+
+.sidebar.collapsed .brand a,
+.sidebar.collapsed .brand-container a {
+    /* Mở rộng vùng click logo theo chiều ngang */
+    width: 100%;
+    height: 100%;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    border-radius: 0;
+}
+
+.sidebar .brand .brand-label,
+.sidebar .brand-container .hide-on-collapse,
+.sidebar .brand a span:last-child,
+.sidebar .brand-container a span:last-child {
+    /* Kích thước nhãn thương hiệu */
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+/* Hiển thị responsive trên mobile */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        width: var(--cms-sidebar-width);
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .main-content,
+    .main-content.expanded,
+    #mainContent,
+    #mainContent.expanded {
+        margin-left: 0 !important;
+    }
+}

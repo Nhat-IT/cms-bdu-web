@@ -1,64 +1,64 @@
-/* Mo ta: Giao dien trang thong bao danh cho BCS (card, nhan, trang thai). */
+/* Mô tả: Giao diện trang thong bao dành cho BCS (card, nhãn, trạng thái). */
 
         .announcement-card {
-            /* Card tong cho moi thong bao */
+            /* Card tổng cho mỗi thông báo */
             border: 1px solid rgba(13, 110, 253, 0.08);
             box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
         }
 
         .announcement-pill {
-            /* Nhan trang thai/loai thong bao */
+            /* Nhan trạng thái/loai thong bao */
             background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(13, 110, 253, 0.02));
             color: #0d6efd;
             border: 1px solid rgba(13, 110, 253, 0.12);
         }
 
         .announcement-empty {
-            /* Trang thai rong khi chua co du lieu */
+            /* Trạng thái rỗng khi chưa có dữ liệu */
             background: linear-gradient(135deg, #f8fbff, #eef5ff);
             border: 1px dashed rgba(13, 110, 253, 0.2);
         }
 
         .announcement-item:hover {
-            /* Highlight dong thong bao khi hover */
+            /* Highlight dòng thông báo khi hover */
             background-color: #f8faff;
         }
 
         .panel-toggle {
-            /* Nut mo dong panel xu ly */
+            /* Nút mở đóng panel xử lý */
             border: 1px dashed rgba(13, 110, 253, 0.25);
             background: #f8fbff;
         }
 
         .process-panel .step-card {
-            /* Card tung buoc trong panel quy trinh */
+            /* Card từng bước trong panel quy trình */
             background: linear-gradient(180deg, #ffffff, #f8fbff);
             border: 1px solid rgba(13, 110, 253, 0.08);
         }
 
         .announcements-header {
-            /* Header co dinh khi cuon danh sach thong bao */
+            /* Header cố định khi cuộn danh sách thông báo */
             position: sticky;
             top: 0;
             z-index: 1050;
         }
 
         .announcements-scope-banner {
-            /* Banner pham vi thong bao dung sticky duoi topbar */
+            /* Banner phạm vi thong bao dùng sticky dưới topbar */
             position: sticky;
             top: 70px;
             z-index: 1040;
         }
 
         .schedule-grid {
-            /* Luoi thong tin lich lien quan thong bao */
+            /* Lưới thông tin lịch liên quan thông báo */
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
 
         .schedule-label {
-            /* Nhan cot trong khoi lich */
+            /* Nhãn cột trong khối lịch */
             font-size: 0.82rem;
             font-weight: 700;
             color: #4b5563;
@@ -67,7 +67,7 @@
 
         @media (max-width: 768px) {
             .schedule-grid {
-                /* Mobile: chuyen tu 2 cot ve 1 cot */
+                /* Mobile: chuyển từ 2 cột về 1 cột */
                 grid-template-columns: 1fr;
             }
         }
