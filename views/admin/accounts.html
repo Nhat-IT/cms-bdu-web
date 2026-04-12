@@ -9,12 +9,6 @@
     <link rel="stylesheet" href="../../public/css/style.css">
     <link rel="stylesheet" href="../../public/css/layout.css">
     <style>
-        .sidebar-admin { background: linear-gradient(180deg, #4e71aa 0%, #0e255b 100%) !important; }
-        .sidebar-admin .brand { background-color: #ffffff !important; color: #0d6efd !important; }
-        .top-navbar-admin { background-color: #0d6efd !important; }
-                .sidebar-admin .brand .brand-label { font-size: 1.5rem; }
-        .sidebar-admin nav a { font-size: 0.95rem; }
-        .top-navbar-admin h4 { font-size: 1.1rem; }
 .action-btn { padding: 0.2rem 0.5rem; font-size: 0.875rem; border-radius: 4px; }
         .table-avatar { width: 35px; height: 35px; object-fit: cover; border-radius: 50%; }
         /* Style cho Checkbox Vai trò */
@@ -32,7 +26,7 @@
                 <span class="brand-label">CMS ADMIN</span>
             </a>
         </div>
-        <div class="text-center mb-3 text-white-50 small fw-bold">QUẢN TRỊ KHOA CNTT</div>
+        <div class="text-center mb-3 text-white-50 small fw-bold">QUẢN TRỊ HỆ THỐNG</div>
         <nav>
             <a href="home.html"><i class="bi bi-speedometer2"></i> Tổng quan hệ thống</a>
             <a href="org-settings.html"><i class="bi bi-gear-wide-connected"></i> Cấu hình Học vụ</a>
@@ -63,7 +57,7 @@
         
         <div class="d-flex align-items-center text-white">
             <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
-                <div class="fs-6">Quản trị viên: <span class="fw-bold text-warning">Admin Khoa CNTT</span></div>
+                <div class="fs-6">Quản trị viên: <span class="fw-bold text-warning">Giáo vụ khoa CNTT</span></div>
             </div>
             
             <div class="dropdown">
@@ -96,7 +90,6 @@
                         <select class="form-select fw-bold text-dark">
                             <option selected value="all">Tất cả</option>
                             <option value="super_admin">Admin (Toàn quyền)</option>
-                            <option value="sub_admin">Giáo vụ (Hỗ trợ)</option>
                             <option value="teacher">Giảng viên</option>
                             <option value="bcs">Ban Cán Sự</option>
                             <option value="student">Sinh viên</option>
@@ -155,7 +148,7 @@
                                 </td>
                                 <td class="text-center">
                                     <div class="d-flex flex-column align-items-center gap-1">
-                                        <span class="badge bg-danger text-white px-2 py-1"><i class="bi bi-shield-lock-fill me-1"></i>Admin Khoa</span>
+                                        <span class="badge bg-danger text-white px-2 py-1"><i class="bi bi-shield-lock-fill me-1"></i>Giáo vụ khoa</span>
                                         <span class="badge bg-primary text-white px-2 py-1"><i class="bi bi-person-video3 me-1"></i>Giảng viên</span>
                                     </div>
                                 </td>
@@ -164,7 +157,7 @@
                                 </td>
                                 <td class="pe-4 text-end">
                                     <button class="btn btn-light action-btn text-warning border me-1" title="Khôi phục mật khẩu" onclick="confirmResetPassword('GVDQS', 'ThS. Dương Quang Sinh')"><i class="bi bi-key-fill"></i></button>
-                                    <button class="btn btn-light action-btn text-primary border me-1" title="Sửa thông tin" data-bs-toggle="modal" data-bs-target="#accountModal" onclick="openAccountModal('edit', 'GVDQS', 'ThS. Dương Quang Sinh', 'sinh.dq@bdu.edu.vn', ['super_admin', 'teacher'])"><i class="bi bi-pencil-square"></i></button>
+                                    <button class="btn btn-light action-btn text-primary border me-1" title="Sửa thông tin" data-bs-toggle="modal" data-bs-target="#accountModal" onclick="openAccountModal('edit', 'GVDQS', 'ThS. Dương Quang Sinh', 'sinh.dq@bdu.edu.vn', ['super_admin', 'teacher'], '', 'Thạc sĩ')"><i class="bi bi-pencil-square"></i></button>
                                     <button class="btn btn-light action-btn text-danger border" title="Khóa tài khoản" onclick="confirmLockAccount('GVDQS', 'ThS. Dương Quang Sinh')"><i class="bi bi-lock-fill"></i></button>
                                 </td>
                             </tr>
@@ -195,7 +188,7 @@
                                 </td>
                                 <td class="pe-4 text-end">
                                     <button class="btn btn-light action-btn text-warning border me-1" title="Khôi phục mật khẩu" onclick="confirmResetPassword('22050004', 'Phạm Huỳnh Nhật Ý')"><i class="bi bi-key-fill"></i></button>
-                                    <button class="btn btn-light action-btn text-primary border me-1" title="Sửa thông tin" data-bs-toggle="modal" data-bs-target="#accountModal" onclick="openAccountModal('edit', '22050004', 'Phạm Huỳnh Nhật Ý', '22050004@student.bdu.edu.vn', ['bcs', 'student'], '22TH01')"><i class="bi bi-pencil-square"></i></button>
+                                    <button class="btn btn-light action-btn text-primary border me-1" title="Sửa thông tin" data-bs-toggle="modal" data-bs-target="#accountModal" onclick="openAccountModal('edit', '22050004', 'Phạm Huỳnh Nhật Ý', '22050004@student.bdu.edu.vn', ['bcs', 'student'], '22TH01', '')"><i class="bi bi-pencil-square"></i></button>
                                     <button class="btn btn-light action-btn text-danger border" title="Khóa tài khoản" onclick="confirmLockAccount('22050004', 'Phạm Huỳnh Nhật Ý')"><i class="bi bi-lock-fill"></i></button>
                                 </td>
                             </tr>
@@ -223,7 +216,7 @@
                                 </td>
                                 <td class="pe-4 text-end">
                                     <button class="btn btn-light action-btn text-warning border me-1" title="Khôi phục mật khẩu" onclick="confirmResetPassword('22050111', 'Nguyễn Thị C')"><i class="bi bi-key-fill"></i></button>
-                                    <button class="btn btn-light action-btn text-primary border me-1" title="Sửa thông tin" data-bs-toggle="modal" data-bs-target="#accountModal" onclick="openAccountModal('edit', '22050111', 'Nguyễn Thị C', '22050111@student.bdu.edu.vn', ['student'], '22TH02')"><i class="bi bi-pencil-square"></i></button>
+                                    <button class="btn btn-light action-btn text-primary border me-1" title="Sửa thông tin" data-bs-toggle="modal" data-bs-target="#accountModal" onclick="openAccountModal('edit', '22050111', 'Nguyễn Thị C', '22050111@student.bdu.edu.vn', ['student'], '22TH02', '')"><i class="bi bi-pencil-square"></i></button>
                                     <button class="btn btn-light action-btn text-danger border" title="Khóa tài khoản" onclick="confirmLockAccount('22050111', 'Nguyễn Thị C')"><i class="bi bi-lock-fill"></i></button>
                                 </td>
                             </tr>
@@ -272,11 +265,21 @@
           </div>
 
           <div class="row">
-            <div class="col-md-8 mb-3">
+            <div class="col-md-5 mb-3">
                 <label class="form-label fw-bold">Họ và tên <span class="text-danger">*</span></label>
                 <input type="text" class="form-control border-secondary" id="modalFullName" placeholder="Nhập đầy đủ họ tên..." required>
             </div>
-            <div class="col-md-4 mb-3" id="classInputGroup" style="display: none;">
+            <div class="col-md-4 mb-3" id="academicRankGroup">
+                <label class="form-label fw-bold">Học hàm / Học vị</label>
+                <select class="form-select border-secondary" id="modalAcademicRank">
+                    <option value="">Không áp dụng</option>
+                    <option value="Cử nhân">Cử nhân (CN.)</option>
+                    <option value="Thạc sĩ">Thạc sĩ (ThS.)</option>
+                    <option value="Tiến sĩ">Tiến sĩ (TS.)</option>
+                    <option value="PGS.TS">Phó Giáo sư (PGS.TS)</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-3" id="classInputGroup" style="display: none;">
                 <label class="form-label fw-bold">Lớp học <span class="text-danger">*</span></label>
                 <input type="text" class="form-control border-warning fw-bold" id="modalClass" placeholder="VD: 22TH01">
             </div>
@@ -289,7 +292,7 @@
                     <p class="small fw-bold text-muted mb-2">QUẢN TRỊ & GIẢNG DẠY</p>
                     <div class="form-check mb-2">
                         <input class="form-check-input group-staff" type="checkbox" value="super_admin" id="roleSuperAdmin">
-                        <label class="form-check-label fw-bold text-danger" for="roleSuperAdmin">Admin Khoa</label>
+                        <label class="form-check-label fw-bold text-danger" for="roleSuperAdmin">Giáo vụ khoa</label>
                     </div>
                     <div class="form-check mb-2">
                         <input class="form-check-input group-staff" type="checkbox" value="teacher" id="roleTeacher">
@@ -337,7 +340,7 @@
             <hr class="my-2">
             <span class="text-danger fw-bold">*Ghi chú:</span> 
             <br>- Cột Lớp học: Bỏ trống nếu là vai trò Admin/Giảng viên.
-            <br>- Cột Vai trò: super_admin, sub_admin, teacher, bcs, student.
+            <br>- Cột Vai trò: super_admin, teacher, bcs, student.
         </div>
         <div class="mb-3">
             <label class="form-label fw-bold">Chọn file Excel (.xlsx, .xls) <span class="text-danger">*</span></label>
@@ -364,6 +367,8 @@
     const studentCheckboxes = document.querySelectorAll('.group-student');
     const classInputGroup = document.getElementById('classInputGroup');
     const modalClassInput = document.getElementById('modalClass');
+    const academicRankGroup = document.getElementById('academicRankGroup');
+    const modalAcademicRank = document.getElementById('modalAcademicRank');
 
     // Tự động ẩn hiện ô Lớp học dựa vào vai trò
     function updateRoleConstraints() {
@@ -379,10 +384,17 @@
         if (isStdChecked || isBcsChecked) {
             classInputGroup.style.display = 'block';
             modalClassInput.setAttribute('required', 'true');
+
+            // Vai trò người học: ẩn Học hàm / Học vị
+            academicRankGroup.style.display = 'none';
+            modalAcademicRank.value = '';
         } else {
             classInputGroup.style.display = 'none';
             modalClassInput.removeAttribute('required');
             modalClassInput.value = '';
+
+            // Vai trò quản trị/giảng viên: hiện Học hàm / Học vị
+            academicRankGroup.style.display = 'block';
         }
 
         if (isStaffChecked || isStudentChecked) document.getElementById('roleValidationMsg').style.display = 'none';
@@ -392,17 +404,20 @@
         cb.addEventListener('change', updateRoleConstraints);
     });
 
-    function openAccountModal(mode, code = '', fullName = '', email = '', roles = [], className = '') {
+    function openAccountModal(mode, code = '', fullName = '', email = '', roles = [], className = '', academicRank = '') {
         const title = document.getElementById('accountModalTitle');
         const inputCode = document.getElementById('modalCode');
+        const inputAcademicRank = document.getElementById('modalAcademicRank');
         document.getElementById('accountForm').reset();
         
         document.querySelectorAll('.form-check-input').forEach(cb => { cb.checked = false; cb.disabled = false; });
         classInputGroup.style.display = 'none';
+        academicRankGroup.style.display = 'block';
 
         if (mode === 'add') {
             title.innerHTML = '<i class="bi bi-person-plus-fill me-2"></i>Thêm Tài Khoản Mới';
             inputCode.removeAttribute('readonly'); 
+            inputAcademicRank.value = '';
         } else {
             title.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Cập Nhật Thông Tin';
             inputCode.value = code;
@@ -410,6 +425,7 @@
             document.getElementById('modalFullName').value = fullName;
             document.getElementById('modalEmail').value = email;
             modalClassInput.value = className;
+            inputAcademicRank.value = academicRank;
             
             roles.forEach(role => {
                 if (role === 'super_admin') document.getElementById('roleSuperAdmin').checked = true;

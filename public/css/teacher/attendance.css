@@ -1,17 +1,28 @@
+/* Mo ta: Giao dien diem danh giang vien (tab dieu huong, lich day, bang diem danh). */
+
         .nav-tabs .nav-link.active { font-weight: bold; border-bottom: 3px solid #0d6efd; color: #0d6efd; background-color: transparent;}
+        /* Tab dang duoc chon */
         .nav-tabs .nav-link { color: #6c757d; border: none; font-size: 1.05rem;}
+        /* Tab mac dinh */
         .nav-tabs .nav-link:hover { color: #0d6efd; border-color: transparent; }
+        /* Mau tab khi hover */
 
         /* Cấu trúc lịch dạy */
         .schedule-table th { background-color: #f8f9fa; text-align: center; vertical-align: middle; }
+        /* Header bang lich day */
         .schedule-table td { width: 14.28%; vertical-align: top; height: 120px; border: 1px solid #dee2e6;}
+        /* O tiet hoc trong bang lich */
         .class-card { transition: transform 0.2s; cursor: pointer; }
+        /* Card lop hoc trong tung khung lich */
         .class-card:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
 
         /* Style điểm danh chuẩn BCS */
         .status-select.val-1 { color: #198754; font-weight: bold; }
         .status-select.val-2 { color: #ffc107; font-weight: bold; }
         .status-select.val-3 { color: #dc3545; font-weight: bold; }
+        /* Mau chu cho 3 trang thai diem danh */
         .fixed-info-box { min-height: 42px; display: flex; align-items: center; }
+        /* Co dinh chieu cao thong tin de bang khong xoc */
         #attendanceTable { table-layout: fixed; width: 100%; }
         #attendanceTable th, #attendanceTable td { vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        /* Cat ngan noi dung qua dai trong o bang */

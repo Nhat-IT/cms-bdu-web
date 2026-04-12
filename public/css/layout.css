@@ -1,29 +1,249 @@
+/* Mo ta: Bo cuc dung chung toan he thong (sidebar, navbar, khung noi dung). */
+
 /* ==========================================
-   LAYOUT.CSS - MENU DUNG CHUNG TOAN HE THONG
-   ========================================== */
+    LAYOUT.CSS - MENU DÙNG CHUNG TOÀN HỆ THỐNG
+    ========================================== */
 
 :root {
+    /* Kich thuoc sidebar o trang thai mo va thu gon */
     --cms-sidebar-width: 260px;
     --cms-sidebar-collapsed-width: 86px;
 }
 
+/* Khung sidebar chinh: co dinh ben trai, cao full man hinh */
 .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
     width: var(--cms-sidebar-width);
+    background: linear-gradient(180deg, #4e71aa 0%, #0e255b 100%);
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
     transition: width 0.3s ease, transform 0.3s ease;
     will-change: width, transform;
 }
 
+.sidebar > div:first-child {
+    /* Vung noi dung chinh trong sidebar (logo + menu) */
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.sidebar > div:last-child {
+    /* Vung chan sidebar: thuong dung cho nut dang xuat */
+    flex: 0 0 auto;
+    margin-top: auto;
+    position: sticky;
+    bottom: 0;
+    background: inherit;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sidebar > div:last-child .hover-logout,
+.sidebar > div:last-child .logout-btn {
+    /* Chuan hoa nut dang xuat o day sidebar */
+    width: 100%;
+    padding-top: 0.6rem !important;
+    padding-bottom: 0.6rem !important;
+    padding-left: 0.9rem !important;
+    padding-right: 0.9rem !important;
+    border-radius: 10px;
+    justify-content: center;
+    text-align: center;
+}
+
+.sidebar > div:last-child hr {
+    /* Duong ke ngang ngan cach menu va nut dang xuat */
+    width: 100%;
+}
+
+.sidebar > div:last-child .hover-logout i,
+.sidebar > div:last-child .logout-btn i {
+    /* Kich thuoc icon dang xuat */
+    font-size: 1.25rem !important;
+}
+
+.sidebar > div:last-child .hover-logout span,
+.sidebar > div:last-child .logout-btn span {
+    /* Kieu chu nhan dang xuat */
+    font-size: 1.02rem;
+    font-weight: 700;
+}
+
+/* Vung logo/brand cua sidebar */
+.sidebar .brand,
+.sidebar .brand-container {
+    background-color: #ffffff;
+    color: #0d6efd !important;
+    min-height: 70px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.sidebar .brand a,
+.sidebar .brand-container a {
+    /* Khung click cho logo de chuyen trang */
+    width: 100%;
+    height: 100%;
+    color: #0d6efd !important;
+    text-decoration: none;
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sidebar .brand a:hover,
+.sidebar .brand-container a:hover {
+    /* Hieu ung hover cho logo */
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 14px rgba(13, 110, 253, 0.25);
+}
+
+.sidebar nav {
+    /* Menu dieu huong co the cuon doc khi danh sach dai */
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 10px;
+}
+
+.sidebar .sidebar-scrollable {
+    /* Lop cuon bo sung cho cac trang can custom sidebar */
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.sidebar .sidebar-scrollable nav {
+    /* Tranh xung dot overflow khi nav nam trong wrapper cuon */
+    overflow: visible;
+}
+
+.sidebar nav::-webkit-scrollbar {
+    /* Do rong thanh cuon menu */
+    width: 4px;
+}
+
+.sidebar nav::-webkit-scrollbar-thumb {
+    /* Mau thanh keo scrollbar cua menu */
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+}
+
+.sidebar .sidebar-scrollable::-webkit-scrollbar {
+    /* Do rong scrollbar cho wrapper sidebar-scrollable */
+    width: 4px;
+}
+
+.sidebar .sidebar-scrollable::-webkit-scrollbar-thumb {
+    /* Mau thanh keo trong wrapper sidebar-scrollable */
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+}
+
+.sidebar nav a,
+.sidebar .nav-link {
+    /* Style co ban cho tung muc menu */
+    color: #e2e8f0 !important;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin: 4px 12px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    border-left: none !important;
+}
+
+.sidebar nav a i,
+.sidebar .nav-link i {
+    /* Canh deu icon menu de menu thang cot */
+    font-size: 1.1rem;
+    width: 1.25rem;
+    min-width: 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin-right: 12px;
+}
+
+.sidebar nav a:hover,
+.sidebar nav a.active,
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+    /* Trang thai hover/active cua menu */
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+    border-left: none !important;
+    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.4);
+}
+
+.sidebar .hover-logout,
+.sidebar .logout-btn {
+    /* Mau mac dinh cho nut dang xuat */
+    color: #f87171 !important;
+    background-color: rgba(239, 68, 68, 0.08) !important;
+    border: 1px solid rgba(248, 113, 113, 0.35) !important;
+}
+
+.sidebar .hover-logout:hover,
+.sidebar .logout-btn:hover {
+    /* Hieu ung hover cho nut dang xuat */
+    background-color: rgba(239, 68, 68, 0.16) !important;
+    color: #fca5a5 !important;
+    border-color: rgba(252, 165, 165, 0.5) !important;
+    box-shadow: 0 6px 14px rgba(239, 68, 68, 0.22);
+}
+
+.dropdown-menu .dropdown-item.fw-bold.text-danger {
+    /* Muc dang xuat trong dropdown (o topbar) */
+    font-size: 1rem;
+    padding: 0.6rem 0.95rem;
+}
+
+.dropdown-menu .dropdown-item.fw-bold.text-danger i {
+    font-size: 1.05rem;
+}
+
 .main-content,
 #mainContent {
+    /* Noi dung chinh dich sang phai theo do rong sidebar */
     margin-left: var(--cms-sidebar-width);
     transition: margin-left 0.3s ease;
 }
 
 .main-content.expanded,
 #mainContent.expanded {
+    /* Khi sidebar thu gon, noi dung chinh thu hep le trai */
     margin-left: var(--cms-sidebar-collapsed-width);
 }
 
+/* Sidebar thu gon */
 .sidebar.collapsed {
     width: var(--cms-sidebar-collapsed-width);
 }
@@ -31,35 +251,48 @@
 .sidebar.collapsed .hide-on-collapse,
 .sidebar.collapsed .brand-label,
 .sidebar.collapsed .small.fw-bold,
-.sidebar.collapsed .hover-logout span {
+.sidebar.collapsed .hover-logout span,
+.sidebar.collapsed .logout-btn span {
+    /* An nhan text khi thu gon, chi de lai icon */
     display: none !important;
 }
 
 .sidebar.collapsed .nav-link,
 .sidebar.collapsed nav a {
+    /* Canh giua item menu o che do thu gon */
     display: flex !important;
-    justify-content: center;
-    align-items: center;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 0 !important;
+    font-size: 0;
+    line-height: 1;
     padding: 12px 0;
     margin: 5px 10px;
 }
 
 .sidebar.collapsed .nav-link i,
 .sidebar.collapsed nav a i,
-.sidebar.collapsed .hover-logout i {
+.sidebar.collapsed .hover-logout i,
+.sidebar.collapsed .logout-btn i {
+    /* Chuan hoa icon khi thu gon */
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    width: 1.3rem;
+    min-width: 1.3rem;
     margin-right: 0 !important;
 }
 
-.sidebar.collapsed .hover-logout {
+.sidebar.collapsed .hover-logout,
+.sidebar.collapsed .logout-btn {
+    /* Dam bao nut dang xuat van canh giua o che do thu gon */
     display: flex !important;
     justify-content: center;
     align-items: center;
 }
 
 .sidebar.collapsed .brand i {
+    /* Bo khoang cach phai icon logo khi thu gon */
     margin-right: 0 !important;
 }
 
@@ -89,13 +322,16 @@
 }
 
 .sidebar .brand .brand-label {
+    /* Co chu nhan thuong hieu */
     font-size: 1.5rem;
     font-weight: 700;
 }
 
-.sidebar nav a,
-.sidebar .nav-link {
-    font-size: 0.95rem;
+.sidebar .brand-container .hide-on-collapse,
+.sidebar .brand a span:last-child,
+.sidebar .brand-container a span:last-child {
+    font-size: 1.5rem;
+    font-weight: 700;
 }
 
 .sidebar-admin nav a:hover,
@@ -116,10 +352,50 @@
 .top-navbar-admin h4,
 .top-navbar-blue h4,
 .top-navbar-teacher h4 {
+    /* Co chu tieu de topbar cho cac vai tro */
     font-size: 1.1rem;
 }
 
+.top-navbar-admin,
+.top-navbar-blue,
+.top-navbar-teacher {
+    /* Mau nen topbar dung chung */
+    background-color: #0d6efd !important;
+    transition: left 0.3s ease;
+    will-change: left;
+}
+
+.sidebar-admin .brand,
+.sidebar-teacher .brand,
+.sidebar .brand {
+    background-color: #ffffff !important;
+}
+
+.sidebar-admin .brand a {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    justify-content: center;
+}
+
+.sidebar-admin .brand {
+    height: 81px;
+    min-height: 72px;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.sidebar-admin > div:first-child > .text-center.mb-3.text-white-50.small.fw-bold {
+    margin-top: 40px;
+}
+
+.sidebar-admin nav {
+    /* Tao khoang cach phan menu admin voi header */
+    padding-top: 24px;
+}
+
 @media (max-width: 768px) {
+    /* Responsive mobile: an sidebar mac dinh va mo bang class active */
     .sidebar {
         transform: translateX(-100%);
         width: var(--cms-sidebar-width);

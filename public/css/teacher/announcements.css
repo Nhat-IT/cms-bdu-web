@@ -1,60 +1,74 @@
+/* Mo ta: Giao dien thong bao giang vien (card thong bao, bo loc, noi dung). */
+
         .announcement-card {
+            /* Card tong cho bai dang/thong bao */
             border: 1px solid rgba(13, 110, 253, 0.08);
             box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
         }
 
         .announcements-content-wrap {
+            /* Bo dem ngang cho noi dung chinh */
             padding-left: 1rem !important;
             padding-right: 1rem !important;
         }
 
         .announcements-content-wrap .card-body {
+            /* Bo dem trong card noi dung */
             padding-left: 1.25rem;
             padding-right: 1.25rem;
         }
 
         .announcement-pill {
+            /* Nhan trang thai thong bao */
             background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(13, 110, 253, 0.02));
             color: #0d6efd;
             border: 1px solid rgba(13, 110, 253, 0.12);
         }
 
         .announcement-empty {
+            /* Trang thai rong khi chua co bai dang */
             background: linear-gradient(135deg, #f8fbff, #eef5ff);
             border: 1px dashed rgba(13, 110, 253, 0.2);
         }
 
         .announcement-item:hover {
+            /* Highlight dong thong bao khi hover */
             background-color: #f8faff;
         }
 
         .panel-toggle {
+            /* Nut mo/rut gon panel quy trinh */
             border: 1px dashed rgba(13, 110, 253, 0.25);
             background: #f8fbff;
         }
 
         .process-panel .step-card {
+            /* Card buoc xu ly trong panel */
             background: linear-gradient(180deg, #ffffff, #f8fbff);
             border: 1px solid rgba(13, 110, 253, 0.08);
         }
 
         .announcements-header {
+            /* Lop z-index cho header de khong bi de */
             z-index: 1020;
         }
 
         .announcements-scope-banner {
+            /* Banner pham vi thong bao dang sticky duoi topbar */
             position: sticky;
             top: 70px;
             z-index: 1040;
         }
 
         .schedule-grid {
+            /* Luoi hien thi thong tin lich lien quan */
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
 
         .schedule-label {
+            /* Nhan cot trong luoi lich */
             font-size: 0.82rem;
             font-weight: 700;
             color: #4b5563;
@@ -63,10 +77,12 @@
 
         @media (max-width: 768px) {
             .schedule-grid {
+                /* Mobile: 1 cot de de doc */
                 grid-template-columns: 1fr;
             }
 
             .announcements-content-wrap {
+                /* Mobile: thu gon bo dem ngang */
                 padding-left: 0.75rem !important;
                 padding-right: 0.75rem !important;
             }

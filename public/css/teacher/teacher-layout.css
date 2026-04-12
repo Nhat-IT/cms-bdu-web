@@ -1,20 +1,9 @@
-/* Shared Teacher layout: sidebar behavior mirrors student pages */
-.sidebar-teacher {
-    width: 260px;
-    background: linear-gradient(180deg, #4e71aa 0%, #0e255b 100%);
-    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    z-index: 1000;
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
+/* Mo ta: Bo cuc tong the khu vuc giang vien (sidebar, khung noi dung, canh le). */
+
+/* Bố cục chung cho giảng viên: hành vi sidebar đồng bộ với trang sinh viên */
 
 .sidebar-teacher > div:first-child {
+    /* Vung tren sidebar: logo + profile + menu */
     flex: 1;
     min-height: 0;
     display: flex;
@@ -23,10 +12,12 @@
 }
 
 .sidebar-teacher > div:last-child {
+    /* Vung duoi sidebar: nut dang xuat */
     flex: 0 0 auto;
 }
 
 .teacher-menu-scroll {
+    /* Vung cuon cho menu giang vien */
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
@@ -39,10 +30,12 @@
 }
 
 .teacher-menu-scroll > .text-start.small.fw-bold {
+    /* Nhan nhom menu khong bi co lai khi cuon */
     flex: 0 0 auto;
 }
 
 .teacher-menu-scroll .nav {
+    /* Ep nav luon xep doc */
     display: flex;
     flex-direction: column !important;
     flex-wrap: nowrap;
@@ -50,43 +43,25 @@
 }
 
 .teacher-menu-scroll::-webkit-scrollbar {
+    /* Do rong scrollbar menu */
     width: 4px;
 }
 
 .teacher-menu-scroll::-webkit-scrollbar-thumb {
+    /* Mau thanh keo scrollbar */
     background: rgba(255, 255, 255, 0.2);
     border-radius: 8px;
 }
 
-.sidebar-teacher .brand {
-    background-color: #ffffff;
-    color: #0d6efd !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-}
-
-.sidebar-teacher .brand a {
-    color: #0d6efd !important;
-    border-radius: 10px;
-    padding: 6px 10px;
-    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.sidebar-teacher .brand a:hover {
-    background-color: #0d6efd !important;
-    color: #ffffff !important;
-    box-shadow: 0 6px 14px rgba(13, 110, 253, 0.25);
-}
-
 .teacher-profile-container {
+    /* Khoi profile giang vien trong sidebar */
     text-align: center;
     padding: 14px 10px 12px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .teacher-profile-trigger {
+    /* Vung click profile giang vien */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -101,6 +76,7 @@
 }
 
 .teacher-profile-trigger:hover {
+    /* Hover profile giang vien */
     background-color: #0d6efd !important;
     color: #ffffff !important;
 }
@@ -111,6 +87,7 @@
 }
 
 .teacher-profile-name {
+    /* Ten giang vien trong sidebar */
     color: #ffffff;
     font-weight: 700;
     font-size: 0.9rem;
@@ -121,11 +98,13 @@
 }
 
 .teacher-profile-role {
+    /* Chuc vu/vai tro duoi ten */
     color: rgba(255, 255, 255, 0.72);
     font-size: 0.76rem;
 }
 
 .teacher-role-badge {
+    /* Badge vai tro bo sung */
     display: inline-block;
     margin-top: 8px;
     margin-left: 0;
@@ -136,6 +115,7 @@
 }
 
 .sidebar-teacher nav {
+    /* Nav giang vien: giu bo cuc on dinh */
     flex: 0 0 auto;
     min-height: auto;
     max-height: none;
@@ -144,19 +124,23 @@
 }
 
 .sidebar-teacher .nav-link {
-    color: #e2e8f0 !important;
-    font-weight: 500;
-    padding: 10px 15px;
-    border-radius: 8px;
-    margin: 4px 12px;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
+    /* Khoang cach icon-text cho menu */
     gap: 8px;
-    text-decoration: none;
+}
+
+.sidebar-teacher .nav-link > i,
+.sidebar-teacher .nav-link > span i {
+    /* Chuan cot icon menu */
+    width: 1.25rem;
+    min-width: 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .sidebar-teacher .nav-link > span:first-child {
+    /* Cat text dai trong menu */
     min-width: 0;
     white-space: nowrap;
     overflow: hidden;
@@ -168,6 +152,7 @@
 }
 
 .sidebar-teacher .nav-link.justify-content-between {
+    /* Item menu co badge ben phai */
     gap: 10px;
 }
 
@@ -184,48 +169,11 @@
     margin-left: 8px;
 }
 
-.sidebar-teacher .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-    color: #ffffff !important;
-    transform: none;
-}
-
-.sidebar-teacher .nav-link.active {
-    background-color: #0d6efd !important;
-    color: #ffffff !important;
-    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.4);
-}
-
-.sidebar-teacher .nav-link i {
-    font-size: 1.1rem;
-}
-
-.sidebar-teacher .hover-logout {
-    color: #f87171 !important;
-}
-
-.sidebar-teacher .hover-logout:hover {
-    background-color: rgba(239, 68, 68, 0.12);
-    color: #fca5a5 !important;
-}
-
-.main-content {
-    margin-left: 260px;
-    transition: all 0.3s ease;
-    min-height: 100vh;
-    background-color: #f1f5f9;
-    padding-top: 70px;
-}
-
-.main-content.expanded {
-    margin-left: 85px;
-}
-
 .top-navbar-teacher {
+    /* Topbar giang vien co dinh tren cung */
     height: 70px;
     padding-top: 0 !important;
     padding-bottom: 0 !important;
-    background-color: #0d6efd !important;
     color: #ffffff;
     position: fixed;
     top: 0;
@@ -234,16 +182,20 @@
     z-index: 1020;
 }
 
+.main-content {
+    /* Cho noi dung cach topbar tranh de */
+    padding-top: 70px;
+}
+
 .main-content.expanded .top-navbar-teacher {
+    /* Doi vi tri topbar khi sidebar thu gon */
     left: 85px;
 }
 
-.top-navbar-teacher h4 {
-    font-size: 1.1rem;
-    margin: 0;
-}
+.top-navbar-teacher h4 { margin: 0; }
 
 .teacher-header-notify {
+    /* Link chuong thong bao tren topbar */
     color: #ffffff;
     text-decoration: none;
 }
@@ -268,6 +220,7 @@
 }
 
 .teacher-menu-toggle {
+    /* Nut mo/thu gon sidebar tren mobile */
     border: 1.5px solid rgba(255, 255, 255, 0.55);
     border-radius: 999px;
     color: #ffffff;
@@ -286,10 +239,6 @@
     border-color: #bfdbfe;
 }
 
-.sidebar-teacher.collapsed {
-    width: 85px;
-}
-
 .sidebar-teacher.collapsed .brand {
     padding-left: 0 !important;
     padding-right: 0 !important;
@@ -299,12 +248,7 @@
     padding: 6px;
 }
 
-.sidebar-teacher.collapsed .brand .brand-label {
-    display: none;
-}
-
 .sidebar-teacher.collapsed .brand a i {
-    margin-right: 0 !important;
     font-size: 1.6rem !important;
 }
 
@@ -312,13 +256,12 @@
 .sidebar-teacher.collapsed hr,
 .sidebar-teacher.collapsed .badge,
 .sidebar-teacher.collapsed .hover-logout span {
+    /* Thu gon sidebar: an text, badge va nhan */
     display: none !important;
 }
 
 .sidebar-teacher.collapsed .nav-link {
-    justify-content: center !important;
-    padding: 12px 0;
-    margin: 5px 10px;
+    /* Thu gon sidebar: an chu item menu */
     font-size: 0;
 }
 
@@ -329,7 +272,7 @@
 }
 
 .sidebar-teacher.collapsed .nav-link i {
-    margin-right: 0 !important;
+    /* Icon menu o che do thu gon */
     font-size: 1.3rem;
 }
 
@@ -337,8 +280,27 @@
     font-size: 1.3rem;
 }
 
+.sidebar-teacher.collapsed .nav-link > i,
+.sidebar-teacher.collapsed .nav-link > span i {
+    width: 1.3rem;
+    min-width: 1.3rem;
+}
+
 .sidebar-teacher.collapsed .nav-link.justify-content-between {
+    /* Canh giua item menu co badge khi thu gon */
     justify-content: center !important;
+}
+
+.sidebar-teacher.collapsed .nav-link.justify-content-between > span:first-child {
+    flex: 0 0 auto;
+    min-width: auto;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
 }
 
 .sidebar-teacher.collapsed .teacher-profile-container {
@@ -354,6 +316,7 @@
 
 .sidebar-teacher.collapsed .teacher-profile-meta,
 .sidebar-teacher.collapsed .teacher-role-badge {
+    /* Thu gon sidebar: an thong tin profile, giu avatar */
     display: none;
 }
 
@@ -361,24 +324,8 @@
     justify-content: center;
 }
 
-.sidebar-teacher.collapsed .hover-logout i {
-    margin-right: 0 !important;
-}
-
 @media (max-width: 768px) {
-    .sidebar-teacher {
-        transform: translateX(-100%);
-    }
-
-    .sidebar-teacher.active {
-        transform: translateX(0);
-    }
-
-    .main-content,
-    .main-content.expanded {
-        margin-left: 0;
-    }
-
+    /* Mobile: topbar full width */
     .top-navbar-teacher,
     .main-content.expanded .top-navbar-teacher {
         left: 0;

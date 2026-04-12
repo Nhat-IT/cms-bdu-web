@@ -1,6 +1,14 @@
+/* Mo ta: Giao dien quan ly bai tap lop hoc (tab, nut thao tac, tep dinh kem). */
+
         .action-btn { padding: 0.2rem 0.5rem; font-size: 0.875rem; border-radius: 4px; }
+        /* Nut thao tac nhanh trong bang bai tap */
         .nav-tabs .nav-link.active { font-weight: bold; border-bottom: 3px solid #0d6efd; color: #0d6efd; background-color: transparent;}
+        /* Tab dang duoc chon */
         .nav-tabs .nav-link { color: #6c757d; border: none; font-size: 1.05rem;}
+        /* Tab mac dinh */
         .nav-tabs .nav-link:hover { color: #0d6efd; border-color: transparent; }
+        /* Mau tab khi hover */
         .file-link { cursor: pointer; transition: opacity 0.2s; }
+        /* Link tep dinh kem bai tap */
         .file-link:hover { opacity: 0.7; text-decoration: underline !important; }
+        /* Hover link tep de nhan ro co the click */

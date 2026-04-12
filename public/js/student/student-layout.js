@@ -9,15 +9,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    if (window.CMSMenu && typeof window.CMSMenu.init === 'function') {
-        window.CMSMenu.init({
-            toggleElement: sidebarToggle,
-            sidebarElement: sidebar,
-            mainContentElement: mainContent,
-            topNavbarSelector: '.top-navbar-blue'
-        });
-    }
-
     if (!bellLink) {
         return;
     }

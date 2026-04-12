@@ -1,3 +1,8 @@
+/* Mo ta: Giao dien tai lieu BCS (link tep, tieu de, trang thai hien thi). */
+
         .file-link { cursor: pointer; transition: opacity 0.2s; color: inherit; text-decoration: none; }
+        /* Link tai lieu: giu mau chu ke thua va co hieu ung mo dan */
         .file-link:hover { opacity: 0.8; }
+        /* Hover vao toan bo dong tai lieu */
         .file-link:hover .file-title { color: #0d6efd; text-decoration: underline; }
+        /* Hover rieng tieu de file de de nhan biet click */

@@ -1,52 +1,64 @@
+/* Mo ta: Giao dien trang thong bao danh cho BCS (card, nhan, trang thai). */
+
         .announcement-card {
+            /* Card tong cho moi thong bao */
             border: 1px solid rgba(13, 110, 253, 0.08);
             box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
         }
 
         .announcement-pill {
+            /* Nhan trang thai/loai thong bao */
             background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(13, 110, 253, 0.02));
             color: #0d6efd;
             border: 1px solid rgba(13, 110, 253, 0.12);
         }
 
         .announcement-empty {
+            /* Trang thai rong khi chua co du lieu */
             background: linear-gradient(135deg, #f8fbff, #eef5ff);
             border: 1px dashed rgba(13, 110, 253, 0.2);
         }
 
         .announcement-item:hover {
+            /* Highlight dong thong bao khi hover */
             background-color: #f8faff;
         }
 
         .panel-toggle {
+            /* Nut mo dong panel xu ly */
             border: 1px dashed rgba(13, 110, 253, 0.25);
             background: #f8fbff;
         }
 
         .process-panel .step-card {
+            /* Card tung buoc trong panel quy trinh */
             background: linear-gradient(180deg, #ffffff, #f8fbff);
             border: 1px solid rgba(13, 110, 253, 0.08);
         }
 
         .announcements-header {
+            /* Header co dinh khi cuon danh sach thong bao */
             position: sticky;
             top: 0;
             z-index: 1050;
         }
 
         .announcements-scope-banner {
+            /* Banner pham vi thong bao dung sticky duoi topbar */
             position: sticky;
             top: 70px;
             z-index: 1040;
         }
 
         .schedule-grid {
+            /* Luoi thong tin lich lien quan thong bao */
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
 
         .schedule-label {
+            /* Nhan cot trong khoi lich */
             font-size: 0.82rem;
             font-weight: 700;
             color: #4b5563;
@@ -55,6 +67,7 @@
 
         @media (max-width: 768px) {
             .schedule-grid {
+                /* Mobile: chuyen tu 2 cot ve 1 cot */
                 grid-template-columns: 1fr;
             }
         }

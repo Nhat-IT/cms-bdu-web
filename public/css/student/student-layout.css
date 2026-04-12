@@ -1,175 +1,14 @@
-/* Giao diện dùng chung Student: Khung sidebar */
-.sidebar {
-    width: 260px;
-    background: linear-gradient(180deg, #4e71aa 0%, #0e255b 100%);
-    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    z-index: 1000;
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
+/* Mo ta: Bo cuc rieng cua khu vuc sinh vien trong sidebar va khung noi dung. */
 
-/* Giao diện dùng chung Student: Khu vực logo */
-.brand-container {
-    background-color: #ffffff;
-    height: 70px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-    z-index: 10;
-}
-
-.brand-container a {
-    color: #0d6efd !important;
-    border-radius: 10px;
-    padding: 8px 12px;
-    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.brand-container a:hover {
-    background-color: #0d6efd !important;
-    color: #ffffff !important;
-    border-left: none !important;
-    box-shadow: 0 6px 14px rgba(13, 110, 253, 0.25);
-}
-
-/* Giao diện dùng chung Student: Trạng thái thu gọn sidebar */
-.sidebar.collapsed {
-    width: 85px;
-}
-
-.sidebar.collapsed .hide-on-collapse {
-    display: none !important;
-}
-
-.sidebar.collapsed .nav-link {
-    justify-content: center;
-    padding: 12px 0;
-    margin: 5px 10px;
-}
-
-.sidebar.collapsed .nav-link i {
-    margin-right: 0 !important;
-    font-size: 1.3rem;
-}
-
-.sidebar.collapsed .brand-container a {
-    justify-content: center;
-    width: 100%;
-}
-
-.sidebar.collapsed .brand-container a i {
-    margin-right: 0 !important;
-}
-
-.sidebar.collapsed .profile-container {
-    padding: 20px 0 15px;
-    display: flex;
-    justify-content: center;
-}
-
-.sidebar.collapsed .profile-trigger {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 5px;
-}
-
-.sidebar.collapsed .profile-trigger img {
-    width: 40px;
-    height: 40px;
-    margin-bottom: 0 !important;
-}
-
-/* Giao diện dùng chung Student: Bố cục nội dung chính */
-.main-content {
-    margin-left: 260px;
-    transition: all 0.3s ease;
-    background-color: #f4f6f9;
-    min-height: 100vh;
-    padding-top: 70px;
-    padding-bottom: 50px;
-}
-
-.main-content.expanded {
-    margin-left: 85px;
-}
-
-/* Giao diện dùng chung Student: Vùng cuộn sidebar */
-.sidebar-scrollable {
-    flex-grow: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-bottom: 10px;
-}
-
-.sidebar-scrollable::-webkit-scrollbar {
-    width: 4px;
-}
-
-.sidebar-scrollable::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-}
-
-.sidebar-scrollable::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-/* Giao diện dùng chung Student: Liên kết điều hướng */
-.sidebar .nav-link {
-    color: #e2e8f0;
-    font-weight: 500;
-    padding: 10px 15px;
-    border-radius: 8px;
-    margin: 4px 15px;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-}
-
-.sidebar .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-    color: #ffffff;
-    transform: translateX(3px);
-}
-
-.sidebar .nav-link.active {
-    background-color: #0d6efd;
-    color: #ffffff;
-    font-weight: bold;
-    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.4);
-}
-
-.sidebar .nav-link i {
-    font-size: 1.1rem;
-    margin-right: 12px;
-}
-
-/* Giao diện dùng chung Student: Nút đăng xuất */
-.logout-btn {
-    color: #f87171 !important;
-}
-
-.logout-btn:hover {
-    background-color: rgba(239, 68, 68, 0.1) !important;
-    color: #fca5a5 !important;
-}
-
-/* Giao diện dùng chung Student: Khối hồ sơ trong sidebar */
+/* Giao diện Student: Khối hồ sơ trong sidebar */
 .profile-container {
+    /* Khung thong tin sinh vien o sidebar */
     padding: 20px 10px 15px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .profile-trigger {
+    /* Vung click cua the profile sinh vien */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -182,6 +21,7 @@
 }
 
 .profile-trigger:hover {
+    /* Hover cho the profile */
     background-color: #0d6efd !important;
     color: #ffffff !important;
     border-left: none !important;
@@ -190,38 +30,27 @@
 
 .profile-trigger:hover .text-white,
 .profile-trigger:hover .text-white-50 {
+    /* Dam bao text doi mau khi hover */
     color: #ffffff !important;
 }
 
 /* Giao diện dùng chung Student: Badge lớp dùng lại */
 .student-class-badge {
+    /* Badge lop hien thi duoi avatar */
     font-size: 0.75rem;
     background-color: rgba(255, 255, 255, 0.25) !important;
     color: #ffffff !important;
     border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
-/* Giao diện dùng chung Student: Thanh điều hướng trên cùng */
-.top-navbar-blue {
-    height: 70px;
-    background-color: #0d6efd;
-    position: fixed;
-    top: 0;
-    left: 260px;
-    right: 0;
-    z-index: 1020;
-}
-
-.main-content.expanded .top-navbar-blue {
-    left: 85px;
-}
-
-/* Giao diện dùng chung Student: Popup thông báo từ icon chuông */
+/* Giao diện Student: Popup thông báo từ icon chuông */
 .student-notify-wrapper {
+    /* Moc dinh vi dropdown thong bao theo icon chuong */
     position: relative;
 }
 
 .student-notify-dropdown {
+    /* Hop danh sach thong bao */
     position: absolute;
     top: calc(100% + 12px);
     right: 0;
@@ -236,16 +65,19 @@
 }
 
 .student-notify-dropdown.show {
+    /* JS them class show de mo dropdown */
     display: block;
 }
 
 .student-notify-header {
+    /* Header cua dropdown thong bao */
     padding: 12px 14px;
     background: linear-gradient(180deg, #f8fbff, #ffffff);
     border-bottom: 1px solid #edf2ff;
 }
 
 .student-notify-item {
+    /* Tung dong thong bao */
     display: block;
     padding: 10px 14px;
     text-decoration: none;
@@ -255,6 +87,7 @@
 }
 
 .student-notify-item:hover {
+    /* Highlight dong thong bao khi hover */
     background-color: #f8fbff;
 }
 
@@ -263,6 +96,7 @@
 }
 
 .student-notify-source {
+    /* Nhan nguon thong bao (mon hoc/he thong/...) */
     font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -270,23 +104,27 @@
 }
 
 .student-notify-time {
+    /* Thoi gian thong bao */
     font-size: 0.78rem;
     color: #6c757d;
 }
 
 .student-notify-title {
+    /* Tieu de thong bao */
     font-weight: 700;
     font-size: 0.92rem;
     color: #1f2937;
 }
 
 .student-notify-footer {
+    /* Chan dropdown, thuong de link xem tat ca */
     padding: 10px 14px;
     border-top: 1px solid #edf2ff;
     background: #ffffff;
 }
 
 .student-notify-view-all {
+    /* Nut/link xem toan bo thong bao */
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -294,26 +132,9 @@
     text-decoration: none;
 }
 
-/* Giao diện dùng chung Student: Hiển thị trên mobile */
+/* Giao diện Student: Hiển thị trên mobile */
 @media (max-width: 768px) {
-    .sidebar {
-        transform: translateX(-100%);
-        width: 260px;
-    }
-
-    .sidebar.active {
-        transform: translateX(0);
-    }
-
-    .sidebar.active .hide-on-collapse {
-        display: block !important;
-    }
-
-    .main-content,
-    .main-content.expanded {
-        margin-left: 0;
-    }
-
+    /* Mobile: topbar canh trai 0 va dropdown gon hon */
     .top-navbar-blue,
     .main-content.expanded .top-navbar-blue {
         left: 0;

@@ -10,13 +10,31 @@
         return { sidebar, mainContent, topNavbar, toggle };
     }
 
-    function applyDesktopPosition(mainContent, topNavbar) {
-        if (!mainContent || !topNavbar || window.innerWidth <= MOBILE_BREAKPOINT) {
+    function applyDesktopPosition(sidebar, mainContent, topNavbar) {
+        if (!topNavbar) {
             return;
         }
 
-        const left = getComputedStyle(mainContent).marginLeft;
-        topNavbar.style.left = left;
+        if (window.innerWidth <= MOBILE_BREAKPOINT) {
+            topNavbar.style.left = '0px';
+            return;
+        }
+
+        const rootStyles = getComputedStyle(document.documentElement);
+        const expandedLeft = rootStyles.getPropertyValue('--cms-sidebar-width').trim() || '260px';
+        const collapsedLeft = rootStyles.getPropertyValue('--cms-sidebar-collapsed-width').trim() || '86px';
+
+        if (sidebar) {
+            topNavbar.style.left = sidebar.classList.contains('collapsed') ? collapsedLeft : expandedLeft;
+            return;
+        }
+
+        if (mainContent) {
+            topNavbar.style.left = getComputedStyle(mainContent).marginLeft;
+            return;
+        }
+
+        topNavbar.style.left = expandedLeft;
     }
 
     function initMenu(options = {}) {
@@ -43,7 +61,7 @@
             if (mainContent) {
                 mainContent.classList.toggle('expanded');
             }
-            applyDesktopPosition(mainContent, topNavbar);
+            applyDesktopPosition(sidebar, mainContent, topNavbar);
         });
 
         document.addEventListener('click', function (event) {
@@ -60,10 +78,10 @@
         });
 
         window.addEventListener('resize', function () {
-            applyDesktopPosition(mainContent, topNavbar);
+            applyDesktopPosition(sidebar, mainContent, topNavbar);
         });
 
-        applyDesktopPosition(mainContent, topNavbar);
+        applyDesktopPosition(sidebar, mainContent, topNavbar);
         return true;
     }
 

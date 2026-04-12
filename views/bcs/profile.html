@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS BDU - Ho so Ban Can Su</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+    <link rel="stylesheet" href="../../public/css/layout.css">
+    <link rel="stylesheet" href="../../public/css/bcs/bcs-layout.css">
+    <link rel="stylesheet" href="../../public/css/bcs/profile.css">
+</head>
+<body class="dashboard-body">
+
+<div class="sidebar d-flex flex-column" id="sidebar" style="height: 100vh;">
+    <div>
+        <div class="brand">
+            <a href="home.html" class="fw-bold">
+                <i class="bi bi-mortarboard-fill fs-2 me-2"></i>
+                <span class="brand-label">CMS BDU</span>
+            </a>
+        </div>
+
+        <div class="bcs-profile-container text-center flex-shrink-0">
+            <a href="profile.html" class="bcs-profile-trigger" title="Xem ho so ban can su">
+                <img src="https://ui-avatars.com/api/?name=Pham+H+Nhat+Y&background=0d6efd&color=fff" id="sidebarAvatar" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar BCS">
+                <div>
+                    <div class="text-white fw-bold fs-6">Pham Huynh Nhat Y</div>
+                    <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">Vai tro: <span id="sidebarRoleText">Lop truong</span></div>
+                </div>
+            </a>
+            <span class="badge bcs-class-badge mt-1">LOP: 25TH01</span>
+        </div>
+
+        <nav>
+            <a href="home.html"><i class="bi bi-grid-1x2-fill"></i> Bang dieu khien</a>
+            <a href="attendance.html"><i class="bi bi-calendar-check"></i> Quan ly Chuyen can</a>
+            <a href="documents.html"><i class="bi bi-folder2-open"></i> Kho Luu tru</a>
+            <a href="announcements.html"><i class="bi bi-megaphone-fill"></i> Thong bao va Ban tin</a>
+            <a href="feedback.html"><i class="bi bi-chat-dots"></i> Cong Tuong tac</a>
+            <div class="px-3 mt-4 mb-2 small text-white-50 fw-bold">CA NHAN</div>
+            <a href="../student/home.html" class="text-warning"><i class="bi bi-arrow-repeat"></i> Ve Cong Sinh Vien</a>
+        </nav>
+    </div>
+
+    <div class="mt-auto mb-3 px-3">
+        <hr class="text-secondary border-opacity-50">
+        <a href="../../login.html" class="nav-link logout-btn">
+            <i class="bi bi-box-arrow-left me-2 fs-5"></i> <span class="fw-bold">Dang xuat</span>
+        </a>
+    </div>
+</div>
+
+<div class="main-content" id="mainContent" style="padding: 0; background-color: #f4f6f9; min-height: 100vh;">
+    <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 py-3">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+            <h5 class="m-0 text-white fw-bold d-flex align-items-center"><i class="bi bi-person-vcard me-2 fs-4"></i> HO SO BAN CAN SU</h5>
+        </div>
+        <div class="bcs-header-meta d-flex align-items-center text-white">
+            <span class="bcs-header-label fw-bold">BAN CAN SU</span>
+            <a href="feedback.html" class="bcs-notification-link" title="Co 4 thong bao he thong">
+                <i class="bi bi-bell fs-5"></i>
+                <span class="bcs-notification-count">4</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="p-4">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="profile-header-bg"></div>
+                    <div class="card-body text-center pt-0">
+                        <div class="avatar-wrapper mb-3">
+                            <img src="https://ui-avatars.com/api/?name=Pham+H+Nhat+Y&background=0d6efd&color=fff&size=200" id="mainProfileAvatar" class="profile-avatar" alt="Avatar BCS">
+                            <label for="avatarUploadInput" class="avatar-edit-btn" title="Thay doi anh dai dien">
+                                <i class="bi bi-camera-fill"></i>
+                            </label>
+                            <input type="file" id="avatarUploadInput" class="d-none" accept="image/png, image/jpeg, image/jpg">
+                        </div>
+
+                        <h5 class="fw-bold text-dark mb-1">Pham Huynh Nhat Y</h5>
+                        <p class="text-muted small mb-3"><i class="bi bi-mortarboard-fill text-info me-1"></i><span id="profileRoleText">Lop truong</span> - BCS</p>
+
+                        <div class="d-flex justify-content-center gap-2 mb-4">
+                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">25TH01</span>
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success">Dang hoat dong</span>
+                        </div>
+
+                        <hr class="text-muted border-opacity-25">
+
+                        <div class="text-start mt-3">
+                            <p class="mb-2 text-muted small fw-bold">THONG TIN HOC VU</p>
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Ma so sinh vien:</small>
+                                <span class="fw-bold text-dark">22050111</span>
+                            </div>
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Lop:</small>
+                                <span class="fw-bold text-dark">25TH01</span>
+                            </div>
+                            <div class="mb-0">
+                                <small class="text-muted d-block">Nien khoa:</small>
+                                <span class="fw-bold text-dark">2022 - 2026</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white pt-4 pb-2 border-0">
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-person-lines-fill text-info me-2"></i>Thong tin lien he</h5>
+                        <p class="text-muted small mt-1 mb-0">Cap nhat thong tin lien he va chuc vu BCS tai day.</p>
+                    </div>
+                    <div class="card-body">
+                        <form onsubmit="return handleUpdateProfile(event)">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Ho va ten day du</label>
+                                    <input type="text" class="form-control border-secondary bg-light" value="Pham Huynh Nhat Y" readonly title="Khong the tu thay doi">
+                                </div>
+                                <div class="col-md-6 mt-3 mt-md-0">
+                                    <label class="form-label fw-bold">Ngay sinh <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control border-secondary" value="2004-01-01" required>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Email truong cap</label>
+                                    <input type="email" class="form-control border-secondary bg-light" value="22050111@student.bdu.edu.vn" readonly title="Khong the tu thay doi">
+                                </div>
+                                <div class="col-md-6 mt-3 mt-md-0">
+                                    <label class="form-label fw-bold">So dien thoai ca nhan <span class="text-danger">*</span></label>
+                                    <input type="tel" class="form-control border-secondary" value="0987654321" required placeholder="Dung de lien lac">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">MSSV</label>
+                                    <input type="text" class="form-control border-secondary bg-light" value="22050111" readonly>
+                                </div>
+                                <div class="col-md-6 mt-3 mt-md-0">
+                                    <label class="form-label fw-bold">Chuc vu BCS <span class="text-danger">*</span></label>
+                                    <input type="text" id="roleInput" class="form-control border-secondary" list="roleOptions" value="Lop truong" required placeholder="Nhap chuc vu">
+                                    <datalist id="roleOptions">
+                                        <option value="Lop truong"></option>
+                                        <option value="Lop pho"></option>
+                                    </datalist>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Dia chi hien tai</label>
+                                <input type="text" class="form-control border-secondary" value="KTX BDU, Thu Dau Mot, Binh Duong" placeholder="Nhap dia chi tam tru/thuong tru">
+                            </div>
+
+                            <div class="text-end border-top pt-3">
+                                <button type="submit" class="btn btn-primary fw-bold px-4 shadow-sm"><i class="bi bi-save me-1"></i>LUU THAY DOI</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 border-start border-4 border-danger">
+                    <div class="card-header bg-white pt-4 pb-2 border-0">
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-shield-lock-fill text-danger me-2"></i>Doi mat khau</h5>
+                        <p class="text-muted small mt-1 mb-0">Doi mat khau dinh ky de bao ve tai khoan BCS.</p>
+                    </div>
+                    <div class="card-body">
+                        <form onsubmit="return handleChangePassword(event)">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Mat khau hien tai <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control border-secondary" placeholder="Nhap mat khau cu" required id="oldPassword">
+                            </div>
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-dark">Mat khau moi <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control border-danger" placeholder="Nhap mat khau moi" required id="newPassword">
+                                </div>
+                                <div class="col-md-6 mt-3 mt-md-0">
+                                    <label class="form-label fw-bold text-dark">Xac nhan mat khau moi <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control border-danger" placeholder="Nhap lai mat khau moi" required id="confirmPassword">
+                                    <div class="invalid-feedback">Mat khau xac nhan khong khop!</div>
+                                </div>
+                            </div>
+                            <div class="text-end border-top pt-3">
+                                <button type="submit" class="btn btn-danger fw-bold px-4 shadow-sm"><i class="bi bi-key-fill me-1"></i>CAP NHAT MAT KHAU</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../public/js/script.js"></script>
+<script src="../../public/js/bcs/bcs-layout.js"></script>
+<script src="../../public/js/bcs/profile.js"></script>
+</body>
+</html>

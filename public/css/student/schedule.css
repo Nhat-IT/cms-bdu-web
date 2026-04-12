@@ -1,10 +1,14 @@
+/* Mo ta: Giao dien thoi khoa bieu sinh vien (bang lich hoc, scroll, nhan tiet). */
+
 /* ==========================================
            TÙY CHỈNH BẢNG THỜI KHÓA BIỂU
            ========================================== */
         .schedule-table-wrapper {
+            /* Vung bo ngoai cho phep cuon ngang bang lich */
             overflow-x: auto;
         }
         .schedule-table { 
+            /* Bang thoi khoa bieu co chieu rong lon hon man hinh */
             min-width: 1000px; 
             border-collapse: collapse; 
             border: 2px solid #b71c1c; 
@@ -14,6 +18,7 @@
         .schedule-table td { width: 13.5%; vertical-align: top; padding: 0; position: relative; height: 40px; }
         
         .edge-col { 
+            /* Cot bien trai/phai danh dau tiet hoc */
             background-color: #b71c1c !important; 
             color: #ffffff !important; 
             text-align: center !important; 
@@ -26,6 +31,7 @@
         }
         
         .subject-block {
+            /* O mon hoc trong tung khung tiet */
             background-color: #dbeafe;
             border: 1px solid #dc3545;
             padding: 8px;
@@ -38,16 +44,19 @@
             transition: all 0.2s ease;
         }
         .subject-block:hover { 
+            /* Hieu ung hover o mon hoc */
             background-color: #bfdbfe; 
             cursor: pointer; 
             transform: scale(0.99);
         }
         .subject-title { font-weight: bold; margin-bottom: 4px; font-size: 0.85rem; }
+        /* Tieu de mon hoc trong o lich */
         
         .week-nav-btn { cursor: pointer; padding: 0 10px; font-weight: bold; color: #495057; transition: color 0.2s; }
+        /* Nut chuyen tuan truoc/sau */
         .week-nav-btn:hover { color: #dc3545 !important; } 
 
-        /* Chế độ In ấn (Print) */
+        /* Chế độ in ấn */
         @media print {
             .sidebar, .top-navbar-blue, .filter-section { display: none !important; }
             .main-content { margin-left: 0 !important; padding: 0 !important; }

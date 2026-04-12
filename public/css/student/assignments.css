@@ -1,24 +1,36 @@
-/* Classroom Style Adjustments */
+/* Mo ta: Giao dien bai tap sinh vien (the bai tap, bang cong viec, trang thai). */
+
+/* Tùy chỉnh giao diện theo kiểu Classroom */
         .assignment-icon-bg { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        /* Vong nen icon dai dien loai bai tap */
         .assignment-card { transition: box-shadow 0.2s; cursor: pointer; border-left: 4px solid transparent; }
+        /* Card bai tap: co vien trai doi mau khi hover */
         .assignment-card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-left-color: #0d6efd; }
         
-        /* Your Work Panel (Classroom Clone) */
+        /* Bảng Công việc của bạn (mô phỏng Classroom) */
         .your-work-panel { border-radius: 8px; border: 1px solid #e0e0e0; box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15); background-color: #fff; }
+        /* Khoi "Cong viec cua ban" ben phai */
         .file-upload-item { border: 1px solid #e0e0e0; border-radius: 6px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; background-color: #fff; }
+        /* Tung dong file da nop/chua nop */
         .btn-classroom-add { color: #1a73e8; border: 1px solid #e0e0e0; font-weight: 500; background: #fff; }
+        /* Nut them tep */
         .btn-classroom-add:hover { background-color: #f8f9fa; border-color: #d2e3fc; }
         .btn-classroom-submit { background-color: #1a73e8; color: #fff; font-weight: 500; }
+        /* Nut nop bai */
         .btn-classroom-submit:hover { background-color: #1b66c9; box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3); }
         .btn-classroom-unsubmit { border: 1px solid #e0e0e0; color: #3c4043; font-weight: 500; background: #fff; }
+        /* Nut huy nop bai */
         
-        /* Material Attachments */
+        /* Tài liệu đính kèm */
         .material-card { border: 1px solid #e0e0e0; border-radius: 8px; display: flex; overflow: hidden; max-width: 400px; cursor: pointer; transition: background 0.2s; }
+        /* Card tai lieu dinh kem */
         .material-card:hover { background-color: #f1f3f4; }
         .material-icon { width: 60px; display: flex; align-items: center; justify-content: center; border-right: 1px solid #e0e0e0; font-size: 1.5rem; }
+        /* Cot icon cua card tai lieu */
 
         /* Chi tiết bài tập: ô nhận xét riêng tư tự giãn theo nội dung */
         .auto-grow-textarea {
+            /* O nhap nhan xet tu no gian theo noi dung */
             min-height: calc(1.5em + 0.75rem + 2px);
             overflow: hidden;
         }

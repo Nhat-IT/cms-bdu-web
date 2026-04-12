@@ -1,8 +1,14 @@
+/* Mo ta: Giao dien diem danh BCS (trang thai, hop thong tin, bang danh sach). */
+
         .status-select.val-1 { color: #198754; font-weight: bold; }
+        /* Mau trang thai: 1 = co mat */
         .status-select.val-2 { color: #ffc107; font-weight: bold; }
+        /* Mau trang thai: 2 = di muon/vang co phep */
         .status-select.val-3 { color: #dc3545; font-weight: bold; }
+        /* Mau trang thai: 3 = vang khong phep */
         
         /* CSS Khóa cứng layout chống xê dịch */
         .fixed-info-box { min-height: 42px; display: flex; align-items: center; }
+        /* Khoa bo cuc bang diem danh khong bi xo dong */
         #attendanceTable { table-layout: fixed; width: 100%; }
         #attendanceTable th, #attendanceTable td { vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

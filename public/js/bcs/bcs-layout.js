@@ -17,12 +17,4 @@ document.addEventListener('DOMContentLoaded', function () {
         toggleIcon.classList.add('fs-3');
     }
 
-    if (window.CMSMenu && typeof window.CMSMenu.init === 'function') {
-        window.CMSMenu.init({
-            toggleElement: sidebarToggle,
-            sidebarElement: sidebar,
-            mainContentElement: mainContent,
-            topNavbarSelector: '.top-navbar-blue'
-        });
-    }
 });

@@ -1,23 +1,33 @@
+/* Mo ta: Giao dien trang chu giang vien (card thong ke, vien mau, hieu ung hover). */
+
 .stat-card-custom { border-radius: 8px; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: transform 0.2s; }
+/* Card thong ke nhanh trang chu giang vien */
 .stat-card-custom:hover { transform: translateY(-3px); }
 .border-left-primary { border-left: 4px solid #0d6efd !important; }
 .border-left-success { border-left: 4px solid #198754 !important; }
 .border-left-warning { border-left: 4px solid #ffc107 !important; }
 .border-left-danger { border-left: 4px solid #dc3545 !important; }
+/* Vien mau theo tung nhom thong tin */
 .icon-box-custom { width: 48px; height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+/* Hop icon card */
 .bg-light-primary { background-color: rgba(13, 110, 253, 0.1); }
 .bg-light-success { background-color: rgba(25, 135, 84, 0.1); }
 .bg-light-warning { background-color: rgba(255, 193, 7, 0.1); }
 .bg-light-danger { background-color: rgba(220, 53, 69, 0.1); }
+/* Nen nhe cho icon hoac badge */
 .action-btn { padding: 0.2rem 0.5rem; font-size: 0.875rem; border-radius: 4px; }
+/* Nut thao tac trong bang */
 
 /* CSS riêng cho cột Lời nhắc giảng viên */
 .reminder-card { border-radius: 6px; padding: 12px 16px; margin-bottom: 12px; }
+/* Card loi nhac cong viec */
 .reminder-danger { background-color: #fff0f2; border-left: 4px solid #dc3545; }
 .reminder-warning { background-color: #fff8e6; border-left: 4px solid #ffc107; }
 .reminder-primary { background-color: #f0f7ff; border-left: 4px solid #0d6efd; }
+/* Mau uu tien cua tung loi nhac */
 
 .teacher-home-title-icon {
+    /* Co icon tieu de khoi */
     width: 30px;
     height: 30px;
 }
