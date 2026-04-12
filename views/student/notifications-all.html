@@ -93,19 +93,55 @@
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
             <div>
                 <h5 class="fw-bold mb-1">Danh sách thông báo</h5>
-                <p class="text-muted mb-0">Tất cả cập nhật từ BCS, Giảng viên và Khoa CNTT.</p>
+                <p class="text-muted mb-0">Tất cả cập nhật từ Ban cán sự, Giảng viên và Khoa Công nghệ thông tin.</p>
             </div>
-            <a href="notifications-all.html" class="btn btn-outline-primary fw-bold">
-                <i class="bi bi-arrow-clockwise me-1"></i> Làm mới danh sách
-            </a>
+            <div class="d-flex gap-2 flex-wrap">
+                <button type="button" class="btn btn-outline-success fw-bold" id="markAllReadBtn">
+                    <i class="bi bi-check2-all me-1"></i> Đánh dấu tất cả là đã đọc
+                </button>
+                <a href="notifications-all.html" class="btn btn-outline-primary fw-bold">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Làm mới
+                </a>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body py-3">
+                <div class="row g-2 align-items-end">
+                    <div class="col-lg-5">
+                        <label class="form-label small fw-bold text-muted mb-1">Tìm kiếm</label>
+                        <input type="text" class="form-control" id="notifySearchInput" placeholder="Nhập tiêu đề hoặc nội dung thông báo...">
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label small fw-bold text-muted mb-1">Nguồn thông báo</label>
+                        <select class="form-select" id="notifySourceFilter">
+                            <option value="all" selected>Tất cả nguồn</option>
+                            <option value="BAN CÁN SỰ">Ban cán sự</option>
+                            <option value="GIẢNG VIÊN">Giảng viên</option>
+                            <option value="KHOA CNTT">Khoa CNTT</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-3">
+                        <label class="form-label small fw-bold text-muted mb-1">Trạng thái</label>
+                        <select class="form-select" id="notifyReadFilter">
+                            <option value="all" selected>Tất cả</option>
+                            <option value="unread">Chưa đọc</option>
+                            <option value="read">Đã đọc</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-3 d-grid">
+                        <button type="button" class="btn btn-outline-secondary" id="clearNotifyFilterBtn">Xóa lọc</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="card shadow-sm border-0">
-            <div class="list-group list-group-flush">
-                <div class="list-group-item notify-item py-3">
+            <div class="list-group list-group-flush" id="notifyList">
+                <div class="list-group-item notify-item py-3" data-source="BAN CÁN SỰ" data-read="false" title="Nhấp để xem chi tiết">
                     <div class="d-flex justify-content-between flex-wrap gap-2">
                         <div>
-                            <div class="mb-1"><span class="badge bg-primary bg-opacity-10 text-primary source-badge">BCS</span></div>
+                            <div class="mb-1"><span class="badge source-badge source-badge-bcs">BAN CÁN SỰ</span></div>
                             <h6 class="fw-bold mb-1">Nhắc nộp minh chứng chuyên cần tuần 8</h6>
                             <p class="text-muted mb-0">Nộp trước 17:00 hôm nay qua mục phản hồi.</p>
                         </div>
@@ -113,10 +149,10 @@
                     </div>
                 </div>
 
-                <div class="list-group-item notify-item py-3">
+                <div class="list-group-item notify-item py-3" data-source="GIẢNG VIÊN" data-read="false" title="Nhấp để xem chi tiết">
                     <div class="d-flex justify-content-between flex-wrap gap-2">
                         <div>
-                            <div class="mb-1"><span class="badge bg-success bg-opacity-10 text-success source-badge">Giảng viên</span></div>
+                            <div class="mb-1"><span class="badge source-badge source-badge-lecturer">GIẢNG VIÊN</span></div>
                             <h6 class="fw-bold mb-1">Thông báo đổi phòng học môn Lập trình Web</h6>
                             <p class="text-muted mb-0">Buổi học chiều thứ 3 chuyển sang phòng B305.</p>
                         </div>
@@ -124,7 +160,7 @@
                     </div>
                 </div>
 
-                <div class="list-group-item notify-item py-3">
+                <div class="list-group-item notify-item py-3" data-source="KHOA CNTT" data-read="false" title="Nhấp để xem chi tiết">
                     <div class="d-flex justify-content-between flex-wrap gap-2">
                         <div>
                             <div class="mb-1"><span class="badge bg-warning text-dark source-badge">Khoa CNTT</span></div>
@@ -135,10 +171,10 @@
                     </div>
                 </div>
 
-                <div class="list-group-item notify-item py-3">
+                <div class="list-group-item notify-item py-3" data-source="BAN CÁN SỰ" data-read="true" title="Nhấp để xem chi tiết">
                     <div class="d-flex justify-content-between flex-wrap gap-2">
                         <div>
-                            <div class="mb-1"><span class="badge bg-info bg-opacity-10 text-info source-badge">BCS</span></div>
+                            <div class="mb-1"><span class="badge source-badge source-badge-bcs">BAN CÁN SỰ</span></div>
                             <h6 class="fw-bold mb-1">Cập nhật danh sách bài tập tuần này</h6>
                             <p class="text-muted mb-0">Các môn đã cập nhật deadline mới.</p>
                         </div>
@@ -146,10 +182,10 @@
                     </div>
                 </div>
 
-                <div class="list-group-item notify-item py-3">
+                <div class="list-group-item notify-item py-3" data-source="GIẢNG VIÊN" data-read="true" title="Nhấp để xem chi tiết">
                     <div class="d-flex justify-content-between flex-wrap gap-2">
                         <div>
-                            <div class="mb-1"><span class="badge bg-success bg-opacity-10 text-success source-badge">Giảng viên</span></div>
+                            <div class="mb-1"><span class="badge source-badge source-badge-lecturer">GIẢNG VIÊN</span></div>
                             <h6 class="fw-bold mb-1">Bổ sung tài liệu chương 5 môn CSDL</h6>
                             <p class="text-muted mb-0">Đã đăng file mới tại mục Kho Tài liệu lớp.</p>
                         </div>
@@ -157,7 +193,7 @@
                     </div>
                 </div>
 
-                <div class="list-group-item notify-item py-3">
+                <div class="list-group-item notify-item py-3" data-source="KHOA CNTT" data-read="true" title="Nhấp để xem chi tiết">
                     <div class="d-flex justify-content-between flex-wrap gap-2">
                         <div>
                             <div class="mb-1"><span class="badge bg-warning text-dark source-badge">Khoa CNTT</span></div>
@@ -172,8 +208,30 @@
     </div>
 </div>
 
+<div class="modal fade" id="notifyDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="notifyDetailTitle">Chi tiết thông báo</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <span class="badge source-badge" id="notifyDetailSource">Nguồn</span>
+                </div>
+                <div class="text-muted small mb-3" id="notifyDetailTime">Thời gian</div>
+                <p class="mb-0 text-dark" id="notifyDetailContent">Nội dung thông báo</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../../public/js/script.js"></script>
 <script src="../../public/js/student/student-layout.js"></script>
+<script src="../../public/js/student/notifications-all.js"></script>
 </body>
 </html>

@@ -34,6 +34,28 @@
 
     let currentDefaultSession = "Sáng";
 
+    function applyStatusSelectStyle(selectElement) {
+        if (!selectElement) {
+            return;
+        }
+
+        const value = selectElement.value;
+        if (value === '1') {
+            selectElement.style.color = '#198754';
+            selectElement.style.backgroundColor = '#ecfdf3';
+            selectElement.style.borderColor = '#86efac';
+        } else if (value === '2') {
+            selectElement.style.color = '#b58105';
+            selectElement.style.backgroundColor = '#fffbeb';
+            selectElement.style.borderColor = '#fcd34d';
+        } else {
+            selectElement.style.color = '#dc3545';
+            selectElement.style.backgroundColor = '#fff1f2';
+            selectElement.style.borderColor = '#fda4af';
+        }
+        selectElement.style.fontWeight = '700';
+    }
+
     function initDropdowns() {
         const subjectSelect = document.getElementById('subjectSelect');
         subjectSelect.innerHTML = '';
@@ -88,21 +110,24 @@
                             : `<input type="text" class="form-control form-control-sm bg-light border-0" placeholder="Ghi chú..." value="${sv.note}">`;
 
             tr.innerHTML = `
-                <td class="text-center stt-col text-muted">${index + 1}</td>
+                <td class="text-center stt-col">${index + 1}</td>
                 <td class="fw-bold text-dark">${sv.mssv}</td>
                 <td class="fw-bold ${sv.status === '3' ? 'text-danger' : 'text-dark'} student-name">${sv.name}</td>
                 <td>${sv.dob}</td>
                 <td>${sv.cls}</td>
                 <td>
                     <select class="form-select form-select-sm status-select val-${sv.status}" onchange="updateColor(this)">
-                        <option value="1" ${sv.status === '1' ? 'selected' : ''}>Có mặt</option>
-                        <option value="2" ${sv.status === '2' ? 'selected' : ''}>Vắng có phép</option>
-                        <option value="3" ${sv.status === '3' ? 'selected' : ''}>Vắng không phép</option>
+                        <option value="1" style="color:#198754;" ${sv.status === '1' ? 'selected' : ''}>Có mặt</option>
+                        <option value="2" style="color:#b58105;" ${sv.status === '2' ? 'selected' : ''}>Vắng có phép</option>
+                        <option value="3" style="color:#dc3545;" ${sv.status === '3' ? 'selected' : ''}>Vắng không phép</option>
                     </select>
                 </td>
                 <td>${badgeHtml}</td>
             `;
             tbody.appendChild(tr);
+        });
+        tbody.querySelectorAll('.status-select').forEach(function (select) {
+            applyStatusSelectStyle(select);
         });
         recalculateAttendance();
     }
@@ -139,6 +164,7 @@
             tr.querySelector('.student-name').classList.remove('text-dark');
             tr.querySelector('.student-name').classList.add('text-danger');
         }
+        applyStatusSelectStyle(selectElement);
         recalculateAttendance();
     }
 
@@ -182,22 +208,23 @@
         const tr = document.createElement('tr');
         tr.className = "student-row";
         tr.innerHTML = `
-            <td class="text-center stt-col text-muted">${rowCount}</td>
+            <td class="text-center stt-col">${rowCount}</td>
             <td class="fw-bold text-dark">${mssv}</td>
             <td class="fw-bold text-primary student-name">${name} <span class="badge bg-primary ms-1 small">Mới</span></td>
             <td>${formattedDob}</td>
             <td>${cls}</td>
             <td>
                 <select class="form-select form-select-sm status-select val-1" onchange="updateColor(this)">
-                    <option value="1" selected>Có mặt</option>
-                    <option value="2">Vắng có phép</option>
-                    <option value="3">Vắng không phép</option>
+                    <option value="1" style="color:#198754;" selected>Có mặt</option>
+                    <option value="2" style="color:#b58105;">Vắng có phép</option>
+                    <option value="3" style="color:#dc3545;">Vắng không phép</option>
                 </select>
             </td>
             <td><input type="text" class="form-control form-control-sm bg-light border-0" placeholder="Ghi chú..."></td>
         `;
 
         tbody.appendChild(tr);
+        applyStatusSelectStyle(tr.querySelector('.status-select'));
         bootstrap.Modal.getInstance(document.getElementById('addStudentModal')).hide();
         document.getElementById('addStudentForm').reset();
         recalculateAttendance();

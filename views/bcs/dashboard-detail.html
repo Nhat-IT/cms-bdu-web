@@ -10,6 +10,26 @@
     <link rel="stylesheet" href="../../public/css/layout.css">
     <!-- CSS dùng chung cho BCS -->
     <link rel="stylesheet" href="../../public/css/bcs/bcs-layout.css">
+    <style>
+        .custom-detail-table th,
+        .custom-detail-table td {
+            border-right: 1px solid #dee2e6;
+        }
+
+        .custom-detail-table thead th {
+            border-top: 1px solid #dee2e6;
+        }
+
+        .custom-detail-table th:first-child,
+        .custom-detail-table td:first-child {
+            border-left: 1px solid #dee2e6;
+        }
+
+        .custom-detail-table th:last-child,
+        .custom-detail-table td:last-child {
+            border-right: none;
+        }
+    </style>
 </head>
 <body class="dashboard-body">
 
@@ -22,7 +42,7 @@
             </a>
         </div>
         <div class="bcs-profile-container text-center flex-shrink-0">
-            <a href="#" class="bcs-profile-trigger" title="Xem hồ sơ ban cán sự">
+            <a href="profile.html" class="bcs-profile-trigger" title="Xem hồ sơ ban cán sự">
                 <img src="https://ui-avatars.com/api/?name=Nhat+Y&background=0d6efd&color=fff" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar BCS">
                 <div class="hide-on-collapse">
                     <div class="text-white fw-bold fs-6">Nhật Ý</div>
@@ -57,9 +77,7 @@
     <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 py-3">
         <div class="d-flex align-items-center">
             <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
-            <h4 class="m-0 text-white fw-bold d-flex align-items-center">
-                <i class="bi bi-bar-chart-fill me-2 fs-3"></i> THỐNG KÊ CHI TIẾT
-            </h4>
+            <h4 class="m-0 text-white fw-bold d-flex align-items-center">THỐNG KÊ CHI TIẾT</h4>
         </div>
 
         <div class="bcs-header-meta d-flex align-items-center text-white">
@@ -123,7 +141,7 @@
                     <table class="table table-hover align-middle mb-0 custom-detail-table">
                         <thead class="text-muted small fw-bold" style="background-color: #f8f9fa;">
                             <tr>
-                                <th class="text-center py-3">STT</th>
+                                <th class="text-center py-3 border-end">STT</th>
                                 <th class="py-3">HỌ VÀ TÊN</th>
                                 <th class="py-3">MÔN HỌC</th>
                                 <th class="py-3">NGÀY VẮNG</th>
@@ -135,7 +153,7 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td rowspan="2" class="text-center align-middle bg-white">1</td>
+                                <td rowspan="2" class="text-center align-middle bg-white border-end">1</td>
                                 <td rowspan="2" class="align-middle pe-4 bg-white border-end">
                                     <div class="fw-bold text-dark" style="font-size: 0.95rem;">Trần Vũ Gia Huy</div>
                                     <div class="text-muted small">22050022</div>
@@ -164,7 +182,7 @@
                             </tr>
 
                             <tr>
-                                <td class="text-center align-middle border-top">2</td>
+                                <td class="text-center align-middle border-top border-end">2</td>
                                 <td class="align-middle pe-4 border-top border-end">
                                     <div class="fw-bold text-dark" style="font-size: 0.95rem;">Phan Đình Luyến</div>
                                     <div class="text-muted small">22050089</div>

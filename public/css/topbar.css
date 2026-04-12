@@ -21,7 +21,7 @@
 /* Đẩy nội dung xuống để không bị topbar fixed đè lên */
 .main-content,
 #mainContent {
-  padding-top: var(--cms-header-height, 70px);
+  padding-top: var(--cms-header-height, 70px) !important;
 }
 
 /* Khi sidebar thu gọn, topbar dịch trái tương ứng */

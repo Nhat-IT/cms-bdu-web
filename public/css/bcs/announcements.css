@@ -37,16 +37,14 @@
         }
 
         .announcements-header {
-            /* Header cố định khi cuộn danh sách thông báo */
-            position: sticky;
-            top: 0;
-            z-index: 1050;
+            /* Giữ lớp phụ cho header announcements, không ghi đè cơ chế fixed dùng chung */
+            z-index: 1020;
         }
 
         .announcements-scope-banner {
             /* Banner phạm vi thong bao dùng sticky dưới topbar */
             position: sticky;
-            top: 70px;
+            top: var(--cms-header-height, 70px);
             z-index: 1040;
         }
 

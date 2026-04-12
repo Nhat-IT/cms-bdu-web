@@ -1,0 +1,78 @@
+/* Mô tả: Giao diện riêng cho trang điểm danh cá nhân của sinh viên. */
+
+/* Nhóm bộ lọc môn học / học kỳ. */
+.attendance-filter-label {
+    /* Nhãn bộ lọc để nổi bật hơn trong khối chọn. */
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #374151;
+}
+
+.attendance-select {
+    /* Ô chọn môn/học kỳ thống nhất độ cao và độ đậm chữ. */
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.attendance-summary-badge {
+    /* Badge thống kê tổng buổi/có mặt/đã vắng. */
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.2;
+    padding: 0.7rem 0.95rem;
+}
+
+.attendance-warning-box {
+    /* Ô cảnh báo rộng hơn để tránh xuống hàng. */
+    min-height: 100%;
+    padding: 1rem 1.1rem;
+}
+
+.attendance-warning-box .attendance-warning-text {
+    /* Dòng nội dung cảnh báo cần thoáng hơn. */
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+
+.attendance-info-box {
+    /* Khối thông tin môn học / giảng viên. */
+    min-height: 100%;
+}
+
+.attendance-detail-title {
+    /* Tiêu đề bảng chi tiết lớn hơn chữ trong bảng 1 bậc. */
+    font-size: 1.15rem;
+}
+
+.attendance-detail-table thead th {
+    /* Header bảng chi tiết hơi lớn và đậm hơn nội dung. */
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+}
+
+.attendance-detail-table tbody td {
+    /* Nội dung trong bảng giữ cỡ chữ vừa phải. */
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
+.attendance-detail-table tbody td.attendance-col-stt,
+.attendance-detail-table tbody td.attendance-col-date {
+    /* Cột STT và ngày học không in đậm. */
+    font-weight: 400 !important;
+}
+
+.attendance-approved-pill {
+    /* Badge duyệt hợp lệ với nền sáng hơn. */
+    background-color: #dcfce7 !important;
+    color: #166534 !important;
+    border-color: #86efac !important;
+}
+
+@media (max-width: 767.98px) {
+    .attendance-summary-badge {
+        /* Mobile: badge thống kê gọn lại nhưng vẫn rõ. */
+        width: 100%;
+        text-align: center;
+    }
+}
