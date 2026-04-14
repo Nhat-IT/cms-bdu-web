@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function () {
         toggleButton = document.createElement('button');
         toggleButton.type = 'button';
         toggleButton.id = 'sidebarToggleTeacher';
-        toggleButton.className = 'menu-toggle btn me-2';
+        toggleButton.className = 'menu-toggle btn btn-outline-light me-3 border-0';
         toggleButton.setAttribute('aria-label', 'Toggle sidebar menu');
         toggleButton.innerHTML = '<i class="bi bi-list fs-3"></i>';
 
@@ -120,12 +120,71 @@ document.addEventListener('DOMContentLoaded', function () {
         bell.className = 'menu-header-notify';
         bell.title = 'Xem thong bao va minh chung cho duyet';
         bell.innerHTML = '<i class="bi bi-bell fs-5 text-white position-relative">' +
-            '<span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>' +
+            '<span class="menu-header-notify-badge d-none" id="menuHeaderNotifyBadge">0</span>' +
             '</i>';
 
         rightGroup.appendChild(bell);
         topNavbar.appendChild(rightGroup);
     }
+
+    function parseUnreadCount(value) {
+        const count = Number.parseInt(String(value || '0').trim(), 10);
+        return Number.isFinite(count) && count > 0 ? count : 0;
+    }
+
+    function getSidebarUnreadCount() {
+        const sidebarBadge = sidebar.querySelector('a[href="approve-evidences.html"] .badge');
+        if (!sidebarBadge) {
+            return 0;
+        }
+
+        return parseUnreadCount(sidebarBadge.textContent);
+    }
+
+    function renderUnreadCount(unreadCount) {
+        const badge = topNavbar.querySelector('#menuHeaderNotifyBadge');
+        const bell = topNavbar.querySelector('.menu-header-notify');
+
+        if (!badge || !bell) {
+            return;
+        }
+
+        const count = unreadCount > 0 ? unreadCount : 0;
+
+        if (count === 0) {
+            badge.classList.add('d-none');
+            bell.removeAttribute('data-unread');
+            return;
+        }
+
+        badge.classList.remove('d-none');
+        badge.textContent = count > 10 ? '10+' : String(count);
+        bell.setAttribute('data-unread', String(count));
+    }
+
+    async function updateUnreadCount() {
+        // Fallback to sidebar count if API is not available yet.
+        let unreadCount = getSidebarUnreadCount();
+
+        try {
+            const response = await fetch('/api/notifications/unread-count', {
+                headers: {
+                    Accept: 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                unreadCount = parseUnreadCount(data && data.unreadCount);
+            }
+        } catch (error) {
+            // Keep fallback count when request fails.
+        }
+
+        renderUnreadCount(unreadCount);
+    }
+
+    updateUnreadCount();
 
     if (window.CMSMenu && typeof window.CMSMenu.init === 'function') {
         window.CMSMenu.init({

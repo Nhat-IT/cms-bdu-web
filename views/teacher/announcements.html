@@ -48,7 +48,7 @@
     <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 py-3 announcements-header shadow-sm mb-4">
         <div class="d-flex align-items-center">
             <h4 class="m-0 text-white fw-bold d-flex align-items-center">
-                <i class="bi bi-megaphone-fill me-2 fs-3 text-warning"></i> ĐĂNG BẢNG TIN
+                ĐĂNG BẢNG TIN
             </h4>
         </div>
 
@@ -140,7 +140,7 @@
 
                         <div class="list-group">
                             <div class="list-group-item announcement-item border rounded-3 mb-3">
-                                <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div class="d-flex justify-content-between align-items-center gap-3">
                                     <div>
                                         <div class="d-flex align-items-center gap-2 mb-2">
                                             <span class="badge rounded-pill announcement-pill px-3 py-2 fw-normal">Mới</span>
@@ -151,18 +151,14 @@
                                         <p class="mb-0 text-dark">Sinh viên theo dõi lịch nghỉ và cập nhật giấy tờ học vụ đúng thời hạn. File đính kèm có mẫu thông báo chi tiết.</p>
                                     </div>
                                     <div class="text-end">
-                                        <button class="btn btn-outline-primary btn-sm fw-bold mb-2" onclick="openViewModal('Lịch nghỉ giữa kỳ và quy định bổ sung hồ sơ học vụ')"><i class="bi bi-eye me-1"></i>Xem</button>
-                                        <div class="d-flex gap-2 justify-content-end flex-wrap">
-                                            <button class="btn btn-sm btn-light border" onclick="confirmAction('tải file đính kèm thông báo này', function () { alert('Đã tải file.'); })"><i class="bi bi-download me-1"></i>Tải file</button>
-                                            <button class="btn btn-sm btn-outline-secondary" onclick="openEditModal('Lịch nghỉ giữa kỳ và quy định bổ sung hồ sơ học vụ', 'Phòng Đào tạo', 'Tất cả sinh viên trong lớp', 'Thông báo', 'Sinh viên theo dõi lịch nghỉ và cập nhật giấy tờ học vụ đúng thời hạn. File đính kèm có mẫu thông báo chi tiết.')"><i class="bi bi-pencil-square me-1"></i>Sửa</button>
-                                            <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('Lịch nghỉ giữa kỳ và quy định bổ sung hồ sơ học vụ')"><i class="bi bi-trash me-1"></i>Xóa</button>
-                                        </div>
+                                        <button class="btn btn-outline-primary btn-sm fw-bold mb-2" onclick="openViewModal('Lịch nghỉ giữa kỳ và quy định bổ sung hồ sơ học vụ', 'Phòng Đào tạo', '11/04/2026, 08:15', 'Mới', 'Sinh viên theo dõi lịch nghỉ và cập nhật giấy tờ học vụ đúng thời hạn. File đính kèm có mẫu thông báo chi tiết.')"><i class="bi bi-eye me-1"></i>Xem</button>
+                                        <button class="btn btn-sm btn-light border" onclick="confirmAction('tải file đính kèm thông báo này', function () { alert('Đã tải file.'); })"><i class="bi bi-download me-1"></i>Tải file</button>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="list-group-item announcement-item border rounded-3 mb-3">
-                                <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div class="d-flex justify-content-between align-items-center gap-3">
                                     <div>
                                         <div class="d-flex align-items-center gap-2 mb-2">
                                             <span class="badge rounded-pill bg-warning text-dark px-3 py-2 fw-normal">Đang ghim</span>
@@ -173,18 +169,14 @@
                                         <p class="mb-0 text-dark">Các lớp nhắc sinh viên rà soát ảnh hồ sơ, minh chứng vắng học và hoàn tất trước hạn được ghi trong văn bản.</p>
                                     </div>
                                     <div class="text-end">
-                                        <button class="btn btn-outline-primary btn-sm fw-bold mb-2" onclick="openViewModal('Thông báo nộp minh chứng và cập nhật ảnh hồ sơ sinh viên')"><i class="bi bi-eye me-1"></i>Xem</button>
-                                        <div class="d-flex gap-2 justify-content-end flex-wrap">
-                                            <button class="btn btn-sm btn-light border" onclick="confirmAction('tải file đính kèm thông báo này', function () { alert('Đã tải file.'); })"><i class="bi bi-download me-1"></i>Tải file</button>
-                                            <button class="btn btn-sm btn-outline-secondary" onclick="openEditModal('Thông báo nộp minh chứng và cập nhật ảnh hồ sơ sinh viên', 'Phòng CTSV', 'Tất cả sinh viên trong lớp', 'Thông báo', 'Các lớp nhắc sinh viên rà soát ảnh hồ sơ, minh chứng vắng học và hoàn tất trước hạn được ghi trong văn bản.')"><i class="bi bi-pencil-square me-1"></i>Sửa</button>
-                                            <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('Thông báo nộp minh chứng và cập nhật ảnh hồ sơ sinh viên')"><i class="bi bi-trash me-1"></i>Xóa</button>
-                                        </div>
+                                        <button class="btn btn-outline-primary btn-sm fw-bold mb-2" onclick="openViewModal('Thông báo nộp minh chứng và cập nhật ảnh hồ sơ sinh viên', 'Phòng CTSV', '10/04/2026, 16:45', 'Đang ghim', 'Các lớp nhắc sinh viên rà soát ảnh hồ sơ, minh chứng vắng học và hoàn tất trước hạn được ghi trong văn bản.')"><i class="bi bi-eye me-1"></i>Xem</button>
+                                        <button class="btn btn-sm btn-light border" onclick="confirmAction('tải file đính kèm thông báo này', function () { alert('Đã tải file.'); })"><i class="bi bi-download me-1"></i>Tải file</button>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="list-group-item announcement-item border rounded-3">
-                                <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div class="d-flex justify-content-between align-items-center gap-3">
                                     <div>
                                         <div class="d-flex align-items-center gap-2 mb-2">
                                             <span class="badge rounded-pill bg-success text-white px-3 py-2 fw-normal">Đã đọc</span>
@@ -195,12 +187,8 @@
                                         <p class="mb-0 text-dark">Sinh viên đăng ký tham dự theo lớp, bản tin đính kèm có thời gian, địa điểm và biểu mẫu xác nhận.</p>
                                     </div>
                                     <div class="text-end">
-                                        <button class="btn btn-outline-primary btn-sm fw-bold mb-2" onclick="openViewModal('Kế hoạch seminar chuyên đề và lịch đăng ký tham dự')"><i class="bi bi-eye me-1"></i>Xem</button>
-                                        <div class="d-flex gap-2 justify-content-end flex-wrap">
-                                            <button class="btn btn-sm btn-light border" onclick="confirmAction('tải file đính kèm thông báo này', function () { alert('Đã tải file.'); })"><i class="bi bi-download me-1"></i>Tải file</button>
-                                            <button class="btn btn-sm btn-outline-secondary" onclick="openEditModal('Kế hoạch seminar chuyên đề và lịch đăng ký tham dự', 'Khoa CNTT', 'Tất cả sinh viên trong lớp', 'Thông báo', 'Sinh viên đăng ký tham dự theo lớp, bản tin đính kèm có thời gian, địa điểm và biểu mẫu xác nhận.')"><i class="bi bi-pencil-square me-1"></i>Sửa</button>
-                                            <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('Kế hoạch seminar chuyên đề và lịch đăng ký tham dự')"><i class="bi bi-trash me-1"></i>Xóa</button>
-                                        </div>
+                                        <button class="btn btn-outline-primary btn-sm fw-bold mb-2" onclick="openViewModal('Kế hoạch seminar chuyên đề và lịch đăng ký tham dự', 'Khoa CNTT', '09/04/2026, 09:00', 'Đã đọc', 'Sinh viên đăng ký tham dự theo lớp, bản tin đính kèm có thời gian, địa điểm và biểu mẫu xác nhận.')"><i class="bi bi-eye me-1"></i>Xem</button>
+                                        <button class="btn btn-sm btn-light border" onclick="confirmAction('tải file đính kèm thông báo này', function () { alert('Đã tải file.'); })"><i class="bi bi-download me-1"></i>Tải file</button>
                                     </div>
                                 </div>
                             </div>
@@ -249,9 +237,9 @@
                                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                                         <div>
                                             <h5 class="fw-bold text-dark mb-1"><i class="bi bi-send-check text-primary me-2"></i>Soạn / cập nhật bản tin</h5>
-                                            <p class="text-muted mb-0">Người đăng tin có thể sửa các tin đã đăng hoặc tạo tin mới ngay tại đây.</p>
+                                            <p class="text-muted mb-0">Người đăng tin có thể tạo bản tin mới và gửi thông báo ngay tại đây.</p>
                                         </div>
-                                        <span class="badge bg-white text-primary border border-primary px-3 py-2">Giảng viên có quyền chỉnh sửa</span>
+                                        <span class="badge bg-white text-primary border border-primary px-3 py-2">Giảng viên quản lý bản tin</span>
                                     </div>
 
                                     <form id="newsForm">
@@ -364,7 +352,7 @@
                                     <div class="card-body p-4">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                             <h5 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history text-primary me-2"></i>Bản tin đã đăng</h5>
-                                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2">Có thể sửa</span>
+                                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2">Đang hiển thị</span>
                                         </div>
                                         <div class="d-grid gap-3">
                                             <div class="p-3 rounded-3 bg-light border">
@@ -377,7 +365,8 @@
                                                 </div>
                                                 <div class="d-flex gap-2 mt-3 flex-wrap">
                                                     <button class="btn btn-sm btn-outline-warning" onclick="togglePin('Lịch học bù môn Cơ sở dữ liệu')"><i class="bi bi-pin-angle me-1"></i>Ghim</button>
-                                                    <button class="btn btn-sm btn-outline-secondary" onclick="openEditModal('Lịch học bù môn Cơ sở dữ liệu', 'Phòng Đào tạo', 'Tất cả sinh viên trong lớp', 'Thông báo', 'Lịch học bù và phòng học được cập nhật. Sinh viên theo dõi kỹ thời gian.')"><i class="bi bi-pencil-square me-1"></i>Sửa</button>
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="openViewModal('Lịch học bù môn Cơ sở dữ liệu', 'Phòng Đào tạo', '10/04/2026', 'Đang hiển thị', 'Lịch học bù và phòng học được cập nhật. Sinh viên theo dõi kỹ thời gian.')"><i class="bi bi-eye me-1"></i>Xem</button>
+                                                    <button class="btn btn-sm btn-outline-secondary" onclick="openEditModal('Lịch học bù môn Cơ sở dữ liệu', 'Phòng Đào tạo', 'Tất cả sinh viên trong lớp', 'Thông báo', 'Lịch học bù và phòng học được cập nhật. Sinh viên theo dõi kỹ thời gian.', 'lich-hoc-bu-csdl.pdf')"><i class="bi bi-pencil-square me-1"></i>Sửa</button>
                                                     <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('Lịch học bù môn Cơ sở dữ liệu')"><i class="bi bi-trash me-1"></i>Xóa</button>
                                                 </div>
                                             </div>
@@ -391,7 +380,8 @@
                                                 </div>
                                                 <div class="d-flex gap-2 mt-3 flex-wrap">
                                                     <button class="btn btn-sm btn-outline-warning" onclick="togglePin('Thông báo nộp hồ sơ học vụ')"><i class="bi bi-pin-angle me-1"></i>Ghim</button>
-                                                    <button class="btn btn-sm btn-outline-secondary" onclick="openEditModal('Thông báo nộp hồ sơ học vụ', 'Phòng CTSV', 'Tất cả sinh viên trong lớp', 'Thông báo', 'Nhắc sinh viên nộp hồ sơ đúng hạn và kiểm tra minh chứng.')"><i class="bi bi-pencil-square me-1"></i>Sửa</button>
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="openViewModal('Thông báo nộp hồ sơ học vụ', 'Phòng CTSV', '09/04/2026', 'Đăng ngay', 'Nhắc sinh viên nộp hồ sơ đúng hạn và kiểm tra minh chứng.')"><i class="bi bi-eye me-1"></i>Xem</button>
+                                                    <button class="btn btn-sm btn-outline-secondary" onclick="openEditModal('Thông báo nộp hồ sơ học vụ', 'Phòng CTSV', 'Tất cả sinh viên trong lớp', 'Thông báo', 'Nhắc sinh viên nộp hồ sơ đúng hạn và kiểm tra minh chứng.', 'thong-bao-ho-so-hoc-vu.docx')"><i class="bi bi-pencil-square me-1"></i>Sửa</button>
                                                     <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('Thông báo nộp hồ sơ học vụ')"><i class="bi bi-trash me-1"></i>Xóa</button>
                                                 </div>
                                             </div>
@@ -424,6 +414,11 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Nội dung</label>
                         <textarea class="form-control" rows="5" id="modalContentInput"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">File đính kèm</label>
+                        <input type="file" class="form-control" id="modalAttachmentInput" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.png,.jpg,.jpeg">
+                        <div class="small text-muted mt-2" id="modalAttachmentInfo">Chưa có file đính kèm.</div>
                     </div>
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -494,12 +489,30 @@
                     </div>
                 </form>
             </div>
-            <div class="modal-footer border-0 pb-4 px-4 bg-light justify-content-between">
-                <button type="button" class="btn btn-outline-danger" onclick="confirmAction('xóa bản tin đang chỉnh sửa', function () { alert('Đã xóa bản tin.'); })"><i class="bi bi-trash me-1"></i>Xóa</button>
+            <div class="modal-footer border-0 pb-4 px-4 bg-light justify-content-end">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary fw-bold" onclick="confirmAction('lưu thay đổi bản tin', function () { alert('Đã lưu thay đổi.'); })"><i class="bi bi-check2-all me-1"></i>Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="announcementViewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
                 <div>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                    <button type="button" class="btn btn-primary fw-bold" onclick="confirmAction('lưu thay đổi bản tin', function () { alert('Đã lưu thay đổi.'); })"><i class="bi bi-check2-all me-1"></i>Lưu thay đổi</button>
+                    <h5 class="modal-title fw-bold mb-1" id="announcementViewTitle">Chi tiết thông báo</h5>
+                    <div class="small text-white-50" id="announcementViewMeta"></div>
                 </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="d-flex flex-wrap gap-2 mb-3" id="announcementViewBadges"></div>
+                <p class="text-dark mb-0 lh-lg" id="announcementViewContent"></p>
+            </div>
+            <div class="modal-footer border-0 pb-4 px-4 bg-light justify-content-end">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
             </div>
         </div>
     </div>

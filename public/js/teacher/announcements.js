@@ -1,7 +1,16 @@
     let newsModal;
+    let announcementViewModal;
 
     document.addEventListener('DOMContentLoaded', function () {
         newsModal = new bootstrap.Modal(document.getElementById('newsModal'));
+        announcementViewModal = new bootstrap.Modal(document.getElementById('announcementViewModal'));
+
+        const modalAttachmentInput = document.getElementById('modalAttachmentInput');
+        if (modalAttachmentInput) {
+            modalAttachmentInput.addEventListener('change', function () {
+                updateAttachmentInfo();
+            });
+        }
 
         document.getElementById('newsSource').addEventListener('change', function () {
             handleSourceSelection('newsSource', 'customNewsSourceWrap', 'customNewsSource');
@@ -138,11 +147,54 @@
         });
     }
 
-    function openViewModal(title) {
-        alert('Mở chi tiết bản tin: ' + title);
+    function openViewModal(title, source, metaText, statusText, content) {
+        document.getElementById('announcementViewTitle').textContent = title;
+        document.getElementById('announcementViewMeta').textContent = metaText || '';
+        document.getElementById('announcementViewContent').textContent = content || '';
+
+        const badgesWrap = document.getElementById('announcementViewBadges');
+        badgesWrap.innerHTML = '';
+
+        const statusBadge = document.createElement('span');
+        statusBadge.className = 'badge rounded-pill bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 fw-normal';
+        statusBadge.textContent = statusText || 'Mới';
+
+        const sourceBadge = document.createElement('span');
+        sourceBadge.className = 'badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 fw-normal';
+        sourceBadge.textContent = source || 'Thông báo';
+
+        badgesWrap.appendChild(statusBadge);
+        badgesWrap.appendChild(sourceBadge);
+
+        announcementViewModal.show();
     }
 
-    function openEditModal(title, source, scope, category, content) {
+    function updateAttachmentInfo(existingAttachmentName) {
+        const attachmentInput = document.getElementById('modalAttachmentInput');
+        const attachmentInfo = document.getElementById('modalAttachmentInfo');
+
+        if (!attachmentInput || !attachmentInfo) {
+            return;
+        }
+
+        const selectedFile = attachmentInput.files && attachmentInput.files.length > 0
+            ? attachmentInput.files[0].name
+            : '';
+
+        if (selectedFile) {
+            attachmentInfo.textContent = 'Tệp mới đã chọn: ' + selectedFile + '. Tệp hiện có sẽ được thay thế.';
+            return;
+        }
+
+        if (existingAttachmentName) {
+            attachmentInfo.textContent = 'File hiện có: ' + existingAttachmentName + '. Chọn file khác nếu muốn thay thế.';
+            return;
+        }
+
+        attachmentInfo.textContent = 'Chưa có file đính kèm.';
+    }
+
+    function openEditModal(title, source, scope, category, content, attachmentName) {
         document.getElementById('newsModalTitle').innerHTML = '<i class="bi bi-pencil-square me-2"></i>Chỉnh sửa bản tin';
         document.getElementById('modalTitleInput').value = title;
 
@@ -173,5 +225,13 @@
         handleCategorySelection('modalCategoryInput', 'customModalCategoryWrap', 'customModalCategory');
         document.getElementById('modalScopeInput').value = scope;
         document.getElementById('modalContentInput').value = content;
+
+        const attachmentInput = document.getElementById('modalAttachmentInput');
+        if (attachmentInput) {
+            attachmentInput.value = '';
+        }
+
+        updateAttachmentInfo(attachmentName);
+
         newsModal.show();
     }
