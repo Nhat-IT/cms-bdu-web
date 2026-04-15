@@ -208,3 +208,77 @@ body {
     background-color: rgba(220, 53, 69, 0.1);
     transition: 0.3s ease;
 }
+
+/* =========================================
+   RESPONSIVE SAFETY BASELINE (TOAN HE THONG)
+   ========================================= */
+* {
+    box-sizing: border-box;
+}
+
+img,
+svg,
+video,
+canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+@media (max-width: 768px) {
+    html,
+    body {
+        overflow-x: hidden;
+    }
+
+    .top-navbar,
+    .top-navbar-blue,
+    .top-navbar-admin {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    .top-navbar-blue h4,
+    .top-navbar-blue h5,
+    .top-navbar-admin h4,
+    .top-navbar-admin h5 {
+        font-size: 0.95rem;
+    }
+
+    .p-4 {
+        padding: 1rem !important;
+    }
+
+    .card-header,
+    .card-body,
+    .card-footer {
+        padding-left: 0.85rem !important;
+        padding-right: 0.85rem !important;
+    }
+
+    .btn,
+    .form-control,
+    .form-select {
+        min-height: 40px;
+    }
+
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100vw - 1rem);
+    }
+
+    .table {
+        font-size: 0.875rem;
+    }
+
+    .table-responsive > .table th,
+    .table-responsive > .table td,
+    .cms-auto-table-responsive .table th,
+    .cms-auto-table-responsive .table td {
+        white-space: nowrap;
+    }
+
+    .cms-auto-table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}

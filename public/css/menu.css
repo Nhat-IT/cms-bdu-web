@@ -26,6 +26,21 @@
     will-change: width, transform;
 }
 
+.sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.36);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+body.cms-sidebar-open .sidebar-backdrop {
+    opacity: 1;
+    visibility: visible;
+}
+
 .sidebar > div:first-child {
     /* Vùng nội dung chính trong sidebar (logo + menu) */
     flex: 1 1 auto;
@@ -338,5 +353,9 @@
     #mainContent,
     #mainContent.expanded {
         margin-left: 0 !important;
+    }
+
+    body.cms-sidebar-open {
+        overflow: hidden;
     }
 }

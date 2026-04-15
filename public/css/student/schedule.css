@@ -6,6 +6,7 @@
         .schedule-table-wrapper {
             /* Vùng bọc ngoài cho phép cuộn ngang bảng lịch */
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
         .schedule-table { 
             /* Bảng thời khóa biểu có chiều rộng lớn hơn màn hình */
@@ -55,6 +56,32 @@
         .week-nav-btn { cursor: pointer; padding: 0 10px; font-weight: bold; color: #495057; transition: color 0.2s; }
         /* Nút chuyển tuần trước/sau */
         .week-nav-btn:hover { color: #dc3545 !important; } 
+
+        @media (max-width: 768px) {
+            .schedule-table {
+                min-width: 900px;
+            }
+
+            .schedule-table th {
+                font-size: 0.78rem;
+                padding: 8px;
+            }
+
+            .subject-block {
+                font-size: 0.75rem;
+                padding: 6px;
+            }
+
+            .subject-title {
+                font-size: 0.8rem;
+            }
+
+            .edge-col {
+                width: 72px !important;
+                min-width: 72px !important;
+                max-width: 72px !important;
+            }
+        }
 
         /* Chế độ in ấn */
         @media print {

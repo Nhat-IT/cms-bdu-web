@@ -26,3 +26,32 @@
         #attendanceTable { table-layout: fixed; width: 100%; }
         #attendanceTable th, #attendanceTable td { vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         /* Cắt ngắn nội dung quá dài trong ô bảng */
+
+        @media (max-width: 768px) {
+                .schedule-table {
+                        min-width: 700px;
+                }
+
+                #attendanceTable {
+                        min-width: 780px;
+                }
+
+                .fixed-info-box {
+                        min-height: 0;
+                        align-items: flex-start;
+                }
+
+                .card-header .input-group {
+                        width: 100% !important;
+                }
+
+                .card-footer {
+                        flex-direction: column;
+                        align-items: stretch !important;
+                        gap: 10px;
+                }
+
+                .card-footer .btn {
+                        width: 100%;
+                }
+        }

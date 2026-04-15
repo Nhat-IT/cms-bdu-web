@@ -1,6 +1,42 @@
 (function () {
     const MOBILE_BREAKPOINT = 768;
 
+    function ensureSidebarBackdrop() {
+        let backdrop = document.getElementById('sidebarBackdrop');
+        if (backdrop) {
+            return backdrop;
+        }
+
+        backdrop = document.createElement('div');
+        backdrop.id = 'sidebarBackdrop';
+        backdrop.className = 'sidebar-backdrop';
+        document.body.appendChild(backdrop);
+        return backdrop;
+    }
+
+    function setMobileSidebarState(sidebar, isOpen) {
+        if (!sidebar) {
+            return;
+        }
+
+        sidebar.classList.toggle('active', isOpen);
+        document.body.classList.toggle('cms-sidebar-open', isOpen);
+    }
+
+    function wrapStandaloneTables() {
+        const tables = document.querySelectorAll('table');
+        tables.forEach(function (table) {
+            if (table.closest('.table-responsive') || table.closest('.schedule-wrapper')) {
+                return;
+            }
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'table-responsive cms-auto-table-responsive';
+            table.parentNode.insertBefore(wrapper, table);
+            wrapper.appendChild(table);
+        });
+    }
+
     function getElements(options) {
         const sidebar = options.sidebarElement || document.querySelector(options.sidebarSelector || '#sidebar');
         const mainContent = options.mainContentElement || document.querySelector(options.mainContentSelector || '#mainContent, .main-content');
@@ -44,6 +80,8 @@
             return false;
         }
 
+        const backdrop = ensureSidebarBackdrop();
+
         if (toggle.dataset.cmsMenuBound === '1') {
             return true;
         }
@@ -53,7 +91,8 @@
 
         toggle.addEventListener('click', function () {
             if (window.innerWidth <= MOBILE_BREAKPOINT) {
-                sidebar.classList.toggle('active');
+                const willOpen = !sidebar.classList.contains('active');
+                setMobileSidebarState(sidebar, willOpen);
                 return;
             }
 
@@ -73,11 +112,24 @@
             const isInsideSidebar = event.target.closest('#sidebar');
 
             if (!isToggle && !isInsideSidebar) {
-                sidebar.classList.remove('active');
+                setMobileSidebarState(sidebar, false);
+            }
+        });
+
+        backdrop.addEventListener('click', function () {
+            setMobileSidebarState(sidebar, false);
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                setMobileSidebarState(sidebar, false);
             }
         });
 
         window.addEventListener('resize', function () {
+            if (window.innerWidth > MOBILE_BREAKPOINT) {
+                setMobileSidebarState(sidebar, false);
+            }
             applyDesktopPosition(sidebar, mainContent, topNavbar);
         });
 
@@ -113,6 +165,7 @@
     };
 
     document.addEventListener('DOMContentLoaded', function () {
+        wrapStandaloneTables();
         initLoginPasswordToggle();
         initMenu();
     });

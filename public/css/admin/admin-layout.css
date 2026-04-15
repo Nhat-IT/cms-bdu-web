@@ -23,6 +23,11 @@
     font-size: 1.1rem;
 }
 
+/* Màu đỏ nhạt cho tên quản trị viên trên topbar. */
+.admin-operator-name {
+    color: #ffb3bf !important;
+}
+
 /* Nút thao tác nhỏ dùng lặp lại trong các bảng admin. */
 .action-btn {
     padding: 0.2rem 0.5rem;
