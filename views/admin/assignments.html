@@ -9,37 +9,7 @@
     <link rel="stylesheet" href="../../public/css/style.css">
     <link rel="stylesheet" href="../../public/css/layout.css">
     <link rel="stylesheet" href="../../public/css/admin/admin-layout.css">
-    
-    <style>
-        /* CSS Đặc thù Admin */
-        .action-btn { font-weight: 600; }
-        
-        /* TABS CSS */
-        .nav-tabs .nav-link { color: #64748b; font-weight: bold; border: none; border-bottom: 3px solid transparent; padding: 12px 20px; }
-        .nav-tabs .nav-link:hover { color: #0f172a; border-bottom-color: #cbd5e1; }
-        .nav-tabs .nav-link.active { color: #0d6efd; border-bottom-color: #0d6efd; background: transparent; }
-
-        /* Bảng danh sách buổi học (Session Manager) */
-        .table-sessions th { background-color: #f8fafc; font-size: 0.85rem; text-transform: uppercase; color: #475569; }
-        .status-normal { background-color: #d1fae5; color: #0f766e; border: 1px solid #10b981; }
-        .status-canceled { background-color: #fee2e2; color: #b91c1c; border: 1px solid #ef4444; }
-        .status-makeup { background-color: #fef3c7; color: #b45309; border: 1px solid #f59e0b; }
-
-        /* GRID LỊCH TỔNG (MASTER SCHEDULE) */
-        .schedule-wrapper { overflow-x: auto; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #dee2e6; }
-        .master-schedule-table { width: 100%; min-width: 1100px; border-collapse: collapse; border: 2px solid #b71c1c; }
-        .master-schedule-table th, .master-schedule-table td { border: 1px solid #dee2e6; }
-        .master-schedule-table thead th { background-color: #ffffff; text-align: center; padding: 12px; font-weight: bold; color: #000; vertical-align: middle; }
-        .master-schedule-table td { width: 12%; height: 40px; padding: 0; vertical-align: top; }
-        .edge-col { background-color: #b71c1c !important; color: #ffffff !important; text-align: center !important; vertical-align: middle !important; font-weight: bold; width: 80px !important; min-width: 80px !important; font-size: 0.9rem; }
-        .subject-block { background-color: #dbeafe; border: 1px solid #b71c1c; padding: 8px; height: 100%; width: 100%; font-size: 0.8rem; line-height: 1.4; color: #000; cursor: pointer; transition: all 0.2s ease; }
-        .subject-block:hover { background-color: #bfdbfe; transform: scale(0.98); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .subject-title { font-weight: bold; margin-bottom: 2px; font-size: 0.85rem; }
-        .week-nav-btn { cursor: pointer; color: #000; transition: 0.2s; font-weight: 900; }
-        .week-nav-btn:hover { color: #dc3545; }
-        .subject-block.makeup { background-color: #fef2f2; border: 2px dashed #dc3545; }
-        .subject-block.canceled { background-color: #f3f4f6; border: 1px solid #94a3b8; opacity: 0.7; }
-    </style>
+    <link rel="stylesheet" href="../../public/css/admin/assignments.css">
 </head>
 <body class="dashboard-body">
 
@@ -119,49 +89,46 @@
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                         <h6 class="m-0 fw-bold text-dark">DANH SÁCH CÁC LỚP ĐỂ XẾP LỊCH</h6>
-                        <div class="input-group input-group-sm" style="width: 250px;">
+                        <div class="input-group input-group-sm admin-assignments-search">
                             <input type="text" class="form-control" placeholder="Tìm tên môn, mã lớp...">
                             <button class="btn btn-primary"><i class="bi bi-search"></i></button>
                         </div>
                     </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover admin-table mb-0 align-middle">
-                                <thead class="bg-light text-muted small fw-bold">
-                                    <tr>
-                                        <th class="ps-4 py-3">MÃ LỚP HP</th>
-                                        <th>MÔN HỌC</th>
-                                        <th>GIẢNG VIÊN</th>
-                                        <th>TÌNH TRẠNG LỊCH</th>
-                                        <th class="text-end pe-4">THAO TÁC</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="ps-4 fw-bold">25TH01-WEB</td>
-                                        <td>Lập trình Web nâng cao</td>
-                                        <td><span class="text-danger fst-italic"><i class="bi bi-exclamation-circle me-1"></i>Chưa phân công</span></td>
-                                        <td><span class="badge bg-secondary">Chưa xếp lịch</span></td>
-                                        <td class="text-end pe-4">
-                                            <button class="btn btn-primary action-btn" onclick="openInitialScheduleModal('add', '25TH01-WEB', 'Lập trình Web nâng cao', '', '', '', '', '', '', '')">
-                                                <i class="bi bi-calendar-plus me-1"></i> Xếp lịch ngay
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="ps-4 fw-bold">25TH01-CSDL</td>
-                                        <td>An ninh Cơ sở dữ liệu</td>
-                                        <td><span class="fw-bold text-dark">ThS. Dương Quang Sinh</span></td>
-                                        <td><span class="badge bg-success">Đã xếp lịch</span></td>
-                                        <td class="text-end pe-4">
-                                            <button class="btn btn-outline-primary action-btn" onclick="openSessionManager('25TH01-CSDL', 'An ninh Cơ sở dữ liệu', 'ThS. Dương Quang Sinh')">
-                                                <i class="bi bi-calendar3 me-1"></i> Quản lý lịch
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                    <div class="card-body border-bottom bg-light-subtle py-3">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold text-muted mb-1">NĂM HỌC</label>
+                                <select class="form-select form-select-sm" id="assignFilterYear">
+                                    <option value="all">Chọn tất cả</option>
+                                    <option value="2024">2024 - 2025</option>
+                                    <option value="2025" selected>2025 - 2026</option>
+                                    <option value="2026">2026 - 2027</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold text-muted mb-1">HỌC KỲ</label>
+                                <select class="form-select form-select-sm" id="assignFilterSemester">
+                                    <option value="all">Chọn tất cả</option>
+                                    <option value="1" selected>Học kỳ 1</option>
+                                    <option value="2">Học kỳ 2</option>
+                                    <option value="3">Học kỳ 3 (Hè)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold text-muted mb-1">TRẠNG THÁI MÔN</label>
+                                <select class="form-select form-select-sm" id="assignFilterOpenStatus">
+                                    <option value="all">Tất cả</option>
+                                    <option value="open" selected>Đang mở</option>
+                                    <option value="closed">Đã đóng</option>
+                                </select>
+                            </div>
                         </div>
+                        <div class="small text-muted mt-2">
+                            <i class="bi bi-info-circle me-1"></i>Thời gian mở môn được lấy từ cấu hình tại trang Quản lý Lớp & Môn và chỉ hiển thị để tham chiếu.
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="assignmentOfferingContainer"></div>
                     </div>
                 </div>
             </div>
@@ -272,7 +239,7 @@
                     <div class="alert alert-primary bg-primary bg-opacity-10 border-0 mb-4" id="initClassInfoAlert">
                         <div class="row">
                             <div class="col-md-6">
-                                <small class="text-muted fw-bold d-block mb-1">Mã Lớp Học Phần:</small>
+                                <small class="text-muted fw-bold d-block mb-1">Mã Lớp:</small>
                                 <span class="fw-bold text-primary fs-5" id="initClassCode">--</span>
                             </div>
                             <div class="col-md-6">
@@ -280,31 +247,35 @@
                                 <span class="fw-bold text-dark fs-6" id="initSubjectName">--</span>
                             </div>
                         </div>
+                        <div class="small text-muted mt-2">
+                            <i class="bi bi-collection me-1"></i>Nhóm đang chỉnh: <span class="fw-bold text-dark" id="initGroupLabel">Toàn bộ nhóm</span>
+                        </div>
                     </div>
 
                     <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">1. Phân công Giảng viên</h6>
-                    <div class="mb-4">
-                        <select class="form-select border-secondary fw-bold" id="initTeacher" required>
-                            <option value="">-- Chọn Giảng viên phụ trách --</option>
-                            <option value="GV01">ThS. Dương Quang Sinh (Khoa CNTT)</option>
-                            <option value="GV02">ThS. Nguyễn Hồ Hải (Khoa CNTT)</option>
-                            <option value="GV04">Thầy Hồ Ngọc Giàu (Khoa CNTT)</option>
-                        </select>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted">Giảng viên chính <span class="text-danger">*</span></label>
+                            <select class="form-select border-secondary fw-bold" id="initTeacher" required>
+                                <option value="">-- Chọn Giảng viên phụ trách --</option>
+                                <option value="GV01">ThS. Dương Quang Sinh (Khoa CNTT)</option>
+                                <option value="GV02">ThS. Nguyễn Hồ Hải (Khoa CNTT)</option>
+                                <option value="GV04">Thầy Hồ Ngọc Giàu (Khoa CNTT)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted">Trợ giảng</label>
+                            <select class="form-select border-secondary" id="initAssistantTeacher">
+                                <option value="">-- Không có --</option>
+                                <option value="GV01">ThS. Dương Quang Sinh (Khoa CNTT)</option>
+                                <option value="GV02">ThS. Nguyễn Hồ Hải (Khoa CNTT)</option>
+                                <option value="GV04">Thầy Hồ Ngọc Giàu (Khoa CNTT)</option>
+                            </select>
+                        </div>
                     </div>
 
                     <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">2. Thời gian & Lịch học cố định</h6>
                     
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold small text-muted">Từ ngày (Bắt đầu) <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control border-secondary fw-bold text-dark" id="initStartDate" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold small text-muted">Đến ngày (Kết thúc) <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control border-secondary fw-bold text-dark" id="initEndDate" required>
-                        </div>
-                    </div>
-
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
                             <label class="form-label fw-bold small text-muted">Thứ (Hàng tuần) <span class="text-danger">*</span></label>
@@ -323,18 +294,12 @@
                             <label class="form-label fw-bold small text-muted">Từ Tiết <span class="text-danger">*</span></label>
                             <select class="form-select border-secondary" id="initStartPeriod" required>
                                 <option value="">-- Bắt đầu --</option>
-                                <script>
-                                    for(let i=1; i<=14; i++) document.write(`<option value="${i}">Tiết ${i}</option>`);
-                                </script>
                             </select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold small text-muted">Đến Tiết <span class="text-danger">*</span></label>
                             <select class="form-select border-secondary" id="initEndPeriod" required>
                                 <option value="">-- Kết thúc --</option>
-                                <script>
-                                    for(let i=1; i<=14; i++) document.write(`<option value="${i}">Tiết ${i}</option>`);
-                                </script>
                             </select>
                         </div>
                     </div>
@@ -361,7 +326,7 @@
 </div>
 
 <div class="modal fade" id="sessionManagerModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header bg-primary text-white border-bottom-0 pb-3">
                 <div>
@@ -372,11 +337,11 @@
             </div>
             <div class="modal-body bg-light p-0">
                 <div class="p-3 bg-white border-bottom d-flex justify-content-between">
-                    <button class="btn btn-warning fw-bold shadow-sm" onclick="openInitialScheduleModal('edit', '25TH01-CSDL', 'An ninh Cơ sở dữ liệu', 'GV01', '2026-03-02', '2026-06-15', '2', '6', '10', 'PLAB')">
+                    <button class="btn btn-warning fw-bold shadow-sm" id="btnEditWholeSchedule">
                         <i class="bi bi-pencil-square me-1"></i> Sửa toàn bộ lịch
                     </button>
                     
-                    <button class="btn btn-outline-primary fw-bold shadow-sm" onclick="openEditSingleSession('add')">
+                    <button class="btn btn-outline-primary fw-bold shadow-sm" id="btnAddSingleSession">
                         <i class="bi bi-plus-circle me-1"></i> Thêm buổi học bù
                     </button>
                 </div>
@@ -384,14 +349,12 @@
                     <table class="table table-bordered table-hover table-sessions bg-white shadow-sm mb-0">
                         <thead>
                             <tr class="text-center">
-                                <th>#</th><th>Ngày học</th><th>Thứ</th><th>Tiết</th><th>Phòng</th><th>Trạng thái</th><th>Sửa</th>
+                                <th>#</th><th>Nhóm</th><th>Ngày học</th><th>Thứ</th><th>Tiết</th><th>Phòng</th><th>Trạng thái</th><th>Sửa</th>
                             </tr>
                         </thead>
-                        <tbody class="text-center">
+                        <tbody class="text-center" id="sessionManagerTbody">
                             <tr>
-                                <td class="fw-bold">1</td><td class="fw-bold text-dark">02/03/2026</td><td>Thứ 2</td><td>Tiết 6 - 10</td><td class="fw-bold text-danger">P.LAB</td>
-                                <td><span class="badge status-normal">Bình thường</span></td>
-                                <td><button class="btn btn-sm btn-light text-primary border" onclick="openEditSingleSession('edit','02/03/2026','2026-03-02','2','6','10','PLAB','normal','25TH01-CSDL','An ninh CSDL','GV01')"><i class="bi bi-pencil-square"></i></button></td>
+                                <td colspan="8" class="text-muted py-4">Chọn lớp để xem và sửa từng ngày.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -437,13 +400,13 @@
                         <div class="col-6">
                             <label class="fw-bold small text-muted">Từ tiết</label>
                             <select class="form-select border-secondary" id="singleStart">
-                                <script>for(let i=1; i<=14; i++) document.write(`<option value="${i}">Tiết ${i}</option>`);</script>
+                                <option value="">-- Chọn --</option>
                             </select>
                         </div>
                         <div class="col-6">
                             <label class="fw-bold small text-muted">Đến tiết</label>
                             <select class="form-select border-secondary" id="singleEnd">
-                                <script>for(let i=1; i<=14; i++) document.write(`<option value="${i}">Tiết ${i}</option>`);</script>
+                                <option value="">-- Chọn --</option>
                             </select>
                         </div>
                         <div class="col-12">
@@ -454,7 +417,7 @@
                         </div>
                         <div class="col-12 mt-4">
                             <label class="fw-bold small text-muted border-bottom pb-1 mb-2 d-block">Trạng thái buổi học</label>
-                            <select class="form-select fw-bold border-secondary shadow-sm" id="singleStatus" onchange="toggleCancelReason()">
+                            <select class="form-select fw-bold border-secondary shadow-sm" id="singleStatus">
                                 <option value="normal" class="text-success">✅ Diễn ra Bình thường</option>
                                 <option value="makeup" class="text-warning">🔄 Học Bù / Dạy thay</option>
                                 <option value="canceled" class="text-danger">⛔ Báo Hủy / Cho nghỉ</option>
@@ -478,148 +441,12 @@
     </div>
 </div>
 
+<input type="file" id="assignmentStudentUploadInput" class="d-none" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="../../public/js/script.js"></script>
 <script src="../../public/js/admin/admin-layout.js"></script>
-<script>
-    // Bật tắt menu sidebar
-    document.getElementById('sidebarToggle').addEventListener('click', function() {
-        document.getElementById('sidebar').classList.toggle('active');
-    });
-
-    // ==========================================
-    // 1. MỞ MODAL XẾP/SỬA LỊCH HÀNG LOẠT
-    // ==========================================
-    function openInitialScheduleModal(mode, classCode, subjectName, teacher = '', startDate = '', endDate = '', dayOfWeek = '', startPeriod = '', endPeriod = '', room = '') {
-        document.getElementById('initClassCode').innerText = classCode;
-        document.getElementById('initSubjectName').innerText = subjectName;
-        
-        document.getElementById('initTeacher').value = teacher;
-        document.getElementById('initStartDate').value = startDate;
-        document.getElementById('initEndDate').value = endDate;
-        document.getElementById('initDayOfWeek').value = dayOfWeek;
-        document.getElementById('initStartPeriod').value = startPeriod;
-        document.getElementById('initEndPeriod').value = endPeriod;
-        document.getElementById('initRoom').value = room;
-
-        const modalHeader = document.getElementById('initModalHeader');
-        const modalTitle = document.getElementById('initModalTitle');
-        const submitBtn = document.getElementById('initSubmitBtn');
-        const warningAlert = document.getElementById('editBulkWarning');
-        const infoAlert = document.getElementById('initClassInfoAlert');
-
-        if (mode === 'add') {
-            modalHeader.className = "modal-header bg-primary text-white border-bottom-0 pb-3";
-            modalTitle.innerHTML = '<i class="bi bi-calendar-plus me-2"></i>Thiết Lập Lịch Giảng Dạy Mới';
-            submitBtn.className = "btn btn-primary fw-bold px-4";
-            submitBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>Lưu Lịch & Phát Sinh';
-            warningAlert.classList.add('d-none');
-            infoAlert.className = "alert alert-primary bg-primary bg-opacity-10 border-0 mb-4";
-        } else {
-            modalHeader.className = "modal-header bg-warning text-dark border-bottom-0 pb-3";
-            modalTitle.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Chỉnh Sửa Lịch Giảng Dạy (Hàng Loạt)';
-            submitBtn.className = "btn btn-warning fw-bold px-4 text-dark shadow-sm";
-            submitBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>Cập nhật toàn bộ các tuần';
-            warningAlert.classList.remove('d-none');
-            infoAlert.className = "alert alert-warning bg-warning bg-opacity-10 border-0 mb-4";
-            
-            const sessionModal = bootstrap.Modal.getInstance(document.getElementById('sessionManagerModal'));
-            if(sessionModal) sessionModal.hide();
-        }
-
-        new bootstrap.Modal(document.getElementById('initialScheduleModal')).show();
-    }
-
-    function handleInitialScheduleSubmit(event) {
-        event.preventDefault();
-        
-        // KIỂM TRA LỖI LOGIC: Tiết Bắt đầu >= Kết thúc
-        const start = parseInt(document.getElementById('initStartPeriod').value);
-        const end = parseInt(document.getElementById('initEndPeriod').value);
-        if(start >= end) {
-            alert("⚠️ Lỗi: Tiết bắt đầu phải diễn ra TRƯỚC tiết kết thúc!");
-            return false;
-        }
-        
-        const btnText = document.getElementById('initSubmitBtn').innerText;
-        if (btnText.includes('Cập nhật')) {
-            alert("✅ Đã cập nhật thành công cho tất cả các buổi học chưa diễn ra của lớp này!");
-        } else {
-            alert("✅ Đã thiết lập lịch thành công và tự động phát sinh các buổi học vào Database!");
-        }
-        bootstrap.Modal.getInstance(document.getElementById('initialScheduleModal')).hide();
-        return false;
-    }
-
-    // ==========================================
-    // 2. MỞ MODAL QUẢN LÝ DANH SÁCH BUỔI
-    // ==========================================
-    function openSessionManager(classCode, subjectName, teacherName) {
-        document.getElementById('lblClassInfo').innerText = `${classCode} | ${subjectName} | GV: ${teacherName}`;
-        new bootstrap.Modal(document.getElementById('sessionManagerModal')).show();
-    }
-
-    // ==========================================
-    // 3. MỞ MODAL SỬA NHANH 1 BUỔI
-    // ==========================================
-    function openEditSingleSession(mode, dateStr, dateVal, day, start, end, room, status, classCode, subjectName, teacherId, group = "01") {
-        document.getElementById('qsSubjectInfo').innerText = subjectName;
-        document.getElementById('qsClassCode').innerHTML = `<i class="bi bi-tags-fill me-1 text-muted"></i>Lớp: ${classCode}`;
-        document.getElementById('singleDate').value = dateVal;
-        document.getElementById('singleStart').value = start;
-        document.getElementById('singleEnd').value = end;
-        
-        let teacherSelect = document.getElementById('singleTeacher');
-        for (let i=0; i<teacherSelect.options.length; i++) {
-            if(teacherSelect.options[i].value === teacherId) teacherSelect.selectedIndex = i;
-        }
-
-        let roomSelect = document.getElementById('singleRoom');
-        for (let i=0; i<roomSelect.options.length; i++) {
-            if(roomSelect.options[i].value === room) roomSelect.selectedIndex = i;
-        }
-
-        document.getElementById('singleStatus').value = status;
-        toggleCancelReason();
-
-        const btnDelete = document.getElementById('btnDeleteSingle');
-        if(mode === 'add') {
-            document.getElementById('singleSessionTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>Thêm buổi học bù / đột xuất';
-            btnDelete.classList.add('d-none');
-        } else {
-            document.getElementById('singleSessionTitle').innerHTML = `<i class="bi bi-pencil-square me-2"></i>Sửa lịch ngày ${dateStr}`;
-            btnDelete.classList.remove('d-none');
-        }
-        
-        new bootstrap.Modal(document.getElementById('singleSessionModal')).show();
-    }
-
-    function toggleCancelReason() {
-        const status = document.getElementById('singleStatus').value;
-        const reasonDiv = document.getElementById('cancelReasonDiv');
-        if (status === 'canceled') reasonDiv.classList.remove('d-none');
-        else reasonDiv.classList.add('d-none');
-    }
-
-    function saveSingleSession() {
-        const start = parseInt(document.getElementById('singleStart').value);
-        const end = parseInt(document.getElementById('singleEnd').value);
-        if(start >= end) { alert("⚠️ Lỗi: Tiết bắt đầu phải nhỏ hơn Tiết kết thúc!"); return; }
-        const status = document.getElementById('singleStatus').value;
-        if(status === 'canceled' && document.getElementById('cancelReason').value.trim() === '') {
-            alert("⚠️ Vui lòng nhập lý do báo hủy để hệ thống gửi thông báo cho sinh viên!");
-            document.getElementById('cancelReason').focus(); return;
-        }
-        alert("✅ Đã cập nhật thông tin buổi học thành công!");
-        bootstrap.Modal.getInstance(document.getElementById('singleSessionModal')).hide();
-    }
-
-    function deleteSingleSession() {
-        if(confirm("⚠️ NGUY HIỂM: Bạn có chắc chắn muốn xóa hẳn buổi học này ra khỏi cơ sở dữ liệu không?\nHành động này không thể hoàn tác!")){
-            alert("✅ Đã xóa buổi học thành công!");
-            bootstrap.Modal.getInstance(document.getElementById('singleSessionModal')).hide();
-        }
-    }
-</script>
+<script src="../../public/js/admin/assignments.js"></script>
 </body>
 </html>

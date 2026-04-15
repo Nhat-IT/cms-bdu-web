@@ -73,6 +73,14 @@
         };
     }
 
+    function formatTodayDisplay() {
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year = today.getFullYear();
+        return day + '/' + month + '/' + year;
+    }
+
     function revokeAttachmentUrl(item) {
         if (!item || !item.attachmentUrl) {
             return;
@@ -332,7 +340,7 @@
             id: feedbacks.length ? Math.max.apply(null, feedbacks.map(function (item) { return item.id; })) + 1 : 1,
             topic: topic,
             content: content,
-            date: new Date().toLocaleDateString('vi-VN'),
+            date: formatTodayDisplay(),
             status: 'pending',
             reply: '',
             editedOnce: false,
