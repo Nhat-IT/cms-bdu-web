@@ -2,14 +2,37 @@ const { google } = require('googleapis');
 const path = require('path');
 const stream = require('stream');
 
-// 1. Khai báo file JSON chìa khóa và ID thư mục
-const KEYFILEPATH = path.join(__dirname, '../../drive-credentials.json'); // Đường dẫn trỏ tới file json
-const FOLDER_ID = 'ĐIỀN_FOLDER_ID_CỦA_BẠN_VÀO_ĐÂY'; // Paste mã URL bạn copy ở Bước 2
+// 1. Đọc cấu hình bảo mật từ biến môi trường
+const LEGACY_KEYFILEPATH = path.join(__dirname, '../../drive-credentials.json');
+const FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID;
+
+function resolveGoogleAuthConfig() {
+    const credentialsJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+    if (credentialsJson) {
+        return {
+            credentials: JSON.parse(credentialsJson),
+            scopes: ['https://www.googleapis.com/auth/drive'],
+        };
+    }
+
+    const keyFileFromEnv = process.env.GOOGLE_APPLICATION_CREDENTIALS || process.env.GOOGLE_DRIVE_CREDENTIALS_FILE;
+    if (keyFileFromEnv) {
+        return {
+            keyFile: path.resolve(keyFileFromEnv),
+            scopes: ['https://www.googleapis.com/auth/drive'],
+        };
+    }
+
+    // Fallback để tương thích cũ trong local, không nên dùng khi deploy.
+    return {
+        keyFile: LEGACY_KEYFILEPATH,
+        scopes: ['https://www.googleapis.com/auth/drive'],
+    };
+}
 
 // 2. Cấu hình xác thực với Google
 const auth = new google.auth.GoogleAuth({
-    keyFile: KEYFILEPATH,
-    scopes: ['https://www.googleapis.com/auth/drive'], // Cấp full quyền quản lý Drive
+    ...resolveGoogleAuthConfig(),
 });
 
 // Khởi tạo dịch vụ Drive
@@ -18,6 +41,10 @@ const driveService = google.drive({ version: 'v3', auth });
 // 3. Hàm xử lý Tải file lên
 const uploadFileToDrive = async (fileObject) => {
     try {
+        if (!FOLDER_ID) {
+            throw new Error('Missing GOOGLE_DRIVE_FOLDER_ID in environment variables.');
+        }
+
         // Biến file từ Multer thành luồng (Stream) để đẩy lên mạng
         const bufferStream = new stream.PassThrough();
         bufferStream.end(fileObject.buffer);
