@@ -235,6 +235,7 @@ function renderAssignmentOfferings() {
                 '<div class="section-value">' + (hasGroupSchedule ? group.room : '--') + '</div>';
             
             const statusDiv = document.createElement('div');
+            statusDiv.className = 'section-status';
             const statusText = course.isOpen ? 'Đang mở' : 'Đã đóng';
             statusDiv.innerHTML = '<div class="section-label">Trạng thái</div>' +
                 '<div class="section-value">' + statusText + '</div>';

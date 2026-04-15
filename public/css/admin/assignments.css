@@ -36,7 +36,7 @@
 
 .section-row {
     display: grid;
-    grid-template-columns: 120px 1.2fr 1.2fr 1fr 1fr auto;
+    grid-template-columns: 120px minmax(170px, 1.2fr) minmax(170px, 1.2fr) minmax(100px, 1fr) 130px 160px;
     gap: 10px;
     padding: 10px 16px;
     align-items: center;
@@ -74,6 +74,15 @@
 .section-value {
     font-weight: 600;
     color: #0f172a;
+}
+
+.section-status {
+    text-align: center;
+    margin-left: -50px;
+}
+
+.section-status .section-value {
+    white-space: nowrap;
 }
 
 .section-actions {
@@ -178,6 +187,17 @@
     font-size: 0.85rem;
     text-transform: uppercase;
     color: #475569;
+}
+
+.table-sessions th,
+.table-sessions td {
+    vertical-align: middle;
+}
+
+.table-sessions th:nth-child(7),
+.table-sessions td:nth-child(7) {
+    white-space: nowrap;
+    text-align: center;
 }
 
 .status-normal {
