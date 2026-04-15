@@ -113,7 +113,7 @@
                                         <th class="py-3">TÊN LỚP HỌC</th>
                                         <th class="py-3">NIÊN KHÓA</th>
                                         <th class="text-center py-3">SỐ LƯỢNG SV</th>
-                                            <th class="py-3">TRẠNG THÁI</th>
+                                        <th class="text-center py-3">TRẠNG THÁI</th>
                                         <th class="text-end pe-4 py-3">HÀNH ĐỘNG</th>
                                     </tr>
                                 </thead>
@@ -123,16 +123,13 @@
                                         <td class="fw-bold text-primary fs-6">25TH01</td>
                                         <td>2025 - 2029</td>
                                         <td class="text-center"><span class="badge student-count-soft">68 SV</span></td>
-                                        <td><span class="badge class-status-open"><i class="bi bi-circle-fill me-1 status-dot-icon"></i>Đang mở</span></td>
+                                        <td class="text-center"><span class="badge class-status-open">Đang mở</span></td>
                                         <td class="text-end pe-4">
                                             <div class="action-btn-group">
-                                                <button class="btn btn-light action-btn text-warning border" title="Quản lý trạng thái mở/đóng theo học kỳ" onclick="openSubjectStatusModal('IT001', 'An ninh cơ sở dữ liệu')" data-bs-toggle="modal" data-bs-target="#subjectStatusModal">
-                                                    <i class="bi bi-clock-history"></i>
-                                                </button>
                                                 <button class="btn btn-light action-btn text-success border" title="Nhập danh sách Sinh viên vào lớp" onclick="openImportStudentModal('25TH01')" data-bs-toggle="modal" data-bs-target="#importStudentModal">
                                                 <i class="bi bi-person-lines-fill"></i>
                                             </button>
-                                                <button class="btn btn-light action-btn text-primary border" title="Sửa thông tin lớp" onclick="openClassModal('edit', '25TH01', '2025 - 2029')" data-bs-toggle="modal" data-bs-target="#classModal">
+                                                <button class="btn btn-light action-btn text-primary border" title="Sửa thông tin lớp" onclick="openClassModal('edit', '25TH01', '2025 - 2029', 'open')" data-bs-toggle="modal" data-bs-target="#classModal">
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
                                                 <button class="btn btn-light action-btn text-danger border" title="Xóa lớp" onclick="confirmDelete('Lớp hành chính', '25TH01')">
@@ -146,16 +143,13 @@
                                         <td class="fw-bold text-primary fs-6">25TH02</td>
                                         <td>2024 - 2028</td>
                                         <td class="text-center"><span class="badge student-count-empty">Chưa có SV</span></td>
-                                        <td><span class="badge class-status-open"><i class="bi bi-circle-fill me-1 status-dot-icon"></i>Đang mở</span></td>
+                                        <td class="text-center"><span class="badge class-status-open">Đang mở</span></td>
                                         <td class="text-end pe-4">
                                             <div class="action-btn-group">
-                                                <button class="btn btn-light action-btn text-warning border" title="Quản lý trạng thái mở/đóng theo học kỳ" onclick="openSubjectStatusModal('IT002', 'Cấu trúc dữ liệu & Giải thuật')" data-bs-toggle="modal" data-bs-target="#subjectStatusModal">
-                                                    <i class="bi bi-clock-history"></i>
-                                                </button>
                                                 <button class="btn btn-light action-btn text-success border" title="Nhập danh sách Sinh viên vào lớp" onclick="openImportStudentModal('25TH02')" data-bs-toggle="modal" data-bs-target="#importStudentModal">
                                                     <i class="bi bi-person-lines-fill"></i>
                                                 </button>
-                                                <button class="btn btn-light action-btn text-primary border" title="Sửa thông tin lớp" onclick="openClassModal('edit', '25TH02', '2024 - 2028')" data-bs-toggle="modal" data-bs-target="#classModal">
+                                                <button class="btn btn-light action-btn text-primary border" title="Sửa thông tin lớp" onclick="openClassModal('edit', '25TH02', '2024 - 2028', 'open')" data-bs-toggle="modal" data-bs-target="#classModal">
                                                     <i class="bi bi-pencil-square"></i>
                                                 </button>
                                                 <button class="btn btn-light action-btn text-danger border" title="Xóa lớp" onclick="confirmDelete('Lớp hành chính', '25TH02')">
@@ -210,9 +204,12 @@
                                         <td class="fw-bold">An ninh cơ sở dữ liệu</td>
                                         <td class="text-muted"><i class="bi bi-link-45deg me-1"></i>Cơ sở dữ liệu (IT003)</td>
                                         <td class="text-center"><span class="badge bg-light text-dark border">3</span></td>
-                                        <td class="text-center"><span class="badge class-status-open"><i class="bi bi-circle-fill me-1 status-dot-icon"></i>Đang mở</span></td>
+                                        <td class="text-center"><span class="badge class-status-open">Đang mở</span></td>
                                         <td class="text-end pe-4">
-                                            <button class="btn btn-light action-btn text-primary border me-1" title="Sửa môn học" onclick="openSubjectModal('edit', 'IT001', 'An ninh cơ sở dữ liệu', 'IT003', 3)" data-bs-toggle="modal" data-bs-target="#subjectModal">
+                                            <button class="btn btn-light action-btn text-warning border me-1" title="Quản lý trạng thái mở/đóng theo học kỳ" onclick="openSubjectStatusModal('IT001', 'An ninh cơ sở dữ liệu')" data-bs-toggle="modal" data-bs-target="#subjectStatusModal">
+                                                <i class="bi bi-clock-history"></i>
+                                            </button>
+                                            <button class="btn btn-light action-btn text-primary border me-1" title="Sửa môn học" onclick="openSubjectModal('edit', 'IT001', 'An ninh cơ sở dữ liệu', 'IT003', 3, '2025-2026', '1', 'open', '2025-09-01', '2025-12-31')" data-bs-toggle="modal" data-bs-target="#subjectModal">
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
                                             <button class="btn btn-light action-btn text-danger border" title="Xóa môn học" onclick="confirmDelete('Môn học', 'IT001 - An ninh cơ sở dữ liệu')">
@@ -225,12 +222,12 @@
                                         <td class="fw-bold">Cấu trúc dữ liệu & Giải thuật</td>
                                         <td class="text-muted fst-italic">-- Không --</td>
                                         <td class="text-center"><span class="badge bg-light text-dark border">4</span></td>
-                                        <td class="text-center"><span class="badge class-status-closed"><i class="bi bi-circle-fill me-1 status-dot-icon"></i>Đã đóng</span></td>
+                                        <td class="text-center"><span class="badge class-status-closed">Đã đóng</span></td>
                                         <td class="text-end pe-4">
                                                 <button class="btn btn-light action-btn text-warning border me-1" title="Quản lý trạng thái mở/đóng theo học kỳ" onclick="openSubjectStatusModal('IT002', 'Cấu trúc dữ liệu & Giải thuật')" data-bs-toggle="modal" data-bs-target="#subjectStatusModal">
                                                     <i class="bi bi-clock-history"></i>
                                                 </button>
-                                            <button class="btn btn-light action-btn text-primary border me-1" title="Sửa môn học" onclick="openSubjectModal('edit', 'IT002', 'Cấu trúc dữ liệu & Giải thuật', '', 4)" data-bs-toggle="modal" data-bs-target="#subjectModal">
+                                            <button class="btn btn-light action-btn text-primary border me-1" title="Sửa môn học" onclick="openSubjectModal('edit', 'IT002', 'Cấu trúc dữ liệu & Giải thuật', '', 4, '2025-2026', '1', 'closed', '', '')" data-bs-toggle="modal" data-bs-target="#subjectModal">
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
                                             <button class="btn btn-light action-btn text-danger border" title="Xóa môn học" onclick="confirmDelete('Môn học', 'IT002 - Cấu trúc dữ liệu & Giải thuật')">
@@ -266,6 +263,26 @@
             <label class="form-label fw-bold">Niên Khóa <span class="text-danger">*</span></label>
             <input type="text" class="form-control border-secondary" id="modalAcademicYear" placeholder="VD: 2025 - 2029" required>
           </div>
+
+          <!-- Trạng Thái Lớp Học -->
+          <div class="mb-4">
+            <label class="form-label fw-bold">Trạng Thái Lớp Học <span class="text-danger">*</span></label>
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input class="form-check-input border-success" type="radio" name="classStatus" id="classStatusOpen" value="open" checked>
+                <label class="form-check-label" for="classStatusOpen">
+                  Đang mở
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input border-danger" type="radio" name="classStatus" id="classStatusClosed" value="closed">
+                <label class="form-check-label" for="classStatusClosed">
+                  Đã đóng
+                </label>
+              </div>
+            </div>
+          </div>
+
           <div class="text-end mt-4">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
             <button type="submit" class="btn btn-primary fw-bold px-4" id="classModalBtn">LƯU LỚP HỌC</button>
@@ -335,7 +352,7 @@
 </div>
 
 <div class="modal fade" id="subjectModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow">
       <div class="modal-header bg-success text-white">
         <h5 class="modal-title fw-bold" id="subjectModalTitle">Thêm Môn Học Mới</h5>
@@ -343,23 +360,27 @@
       </div>
       <div class="modal-body p-4">
         <form id="subjectForm" onsubmit="return handleDataSubmit(event, 'Môn học', 'subjectModal')">
+          <!-- Mã Môn & Tín Chỉ -->
           <div class="row">
-              <div class="col-md-5 mb-3">
+              <div class="col-md-6 mb-3">
                 <label class="form-label fw-bold">Mã Môn <span class="text-danger">*</span></label>
                 <input type="text" class="form-control border-success text-uppercase" id="modalSubjectCode" placeholder="VD: IT001" required>
               </div>
-              <div class="col-md-7 mb-3">
+              <div class="col-md-6 mb-3">
                 <label class="form-label fw-bold">Số Tín Chỉ <span class="text-danger">*</span></label>
                 <input type="number" class="form-control border-secondary" id="modalCredits" placeholder="VD: 3" min="1" max="10" required>
               </div>
           </div>
+
+          <!-- Tên Môn Học -->
           <div class="mb-3">
             <label class="form-label fw-bold">Tên Môn Học <span class="text-danger">*</span></label>
             <input type="text" class="form-control border-secondary" id="modalSubjectName" placeholder="VD: An ninh cơ sở dữ liệu" required>
           </div>
           
+          <!-- Môn Tiên Quyết -->
           <div class="mb-4">
-            <label class="form-label fw-bold">Môn học tiên quyết <span class="text-muted fw-normal small">(Không bắt buộc)</span></label>
+            <label class="form-label fw-bold">Môn Tiên Quyết <span class="text-muted fw-normal small">(Không bắt buộc)</span></label>
             <div class="dropdown custom-select-search w-100">
                 <input type="hidden" id="modalPrerequisiteValue" value="">
                 
@@ -383,7 +404,60 @@
             </div>
           </div>
 
-          <div class="text-end mt-2">
+          <!-- Năm Học & Học Kỳ -->
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold">Năm Học <span class="text-danger">*</span></label>
+              <select class="form-select border-secondary" id="modalAcademicYear" required>
+                <option value="" disabled selected>-- Chọn năm học --</option>
+                <option value="2025-2026" selected>2025 - 2026</option>
+                <option value="2024-2025">2024 - 2025</option>
+                <option value="2026-2027">2026 - 2027</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold">Học Kỳ <span class="text-danger">*</span></label>
+              <select class="form-select border-secondary" id="modalSemester" required>
+                <option value="" disabled selected>-- Chọn học kỳ --</option>
+                <option value="1" selected>Học kỳ 1</option>
+                <option value="2">Học kỳ 2</option>
+                <option value="3">Học kỳ 3 (Hè)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Trạng Thái -->
+          <div class="mb-4">
+            <label class="form-label fw-bold">Trạng Thái Ban Đầu <span class="text-danger">*</span></label>
+            <div class="d-flex gap-3 mb-3">
+              <div class="form-check">
+                <input class="form-check-input border-success" type="radio" name="initialStatus" id="statusOpen" value="open" checked onchange="toggleStatusFields()">
+                <label class="form-check-label" for="statusOpen">
+                  Đang mở
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input border-danger" type="radio" name="initialStatus" id="statusClosed" value="closed" onchange="toggleStatusFields()">
+                <label class="form-check-label" for="statusClosed">
+                  Đã đóng
+                </label>
+              </div>
+            </div>
+
+            <!-- Thời gian bắt đầu và kết thúc (hiển thị khi chọn Đang mở) -->
+            <div id="openStatusFields" class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Bắt Đầu <span class="text-danger">*</span></label>
+                <input type="date" class="form-control border-secondary" id="statusStartDate">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Kết Thúc <span class="text-danger">*</span></label>
+                <input type="date" class="form-control border-secondary" id="statusEndDate">
+              </div>
+            </div>
+          </div>
+
+          <div class="text-end mt-4">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
             <button type="submit" class="btn btn-success fw-bold px-4" id="subjectModalBtn">LƯU MÔN HỌC</button>
           </div>
@@ -555,11 +629,32 @@
     subjectModalEl.addEventListener('hidden.bs.modal', function () {
         document.getElementById('prereqSearchInput').value = '';
         document.querySelectorAll('.prereq-item').forEach(item => item.style.display = '');
+        // Reset readonly attribute từ mã môn
+        const inputCode = document.getElementById('modalSubjectCode');
+        inputCode.removeAttribute('readonly');
     });
 
 
+    // --- HÀM TOGGLE HIỂN THỊ/ẨN CÁC TRƯỜNG THỜI GIAN ---
+    function toggleStatusFields() {
+        const statusOpen = document.getElementById('statusOpen').checked;
+        const openStatusFields = document.getElementById('openStatusFields');
+        
+        if (statusOpen) {
+            openStatusFields.style.display = 'flex';
+            // Đặt required cho các input date
+            document.getElementById('statusStartDate').required = true;
+            document.getElementById('statusEndDate').required = true;
+        } else {
+            openStatusFields.style.display = 'none';
+            // Bỏ required để không validate khi đã đóng
+            document.getElementById('statusStartDate').required = false;
+            document.getElementById('statusEndDate').required = false;
+        }
+    }
+
     // --- XỬ LÝ CHO TAB LỚP HÀNH CHÍNH ---
-    function openClassModal(mode, className = '', year = '') {
+    function openClassModal(mode, className = '', year = '', status = 'open') {
         const title = document.getElementById('classModalTitle');
         const btn = document.getElementById('classModalBtn');
         const inputName = document.getElementById('modalClassName');
@@ -569,12 +664,20 @@
             btn.innerText = 'LƯU LỚP HỌC';
             document.getElementById('classForm').reset();
             inputName.removeAttribute('readonly');
+            document.getElementById('classStatusOpen').checked = true;
         } else {
             title.innerText = 'Chỉnh sửa Lớp Hành Chính';
             btn.innerText = 'CẬP NHẬT LỚP';
             inputName.value = className;
             inputName.setAttribute('readonly', 'true'); 
             document.getElementById('modalAcademicYear').value = year;
+            
+            // Xử lý status radio
+            if (status === 'closed') {
+                document.getElementById('classStatusClosed').checked = true;
+            } else {
+                document.getElementById('classStatusOpen').checked = true;
+            }
         }
     }
 
@@ -595,7 +698,7 @@
     }
 
     // --- XỬ LÝ CHO TAB MÔN HỌC ---
-    function openSubjectModal(mode, subCode = '', subName = '', prereqCode = '', credits = '') {
+    function openSubjectModal(mode, subCode = '', subName = '', prereqCode = '', credits = '', academicYear = '2025-2026', semester = '1', status = 'open', startDate = '', endDate = '') {
         const title = document.getElementById('subjectModalTitle');
         const btn = document.getElementById('subjectModalBtn');
         const inputCode = document.getElementById('modalSubjectCode');
@@ -606,11 +709,21 @@
             document.getElementById('subjectForm').reset();
             inputCode.removeAttribute('readonly');
             
+            // Set giá trị mặc định cho năm học và học kỳ
+            document.getElementById('modalAcademicYear').value = '2025-2026';
+            document.getElementById('modalSemester').value = '1';
+            document.getElementById('statusOpen').checked = true;
+            document.getElementById('statusStartDate').value = '';
+            document.getElementById('statusEndDate').value = '';
+            
             // Đặt lại Dropdown
             document.getElementById('modalPrerequisiteValue').value = '';
             document.querySelector('#prereqDropdownBtn span').innerText = '-- Không có môn tiên quyết --';
             document.querySelectorAll('.prereq-item').forEach(i => i.classList.remove('active'));
             document.querySelector('.prereq-item[data-value=""]').classList.add('active');
+            
+            // Toggle hiển thị các trường thời gian
+            toggleStatusFields();
 
         } else {
             title.innerText = 'Chỉnh sửa Môn Học';
@@ -619,6 +732,17 @@
             inputCode.setAttribute('readonly', 'true'); 
             document.getElementById('modalSubjectName').value = subName;
             document.getElementById('modalCredits').value = credits;
+            document.getElementById('modalAcademicYear').value = academicYear;
+            document.getElementById('modalSemester').value = semester;
+            document.getElementById('statusStartDate').value = startDate;
+            document.getElementById('statusEndDate').value = endDate;
+            
+            // Xử lý status radio
+            if (status === 'closed') {
+                document.getElementById('statusClosed').checked = true;
+            } else {
+                document.getElementById('statusOpen').checked = true;
+            }
 
             // Xử lý set data cho Dropdown tự chế
             document.getElementById('modalPrerequisiteValue').value = prereqCode;
@@ -632,12 +756,38 @@
                 }
             });
             document.querySelector('#prereqDropdownBtn span').innerText = selectedText;
+            
+            // Toggle hiển thị các trường thời gian
+            toggleStatusFields();
         }
     }
 
     // --- HÀM XÁC NHẬN CHUNG (LƯU DỮ LIỆU) ---
     function handleDataSubmit(event, entityName, modalId) {
         event.preventDefault();
+        
+        // Validation cho form môn học
+        if (modalId === 'subjectModal') {
+            const statusOpen = document.getElementById('statusOpen').checked;
+            const startDate = document.getElementById('statusStartDate').value;
+            const endDate = document.getElementById('statusEndDate').value;
+            
+            if (statusOpen) {
+                if (!startDate) {
+                    alert('⚠️ Vui lòng nhập thời gian bắt đầu!');
+                    return false;
+                }
+                if (!endDate) {
+                    alert('⚠️ Vui lòng nhập thời gian kết thúc!');
+                    return false;
+                }
+                if (new Date(startDate) > new Date(endDate)) {
+                    alert('⚠️ Thời gian bắt đầu phải trước thời gian kết thúc!');
+                    return false;
+                }
+            }
+        }
+        
         const action = event.submitter.innerText.includes('CẬP NHẬT') ? 'cập nhật' : 'thêm mới';
         
         if(confirm(`Bạn có chắc chắn muốn ${action} dữ liệu [${entityName}] này vào hệ thống?`)) {
