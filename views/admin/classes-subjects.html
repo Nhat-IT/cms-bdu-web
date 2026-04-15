@@ -9,22 +9,7 @@
     <link rel="stylesheet" href="../../public/css/style.css">
     <link rel="stylesheet" href="../../public/css/layout.css">
     <link rel="stylesheet" href="../../public/css/admin/admin-layout.css">
-    <style>
-        .nav-tabs .nav-link { color: #475569; font-weight: bold; padding: 10px 20px; border: none; border-bottom: 3px solid transparent; }
-        .nav-tabs .nav-link.active { color: #0d6efd; border-bottom: 3px solid #0d6efd; background-color: transparent; }
-        .nav-tabs .nav-link:hover { border-bottom: 3px solid #cbd5e1; }
-        .class-status-open { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
-        .class-status-closed { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
-        .student-count-soft { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
-        .student-count-empty { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
-        .action-btn-group { display: inline-flex; gap: 0.25rem; flex-wrap: wrap; justify-content: flex-end; }
-        
-        /* CSS cho Custom Searchable Dropdown */
-        .custom-select-btn { border: 1px solid #dee2e6; background-color: #fff; text-align: left; padding: 0.375rem 0.75rem; display: flex; justify-content: space-between; align-items: center; }
-        .custom-select-btn:focus { border-color: #86b7fe; outline: 0; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); }
-        .dropdown-menu-search { max-height: 250px; overflow-y: auto; width: 100%; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); }
-        .prereq-item.active { background-color: #e9ecef; color: #000; font-weight: bold; }
-    </style>
+    <link rel="stylesheet" href="../../public/css/admin/classes-subjects.css">
 </head>
 <body class="dashboard-body">
 
@@ -138,7 +123,7 @@
                                         <td class="fw-bold text-primary fs-6">25TH01</td>
                                         <td>2025 - 2029</td>
                                         <td class="text-center"><span class="badge student-count-soft">68 SV</span></td>
-                                        <td><span class="badge class-status-open"><i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>Đang mở</span></td>
+                                        <td><span class="badge class-status-open"><i class="bi bi-circle-fill me-1 status-dot-icon"></i>Đang mở</span></td>
                                         <td class="text-end pe-4">
                                             <div class="action-btn-group">
                                                 <button class="btn btn-light action-btn text-warning border" title="Quản lý trạng thái mở/đóng theo học kỳ" onclick="openSubjectStatusModal('IT001', 'An ninh cơ sở dữ liệu')" data-bs-toggle="modal" data-bs-target="#subjectStatusModal">
@@ -161,7 +146,7 @@
                                         <td class="fw-bold text-primary fs-6">25TH02</td>
                                         <td>2024 - 2028</td>
                                         <td class="text-center"><span class="badge student-count-empty">Chưa có SV</span></td>
-                                        <td><span class="badge class-status-open"><i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>Đang mở</span></td>
+                                        <td><span class="badge class-status-open"><i class="bi bi-circle-fill me-1 status-dot-icon"></i>Đang mở</span></td>
                                         <td class="text-end pe-4">
                                             <div class="action-btn-group">
                                                 <button class="btn btn-light action-btn text-warning border" title="Quản lý trạng thái mở/đóng theo học kỳ" onclick="openSubjectStatusModal('IT002', 'Cấu trúc dữ liệu & Giải thuật')" data-bs-toggle="modal" data-bs-target="#subjectStatusModal">
@@ -186,9 +171,21 @@
 
                     <div class="tab-pane fade" id="subject-pane" role="tabpanel">
                         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                            <div class="input-group input-group-sm" style="width: 300px;">
-                                <span class="input-group-text bg-light"><i class="bi bi-search text-muted"></i></span>
-                                <input type="text" class="form-control" placeholder="Tìm mã môn, tên môn...">
+                            <div class="d-flex align-items-center flex-wrap gap-2">
+                                <div class="input-group input-group-sm" style="width: 300px;">
+                                    <span class="input-group-text bg-light"><i class="bi bi-search text-muted"></i></span>
+                                    <input type="text" class="form-control" placeholder="Tìm mã môn, tên môn...">
+                                </div>
+                                <select class="form-select form-select-sm subject-filter-select">
+                                    <option selected>2025 - 2026</option>
+                                    <option>2024 - 2025</option>
+                                    <option>2026 - 2027</option>
+                                </select>
+                                <select class="form-select form-select-sm subject-filter-select">
+                                    <option selected>Học kỳ 1</option>
+                                    <option>Học kỳ 2</option>
+                                    <option>Học kỳ 3 (Hè)</option>
+                                </select>
                             </div>
                             <button class="btn btn-success fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#subjectModal" onclick="openSubjectModal('add')">
                                 <i class="bi bi-plus-circle-fill me-1"></i> THÊM MÔN HỌC
@@ -203,6 +200,7 @@
                                         <th class="py-3">TÊN MÔN HỌC</th>
                                         <th class="py-3">MÔN TIÊN QUYẾT</th>
                                         <th class="text-center py-3">SỐ TÍN CHỈ</th>
+                                        <th class="text-center py-3">TRẠNG THÁI</th>
                                         <th class="text-end pe-4 py-3">HÀNH ĐỘNG</th>
                                     </tr>
                                 </thead>
@@ -212,6 +210,7 @@
                                         <td class="fw-bold">An ninh cơ sở dữ liệu</td>
                                         <td class="text-muted"><i class="bi bi-link-45deg me-1"></i>Cơ sở dữ liệu (IT003)</td>
                                         <td class="text-center"><span class="badge bg-light text-dark border">3</span></td>
+                                        <td class="text-center"><span class="badge class-status-open"><i class="bi bi-circle-fill me-1 status-dot-icon"></i>Đang mở</span></td>
                                         <td class="text-end pe-4">
                                             <button class="btn btn-light action-btn text-primary border me-1" title="Sửa môn học" onclick="openSubjectModal('edit', 'IT001', 'An ninh cơ sở dữ liệu', 'IT003', 3)" data-bs-toggle="modal" data-bs-target="#subjectModal">
                                                 <i class="bi bi-pencil-square"></i>
@@ -226,7 +225,7 @@
                                         <td class="fw-bold">Cấu trúc dữ liệu & Giải thuật</td>
                                         <td class="text-muted fst-italic">-- Không --</td>
                                         <td class="text-center"><span class="badge bg-light text-dark border">4</span></td>
-                                            <td><span class="badge bg-danger"><i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>Đã đóng</span></td>
+                                        <td class="text-center"><span class="badge class-status-closed"><i class="bi bi-circle-fill me-1 status-dot-icon"></i>Đã đóng</span></td>
                                         <td class="text-end pe-4">
                                                 <button class="btn btn-light action-btn text-warning border me-1" title="Quản lý trạng thái mở/đóng theo học kỳ" onclick="openSubjectStatusModal('IT002', 'Cấu trúc dữ liệu & Giải thuật')" data-bs-toggle="modal" data-bs-target="#subjectStatusModal">
                                                     <i class="bi bi-clock-history"></i>
@@ -305,7 +304,7 @@
 <div class="modal fade" id="importStudentModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow">
-      <div class="modal-header" style="background-color: #0f172a; color: white;">
+    <div class="modal-header subject-status-modal-header">
         <h5 class="modal-title fw-bold"><i class="bi bi-person-lines-fill me-2"></i>Nhập Sinh Viên Vào Lớp</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
@@ -395,13 +394,13 @@
 </div>
 
 <div class="modal fade" id="subjectStatusModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable subject-status-modal">
+        <div class="modal-content border-0 shadow subject-status-modal-content">
       <div class="modal-header bg-warning">
         <h5 class="modal-title fw-bold" id="subjectStatusModalTitle"><i class="bi bi-clock-history me-2"></i>Quản lý Trạng thái Mở/Đóng Môn Học</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body p-4">
+    <div class="modal-body p-4 subject-status-modal-body">
         <!-- Phần lọc Năm/Học kỳ -->
         <div class="row g-3 mb-4">
             <div class="col-md-4">
@@ -466,7 +465,7 @@
                 <i class="bi bi-list-ul me-2"></i>Lịch sử Mở/Đóng Môn
             </div>
             <div class="card-body">
-                <div class="table-responsive small" style="max-height: 300px; overflow-y: auto;">
+                <div class="table-responsive small subject-status-history">
                     <table class="table table-sm mb-0">
                         <thead class="table-light sticky-top">
                             <tr>
@@ -505,7 +504,7 @@
             </div>
         </div>
       </div>
-      <div class="modal-footer border-top">
+            <div class="modal-footer border-top subject-status-modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
       </div>
     </div>

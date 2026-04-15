@@ -1,0 +1,108 @@
+.nav-tabs .nav-link {
+    color: #475569;
+    font-weight: bold;
+    padding: 10px 20px;
+    border: none;
+    border-bottom: 3px solid transparent;
+}
+
+.nav-tabs .nav-link.active {
+    color: #0d6efd;
+    border-bottom: 3px solid #0d6efd;
+    background-color: transparent;
+}
+
+.nav-tabs .nav-link:hover {
+    border-bottom: 3px solid #cbd5e1;
+}
+
+.class-status-open {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.class-status-closed {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+}
+
+.student-count-soft {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+
+.student-count-empty {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+
+.action-btn-group {
+    display: inline-flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.custom-select-btn {
+    border: 1px solid #dee2e6;
+    background-color: #fff;
+    text-align: left;
+    padding: 0.375rem 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.custom-select-btn:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.dropdown-menu-search {
+    max-height: 250px;
+    overflow-y: auto;
+    width: 100%;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.prereq-item.active {
+    background-color: #e9ecef;
+    color: #000;
+    font-weight: bold;
+}
+
+.subject-status-modal-header {
+    background-color: #0f172a;
+    color: #fff;
+}
+
+.subject-status-history {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.status-dot-icon {
+    font-size: 0.5rem;
+}
+
+.subject-filter-select {
+    width: 180px;
+}
+
+.subject-status-modal .modal-content,
+.subject-status-modal-content {
+    max-height: 90vh;
+}
+
+.subject-status-modal-body {
+    overflow-y: auto;
+}
+
+.subject-status-modal-footer {
+    flex-shrink: 0;
+}
