@@ -1,16 +1,16 @@
-/* Mo ta: Quy dinh style tong the cho toan bo giao dien CMS. */
+/* Mô tả: Quy định style tổng thể cho toàn bộ giao diện CMS. */
 
 /* =========================================
    STYLE CHUNG CHO TOÀN BỘ HỆ THỐNG
    ========================================= */
 body {
-    /* Nen va font mac dinh cho toan he thong */
+    /* Nền và font mặc định cho toàn hệ thống */
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f4f6f9;
 }
 
 .cursor-pointer {
-    /* Tien ich: bien moi phan tu thanh co the click */
+    /* Tiện ích: biến mọi phần tử thành có thể click */
     cursor: pointer;
 }
 
@@ -26,7 +26,7 @@ body {
 }
 
 .login-card {
-    /* Khung card tong cho trang dang nhap */
+    /* Khung card tổng cho trang đăng nhập */
     border: none;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
@@ -36,14 +36,14 @@ body {
 }
 
 .login-image {
-    /* Cot ben trai trang dang nhap */
+    /* Cột bên trái trang đăng nhập */
     background: linear-gradient(135deg, #1e2b3c, #3498db);
     color: white;
     padding: 40px;
 }
 
 .login-form {
-    /* Cot ben phai chua form dang nhap */
+    /* Cột bên phải chứa form đăng nhập */
     padding: 40px;
     background-color: white;
     height: 100%;
@@ -53,20 +53,20 @@ body {
 }
 
 .form-control:focus {
-    /* Focus input: bo shadow mac dinh va doi mau vien */
+    /* Focus input: bỏ shadow mặc định và đổi màu viền */
     box-shadow: none;
     border-color: #3498db;
 }
 
-/* Fix CSS cho input-group kết hợp với form-floating của Bootstrap */
+/* Sửa CSS cho input-group kết hợp với form-floating của Bootstrap */
 .input-group > .form-floating > .form-control {
-    /* Ghep input-group voi form-floating khong bi lech bo goc */
+    /* Ghép input-group với form-floating không bị lệch bo góc */
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
 }
 
 .btn-login {
-    /* Nut dang nhap chinh */
+    /* Nút đăng nhập chính */
     background-color: #3498db;
     border: none;
     padding: 12px;
@@ -75,30 +75,21 @@ body {
 }
 
 .btn-login:hover {
-    /* Mau khi re chuot vao nut dang nhap */
+    /* Màu khi rê chuột vào nút đăng nhập */
     background-color: #2980b9;
 }
 
 /* =========================================
-   STYLE DÀNH CHO BẢNG ĐIỀU KHIỂN & SIDEBAR
+   STYLE DÀNH CHO BẢNG ĐIỀU KHIỂN
    ========================================= */
 .dashboard-body {
-    /* Nen tong cho cac trang dashboard */
+    /* Nền tổng cho các trang dashboard */
     background-color: #f4f6f9;
 }
 
-.top-navbar {
-    /* Topbar kieu card bo tron */
-    background-color: #fff;
-    padding: 15px 30px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    margin-bottom: 30px;
-}
-
-/* Các Card Thống kê */
+/* Các card thống kê */
 .stat-card {
-    /* Card thong ke phien ban co ban */
+    /* Card thống kê phiên bản cơ bản */
     border: none;
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.03);
@@ -106,12 +97,12 @@ body {
 }
 
 .stat-card:hover {
-    /* Hieu ung noi card thong ke */
+    /* Hiệu ứng nổi card thống kê */
     transform: translateY(-5px);
 }
 
 .icon-box {
-    /* Hop icon tron cho card thong ke */
+    /* Hộp icon tròn cho card thống kê */
     width: 60px;
     height: 60px;
     border-radius: 50%;
@@ -130,12 +121,12 @@ body {
    STYLE CẬP NHẬT CHO DASHBOARD (THEO MOCKUP MỚI)
    ========================================= */
 .btn-logout-hover:hover {
-    /* Hieu ung hover cho nut dang xuat tren thanh tren */
+    /* Hiệu ứng hover cho nút đăng xuất trên thanh trên */
     background-color: rgba(255, 255, 255, 0.2);
 }
 
 .stat-card-custom {
-    /* Card thong ke phien ban moi theo mockup */
+    /* Card thống kê phiên bản mới theo mockup */
     border: none;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.03);
@@ -144,24 +135,24 @@ body {
 }
 
 .stat-card-custom:hover {
-    /* Nhac nhe card khi hover */
+    /* Nhấc nhẹ card khi hover */
     transform: translateY(-3px);
 }
 
 /* Các viền màu theo thiết kế */
 .border-left-danger {
-    /* Vien mau canh trai de nhan manh card canh bao */
+    /* Viền màu cạnh trái để nhấn mạnh card cảnh báo */
     border-left: 5px solid #dc3545 !important;
 }
 
 .border-left-warning {
-    /* Vien mau canh trai cho card canh bao muc vua */
+    /* Viền màu cạnh trái cho card cảnh báo mức vừa */
     border-left: 5px solid #ffc107 !important;
 }
 
 /* Icon box vuông bo góc nhẹ thay vì tròn hoàn toàn */
 .icon-box-custom {
-    /* Hop icon vuong bo goc cho giao dien moi */
+    /* Hộp icon vuông bo góc cho giao diện mới */
     width: 60px;
     height: 60px;
     border-radius: 12px;
@@ -171,9 +162,9 @@ body {
     font-size: 28px;
 }
 
-/* Style cho các môn cảnh báo (Nền vàng nhạt) */
+/* Style cho các môn cảnh báo (nền vàng nhạt) */
 .subject-warn-card {
-    /* Card mon hoc canh bao */
+    /* Card môn học cảnh báo */
     background-color: #fef5d9; /* Màu vàng nhạt giống mẫu */
     border-radius: 10px;
     border: 1px solid #faebbc;
@@ -182,35 +173,30 @@ body {
 }
 
 .subject-warn-card:hover {
-    /* Hieu ung hover card mon canh bao */
+    /* Hiệu ứng hover card môn cảnh báo */
     box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     transform: translateY(-2px);
 }
 
-/* Custom Table cho Dashboard Chi tiết */
+/* Bảng tùy chỉnh cho dashboard chi tiết */
 .custom-detail-table th {
-    /* Header bang chi tiet dashboard */
+    /* Header bảng chi tiết dashboard */
     font-size: 0.8rem;
     letter-spacing: 0.5px;
 }
 .custom-detail-table td {
-    /* Mau vien cac o du lieu bang chi tiet */
+    /* Màu viền các ô dữ liệu bảng chi tiết */
     border-color: #f1f3f5;
 }
+
 /* Hiệu ứng focus cho các select trên thanh bộ lọc */
 .form-select-sm:focus, .form-control-sm:focus {
-    /* Vong sang nhe khi focus bo loc */
+    /* Vòng sáng nhẹ khi focus bộ lọc */
     box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
 }
 
-.hover-logout:hover {
-    /* Hover dung chung cho nut dang xuat */
-    background-color: rgba(220, 53, 69, 0.1);
-    transition: 0.3s ease;
-}
-
 /* =========================================
-   RESPONSIVE SAFETY BASELINE (TOAN HE THONG)
+   RESPONSIVE SAFETY BASELINE (TOÀN HỆ THỐNG)
    ========================================= */
 * {
     box-sizing: border-box;
@@ -230,21 +216,8 @@ canvas {
         overflow-x: hidden;
     }
 
-    .top-navbar,
-    .top-navbar-blue,
-    .top-navbar-admin {
-        padding-left: 12px !important;
-        padding-right: 12px !important;
-    }
-
-    .top-navbar-blue h4,
-    .top-navbar-blue h5,
-    .top-navbar-admin h4,
-    .top-navbar-admin h5 {
-        font-size: 0.95rem;
-    }
-
     .p-4 {
+        /* Giảm padding của p-4 trên màn hình nhỏ */
         padding: 1rem !important;
     }
 

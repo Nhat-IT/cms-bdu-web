@@ -3,6 +3,5 @@ node_modules/
 .env.*
 !.env.example
 drive-credentials.json
-drive-credentials.json.json
 *service-account*.json
 *credentials*.json
