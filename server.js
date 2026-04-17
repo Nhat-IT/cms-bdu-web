@@ -7,7 +7,22 @@ const fs = require('fs');
 const { google } = require('googleapis');
 const multer = require('multer');
 
+// --- THÊM 2 DÒNG NÀY ĐỂ SỬA LỖI PASSPORT ---
+const session = require('express-session');
+const passport = require('./config/passport-config'); // Trỏ tới file cấu hình passport của bạn
+
 const app = express();
+
+// --- CẤU HÌNH SESSION & PASSPORT ---
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'bdu_default_secret_key_2026',
+    resave: false,
+    saveUninitialized: true
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use(cors());
 app.use(express.json());
 
@@ -29,7 +44,6 @@ const dbConfig = {
 const pool = mysql.createPool(dbConfig);
 
 // --- CẤU HÌNH GOOGLE DRIVE API ---
-// Lưu ý: Đảm bảo file drive-credentials.json nằm cùng cấp với server.js
 const KEYFILEPATH = path.join(__dirname, 'drive-credentials.json');
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
 
@@ -39,7 +53,6 @@ const auth = new google.auth.GoogleAuth({
 });
 const driveService = google.drive({ version: 'v3', auth });
 
-// Cấu hình Multer để tạm lưu file khi upload (sẽ xóa sau khi đẩy lên Drive)
 const upload = multer({ dest: 'uploads/' });
 
 // --- CÁC ĐƯỜNG DẪN GIAO DIỆN ---
@@ -59,20 +72,16 @@ app.get('/api/test-db', async (req, res) => {
     }
 });
 
-/**
- * 2. API UPLOAD FILE LÊN GOOGLE DRIVE
- * Sử dụng cho: Nộp minh chứng điểm danh, nộp bài tập...
- */
+// 2. Upload Google Drive
 app.post('/api/upload-to-drive', upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ success: false, message: 'Không có file nào được tải lên.' });
         }
 
-        // Thông tin file Metadata (Có thể thay đổi folderId theo yêu cầu)
         const fileMetadata = {
             name: req.file.originalname,
-            parents: [process.env.GOOGLE_DRIVE_FOLDER_ID], // ID thư mục lưu trữ lấy từ .env
+            parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
         };
 
         const media = {
@@ -86,7 +95,6 @@ app.post('/api/upload-to-drive', upload.single('file'), async (req, res) => {
             fields: 'id, webViewLink',
         });
 
-        // Xóa file tạm trong thư mục uploads/ trên server
         fs.unlinkSync(req.file.path);
 
         res.json({
@@ -102,6 +110,10 @@ app.post('/api/upload-to-drive', upload.single('file'), async (req, res) => {
     }
 });
 
+// ==============================================
+// 3. API ĐĂNG NHẬP GOOGLE (ĐÃ SỬA LỖI)
+// ==============================================
+
 // Route bắt đầu đăng nhập
 app.get('/auth/google',
   passport.authenticate('google', { scope: ['profile', 'email'] })
@@ -109,21 +121,22 @@ app.get('/auth/google',
 
 // Route xử lý kết quả trả về từ Google
 app.get('/auth/google/callback', 
-  passport.authenticate('google', { failureRedirect: '/login?error=auth_failed' }),
+  passport.authenticate('google', { failureRedirect: '/login.html?error=auth_failed' }),
   (req, res) => {
-    // Dựa vào Role để đưa người dùng về đúng Dashboard
-    if (req.user.role === 'teacher') {
-        res.redirect('/teacher/dashboard');
+    // req.user chứa thông tin lấy từ database
+    if (req.user && req.user.role === 'teacher') {
+        res.redirect('/teacher-dashboard.html'); // Điều chỉnh link tới HTML của Giảng viên
     } else {
-        res.redirect('/student/dashboard');
+        res.redirect('/student-dashboard.html'); // Điều chỉnh link tới HTML của Sinh viên
     }
   }
 );
 
 // Route đăng xuất
-app.get('/logout', (req, res) => {
-    req.logout(() => {
-        res.redirect('/login');
+app.get('/logout', (req, res, next) => {
+    req.logout((err) => {
+        if (err) { return next(err); }
+        res.redirect('/login.html');
     });
 });
 
@@ -133,4 +146,3 @@ app.listen(PORT, () => {
     console.log(`🚀 Server is running on port ${PORT}`);
     console.log(`📁 Thư mục tĩnh: ${path.join(__dirname, 'public')}`);
 });
-

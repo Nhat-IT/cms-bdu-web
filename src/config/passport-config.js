@@ -1,11 +1,11 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const db = require('./db');
+const db = require('./db'); // Đường dẫn trỏ đến file kết nối MySQL của bạn
 
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "/auth/google/callback" // Đường dẫn này phải khớp với cấu hình trên Google Console
+    callbackURL: "/auth/google/callback" // Phải khớp với trên Google Cloud Console
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
@@ -19,6 +19,7 @@ passport.use(new GoogleStrategy({
         const isTeacher = email.endsWith('@bdu.edu.vn');
 
         if (!isStudent && !isTeacher) {
+            // Trả về false và thông báo lỗi nếu không phải email BDU
             return done(null, false, { message: 'Vui lòng sử dụng email do BDU cấp!' });
         }
 
@@ -30,7 +31,7 @@ passport.use(new GoogleStrategy({
         const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
 
         if (users.length > 0) {
-            // Đã có tài khoản: Cập nhật thông tin mới nhất từ Google
+            // Đã có tài khoản: Cập nhật thông tin mới nhất từ Google (VD: lỡ họ đổi avatar)
             const user = users[0];
             await db.query(
                 'UPDATE users SET google_id = ?, avatar = ?, full_name = ? WHERE id = ?',
@@ -43,18 +44,31 @@ passport.use(new GoogleStrategy({
                 'INSERT INTO users (username, full_name, email, google_id, role, avatar) VALUES (?, ?, ?, ?, ?, ?)',
                 [username, fullName, email, googleId, role, avatar]
             );
+            
             const newUser = { id: result.insertId, username, email, role };
             return done(null, newUser);
         }
     } catch (err) {
+        console.error("Lỗi xác thực Google:", err);
         return done(err, null);
     }
   }
 ));
 
-// Lưu và lấy thông tin user từ Session
-passport.serializeUser((user, done) => done(null, user.id));
-passport.deserializeUser(async (id, done) => {
-    const [users] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
-    done(null, users[0]);
+// Lưu ID người dùng vào Session sau khi đăng nhập thành công
+passport.serializeUser((user, done) => {
+    done(null, user.id);
 });
+
+// Lấy thông tin chi tiết của người dùng từ ID lưu trong Session
+passport.deserializeUser(async (id, done) => {
+    try {
+        const [users] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
+        done(null, users[0]);
+    } catch (err) {
+        done(err, null);
+    }
+});
+
+// Xuất cấu hình này ra để dùng ở file server.js
+module.exports = passport;
