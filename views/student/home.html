@@ -25,13 +25,13 @@
     
     <div class="profile-container text-center flex-shrink-0">
         <a href="student-profile.html" class="profile-trigger" title="Xem hồ sơ cá nhân">
-            <img src="https://ui-avatars.com/api/?name=Nhat+Y&background=0d6efd&color=fff" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar">
+            <img src="https://ui-avatars.com/api/?name=User&background=0d6efd&color=fff" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar">
             <div class="hide-on-collapse">
-                <div class="text-white fw-bold fs-6">Phạm Huỳnh Nhật Ý</div>
-                <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">MSSV: 22050111</div>
+                <div class="text-white fw-bold fs-6 profile-name">Đang tải...</div>
+                <div class="text-white-50 small mb-1 profile-mssv" style="font-size: 0.8rem;">MSSV: --</div>
             </div>
         </a>
-        <span class="badge student-class-badge mt-1 hide-on-collapse">LỚP: 25TH01</span>
+        <span class="badge student-class-badge mt-1 hide-on-collapse profile-class">LỚP: --</span>
     </div>
 
     <div class="sidebar-scrollable w-100">
@@ -68,7 +68,7 @@
     </div>
     
     <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-        <a href="../login.html" class="nav-link logout-btn" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?');" title="Đăng xuất">
+        <a href="/auth/logout" class="nav-link logout-btn" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?');" title="Đăng xuất">
             <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
         </a>
     </div>
@@ -87,7 +87,7 @@
         <div class="d-flex align-items-center text-white">
             <a href="notifications-all.html" class="text-white text-decoration-none" title="Xem thông báo từ BCS, Giảng viên, Khoa">
                 <i class="bi bi-bell fs-5 text-white position-relative cursor-pointer">
-                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
+                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle notification-badge" style="display:none; font-size: 0.5rem;">0</span>
                 </i>
             </a>
         </div>
@@ -102,7 +102,7 @@
                         <div class="icon-box-custom bg-light-primary me-3 text-primary"><i class="bi bi-journal-bookmark-fill"></i></div>
                         <div>
                             <p class="text-muted fw-bold mb-1" style="font-size: 0.8rem;">MÔN ĐANG HỌC</p>
-                            <h3 class="mb-0 fw-bold text-dark">5</h3>
+                            <h3 class="mb-0 fw-bold text-dark" data-classes-count>5</h3>
                         </div>
                     </div>
                 </div>
@@ -113,7 +113,7 @@
                         <div class="icon-box-custom bg-light-danger me-3 text-danger"><i class="bi bi-exclamation-triangle-fill"></i></div>
                         <div>
                             <p class="text-danger fw-bold mb-1" style="font-size: 0.8rem;">MÔN CẢNH BÁO</p>
-                            <h3 class="mb-0 fw-bold text-danger">1</h3>
+                            <h3 class="mb-0 fw-bold text-danger" data-warning-count>1</h3>
                         </div>
                     </div>
                 </div>
@@ -124,7 +124,7 @@
                         <div class="icon-box-custom bg-light-warning me-3 text-warning"><i class="bi bi-calendar-x-fill"></i></div>
                         <div>
                             <p class="text-muted fw-bold mb-1" style="font-size: 0.8rem;">TỔNG BUỔI VẮNG</p>
-                            <h3 class="mb-0 fw-bold text-dark">4</h3>
+                            <h3 class="mb-0 fw-bold text-dark" data-absent-count>4</h3>
                         </div>
                     </div>
                 </div>
@@ -135,7 +135,7 @@
                         <div class="icon-box-custom bg-light-success me-3 text-success"><i class="bi bi-envelope-check-fill"></i></div>
                         <div>
                             <p class="text-muted fw-bold mb-1" style="font-size: 0.8rem;">PHẢN HỒI ĐÃ XỬ LÝ</p>
-                            <h3 class="mb-0 fw-bold text-dark">2</h3>
+                            <h3 class="mb-0 fw-bold text-dark" data-resolved-count>2</h3>
                         </div>
                     </div>
                 </div>
@@ -225,6 +225,14 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Hidden containers for dynamic data -->
+<div class="d-none">
+    <div class="classes-list" data-classes-container></div>
+    <div class="grades-list" data-grades-container></div>
+    <div class="attendance-stats" data-attendance-container></div>
+</div>
+
 <!-- JS dùng chung cho Student -->
 <script src="../../public/js/script.js"></script>
 <script src="../../public/js/student/student-layout.js"></script>

@@ -10,6 +10,8 @@ const multer = require('multer');
 // --- THÊM 2 DÒNG NÀY ĐỂ SỬA LỖI PASSPORT ---
 const session = require('express-session');
 const passport = require('./config/passport-config'); // Trỏ tới file cấu hình passport của bạn
+const apiRoutes = require('./routes/apiRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
@@ -25,10 +27,15 @@ app.use(passport.session());
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // --- CẤU HÌNH FILE TĨNH ---
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/', express.static(path.join(__dirname, 'views')));
+
+// --- SỬ DỤNG CÁC ROUTES ---
+app.use('/api', apiRoutes);
+app.use('/auth', authRoutes);
 
 // --- CẤU HÌNH DATABASE (CLEVER CLOUD) ---
 const dbConfig = {
@@ -111,34 +118,9 @@ app.post('/api/upload-to-drive', upload.single('file'), async (req, res) => {
 });
 
 // ==============================================
-// 3. API ĐĂNG NHẬP GOOGLE (ĐÃ SỬA LỖI)
+// 3. DUPLICATE AUTH ROUTES - MOVED TO authRoutes.js
 // ==============================================
 
-// Route bắt đầu đăng nhập
-app.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
-);
-
-// Route xử lý kết quả trả về từ Google
-app.get('/auth/google/callback', 
-  passport.authenticate('google', { failureRedirect: '/login.html?error=auth_failed' }),
-  (req, res) => {
-    // req.user chứa thông tin lấy từ database
-    if (req.user && req.user.role === 'teacher') {
-        res.redirect('/teacher-dashboard.html'); // Điều chỉnh link tới HTML của Giảng viên
-    } else {
-        res.redirect('/student-dashboard.html'); // Điều chỉnh link tới HTML của Sinh viên
-    }
-  }
-);
-
-// Route đăng xuất
-app.get('/logout', (req, res, next) => {
-    req.logout((err) => {
-        if (err) { return next(err); }
-        res.redirect('/login.html');
-    });
-});
 
 // --- KHỞI CHẠY SERVER ---
 const PORT = process.env.PORT || 3000;

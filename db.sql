@@ -16,7 +16,8 @@ CREATE TABLE users (
     google_id VARCHAR(255),
     role ENUM('student', 'bcs', 'teacher', 'admin') DEFAULT 'student',
     avatar VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_email_domain CHECK (email LIKE '%@student.bdu.edu.vn' OR email LIKE '%@bdu.edu.vn')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE password_resets (
@@ -31,6 +32,7 @@ CREATE TABLE roles (
     id INT AUTO_INCREMENT PRIMARY KEY,
     role_name VARCHAR(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- (Thêm sẵn data cho roles)
 INSERT INTO roles (id, role_name) VALUES (1, 'student'), (2, 'bcs'), (3, 'teacher'), (4, 'admin');
 
