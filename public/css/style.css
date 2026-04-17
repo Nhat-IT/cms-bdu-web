@@ -52,6 +52,16 @@ body {
     justify-content: center;
 }
 
+.google-login-btn:hover {
+    background-color: #ed4848;
+    border-color: #e15b5b;
+    color: #fff;
+}
+
+.google-login-btn:hover .google-login-icon {
+    color: #fef6f5 !important;
+}
+
 .form-control:focus {
     /* Focus input: bỏ shadow mặc định và đổi màu viền */
     box-shadow: none;

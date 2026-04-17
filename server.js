@@ -102,9 +102,35 @@ app.post('/api/upload-to-drive', upload.single('file'), async (req, res) => {
     }
 });
 
+// Route bắt đầu đăng nhập
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+// Route xử lý kết quả trả về từ Google
+app.get('/auth/google/callback', 
+  passport.authenticate('google', { failureRedirect: '/login?error=auth_failed' }),
+  (req, res) => {
+    // Dựa vào Role để đưa người dùng về đúng Dashboard
+    if (req.user.role === 'teacher') {
+        res.redirect('/teacher/dashboard');
+    } else {
+        res.redirect('/student/dashboard');
+    }
+  }
+);
+
+// Route đăng xuất
+app.get('/logout', (req, res) => {
+    req.logout(() => {
+        res.redirect('/login');
+    });
+});
+
 // --- KHỞI CHẠY SERVER ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Server is running on port ${PORT}`);
     console.log(`📁 Thư mục tĩnh: ${path.join(__dirname, 'public')}`);
 });
+
