@@ -10,7 +10,7 @@
             }
         }
 
-        function openDocModal(mode, title = '', note = '', category = 'Học liệu', classId = '25TH01') {
+        function openDocModal(mode, title = '', note = '', category = 'Học liệu', classId = '') {
             const modalTitle = document.getElementById('docModalTitle');
             const submitBtn = document.getElementById('docModalSubmitBtn');
             const fileContainer = document.getElementById('fileUploadContainer');

@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const mysql = require('mysql2/promise');
 const path = require('path');
 const cors = require('cors');
 const fs = require('fs');
@@ -14,12 +13,25 @@ const apiRoutes = require('./routes/apiRoutes');
 const authRoutes = require('./routes/authRoutes');
 
 const app = express();
+const isProduction = process.env.NODE_ENV === 'production';
+
+if (isProduction) {
+    app.set('trust proxy', 1);
+    if (!process.env.SESSION_SECRET) {
+        throw new Error('SESSION_SECRET is required in production');
+    }
+}
 
 // --- CẤU HÌNH SESSION & PASSPORT ---
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'bdu_default_secret_key_2026',
+    secret: process.env.SESSION_SECRET || 'change_me_before_production',
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: isProduction
+    }
 }));
 
 app.use(passport.initialize());
@@ -36,19 +48,6 @@ app.use('/', express.static(path.join(__dirname, 'views')));
 // --- SỬ DỤNG CÁC ROUTES ---
 app.use('/api', apiRoutes);
 app.use('/auth', authRoutes);
-
-// --- CẤU HÌNH DATABASE (CLEVER CLOUD) ---
-const dbConfig = {
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-};
-const pool = mysql.createPool(dbConfig);
 
 // --- CẤU HÌNH GOOGLE DRIVE API ---
 const KEYFILEPATH = path.join(__dirname, 'drive-credentials.json');
@@ -69,17 +68,7 @@ app.get('/', (req, res) => {
 
 // --- API HỆ THỐNG ---
 
-// 1. Test kết nối DB
-app.get('/api/test-db', async (req, res) => {
-    try {
-        const [rows] = await pool.query('SELECT 1 + 1 AS solution');
-        res.json({ success: true, message: 'Database connected successfully!', data: rows });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// 2. Upload Google Drive
+// 1. Upload Google Drive
 app.post('/api/upload-to-drive', upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {

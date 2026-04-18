@@ -54,7 +54,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const badge = document.createElement('span');
         badge.className = 'badge menu-profile-badge';
-        badge.textContent = 'KHOA CNTT';
+        badge.textContent = '';
+        badge.classList.add('d-none');
         profileContainer.appendChild(badge);
 
         sidebarBrand.insertAdjacentElement('afterend', profileContainer);
@@ -214,6 +215,17 @@ document.addEventListener('DOMContentLoaded', function () {
             const menuProfileRole = sidebar.querySelector('.menu-profile-role');
             if (menuProfileRole) {
                 menuProfileRole.textContent = me.role === 'teacher' ? 'Giang vien' : (me.role || 'Nguoi dung');
+            }
+
+            const menuProfileBadge = sidebar.querySelector('.menu-profile-badge');
+            if (menuProfileBadge) {
+                const badgeText = me.department_name || me.class_name || '';
+                menuProfileBadge.textContent = badgeText;
+                if (badgeText) {
+                    menuProfileBadge.classList.remove('d-none');
+                } else {
+                    menuProfileBadge.classList.add('d-none');
+                }
             }
 
             const menuAvatar = sidebar.querySelector('.menu-profile-trigger img');

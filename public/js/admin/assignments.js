@@ -23,66 +23,11 @@ document.addEventListener('DOMContentLoaded', function () {
     toggleCancelReason();
 });
 
-const assignmentStudentsByClass = {
-    '25TH01-CSDL': [
-        { mssv: '2050001', name: 'Nguyễn Văn A', dob: '2005-01-01', email: 'a.nguyen@student.bdu.edu.vn', section: 'N1' },
-        { mssv: '2050002', name: 'Trần Thị B', dob: '2005-02-02', email: 'b.tran@student.bdu.edu.vn', section: 'N2' }
-    ]
-};
+const assignmentStudentsByClass = {};
 
-const allAssignmentCourses = [
-    {
-        id: '25TH01-WEB',
-        classCode: '25TH01',
-        name: 'Lập trình Web nâng cao',
-        year: '2025',
-        semester: '1',
-        isOpen: true,
-        credits: 4,
-        openWindow: '01/09/2025 - 31/12/2025',
-        hasSchedule: false,
-        groups: [
-            { code: 'N1', teacherMain: 'GV01', teacherSub: 'GV04', day: '', start: '', end: '', room: '' },
-            { code: 'N2', teacherMain: 'GV03', teacherSub: '', day: '5', start: 1, end: 5, room: 'A201' }
-        ]
-    },
-    {
-        id: '25TH01-CSDL',
-        classCode: '25TH01',
-        name: 'An ninh Cơ sở dữ liệu',
-        year: '2025',
-        semester: '1',
-        isOpen: true,
-        credits: 3,
-        openWindow: '01/09/2025 - 31/12/2025',
-        hasSchedule: true,
-        groups: [
-            { code: 'N1', teacherMain: 'GV01', teacherSub: '', day: '2', start: 6, end: 10, room: 'PLAB' },
-            { code: 'N2', teacherMain: 'GV02', teacherSub: '', day: '2', start: 6, end: 10, room: 'PM3' }
-        ]
-    },
-    {
-        id: '25TH01-JAVA',
-        classCode: '25TH01',
-        name: 'Lập trình Java nâng cao',
-        year: '2025',
-        semester: '2',
-        isOpen: false,
-        credits: 3,
-        openWindow: '15/01/2026 - 30/04/2026',
-        hasSchedule: false,
-        groups: [
-            { code: 'N1', teacherMain: 'GV02', teacherSub: '', day: '3', start: 2, end: 5, room: 'A201' }
-        ]
-    }
-];
+const allAssignmentCourses = [];
 
-const teachers = [
-    { id: 'GV01', name: 'ThS. Dương Quang Sinh' },
-    { id: 'GV02', name: 'ThS. Nguyễn Hồ Hải' },
-    { id: 'GV03', name: 'TS. Lê Anh Tuấn' },
-    { id: 'GV04', name: 'ThS. Hồ Ngọc Giàu' }
-];
+const teachers = [];
 
 const days = [
     { value: '2', label: 'Thứ 2' },
@@ -139,11 +84,15 @@ async function loadAssignmentCoursesFromApi() {
     try {
         const res = await fetch('/api/admin/teaching-assignments', { headers: { Accept: 'application/json' } });
         if (!res.ok) {
+            allAssignmentCourses.splice(0, allAssignmentCourses.length);
+            teachers.splice(0, teachers.length);
             return;
         }
 
         const rows = await res.json();
-        if (!Array.isArray(rows) || !rows.length) {
+        if (!Array.isArray(rows)) {
+            allAssignmentCourses.splice(0, allAssignmentCourses.length);
+            teachers.splice(0, teachers.length);
             return;
         }
 
@@ -179,7 +128,9 @@ async function loadAssignmentCoursesFromApi() {
             teachers.push({ id: entry[0], name: entry[1] });
         });
     } catch (error) {
-        // Keep fallback mock data if API is unavailable.
+        allAssignmentCourses.splice(0, allAssignmentCourses.length);
+        teachers.splice(0, teachers.length);
+        console.error('Không tải được dữ liệu phân công từ API:', error);
     }
 }
 
@@ -713,7 +664,7 @@ function renderSessionManagerRows(course, groupCode = null) {
     displayedGroups.forEach(function (group, index) {
         const hasGroupSchedule = Boolean(group.day && group.start && group.end && group.room);
         const row = document.createElement('tr');
-        const dateLabel = hasGroupSchedule ? '02/03/2026' : '--';
+        const dateLabel = '--';
         const teacherId = group.teacherMain || '';
 
         const dayCell = document.createElement('td');
@@ -727,8 +678,8 @@ function renderSessionManagerRows(course, groupCode = null) {
         editButton.onclick = function () {
             openEditSingleSession(
                 hasGroupSchedule ? 'edit' : 'add',
-                hasGroupSchedule ? dateLabel : '',
-                hasGroupSchedule ? '2026-03-02' : '',
+                '',
+                '',
                 hasGroupSchedule ? group.day : '',
                 hasGroupSchedule ? String(group.start) : '',
                 hasGroupSchedule ? String(group.end) : '',

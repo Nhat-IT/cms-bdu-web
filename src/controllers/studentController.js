@@ -1,6 +1,8 @@
 const studentModel = require('../models/studentModel');
 const bcrypt = require('bcryptjs');
 
+const DEFAULT_ACCOUNT_PASSWORD = process.env.DEFAULT_ACCOUNT_PASSWORD || 'Bdu@123456';
+
 // ========== DASHBOARD SINH VIÊN ==========
 exports.getDashboard = async (req, res) => {
     try {
@@ -226,7 +228,7 @@ exports.createAdminAccount = async (req, res) => {
             return res.status(400).json({ error: 'Thiếu dữ liệu bắt buộc' });
         }
 
-        const passwordHash = await bcrypt.hash('Bdu@123456', 10);
+        const passwordHash = await bcrypt.hash(DEFAULT_ACCOUNT_PASSWORD, 10);
         const createdId = await studentModel.createAdminAccount({
             username,
             fullName,
@@ -293,7 +295,7 @@ exports.resetAdminAccountPassword = async (req, res) => {
             return res.status(400).json({ error: 'id không hợp lệ' });
         }
 
-        const passwordHash = await bcrypt.hash('Bdu@123456', 10);
+        const passwordHash = await bcrypt.hash(DEFAULT_ACCOUNT_PASSWORD, 10);
         await studentModel.updateUserPasswordHash(targetId, passwordHash);
 
         res.json({ success: true });

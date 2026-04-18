@@ -114,7 +114,7 @@ function renderAccounts(rows) {
     tbody.querySelectorAll('button[data-action="reset"]').forEach(function (btn) {
         btn.addEventListener('click', async function () {
             const id = Number(btn.getAttribute('data-id'));
-            if (!confirm('Khôi phục mật khẩu mặc định Bdu@123456 cho tài khoản này?')) {
+            if (!confirm('Khôi phục mật khẩu khởi tạo theo cấu hình hệ thống cho tài khoản này?')) {
                 return;
             }
 
