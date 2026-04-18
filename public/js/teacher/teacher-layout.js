@@ -232,8 +232,53 @@ document.addEventListener('DOMContentLoaded', function () {
             if (menuAvatar) {
                 menuAvatar.src = avatarUrl;
             }
+
+            const leafNodes = document.querySelectorAll('span, b, strong, p, h4, h5, td, option');
+            leafNodes.forEach(function (node) {
+                if (node.children.length > 0) {
+                    return;
+                }
+
+                const text = String(node.textContent || '');
+                let next = text;
+
+                if (me.class_name) {
+                    next = next.replace(/\b25TH01\b/g, me.class_name);
+                }
+                if (me.department_name) {
+                    next = next.replace(/\bKHOA\s*CNTT\b/gi, me.department_name);
+                    next = next.replace(/\bKhoa\s*CNTT\b/g, me.department_name);
+                }
+
+                if (next !== text) {
+                    node.textContent = next;
+                }
+            });
+
+            document.querySelectorAll('*').forEach(function (node) {
+                ['value', 'placeholder', 'title', 'onclick', 'data-source'].forEach(function (attr) {
+                    if (!node.hasAttribute(attr)) {
+                        return;
+                    }
+
+                    const raw = String(node.getAttribute(attr) || '');
+                    let next = raw;
+
+                    if (me.class_name) {
+                        next = next.replace(/\b25TH01\b/g, me.class_name);
+                    }
+                    if (me.department_name) {
+                        next = next.replace(/\bKHOA\s*CNTT\b/gi, me.department_name);
+                        next = next.replace(/\bKhoa\s*CNTT\b/g, me.department_name);
+                    }
+
+                    if (next !== raw) {
+                        node.setAttribute(attr, next);
+                    }
+                });
+            });
         } catch (error) {
-            // Keep existing static content as fallback.
+            console.error('Teacher shared data hydration error:', error);
         }
     }
 

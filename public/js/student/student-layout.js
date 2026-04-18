@@ -81,6 +81,48 @@ function updateSidebarProfile(profile, classes) {
     }
 }
 
+function replaceStaticStudentPlaceholders(profile, classes) {
+    const className = (classes && classes.length && classes[0].class_name) || profile?.class_name || '--';
+    const departmentName = profile?.department_name || '';
+
+    document.querySelectorAll('.student-class-badge, .profile-class, #userClassName').forEach(function (node) {
+        node.textContent = `LỚP: ${className}`;
+    });
+
+    const leafNodes = document.querySelectorAll('span, b, strong, p, h4, h5, td, option');
+    leafNodes.forEach(function (node) {
+        if (node.children.length > 0) {
+            return;
+        }
+        const text = String(node.textContent || '');
+        let next = text.replace(/\b25TH01\b/g, className);
+        if (departmentName) {
+            next = next.replace(/\bKHOA\s*CNTT\b/gi, departmentName);
+            next = next.replace(/\bKhoa\s*CNTT\b/g, departmentName);
+        }
+        if (next !== text) {
+            node.textContent = next;
+        }
+    });
+
+    document.querySelectorAll('*').forEach(function (node) {
+        ['value', 'placeholder', 'title', 'onclick', 'data-source'].forEach(function (attr) {
+            if (!node.hasAttribute(attr)) {
+                return;
+            }
+            const raw = String(node.getAttribute(attr) || '');
+            let next = raw.replace(/\b25TH01\b/g, className);
+            if (departmentName) {
+                next = next.replace(/\bKHOA\s*CNTT\b/gi, departmentName);
+                next = next.replace(/\bKhoa\s*CNTT\b/g, departmentName);
+            }
+            if (next !== raw) {
+                node.setAttribute(attr, next);
+            }
+        });
+    });
+}
+
 function updateNotificationBadge(notifications) {
     const unread = (notifications || []).filter(function (x) {
         return Number(x.is_read) === 0;
@@ -155,6 +197,7 @@ async function initSharedStudentData() {
     const data = await fetchSharedStudentData();
     if (!data) return;
     updateSidebarProfile(data.profile, data.classes);
+    replaceStaticStudentPlaceholders(data.profile, data.classes);
     updateNotificationBadge(data.notifications);
     mountNotificationDropdown(data.notifications);
 }

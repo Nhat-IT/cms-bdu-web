@@ -385,9 +385,36 @@ exports.deleteFeedback = async (userId, feedbackId) => {
 exports.getCurrentUser = async (userId) => {
     try {
         const [rows] = await db.query(
-            `SELECT id, username, full_name, email, role, avatar
-             FROM users
-             WHERE id = ?`,
+            `SELECT
+                u.id,
+                u.username,
+                u.full_name,
+                u.email,
+                u.role,
+                u.avatar,
+                u.birth_date,
+                u.phone_number,
+                u.address,
+                u.created_at,
+                (
+                    SELECT c.class_name
+                    FROM class_students cs
+                    JOIN classes c ON c.id = cs.class_id
+                    WHERE cs.student_id = u.id
+                    ORDER BY cs.id ASC
+                    LIMIT 1
+                ) AS class_name,
+                (
+                    SELECT d.department_name
+                    FROM class_students cs
+                    JOIN classes c ON c.id = cs.class_id
+                    LEFT JOIN departments d ON d.id = c.department_id
+                    WHERE cs.student_id = u.id
+                    ORDER BY cs.id ASC
+                    LIMIT 1
+                ) AS department_name
+             FROM users u
+             WHERE u.id = ?`,
             [userId]
         );
         return rows[0] || null;

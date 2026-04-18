@@ -44,6 +44,8 @@ async function hydrateBcsSharedData() {
             const me = await meRes.json();
             const displayName = me.full_name || me.username || 'BCS';
             const avatar = me.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0d6efd&color=fff`;
+            const className = me.class_name || '--';
+            const departmentName = me.department_name || '';
 
             const profileImg = document.querySelector('.bcs-profile-container img[alt="Avatar BCS"]');
             if (profileImg) {
@@ -59,6 +61,51 @@ async function hydrateBcsSharedData() {
             if (roleNode) {
                 roleNode.textContent = `Vai trò: ${me.role || 'bcs'}`;
             }
+
+            document.querySelectorAll('.bcs-class-badge, #userClassName').forEach(function (node) {
+                if (node.classList.contains('bcs-class-badge')) {
+                    node.textContent = `LỚP: ${className}`;
+                    return;
+                }
+                node.textContent = className;
+            });
+
+            const leafNodes = document.querySelectorAll('span, b, strong, p, h4, h5, td, option');
+            leafNodes.forEach(function (node) {
+                if (node.children.length > 0) {
+                    return;
+                }
+
+                const text = String(node.textContent || '');
+                let next = text.replace(/\b25TH01\b/g, className);
+                if (departmentName) {
+                    next = next.replace(/\bKHOA\s*CNTT\b/gi, departmentName);
+                    next = next.replace(/\bKhoa\s*CNTT\b/g, departmentName);
+                }
+
+                if (next !== text) {
+                    node.textContent = next;
+                }
+            });
+
+            document.querySelectorAll('*').forEach(function (node) {
+                ['value', 'placeholder', 'title', 'onclick', 'data-source'].forEach(function (attr) {
+                    if (!node.hasAttribute(attr)) {
+                        return;
+                    }
+
+                    const raw = String(node.getAttribute(attr) || '');
+                    let next = raw.replace(/\b25TH01\b/g, className);
+                    if (departmentName) {
+                        next = next.replace(/\bKHOA\s*CNTT\b/gi, departmentName);
+                        next = next.replace(/\bKhoa\s*CNTT\b/g, departmentName);
+                    }
+
+                    if (next !== raw) {
+                        node.setAttribute(attr, next);
+                    }
+                });
+            });
         }
 
         if (unreadRes.ok) {
@@ -69,6 +116,6 @@ async function hydrateBcsSharedData() {
             });
         }
     } catch (error) {
-        // Keep static fallback.
+        console.error('BCS shared data hydration error:', error);
     }
 }
