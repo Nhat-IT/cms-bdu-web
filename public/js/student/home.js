@@ -161,16 +161,61 @@ function displayClasses(classes) {
 	classesContainer.innerHTML = html;
 }
 
+function displayTodaySchedule(classes) {
+	const scheduleContainer = document.querySelector('.col-lg-5 .card .card-body');
+	if (!scheduleContainer) return;
+
+	if (!classes || !classes.length) {
+		scheduleContainer.innerHTML = `
+			<div class="p-4 text-center border rounded border-dashed bg-white mt-1">
+				<i class="bi bi-calendar2-week text-muted fs-1 mb-2"></i>
+				<h6 class="text-muted fw-bold">Chua co lich hoc</h6>
+				<p class="small text-muted mb-0">Khi duoc phan lop, lich hoc se hien thi o day.</p>
+			</div>
+		`;
+		return;
+	}
+
+	const items = classes.slice(0, 2);
+	scheduleContainer.innerHTML = items.map((cls) => `
+		<div class="p-3 mb-3 bg-light rounded border-start border-4 border-primary shadow-sm">
+			<div class="d-flex justify-content-between mb-2">
+				<span class="badge bg-primary px-2 py-1"><i class="bi bi-calendar3 me-1"></i>${formatDateDMY(cls.start_date)} - ${formatDateDMY(cls.end_date)}</span>
+				<span class="text-muted small fw-bold"><i class="bi bi-geo-alt-fill me-1 text-danger"></i>${cls.room || 'Chua cap nhat phong'}</span>
+			</div>
+			<h6 class="fw-bold text-dark mb-1">${cls.subject_name || 'Mon hoc'}</h6>
+			<p class="text-muted small mb-0"><i class="bi bi-person-badge text-primary me-1"></i>GV: ${cls.teacher_name || 'Chua phan cong'}</p>
+		</div>
+	`).join('');
+}
+
 function displayAttendanceWarnings(classes, attendance) {
 	const attendanceCard = document.querySelector('.col-lg-7 .card .card-body');
 	if (!attendanceCard) return;
 
 	if (!classes || !classes.length) {
+		attendanceCard.innerHTML = `
+			<div class="p-4 text-center border rounded border-dashed bg-white mt-1">
+				<i class="bi bi-clipboard2-pulse text-muted fs-1 mb-2"></i>
+				<h6 class="text-muted fw-bold">Chua co du lieu diem danh</h6>
+				<p class="small text-muted mb-0">Sau buoi hoc dau tien, he thong se cap nhat tai day.</p>
+			</div>
+		`;
 		return;
 	}
 
 	const totalSessions = Number(attendance?.total_sessions || 0);
 	const totalAbsent = Number(attendance?.excused_absent || 0) + Number(attendance?.unexcused_absent || 0);
+	if (!totalSessions) {
+		attendanceCard.innerHTML = `
+			<div class="p-4 text-center border rounded border-dashed bg-white mt-1">
+				<i class="bi bi-clipboard2-pulse text-muted fs-1 mb-2"></i>
+				<h6 class="text-muted fw-bold">Chua duoc diem danh</h6>
+				<p class="small text-muted mb-0">Hien tai ban chua co buoi diem danh nao.</p>
+			</div>
+		`;
+		return;
+	}
 	const ratio = totalSessions > 0 ? Math.min(100, Math.round((totalAbsent / totalSessions) * 100)) : 0;
 
 	const firstClass = classes[0];
@@ -304,6 +349,7 @@ async function initDashboard() {
 		displayTopCards(data);
 		displayAttendanceStats(data.attendance);
 		displayClasses(data.classes.list);
+		displayTodaySchedule(data.classes.list);
 		displayAttendanceWarnings(data.classes.list, data.attendance);
 		displayGrades(data.grades);
 		displayNotifications(data.notifications);
