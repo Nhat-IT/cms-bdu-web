@@ -37,11 +37,15 @@ if (googleAuthEnabled) {
     },
     async (accessToken, refreshToken, profile, done) => {
         try {
-            const email = profile.emails[0].value;
+            const email = profile.emails?.[0]?.value;
             const googleId = profile.id;
             const fullName = profile.displayName;
-            const avatar = profile.photos[0].value;
+            const avatar = profile.photos?.[0]?.value || null;
             const schema = await resolveUsersSchema();
+
+            if (!email) {
+                return done(null, false, { message: 'Google không trả về email hợp lệ' });
+            }
 
             // 1. Kiểm tra domain email trường BDU
             const isStudent = email.endsWith('@student.bdu.edu.vn');
@@ -62,10 +66,29 @@ if (googleAuthEnabled) {
             if (users.length > 0) {
                 // Đã có tài khoản: Cập nhật thông tin mới nhất từ Google (VD: lỡ họ đổi avatar)
                 const user = users[0];
-                await db.query(
-                    'UPDATE users SET google_id = ?, avatar = ?, full_name = ? WHERE id = ?',
-                    [googleId, avatar, fullName, user.id]
-                );
+                const updatePairs = [];
+                const updateValues = [];
+
+                if (schema.hasGoogleId) {
+                    updatePairs.push('google_id = ?');
+                    updateValues.push(googleId);
+                }
+                if (schema.hasAvatar) {
+                    updatePairs.push('avatar = ?');
+                    updateValues.push(avatar);
+                }
+                if (schema.hasFullName) {
+                    updatePairs.push('full_name = ?');
+                    updateValues.push(fullName);
+                }
+
+                if (updatePairs.length > 0) {
+                    updateValues.push(user.id);
+                    await db.query(
+                        `UPDATE users SET ${updatePairs.join(', ')} WHERE id = ?`,
+                        updateValues
+                    );
+                }
                 return done(null, user);
             }
 
