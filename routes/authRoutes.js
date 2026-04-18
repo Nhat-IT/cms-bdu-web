@@ -3,14 +3,23 @@ const passport = require('passport');
 
 const router = express.Router();
 
+function ensureGoogleAuthEnabled(req, res, next) {
+  if (!passport.googleAuthEnabled) {
+    return res.redirect('/login.html?error=google_oauth_not_configured');
+  }
+  return next();
+}
+
 // ========== GOOGLE AUTHENTICATION ==========
 // Route bắt đầu đăng nhập
 router.get('/google',
+  ensureGoogleAuthEnabled,
   passport.authenticate('google', { scope: ['profile', 'email'] })
 );
 
 // Route xử lý kết quả trả về từ Google
 router.get('/google/callback', 
+  ensureGoogleAuthEnabled,
   passport.authenticate('google', { failureRedirect: '/login.html?error=auth_failed' }),
   (req, res) => {
     // req.user chứa thông tin lấy từ database
