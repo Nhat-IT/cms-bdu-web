@@ -15,6 +15,7 @@ async function resolveUsersSchema() {
     return {
         hasId: columnSet.has('id'),
         hasEmail: columnSet.has('email'),
+        hasName: columnSet.has('name'),
         hasFullName: columnSet.has('full_name'),
         hasGoogleId: columnSet.has('google_id'),
         hasRole: columnSet.has('role'),
@@ -81,6 +82,10 @@ if (googleAuthEnabled) {
                     updatePairs.push('full_name = ?');
                     updateValues.push(fullName);
                 }
+                if (schema.hasName) {
+                    updatePairs.push('name = ?');
+                    updateValues.push(fullName);
+                }
 
                 if (updatePairs.length > 0) {
                     updateValues.push(user.id);
@@ -102,6 +107,10 @@ if (googleAuthEnabled) {
             }
             if (schema.hasFullName) {
                 insertColumns.push('full_name');
+                insertValues.push(fullName);
+            }
+            if (schema.hasName) {
+                insertColumns.push('name');
                 insertValues.push(fullName);
             }
             if (schema.hasEmail) {
