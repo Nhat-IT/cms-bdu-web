@@ -1,5 +1,27 @@
 (function () {
     const MOBILE_BREAKPOINT = 768;
+    const originalFetch = window.fetch ? window.fetch.bind(window) : null;
+
+    function installGlobalAuthGuard() {
+        if (!originalFetch || window.__cmsAuthGuardInstalled) {
+            return;
+        }
+
+        window.__cmsAuthGuardInstalled = true;
+        window.fetch = async function (...args) {
+            const response = await originalFetch(...args);
+            const requestUrl = String(args[0] || '');
+            const isApiCall = requestUrl.startsWith('/api/');
+            const isLoginCall = requestUrl.includes('/auth/login');
+            const isOnLoginPage = window.location.pathname.endsWith('/login.html');
+
+            if (isApiCall && !isLoginCall && response.status === 401 && !isOnLoginPage) {
+                window.location.href = '/login.html?error=session_expired';
+            }
+
+            return response;
+        };
+    }
 
     function ensureSidebarBackdrop() {
         let backdrop = document.getElementById('sidebarBackdrop');
@@ -203,6 +225,7 @@
     };
 
     document.addEventListener('DOMContentLoaded', function () {
+        installGlobalAuthGuard();
         wrapStandaloneTables();
         initLoginPasswordToggle();
             initLoginForm();

@@ -1,12 +1,46 @@
 const db = require('../config/db');
 
+let usersColumnsCache = null;
+let usersColumnsCacheAt = 0;
+const USERS_COLUMNS_TTL_MS = 60 * 1000;
+
+async function getUsersColumns() {
+    const now = Date.now();
+    if (usersColumnsCache && now - usersColumnsCacheAt < USERS_COLUMNS_TTL_MS) {
+        return usersColumnsCache;
+    }
+
+    const [rows] = await db.query('SHOW COLUMNS FROM users');
+    usersColumnsCache = new Set(rows.map((r) => r.Field));
+    usersColumnsCacheAt = now;
+    return usersColumnsCache;
+}
+
+function selectUserColumn(columnSet, tableAlias, columnName) {
+    return columnSet.has(columnName)
+        ? `${tableAlias}.${columnName}`
+        : `NULL`;
+}
+
 // ========== HỒ SƠ SINH VIÊN ==========
 exports.getStudentProfile = async (userId) => {
     try {
+        const userColumns = await getUsersColumns();
+        const hasRole = userColumns.has('role');
         const [rows] = await db.query(
-            `SELECT id, username, full_name, email, avatar, role, created_at,
-                    birth_date, phone_number, address
-             FROM users WHERE id = ? AND role = 'student'`,
+            `SELECT
+                u.id,
+                ${selectUserColumn(userColumns, 'u', 'username')} AS username,
+                ${selectUserColumn(userColumns, 'u', 'full_name')} AS full_name,
+                ${selectUserColumn(userColumns, 'u', 'email')} AS email,
+                ${selectUserColumn(userColumns, 'u', 'avatar')} AS avatar,
+                ${selectUserColumn(userColumns, 'u', 'role')} AS role,
+                ${selectUserColumn(userColumns, 'u', 'created_at')} AS created_at,
+                ${selectUserColumn(userColumns, 'u', 'birth_date')} AS birth_date,
+                ${selectUserColumn(userColumns, 'u', 'phone_number')} AS phone_number,
+                ${selectUserColumn(userColumns, 'u', 'address')} AS address
+             FROM users u
+             WHERE u.id = ? ${hasRole ? "AND u.role = 'student'" : ''}`,
             [userId]
         );
         return rows[0] || null;
@@ -401,39 +435,68 @@ exports.deleteFeedback = async (userId, feedbackId) => {
 // ========== THÔNG TIN USER ĐANG ĐĂNG NHẬP (DÙNG CHUNG) ==========
 exports.getCurrentUser = async (userId) => {
     try {
-        const [rows] = await db.query(
-            `SELECT
-                u.id,
-                u.username,
-                u.full_name,
-                u.email,
-                u.role,
-                u.avatar,
-                u.birth_date,
-                u.phone_number,
-                u.address,
-                u.created_at,
-                (
-                    SELECT c.class_name
-                    FROM class_students cs
-                    JOIN classes c ON c.id = cs.class_id
-                    WHERE cs.student_id = u.id
-                    ORDER BY cs.id ASC
-                    LIMIT 1
-                ) AS class_name,
-                (
-                    SELECT d.department_name
-                    FROM class_students cs
-                    JOIN classes c ON c.id = cs.class_id
-                    LEFT JOIN departments d ON d.id = c.department_id
-                    WHERE cs.student_id = u.id
-                    ORDER BY cs.id ASC
-                    LIMIT 1
-                ) AS department_name
-             FROM users u
-             WHERE u.id = ?`,
-            [userId]
-        );
+        const userColumns = await getUsersColumns();
+        let rows;
+
+        try {
+            [rows] = await db.query(
+                `SELECT
+                    u.id,
+                    ${selectUserColumn(userColumns, 'u', 'username')} AS username,
+                    ${selectUserColumn(userColumns, 'u', 'full_name')} AS full_name,
+                    ${selectUserColumn(userColumns, 'u', 'email')} AS email,
+                    ${selectUserColumn(userColumns, 'u', 'role')} AS role,
+                    ${selectUserColumn(userColumns, 'u', 'avatar')} AS avatar,
+                    ${selectUserColumn(userColumns, 'u', 'birth_date')} AS birth_date,
+                    ${selectUserColumn(userColumns, 'u', 'phone_number')} AS phone_number,
+                    ${selectUserColumn(userColumns, 'u', 'address')} AS address,
+                    ${selectUserColumn(userColumns, 'u', 'created_at')} AS created_at,
+                    (
+                        SELECT c.class_name
+                        FROM class_students cs
+                        JOIN classes c ON c.id = cs.class_id
+                        WHERE cs.student_id = u.id
+                        ORDER BY cs.id ASC
+                        LIMIT 1
+                    ) AS class_name,
+                    (
+                        SELECT d.department_name
+                        FROM class_students cs
+                        JOIN classes c ON c.id = cs.class_id
+                        LEFT JOIN departments d ON d.id = c.department_id
+                        WHERE cs.student_id = u.id
+                        ORDER BY cs.id ASC
+                        LIMIT 1
+                    ) AS department_name
+                 FROM users u
+                 WHERE u.id = ?`,
+                [userId]
+            );
+        } catch (error) {
+            if (!['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)) {
+                throw error;
+            }
+
+            [rows] = await db.query(
+                `SELECT
+                    u.id,
+                    ${selectUserColumn(userColumns, 'u', 'username')} AS username,
+                    ${selectUserColumn(userColumns, 'u', 'full_name')} AS full_name,
+                    ${selectUserColumn(userColumns, 'u', 'email')} AS email,
+                    ${selectUserColumn(userColumns, 'u', 'role')} AS role,
+                    ${selectUserColumn(userColumns, 'u', 'avatar')} AS avatar,
+                    ${selectUserColumn(userColumns, 'u', 'birth_date')} AS birth_date,
+                    ${selectUserColumn(userColumns, 'u', 'phone_number')} AS phone_number,
+                    ${selectUserColumn(userColumns, 'u', 'address')} AS address,
+                    ${selectUserColumn(userColumns, 'u', 'created_at')} AS created_at,
+                    NULL AS class_name,
+                    NULL AS department_name
+                 FROM users u
+                 WHERE u.id = ?`,
+                [userId]
+            );
+        }
+
         return rows[0] || null;
     } catch (error) {
         console.error('Error getting current user:', error);
@@ -460,15 +523,36 @@ exports.getUnreadNotificationCount = async (userId) => {
 // ========== CẬP NHẬT HỒ SƠ SINH VIÊN ==========
 exports.updateStudentProfile = async (userId, profileData) => {
     try {
+        const userColumns = await getUsersColumns();
         const birthDate = profileData.birthDate || null;
         const phoneNumber = profileData.phoneNumber || null;
         const address = profileData.address || null;
+        const setParts = [];
+        const params = [];
+
+        if (userColumns.has('birth_date')) {
+            setParts.push('birth_date = ?');
+            params.push(birthDate);
+        }
+        if (userColumns.has('phone_number')) {
+            setParts.push('phone_number = ?');
+            params.push(phoneNumber);
+        }
+        if (userColumns.has('address')) {
+            setParts.push('address = ?');
+            params.push(address);
+        }
+
+        if (!setParts.length) {
+            return this.getStudentProfile(userId);
+        }
+        const roleClause = userColumns.has('role') ? " AND role = 'student'" : '';
 
         await db.query(
             `UPDATE users
-             SET birth_date = ?, phone_number = ?, address = ?
-             WHERE id = ? AND role = 'student'`,
-            [birthDate, phoneNumber, address, userId]
+             SET ${setParts.join(', ')}
+             WHERE id = ?${roleClause}`,
+            [...params, userId]
         );
 
         return this.getStudentProfile(userId);
