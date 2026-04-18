@@ -11,6 +11,7 @@ const session = require('express-session');
 const passport = require('./src/config/passport-config');
 const apiRoutes = require('./routes/apiRoutes');
 const authRoutes = require('./routes/authRoutes');
+const db = require('./src/config/db');
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
@@ -68,6 +69,19 @@ app.get('/', (req, res) => {
 
 // --- API HỆ THỐNG ---
 
+app.get('/api/health/db', async (req, res) => {
+    try {
+        await db.testConnection();
+        return res.json({ ok: true, service: 'database' });
+    } catch (error) {
+        return res.status(500).json({
+            ok: false,
+            service: 'database',
+            error: error.code || error.message
+        });
+    }
+});
+
 // 1. Upload Google Drive
 app.post('/api/upload-to-drive', upload.single('file'), async (req, res) => {
     try {
@@ -113,7 +127,21 @@ app.post('/api/upload-to-drive', upload.single('file'), async (req, res) => {
 
 // --- KHỞI CHẠY SERVER ---
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
-    console.log(`📁 Thư mục tĩnh: ${path.join(__dirname, 'public')}`);
-});
+
+async function startServer() {
+    try {
+        await db.testConnection();
+        console.log('✅ Database connected successfully.');
+
+        app.listen(PORT, () => {
+            console.log(`🚀 Server is running on port ${PORT}`);
+            console.log(`📁 Thư mục tĩnh: ${path.join(__dirname, 'public')}`);
+        });
+    } catch (error) {
+        console.error('❌ Cannot connect to database. Server startup aborted.');
+        console.error(error.message);
+        process.exit(1);
+    }
+}
+
+startServer();

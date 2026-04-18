@@ -263,13 +263,30 @@ exports.markNotificationsAsRead = async (userId) => {
 // ========== THỐNG KÊ TỔNG HỢP SINH VIÊN ==========
 exports.getStudentDashboard = async (userId) => {
     try {
-        const profile = await this.getStudentProfile(userId);
-        const attendance = await this.getAttendanceStats(userId);
-        const grades = await this.getGrades(userId);
-        const classes = await this.getStudentClasses(userId);
-        const unreadNotifications = await db.query(
-            `SELECT COUNT(*) as count FROM notification_logs WHERE user_id = ? AND is_read = 0`,
-            [userId]
+        const safeResolve = async (label, fn, fallbackValue) => {
+            try {
+                return await fn();
+            } catch (error) {
+                console.error(`[Dashboard:${label}]`, error.code || error.message);
+                return fallbackValue;
+            }
+        };
+
+        const profile = await safeResolve('profile', () => this.getStudentProfile(userId), null);
+        const attendance = await safeResolve(
+            'attendance',
+            () => this.getAttendanceStats(userId),
+            { total_sessions: 0, present: 0, excused_absent: 0, unexcused_absent: 0 }
+        );
+        const grades = await safeResolve('grades', () => this.getGrades(userId), []);
+        const classes = await safeResolve('classes', () => this.getStudentClasses(userId), []);
+        const unreadNotifications = await safeResolve(
+            'notifications',
+            () => db.query(
+                `SELECT COUNT(*) as count FROM notification_logs WHERE user_id = ? AND is_read = 0`,
+                [userId]
+            ),
+            [[{ count: 0 }]]
         );
 
         const avgGrade = grades.length > 0 
