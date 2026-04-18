@@ -9,7 +9,7 @@ const multer = require('multer');
 
 // --- THÊM 2 DÒNG NÀY ĐỂ SỬA LỖI PASSPORT ---
 const session = require('express-session');
-const passport = require('./config/passport-config'); // Trỏ tới file cấu hình passport của bạn
+const passport = require('./src/config/passport-config');
 const apiRoutes = require('./routes/apiRoutes');
 const authRoutes = require('./routes/authRoutes');
 

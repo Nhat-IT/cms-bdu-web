@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -47,7 +47,7 @@
     </div>
 
     <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-        <a href="../../login.html" class="nav-link logout-btn" title="Đăng xuất">
+        <a href="/auth/logout" class="nav-link logout-btn" title="Đăng xuất">
             <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
         </a>
     </div>
@@ -128,7 +128,7 @@
                     <div class="tab-pane fade show active" id="general-panel" role="tabpanel" aria-labelledby="general-tab">
                         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">                           
                             <div class="d-flex gap-2">
-                                <input type="text" class="form-control form-control-sm border-secondary" placeholder="Tìm tiêu đề hoặc nguồn..." style="width: 220px;">
+                                <input type="text" class="form-control form-control-sm border-secondary" id="bcsAnnouncementKeyword" placeholder="Tìm tiêu đề hoặc nguồn..." style="width: 220px;">
                                 <select class="form-select form-select-sm w-auto border-secondary">
                                     <option selected>Tất cả nguồn</option>
                                     <option>Phòng Đào tạo</option>
@@ -138,7 +138,7 @@
                             </div>
                         </div>
 
-                        <div class="list-group">
+                        <div class="list-group" id="bcsAnnouncementList">
                             <div class="list-group-item announcement-item border rounded-3 mb-3">
                                 <div class="d-flex justify-content-between align-items-start gap-3">
                                     <div>
@@ -360,7 +360,7 @@
                                             <h5 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history text-primary me-2"></i>Bản tin đã đăng</h5>
                                             <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2">Có thể sửa</span>
                                         </div>
-                                        <div class="d-grid gap-3">
+                                        <div class="d-grid gap-3" id="bcsAnnouncementManageList">
                                             <div class="p-3 rounded-3 bg-light border">
                                                 <div class="d-flex justify-content-between align-items-start gap-2">
                                                     <div>
@@ -492,7 +492,7 @@
                 <button type="button" class="btn btn-outline-danger" onclick="confirmAction('xóa bản tin đang chỉnh sửa', function () { alert('Đã xóa bản tin.'); })"><i class="bi bi-trash me-1"></i>Xóa</button>
                 <div>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                    <button type="button" class="btn btn-primary fw-bold" onclick="confirmAction('lưu thay đổi bản tin', function () { alert('Đã lưu thay đổi.'); })"><i class="bi bi-check2-all me-1"></i>Lưu thay đổi</button>
+                    <button type="button" class="btn btn-primary fw-bold" id="bcsAnnouncementSaveEditBtn"><i class="bi bi-check2-all me-1"></i>Lưu thay đổi</button>
                 </div>
             </div>
         </div>

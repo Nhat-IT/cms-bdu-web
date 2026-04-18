@@ -184,6 +184,48 @@ document.addEventListener('DOMContentLoaded', function () {
         renderUnreadCount(unreadCount);
     }
 
+    async function hydrateTeacherProfile() {
+        try {
+            const response = await fetch('/api/me', {
+                headers: { Accept: 'application/json' }
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const me = await response.json();
+            const safeName = me.full_name || profileName;
+            const avatarUrl = me.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(safeName)}&background=0dcaf0&color=fff`;
+
+            if (profileNameNode) {
+                profileNameNode.textContent = safeName;
+            }
+
+            if (topAvatar) {
+                topAvatar.src = avatarUrl;
+            }
+
+            const menuProfileName = sidebar.querySelector('.menu-profile-name');
+            if (menuProfileName) {
+                menuProfileName.textContent = safeName;
+            }
+
+            const menuProfileRole = sidebar.querySelector('.menu-profile-role');
+            if (menuProfileRole) {
+                menuProfileRole.textContent = me.role === 'teacher' ? 'Giang vien' : (me.role || 'Nguoi dung');
+            }
+
+            const menuAvatar = sidebar.querySelector('.menu-profile-trigger img');
+            if (menuAvatar) {
+                menuAvatar.src = avatarUrl;
+            }
+        } catch (error) {
+            // Keep existing static content as fallback.
+        }
+    }
+
+    hydrateTeacherProfile();
     updateUnreadCount();
 
     if (window.CMSMenu && typeof window.CMSMenu.init === 'function') {

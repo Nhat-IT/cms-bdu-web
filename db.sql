@@ -16,6 +16,9 @@ CREATE TABLE users (
     google_id VARCHAR(255),
     role ENUM('student', 'bcs', 'teacher', 'admin') DEFAULT 'student',
     avatar VARCHAR(255),
+    birth_date DATE NULL,
+    phone_number VARCHAR(20) NULL,
+    address VARCHAR(255) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_email_domain CHECK (email LIKE '%@student.bdu.edu.vn' OR email LIKE '%@bdu.edu.vn')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -254,6 +257,13 @@ CREATE TABLE notification_logs (
 CREATE INDEX idx_student_session ON attendance_records(student_id, session_id);
 CREATE INDEX idx_student_class_group ON student_subject_registration(student_id, class_subject_group_id);
 CREATE INDEX idx_document_class ON documents(class_subject_id);
+
+-- ==========================================
+-- 6. MIGRATION CHO DB ĐÃ TỒN TẠI
+-- ==========================================
+ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_date DATE NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number VARCHAR(20) NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS address VARCHAR(255) NULL;
 
 -- Bật lại kiểm tra khóa ngoại
 SET FOREIGN_KEY_CHECKS = 1;

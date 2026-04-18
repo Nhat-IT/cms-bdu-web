@@ -16,7 +16,9 @@ document.addEventListener('DOMContentLoaded', function () {
         singleStatus.addEventListener('change', toggleCancelReason);
     }
 
-    initAssignmentEnhancements();
+    loadAssignmentCoursesFromApi().finally(function () {
+        initAssignmentEnhancements();
+    });
 
     toggleCancelReason();
 });
@@ -133,6 +135,54 @@ function initAssignmentEnhancements() {
     applyAssignmentFilters();
 }
 
+async function loadAssignmentCoursesFromApi() {
+    try {
+        const res = await fetch('/api/admin/teaching-assignments', { headers: { Accept: 'application/json' } });
+        if (!res.ok) {
+            return;
+        }
+
+        const rows = await res.json();
+        if (!Array.isArray(rows) || !rows.length) {
+            return;
+        }
+
+        allAssignmentCourses.splice(0, allAssignmentCourses.length, ...rows.map(function (item) {
+            return {
+                id: item.id,
+                classCode: item.classCode,
+                name: item.name,
+                year: item.year || '2025',
+                semester: item.semester || '1',
+                isOpen: Boolean(item.isOpen),
+                credits: Number(item.credits || 0),
+                openWindow: item.openWindow || '--',
+                hasSchedule: Boolean(item.hasSchedule),
+                groups: Array.isArray(item.groups) ? item.groups : []
+            };
+        }));
+
+        teachers.splice(0, teachers.length);
+        const teacherMap = new Map();
+        allAssignmentCourses.forEach(function (course) {
+            course.groups.forEach(function (group) {
+                if (group.teacherMain && group.teacherMainName && !teacherMap.has(group.teacherMain)) {
+                    teacherMap.set(group.teacherMain, group.teacherMainName);
+                }
+                if (group.teacherSub && group.teacherSubName && !teacherMap.has(group.teacherSub)) {
+                    teacherMap.set(group.teacherSub, group.teacherSubName);
+                }
+            });
+        });
+
+        Array.from(teacherMap.entries()).forEach(function (entry) {
+            teachers.push({ id: entry[0], name: entry[1] });
+        });
+    } catch (error) {
+        // Keep fallback mock data if API is unavailable.
+    }
+}
+
 function applyAssignmentFilters() {
     const filterYear = document.getElementById('assignFilterYear');
     const filterSemester = document.getElementById('assignFilterSemester');
@@ -222,9 +272,11 @@ function renderAssignmentOfferings() {
             chipDiv.innerHTML = '<span class="section-chip">' + getGroupLabel(group.code) + '</span>';
             
             const teacherDiv = document.createElement('div');
+            const teacherMainName = group.teacherMainName || getTeacherName(group.teacherMain);
+            const teacherSubName = group.teacherSubName || getTeacherName(group.teacherSub);
             teacherDiv.innerHTML = '<div class="section-label">Giảng viên</div>' +
-                '<div class="section-value">' + getTeacherName(group.teacherMain) +
-                (group.teacherSub ? ' + ' + getTeacherName(group.teacherSub) : '') + '</div>';
+                '<div class="section-value">' + teacherMainName +
+                (group.teacherSub ? ' + ' + teacherSubName : '') + '</div>';
             
             const scheduleDiv = document.createElement('div');
             scheduleDiv.innerHTML = '<div class="section-label">Lịch học</div>' +

@@ -20,6 +20,15 @@ async function fetchDashboardData() {
 	}
 }
 
+function formatDateDMY(dateValue) {
+	const d = new Date(dateValue);
+	if (Number.isNaN(d.getTime())) return '--/--/----';
+	const dd = String(d.getDate()).padStart(2, '0');
+	const mm = String(d.getMonth() + 1).padStart(2, '0');
+	const yyyy = d.getFullYear();
+	return `${dd}/${mm}/${yyyy}`;
+}
+
 // ========== Hàm hiển thị dữ liệu hồ sơ ==========
 function displayUserProfile(profile) {
 	if (!profile) return;
@@ -47,6 +56,33 @@ function displayUserProfile(profile) {
 	emailElements.forEach(el => {
 		el.textContent = profile.email || 'N/A';
 	});
+}
+
+function displayTopCards(data) {
+	const classCountEl = document.querySelector('[data-classes-count]');
+	const warningCountEl = document.querySelector('[data-warning-count]');
+	const absentCountEl = document.querySelector('[data-absent-count]');
+	const resolvedCountEl = document.querySelector('[data-resolved-count]');
+
+	if (classCountEl) {
+		classCountEl.textContent = String(data?.classes?.count || 0);
+	}
+
+	const absentTotal = Number(data?.attendance?.excused_absent || 0) + Number(data?.attendance?.unexcused_absent || 0);
+	if (absentCountEl) {
+		absentCountEl.textContent = String(absentTotal);
+	}
+
+	// Tạm xem "môn cảnh báo" là số môn có tổng điểm dưới 5.
+	const warningCount = (data?.grades?.recent || []).filter((g) => Number(g.total_score || 0) < 5).length;
+	if (warningCountEl) {
+		warningCountEl.textContent = String(warningCount);
+	}
+
+	// Tạm dùng số phản hồi đã xử lý = 0 trên dashboard cho đến khi có endpoint tổng hợp.
+	if (resolvedCountEl) {
+		resolvedCountEl.textContent = '0';
+	}
 }
 
 // ========== Hàm hiển thị thống kê điểm danh ==========
@@ -115,7 +151,7 @@ function displayClasses(classes) {
 					</p>
 					<p class="text-muted small mb-0">
 						<i class="bi bi-calendar"></i> 
-						${new Date(cls.start_date).toLocaleDateString('vi-VN')} - ${new Date(cls.end_date).toLocaleDateString('vi-VN')}
+						${formatDateDMY(cls.start_date)} - ${formatDateDMY(cls.end_date)}
 					</p>
 				</div>
 			</div>
@@ -123,6 +159,41 @@ function displayClasses(classes) {
 	});
     
 	classesContainer.innerHTML = html;
+}
+
+function displayAttendanceWarnings(classes, attendance) {
+	const attendanceCard = document.querySelector('.col-lg-7 .card .card-body');
+	if (!attendanceCard) return;
+
+	if (!classes || !classes.length) {
+		return;
+	}
+
+	const totalSessions = Number(attendance?.total_sessions || 0);
+	const totalAbsent = Number(attendance?.excused_absent || 0) + Number(attendance?.unexcused_absent || 0);
+	const ratio = totalSessions > 0 ? Math.min(100, Math.round((totalAbsent / totalSessions) * 100)) : 0;
+
+	const firstClass = classes[0];
+	const statusColor = ratio >= 20 ? 'danger' : ratio >= 10 ? 'warning' : 'success';
+
+	attendanceCard.innerHTML = `
+		<div class="mb-2">
+			<div class="d-flex justify-content-between align-items-end mb-1">
+				<div>
+					<h6 class="fw-bold text-${statusColor} mb-0">${firstClass.subject_name}</h6>
+					<small class="text-muted">Tổng buổi học ghi nhận: ${totalSessions}</small>
+				</div>
+				<span class="fw-bold text-${statusColor}">Đã vắng ${totalAbsent}/${totalSessions || 0}</span>
+			</div>
+			<div class="progress" style="height: 10px;">
+				<div class="progress-bar bg-${statusColor}" role="progressbar" style="width: ${ratio}%;"></div>
+			</div>
+			<small class="text-${statusColor} fw-bold mt-1 d-block">
+				<i class="bi bi-exclamation-circle me-1"></i>
+				${ratio >= 20 ? 'Cảnh báo: Tỉ lệ vắng cao, cần theo dõi ngay.' : 'Tình trạng chuyên cần đang ổn định.'}
+			</small>
+		</div>
+	`;
 }
 
 // ========== Hàm hiển thị điểm số ==========
@@ -230,8 +301,10 @@ async function initDashboard() {
 	if (data) {
 		// Hiển thị từng phần dữ liệu
 		displayUserProfile(data.profile);
+		displayTopCards(data);
 		displayAttendanceStats(data.attendance);
 		displayClasses(data.classes.list);
+		displayAttendanceWarnings(data.classes.list, data.attendance);
 		displayGrades(data.grades);
 		displayNotifications(data.notifications);
 	}

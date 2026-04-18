@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -47,7 +47,7 @@
     </div>
 
     <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-        <a href="../../login.html" class="nav-link logout-btn" title="Đăng xuất">
+        <a href="/auth/logout" class="nav-link logout-btn" title="Đăng xuất">
             <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
         </a>
     </div>
@@ -122,29 +122,29 @@
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Họ và tên đầy đủ</label>
-                                    <input type="text" class="form-control border-secondary bg-light" value="Phạm Huyền Nhật Ý" readonly title="Không thể tự thay đổi">
+                                    <input type="text" class="form-control border-secondary" id="bcsFullNameInput" value="Phạm Huyền Nhật Ý" required>
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold">Ngày sinh <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control border-secondary" value="2004-01-01" required>
+                                    <input type="date" class="form-control border-secondary" id="bcsBirthDateInput" value="2004-01-01" required>
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Email trường cấp</label>
-                                    <input type="email" class="form-control border-secondary bg-light" value="22050111@student.bdu.edu.vn" readonly title="Không thể tự thay đổi">
+                                    <input type="email" class="form-control border-secondary" id="bcsEmailInput" value="22050111@student.bdu.edu.vn" required>
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold">Số điện thoại cá nhân <span class="text-danger">*</span></label>
-                                    <input type="tel" class="form-control border-secondary" value="0987654321" required placeholder="Dùng để liên lạc">
+                                    <input type="tel" class="form-control border-secondary" id="bcsPhoneInput" value="0987654321" required placeholder="Dùng để liên lạc">
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">MSSV</label>
-                                    <input type="text" class="form-control border-secondary bg-light" value="22050111" readonly>
+                                    <input type="text" class="form-control border-secondary bg-light" id="bcsCodeInput" value="22050111" readonly>
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold">Chức vụ BCS <span class="text-danger">*</span></label>
@@ -158,7 +158,7 @@
 
                             <div class="mb-4">
                                 <label class="form-label fw-bold">Địa chỉ hiện tại</label>
-                                <input type="text" class="form-control border-secondary" value="KTX BDU, Thủ Dầu Một, Bình Dương" placeholder="Nhập địa chỉ tạm trú/thường trú">
+                                <input type="text" class="form-control border-secondary" id="bcsAddressInput" value="KTX BDU, Thủ Dầu Một, Bình Dương" placeholder="Nhập địa chỉ tạm trú/thường trú">
                             </div>
 
                             <div class="text-end border-top pt-3">
@@ -207,3 +207,4 @@
 <script src="../../public/js/bcs/profile.js"></script>
 </body>
 </html>
+

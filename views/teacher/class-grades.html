@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -38,7 +38,7 @@
         </div>
         
         <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-            <a href="../login.html" class="nav-link logout-btn" title="Đăng xuất">
+            <a href="/auth/logout" class="nav-link logout-btn" title="Đăng xuất">
                 <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
             </a>
         </div>
@@ -61,7 +61,7 @@
                     <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
                         <li><a class="dropdown-item fw-bold" href="teacher-profile.html"><i class="bi bi-person-vcard text-info me-2"></i>Hồ sơ cá nhân</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item fw-bold text-danger" href="../login.html"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
+                        <li><a class="dropdown-item fw-bold text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
                     </ul>
                 </div>
             </div>
@@ -84,12 +84,11 @@
                         <div>
                             <label class="form-label small fw-bold text-muted mb-1">Chọn Lớp học phần</label>
                             <select id="classSelect" class="form-select border-info fw-bold text-dark" style="width: 300px;">
-                                <option value="25TH01" selected>25TH01 - An ninh Cơ sở dữ liệu</option>
-                                <option value="24CNTT02">24CNTT02 - Cấu trúc DL & Giải thuật</option>
+                                <option value="">-- Chọn lớp học phần --</option>
                             </select>
                         </div>
                         <div class="ms-2">
-                            <span class="badge bg-light text-dark border p-2 mt-4"><i class="bi bi-people-fill me-1"></i>Sĩ số: 40 SV</span>
+                            <span class="badge bg-light text-dark border p-2 mt-4"><i class="bi bi-people-fill me-1"></i><span id="gradeStudentCountBadge">0 students</span></span>
                         </div>
                     </div>
                     
@@ -104,46 +103,21 @@
                         <table class="table table-hover table-bordered table-grades mb-0" id="gradesTable">
                             <thead>
                                 <tr>
-                                    <th style="width: 50px;">STT</th>
+                                    <th style="width: 60px;">STT</th>
                                     <th style="width: 120px;">MSSV</th>
                                     <th class="text-start">HỌ VÀ TÊN</th>
-                                    <th style="width: 120px;" title="Điểm Bài tập (Trọng số 20%)">Đ. BÀI TẬP<br><small class="text-muted fw-normal">(20%)</small></th>
-                                    <th style="width: 120px;" title="Điểm Giữa kỳ (Trọng số 30%)">Đ. GIỮA KỲ<br><small class="text-muted fw-normal">(30%)</small></th>
-                                    <th style="width: 120px;" title="Điểm Cuối kỳ (Trọng số 50%)">Đ. CUỐI KỲ<br><small class="text-muted fw-normal">(50%)</small></th>
-                                    <th style="width: 120px;" class="bg-light">TỔNG KẾT<br><small class="text-muted fw-normal">(Hệ 10)</small></th>
+                                    <th style="width: 120px;">LỚP</th>
+                                    <th style="width: 130px;">Đ. GIỮA KỲ</th>
+                                    <th style="width: 130px;">Đ. CUỐI KỲ</th>
+                                    <th style="width: 120px;" class="bg-light">TỔNG KẾT</th>
                                     <th style="width: 100px;" class="bg-light">ĐIỂM CHỮ</th>
+                                    <th style="width: 110px;" class="bg-light">KẾT QUẢ</th>
+                                    <th style="width: 180px;">GHI CHÚ</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="teacherGradesTbody">
                                 <tr>
-                                    <td class="text-center text-muted">1</td>
-                                    <td class="fw-bold">22050022</td>
-                                    <td class="text-start fw-bold text-dark">Phạm Huỳnh Nhật Ý</td>
-                                    <td><input type="number" class="grade-input assign-score" min="0" max="10" step="0.5" value="8.5" onchange="calculateRow(this)"></td>
-                                    <td><input type="number" class="grade-input midterm-score" min="0" max="10" step="0.5" value="8.0" onchange="calculateRow(this)"></td>
-                                    <td><input type="number" class="grade-input final-score" min="0" max="10" step="0.5" value="" onchange="calculateRow(this)"></td>
-                                    <td class="bg-light fw-bold text-primary fs-5 total-score">--</td>
-                                    <td class="bg-light"><span class="badge w-100 py-2 grade-letter">--</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center text-muted">2</td>
-                                    <td class="fw-bold">22050111</td>
-                                    <td class="text-start fw-bold text-dark">Nguyễn Văn A</td>
-                                    <td><input type="number" class="grade-input assign-score" min="0" max="10" step="0.5" value="9.0" onchange="calculateRow(this)"></td>
-                                    <td><input type="number" class="grade-input midterm-score" min="0" max="10" step="0.5" value="9.0" onchange="calculateRow(this)"></td>
-                                    <td><input type="number" class="grade-input final-score" min="0" max="10" step="0.5" value="8.5" onchange="calculateRow(this)"></td>
-                                    <td class="bg-light fw-bold text-primary fs-5 total-score">8.8</td>
-                                    <td class="bg-light"><span class="badge grade-A w-100 py-2 grade-letter">A</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center text-muted">3</td>
-                                    <td class="fw-bold">22050222</td>
-                                    <td class="text-start fw-bold text-dark">Trần Thị B</td>
-                                    <td><input type="number" class="grade-input assign-score" min="0" max="10" step="0.5" value="5.0" onchange="calculateRow(this)"></td>
-                                    <td><input type="number" class="grade-input midterm-score" min="0" max="10" step="0.5" value="4.5" onchange="calculateRow(this)"></td>
-                                    <td><input type="number" class="grade-input final-score" min="0" max="10" step="0.5" value="5.0" onchange="calculateRow(this)"></td>
-                                    <td class="bg-light fw-bold text-primary fs-5 total-score">4.9</td>
-                                    <td class="bg-light"><span class="badge grade-D w-100 py-2 grade-letter">D</span></td>
+                                    <td colspan="10" class="text-center text-muted py-4">Đang tải bảng điểm...</td>
                                 </tr>
                             </tbody>
                         </table>

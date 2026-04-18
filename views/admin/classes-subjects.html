@@ -35,7 +35,7 @@
     </div>
     
     <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-        <a href="../login.html" class="nav-link logout-btn" title="Đăng xuất">
+        <a href="/auth/logout" class="nav-link logout-btn" title="Đăng xuất">
             <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
         </a>
     </div>
@@ -63,7 +63,7 @@
                 <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
                     <li><a class="dropdown-item fw-bold" href="admin-profile.html"><i class="bi bi-person-vcard text-primary me-2"></i>Hồ sơ cá nhân</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item fw-bold text-danger" href="../login.html"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
+                    <li><a class="dropdown-item fw-bold text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
                 </ul>
             </div>            
         </div>
@@ -90,7 +90,7 @@
                         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                             <div class="input-group input-group-sm" style="width: 300px;">
                                 <span class="input-group-text bg-light"><i class="bi bi-search text-muted"></i></span>
-                                <input type="text" class="form-control" placeholder="Tìm tên lớp, niên khóa...">
+                                <input type="text" class="form-control" id="adminClassSearch" placeholder="Tìm tên lớp, niên khóa...">
                             </div>
                             <div class="d-flex gap-2 flex-wrap">
                                 <button class="btn btn-outline-dark fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#importStudentModal" onclick="openImportStudentModal()">
@@ -117,7 +117,7 @@
                                         <th class="text-end pe-4 py-3">HÀNH ĐỘNG</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="adminClassTableBody">
                                     <tr>
                                         <td class="ps-4 text-muted">1</td>
                                         <td class="fw-bold text-primary fs-6">25TH01</td>
@@ -168,7 +168,7 @@
                             <div class="d-flex align-items-center flex-wrap gap-2">
                                 <div class="input-group input-group-sm" style="width: 300px;">
                                     <span class="input-group-text bg-light"><i class="bi bi-search text-muted"></i></span>
-                                    <input type="text" class="form-control" placeholder="Tìm mã môn, tên môn...">
+                                    <input type="text" class="form-control" id="adminSubjectSearch" placeholder="Tìm mã môn, tên môn...">
                                 </div>
                                 <select class="form-select form-select-sm subject-filter-select">
                                     <option selected>2025 - 2026</option>
@@ -198,7 +198,7 @@
                                         <th class="text-end pe-4 py-3">HÀNH ĐỘNG</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="adminSubjectTableBody">
                                     <tr>
                                         <td class="ps-4 fw-bold text-success">IT001</td>
                                         <td class="fw-bold">An ninh cơ sở dữ liệu</td>
@@ -954,5 +954,6 @@
         }
     });
 </script>
+<script src="../../public/js/admin/classes-subjects.js"></script>
 </body>
 </html>

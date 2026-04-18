@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -47,7 +47,7 @@
     </div>
     
     <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-        <a href="../../login.html" class="nav-link logout-btn" title="Đăng xuất">
+        <a href="/auth/logout" class="nav-link logout-btn" title="Đăng xuất">
             <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
         </a>
     </div>
@@ -138,15 +138,15 @@
                         <option value="HK2" selected>Học kỳ 2</option>
                         <option value="HK3">Học kỳ 3 (Hè)</option>
                     </select>
-                    <select class="form-select form-select-sm w-auto">
-                        <option selected>Tất cả danh mục</option>
-                        <option>Thông báo</option>
-                        <option>Biên bản</option>
-                        <option>Học liệu</option>
+                    <select class="form-select form-select-sm w-auto" id="bcsDocumentCategoryFilter">
+                        <option value="all" selected>Tất cả danh mục</option>
+                        <option value="Thông báo">Thông báo</option>
+                        <option value="Biên bản">Biên bản</option>
+                        <option value="Học liệu">Học liệu</option>
                     </select>
                     <div class="input-group input-group-sm" style="width: 220px;">
                         <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
-                        <input type="text" class="form-control border-start-0" placeholder="Tìm tên tài liệu...">
+                        <input type="text" class="form-control border-start-0" id="bcsDocumentKeyword" placeholder="Tìm tên tài liệu...">
                     </div>
                 </div>
             </div>
@@ -163,7 +163,7 @@
                                 <th class="pe-4 py-3 text-end">HÀNH ĐỘNG</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="bcsDocumentsTableBody">
                             <tr>
                                 <td class="ps-4 py-3">
                                     <a href="#" class="file-link d-flex align-items-center" onclick="handleFileView(event, 'ThongBao_NghiTet.pdf')">

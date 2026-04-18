@@ -35,7 +35,7 @@
     </div>
     
     <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-        <a href="../login.html" class="nav-link logout-btn" title="Đăng xuất">
+        <a href="/auth/logout" class="nav-link logout-btn" title="Đăng xuất">
             <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
         </a>
     </div>
@@ -63,7 +63,7 @@
                 <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
                     <li><a class="dropdown-item fw-bold" href="admin-profile.html"><i class="bi bi-person-vcard text-primary me-2"></i>Hồ sơ cá nhân</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item fw-bold text-danger" href="../login.html"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
+                    <li><a class="dropdown-item fw-bold text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
                 </ul>
             </div>
         </div>
@@ -78,12 +78,12 @@
                         <label class="fw-bold small text-muted mb-1">TỪ KHÓA / IP / TÀI KHOẢN</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
-                            <input type="text" class="form-control" placeholder="Nhập nội dung cần tìm...">
+                            <input type="text" class="form-control" id="adminLogKeyword" placeholder="Nhập nội dung cần tìm...">
                         </div>
                     </div>
                     <div class="col-md-2">
                         <label class="fw-bold small text-muted mb-1">VAI TRÒ</label>
-                        <select class="form-select fw-bold">
+                        <select class="form-select fw-bold" id="adminLogRole">
                             <option selected value="all">Tất cả</option>
                             <option value="admin">Quản trị viên</option>
                             <option value="teacher">Giảng viên</option>
@@ -94,7 +94,7 @@
                     </div>
                     <div class="col-md-2">
                         <label class="fw-bold small text-muted mb-1">LOẠI HÀNH ĐỘNG</label>
-                        <select class="form-select fw-bold">
+                        <select class="form-select fw-bold" id="adminLogAction">
                             <option selected value="all">Tất cả</option>
                             <option value="login">Đăng nhập / Đăng xuất</option>
                             <option value="create">Thêm mới (Create)</option>
@@ -105,7 +105,7 @@
                     </div>
                     <div class="col-md-3">
                         <label class="fw-bold small text-muted mb-1">THỜI GIAN</label>
-                        <input type="date" class="form-control fw-bold" value="2026-04-05">
+                        <input type="date" class="form-control fw-bold" id="adminLogDate" value="2026-04-05">
                     </div>
                     <div class="col-md-2 text-md-end">
                         <button class="btn btn-outline-danger fw-bold shadow-sm w-100" onclick="exportLogs()">
@@ -132,7 +132,7 @@
                                 <th class="pe-4 py-3 text-end" style="width: 150px;">IP / THIẾT BỊ</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="adminSystemLogsBody">
                             <tr>
                                 <td class="ps-4 text-dark log-time">05/04/2026 15:42:11</td>
                                 <td>
@@ -223,5 +223,6 @@
         alert("📥 Hệ thống đang trích xuất dữ liệu Nhật ký ra file Excel (.xlsx). Quá trình này có thể mất vài phút tùy thuộc vào lượng dữ liệu.");
     }
 </script>
+<script src="../../public/js/admin/system-logs.js"></script>
 </body>
 </html>

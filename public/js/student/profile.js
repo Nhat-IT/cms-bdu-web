@@ -1,59 +1,168 @@
-// Trang hồ sơ sinh viên: xử lý tải ảnh đại diện và các thao tác hồ sơ.
-document.getElementById('avatarUploadInput').addEventListener('change', function(event) {
-    const file = event.target.files[0];
-    if (file) {
-        // Kiểm tra dung lượng (Max 2MB)
-        if(file.size > 2 * 1024 * 1024) {
-            alert('⛔ Dung lượng ảnh vượt quá 2MB. Vui lòng chọn ảnh khác nhỏ hơn!');
-            this.value = ''; 
-            return;
-        }
-
-        // Preview ảnh
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const imgUrl = e.target.result;
-            // Cập nhật ảnh to ở giữa
-            document.getElementById('mainProfileAvatar').src = imgUrl;
-            // Cập nhật luôn ảnh nhỏ trên thanh Sidebar
-            document.getElementById('sidebarAvatar').src = imgUrl;
-            
-            setTimeout(() => {
-                alert('✅ Đã cập nhật ảnh đại diện thành công!');
-            }, 300);
-        }
-        reader.readAsDataURL(file);
+async function loadProfile() {
+    const response = await fetch('/api/student/profile');
+    if (response.status === 401) {
+        window.location.href = '/login.html';
+        return null;
     }
+    if (!response.ok) {
+        throw new Error('Không thể tải hồ sơ');
+    }
+    return response.json();
+}
+
+function bindProfileData(profile) {
+    if (!profile) return;
+
+    const avatar = profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'User')}&background=0d6efd&color=fff&size=200`;
+
+    const mainAvatar = document.getElementById('mainProfileAvatar');
+    const sidebarAvatar = document.getElementById('sidebarAvatar');
+    if (mainAvatar) mainAvatar.src = avatar;
+    if (sidebarAvatar) sidebarAvatar.src = avatar;
+
+    const sideName = document.querySelector('.profile-container .text-white.fw-bold.fs-6');
+    if (sideName) sideName.textContent = profile.full_name || 'Chưa cập nhật';
+
+    const sideMssv = document.querySelector('.profile-container .text-white-50.small.mb-1');
+    if (sideMssv) sideMssv.textContent = `MSSV: ${profile.username || '--'}`;
+
+    const mainName = document.querySelector('.card-body.text-center.pt-0 h5.fw-bold.text-dark.mb-1');
+    if (mainName) mainName.textContent = profile.full_name || 'Chưa cập nhật';
+
+    const readonlyInputs = document.querySelectorAll('form input[readonly]');
+    if (readonlyInputs[0]) readonlyInputs[0].value = profile.full_name || '';
+    if (readonlyInputs[1]) readonlyInputs[1].value = profile.email || '';
+
+    const birthDateInput = document.getElementById('profileBirthDate');
+    const phoneInput = document.getElementById('profilePhoneNumber');
+    const addressInput = document.getElementById('profileAddress');
+
+    if (birthDateInput) {
+        birthDateInput.value = profile.birth_date ? String(profile.birth_date).slice(0, 10) : '';
+    }
+    if (phoneInput) {
+        phoneInput.value = profile.phone_number || '';
+    }
+    if (addressInput) {
+        addressInput.value = profile.address || '';
+    }
+
+    const infoBlocks = document.querySelectorAll('.text-start.mt-3 .mb-3 .fw-bold.text-dark, .text-start.mt-3 .mb-0 .fw-bold.text-dark');
+    if (infoBlocks[0]) infoBlocks[0].textContent = profile.username || '--';
+}
+
+document.getElementById('avatarUploadInput').addEventListener('change', function (event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+        alert('Dung lượng ảnh vượt quá 2MB.');
+        this.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const imgUrl = e.target.result;
+        document.getElementById('mainProfileAvatar').src = imgUrl;
+        document.getElementById('sidebarAvatar').src = imgUrl;
+        alert('Đã cập nhật ảnh đại diện trên giao diện.');
+    };
+    reader.readAsDataURL(file);
 });
 
-// Xử lý Cập nhật Profile
-function handleUpdateProfile(e) {
+async function handleUpdateProfile(e) {
     e.preventDefault();
-    alert('✅ Đã cập nhật Thông tin liên hệ thành công!');
+
+    try {
+        const payload = {
+            birthDate: document.getElementById('profileBirthDate')?.value || null,
+            phoneNumber: document.getElementById('profilePhoneNumber')?.value.trim() || null,
+            address: document.getElementById('profileAddress')?.value.trim() || null
+        };
+
+        const response = await fetch('/api/student/profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.status === 401) {
+            window.location.href = '/login.html';
+            return false;
+        }
+
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.error || 'Không thể cập nhật hồ sơ');
+        }
+
+        const profile = await response.json();
+        bindProfileData(profile);
+        alert('Đã cập nhật thông tin liên hệ thành công.');
+    } catch (error) {
+        console.error(error);
+        alert(error.message || 'Cập nhật hồ sơ thất bại.');
+    }
+
     return false;
 }
 
-// Xử lý Đổi Mật Khẩu kèm Validate
-function handleChangePassword(e) {
+async function handleChangePassword(e) {
     e.preventDefault();
-    
+
     const newPw = document.getElementById('newPassword');
     const confirmPw = document.getElementById('confirmPassword');
-    
     if (newPw.value !== confirmPw.value) {
         confirmPw.classList.add('is-invalid');
         return false;
-    } else {
-        confirmPw.classList.remove('is-invalid');
-        if(confirm('⚠️ Bạn có chắc chắn muốn đổi Mật khẩu không? Hệ thống sẽ yêu cầu bạn đăng nhập lại.')) {
-            alert('🔒 Đã đổi mật khẩu thành công! Hệ thống sẽ tự động đăng xuất.');
-            window.location.href = '../login.html';
-        }
     }
+
+    confirmPw.classList.remove('is-invalid');
+
+    try {
+        const response = await fetch('/api/student/password', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                oldPassword: document.getElementById('oldPassword')?.value || '',
+                newPassword: newPw.value
+            })
+        });
+
+        if (response.status === 401) {
+            window.location.href = '/login.html';
+            return false;
+        }
+
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.error || 'Không thể đổi mật khẩu');
+        }
+
+        alert('Đổi mật khẩu thành công. Vui lòng đăng nhập lại.');
+        window.location.href = '/auth/logout';
+    } catch (error) {
+        console.error(error);
+        alert(error.message || 'Đổi mật khẩu thất bại.');
+    }
+
     return false;
 }
 
-// Xóa cảnh báo đỏ khi người dùng gõ lại mật khẩu
-document.getElementById('confirmPassword').addEventListener('input', function() {
+document.getElementById('confirmPassword').addEventListener('input', function () {
     this.classList.remove('is-invalid');
 });
+
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const profile = await loadProfile();
+        bindProfileData(profile);
+    } catch (error) {
+        console.error(error);
+        alert('Không thể tải hồ sơ sinh viên từ database.');
+    }
+});
+
+window.handleUpdateProfile = handleUpdateProfile;
+window.handleChangePassword = handleChangePassword;

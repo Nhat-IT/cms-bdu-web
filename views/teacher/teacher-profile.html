@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -38,7 +38,7 @@
         </div>
         
         <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-            <a href="../login.html" class="nav-link logout-btn" title="Đăng xuất">
+            <a href="/auth/logout" class="nav-link logout-btn" title="Đăng xuất">
                 <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
             </a>
         </div>
@@ -61,7 +61,7 @@
                     <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
                         <li><a class="dropdown-item fw-bold" href="teacher-profile.html"><i class="bi bi-person-vcard text-info me-2"></i>Hồ sơ cá nhân</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item fw-bold text-danger" href="../login.html"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
+                        <li><a class="dropdown-item fw-bold text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
                     </ul>
                 </div>
             </div>
@@ -121,7 +121,7 @@
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label class="form-label fw-bold">Họ và tên <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control border-secondary bg-light" value="Nguyễn Hồ Hải" required readonly>
+                                        <input type="text" class="form-control border-secondary" id="teacherFullNameInput" value="Nguyễn Hồ Hải" required>
                                     </div>
                                     <div class="col-md-6 mt-3 mt-md-0">
                                         <label class="form-label fw-bold">Học hàm / Học vị</label>
@@ -135,11 +135,11 @@
                                 <div class="row mb-4">
                                     <div class="col-md-6">
                                         <label class="form-label fw-bold">Email trường cấp <span class="text-danger">*</span></label>
-                                        <input type="email" class="form-control border-secondary" value="hai.nh@bdu.edu.vn" required>
+                                        <input type="email" class="form-control border-secondary" id="teacherEmailInput" value="hai.nh@bdu.edu.vn" required>
                                     </div>
                                     <div class="col-md-6 mt-3 mt-md-0">
                                         <label class="form-label fw-bold">Số điện thoại liên hệ (Zalo/Call)</label>
-                                        <input type="tel" class="form-control border-secondary" value="0987654321" placeholder="Dùng để BCS liên lạc khi cần...">
+                                        <input type="tel" class="form-control border-secondary" id="teacherPhoneInput" value="0987654321" placeholder="Dùng để BCS liên lạc khi cần...">
                                     </div>
                                 </div>
                                 <div class="text-end">

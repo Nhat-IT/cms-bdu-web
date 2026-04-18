@@ -68,7 +68,7 @@
     </div>
     
     <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-        <a href="../login.html" class="nav-link logout-btn" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?');" title="Đăng xuất">
+        <a href="/auth/logout" class="nav-link logout-btn" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?');" title="Đăng xuất">
             <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
         </a>
     </div>
@@ -151,26 +151,26 @@
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Họ và tên đầy đủ</label>
-                                    <input type="text" class="form-control border-secondary bg-light" value="Phạm Huỳnh Nhật Ý" readonly title="Không thể tự thay đổi">
+                                    <input type="text" id="profileFullName" class="form-control border-secondary bg-light" value="Phạm Huỳnh Nhật Ý" readonly title="Không thể tự thay đổi">
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold">Ngày sinh <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control border-secondary" value="2004-01-01" required>
+                                    <input type="date" id="profileBirthDate" class="form-control border-secondary" value="2004-01-01" required>
                                 </div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Email trường cấp</label>
-                                    <input type="email" class="form-control border-secondary bg-light" value="22050111@student.bdu.edu.vn" readonly title="Không thể tự thay đổi">
+                                    <input type="email" id="profileEmail" class="form-control border-secondary bg-light" value="22050111@student.bdu.edu.vn" readonly title="Không thể tự thay đổi">
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold">Số điện thoại cá nhân <span class="text-danger">*</span></label>
-                                    <input type="tel" class="form-control border-secondary" value="0987654321" required placeholder="Dùng để GV/BCS liên lạc...">
+                                    <input type="tel" id="profilePhoneNumber" class="form-control border-secondary" value="0987654321" required placeholder="Dùng để GV/BCS liên lạc...">
                                 </div>
                             </div>
                             <div class="mb-4">
                                 <label class="form-label fw-bold">Địa chỉ hiện tại</label>
-                                <input type="text" class="form-control border-secondary" value="Ký túc xá BDU, Thủ Dầu Một, Bình Dương" placeholder="Nhập địa chỉ tạm trú/thường trú...">
+                                <input type="text" id="profileAddress" class="form-control border-secondary" value="Ký túc xá BDU, Thủ Dầu Một, Bình Dương" placeholder="Nhập địa chỉ tạm trú/thường trú...">
                             </div>
                             <div class="text-end border-top pt-3">
                                 <button type="submit" class="btn btn-primary fw-bold px-4 shadow-sm"><i class="bi bi-save me-1"></i>LƯU THAY ĐỔI</button>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -46,7 +46,7 @@
     </div>
     
     <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-        <a href="../../login.html" class="nav-link logout-btn" title="Đăng xuất">
+        <a href="/auth/logout" class="nav-link logout-btn" title="Đăng xuất">
             <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
         </a>
     </div>
@@ -112,8 +112,8 @@
                 <h5 class="fw-bold text-dark m-0"><i class="bi bi-envelope-paper me-2 text-primary"></i>Hộp thư góp ý từ Sinh viên</h5>
                 
                 <div class="d-flex gap-2">
-                    <input type="text" class="form-control form-control-sm border-secondary" placeholder="Tìm MSSV hoặc Tên..." style="width: 200px;">
-                    <select class="form-select form-select-sm w-auto fw-bold text-secondary border-secondary">
+                    <input type="text" class="form-control form-control-sm border-secondary" id="bcsFeedbackKeyword" placeholder="Tìm MSSV hoặc Tên..." style="width: 200px;">
+                    <select class="form-select form-select-sm w-auto fw-bold text-secondary border-secondary" id="bcsFeedbackStatusFilter">
                         <option value="all" selected>Tất cả trạng thái</option>
                         <option value="pending">Chờ xử lý</option>
                         <option value="resolved">Đã giải quyết</option>
@@ -133,7 +133,7 @@
                                 <th class="pe-4 py-3 text-end">XEM CHI TIẾT</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="bcsFeedbackTableBody">
                             <tr class="bg-light">
                                 <td class="ps-4 py-3">
                                     <div class="fw-bold text-dark">Nguyễn Thị C</div>

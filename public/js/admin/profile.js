@@ -1,10 +1,29 @@
 (function () {
-    function getDisplayName(raw) {
-        return String(raw || '').trim() || 'Giảng viên';
-    }
+    function applyProfile(me) {
+        const displayName = me.full_name || me.username || 'Admin';
+        const avatar = me.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0d6efd&color=fff`;
 
-    function getAvatar(displayName, avatar) {
-        return avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0dcaf0&color=fff&size=200`;
+        const mainAvatar = document.getElementById('mainProfileAvatar');
+        const headerAvatar = document.getElementById('headerAvatar');
+        if (mainAvatar) mainAvatar.src = avatar;
+        if (headerAvatar) headerAvatar.src = avatar;
+
+        document.querySelectorAll('.admin-operator-name, h5.fw-bold.text-dark.mb-1').forEach(function (el) {
+            el.textContent = displayName;
+        });
+
+        const usernameNode = document.getElementById('adminUsernameText');
+        if (usernameNode) usernameNode.textContent = me.username || '';
+
+        const createdNode = document.getElementById('adminCreatedAtText');
+        if (createdNode && me.created_at) {
+            createdNode.textContent = String(me.created_at).slice(0, 10);
+        }
+
+        const fullNameInput = document.getElementById('adminFullNameInput');
+        const emailInput = document.getElementById('adminEmailInput');
+        if (fullNameInput) fullNameInput.value = displayName;
+        if (emailInput) emailInput.value = me.email || '';
     }
 
     async function loadProfile() {
@@ -18,59 +37,40 @@
         }
 
         const me = await res.json();
-        const displayName = getDisplayName(me.full_name);
-        const avatarUrl = getAvatar(displayName, me.avatar);
-
-        const mainAvatar = document.getElementById('mainProfileAvatar');
-        const headerAvatar = document.getElementById('headerAvatar');
-        if (mainAvatar) mainAvatar.src = avatarUrl;
-        if (headerAvatar) headerAvatar.src = avatarUrl;
-
-        const nameNodes = document.querySelectorAll('h5.fw-bold.text-dark.mb-1, .text-end.me-3 b');
-        nameNodes.forEach(function (node) {
-            node.textContent = displayName;
-        });
-
-        const fullNameInput = document.getElementById('teacherFullNameInput');
-        const emailInput = document.getElementById('teacherEmailInput');
-        const phoneInput = document.getElementById('teacherPhoneInput');
-
-        if (fullNameInput) fullNameInput.value = displayName;
-        if (emailInput) emailInput.value = me.email || '';
-        if (phoneInput) phoneInput.value = me.phone_number || '';
+        applyProfile(me);
     }
 
-    async function updateProfile(event) {
-        event.preventDefault();
+    window.handleUpdateProfile = async function (e) {
+        e.preventDefault();
 
-        const fullName = document.getElementById('teacherFullNameInput')?.value?.trim() || '';
-        const email = document.getElementById('teacherEmailInput')?.value?.trim() || '';
-        const phoneNumber = document.getElementById('teacherPhoneInput')?.value?.trim() || '';
+        const fullName = document.getElementById('adminFullNameInput')?.value?.trim() || '';
+        const email = document.getElementById('adminEmailInput')?.value?.trim() || '';
 
         if (!fullName || !email) {
-            alert('Vui lòng nhập đầy đủ họ tên và email.');
+            alert('Vui lòng nhập đầy đủ tên hiển thị và email.');
             return false;
         }
 
         const res = await fetch('/api/me', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-            body: JSON.stringify({ fullName, email, phoneNumber })
+            body: JSON.stringify({ fullName, email })
         });
 
         const data = await res.json().catch(function () { return {}; });
         if (!res.ok) {
-            alert(data.error || 'Không thể cập nhật hồ sơ.');
+            alert(data.error || 'Không thể cập nhật thông tin.');
             return false;
         }
 
-        alert('Đã cập nhật thông tin cá nhân.');
+        alert('Đã cập nhật thông tin quản trị viên.');
         loadProfile();
         return false;
-    }
+    };
 
-    async function changePassword(event) {
-        event.preventDefault();
+    window.handleChangePassword = async function (e) {
+        e.preventDefault();
+
         const oldPassword = document.getElementById('oldPassword')?.value || '';
         const newPassword = document.getElementById('newPassword')?.value || '';
         const confirmPassword = document.getElementById('confirmPassword')?.value || '';
@@ -95,15 +95,20 @@
         alert('Đổi mật khẩu thành công. Hệ thống sẽ đăng xuất.');
         window.location.href = '/auth/logout';
         return false;
+    };
+
+    const confirmInput = document.getElementById('confirmPassword');
+    if (confirmInput) {
+        confirmInput.addEventListener('input', function () {
+            confirmInput.classList.remove('is-invalid');
+        });
     }
 
     const avatarInput = document.getElementById('avatarUploadInput');
     if (avatarInput) {
         avatarInput.addEventListener('change', function (event) {
             const file = event.target.files && event.target.files[0];
-            if (!file) {
-                return;
-            }
+            if (!file) return;
             if (file.size > 2 * 1024 * 1024) {
                 alert('Dung lượng ảnh vượt quá 2MB.');
                 avatarInput.value = '';
@@ -111,25 +116,15 @@
             }
             const reader = new FileReader();
             reader.onload = function (e) {
-                const imgUrl = e.target.result;
+                const img = e.target.result;
                 const mainAvatar = document.getElementById('mainProfileAvatar');
                 const headerAvatar = document.getElementById('headerAvatar');
-                if (mainAvatar) mainAvatar.src = imgUrl;
-                if (headerAvatar) headerAvatar.src = imgUrl;
+                if (mainAvatar) mainAvatar.src = img;
+                if (headerAvatar) headerAvatar.src = img;
             };
             reader.readAsDataURL(file);
         });
     }
-
-    const confirmPw = document.getElementById('confirmPassword');
-    if (confirmPw) {
-        confirmPw.addEventListener('input', function () {
-            confirmPw.classList.remove('is-invalid');
-        });
-    }
-
-    window.handleUpdateProfile = updateProfile;
-    window.handleChangePassword = changePassword;
 
     document.addEventListener('DOMContentLoaded', loadProfile);
 })();

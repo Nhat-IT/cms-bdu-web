@@ -35,7 +35,7 @@
     </div>
     
     <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-        <a href="../login.html" class="nav-link logout-btn" title="Đăng xuất">
+        <a href="/auth/logout" class="nav-link logout-btn" title="Đăng xuất">
             <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
         </a>
     </div>
@@ -63,7 +63,7 @@
                 <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
                     <li><a class="dropdown-item fw-bold" href="admin-profile.html"><i class="bi bi-person-vcard text-primary me-2"></i>Hồ sơ cá nhân</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item fw-bold text-danger" href="../login.html"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
+                    <li><a class="dropdown-item fw-bold text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
                 </ul>
             </div>
         </div>
@@ -78,14 +78,14 @@
                         <label class="fw-bold small text-muted mb-1">TÌM KIẾM</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
-                            <input type="text" class="form-control" placeholder="Nhập Mã GV/SV, Họ Tên...">
+                            <input type="text" class="form-control" id="accountSearchInput" placeholder="Nhập Mã GV/SV, Họ Tên...">
                         </div>
                     </div>
                     <div class="col-xl-2 col-lg-3">
                         <label class="fw-bold small text-muted mb-1">LỌC VAI TRÒ</label>
-                        <select class="form-select fw-bold text-dark">
+                        <select class="form-select fw-bold text-dark" id="accountRoleFilter">
                             <option selected value="all">Tất cả</option>
-                            <option value="super_admin">Admin (Toàn quyền)</option>
+                            <option value="admin">Admin (Toàn quyền)</option>
                             <option value="teacher">Giảng viên</option>
                             <option value="bcs">Ban Cán Sự</option>
                             <option value="student">Sinh viên</option>
@@ -93,7 +93,7 @@
                     </div>
                     <div class="col-xl-2 col-lg-2">
                         <label class="fw-bold small text-muted mb-1">TRẠNG THÁI</label>
-                        <select class="form-select fw-bold text-dark">
+                        <select class="form-select fw-bold text-dark" id="accountStatusFilter">
                             <option selected value="all">Tất cả</option>
                             <option value="active">Hoạt động</option>
                             <option value="locked">Bị khóa</option>
@@ -103,7 +103,7 @@
                         <button class="btn btn-success fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#importAccountModal">
                             <i class="bi bi-file-earmark-excel-fill me-1"></i> IMPORT TÀI KHOẢN
                         </button>
-                        <button class="btn btn-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#accountModal" onclick="openAccountModal('add')">
+                        <button class="btn btn-primary fw-bold shadow-sm" id="adminAddAccountBtn">
                             <i class="bi bi-person-plus-fill me-1"></i> THÊM MỚI
                         </button>
                     </div>
@@ -129,92 +129,9 @@
                                 <th class="pe-4 py-3 text-end">HÀNH ĐỘNG</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="adminAccountsTableBody">
                             <tr>
-                                <td class="ps-4 text-center text-muted">1</td>
-                                <td class="fw-bold text-dark">GVDQS</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <img src="https://ui-avatars.com/api/?name=D+Q+S&background=0D8ABC&color=fff" class="table-avatar border me-3" alt="Avatar">
-                                        <div>
-                                            <div class="fw-bold text-dark">ThS. Dương Quang Sinh</div>
-                                            <div class="small text-muted">sinh.dq@bdu.edu.vn</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="text-center">
-                                    <div class="d-flex flex-column align-items-center gap-1">
-                                        <span class="badge bg-danger text-white px-2 py-1"><i class="bi bi-shield-lock-fill me-1"></i>Giáo vụ khoa</span>
-                                        <span class="badge bg-primary text-white px-2 py-1"><i class="bi bi-person-video3 me-1"></i>Giảng viên</span>
-                                    </div>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1">Đang hoạt động</span>
-                                </td>
-                                <td class="pe-4 text-end">
-                                    <button class="btn btn-light action-btn text-warning border me-1" title="Khôi phục mật khẩu" onclick="confirmResetPassword('GVDQS', 'ThS. Dương Quang Sinh')"><i class="bi bi-key-fill"></i></button>
-                                    <button class="btn btn-light action-btn text-primary border me-1" title="Sửa thông tin" data-bs-toggle="modal" data-bs-target="#accountModal" onclick="openAccountModal('edit', 'GVDQS', 'ThS. Dương Quang Sinh', 'sinh.dq@bdu.edu.vn', ['super_admin', 'teacher'], '', 'Thạc sĩ')"><i class="bi bi-pencil-square"></i></button>
-                                    <button class="btn btn-light action-btn text-danger border" title="Khóa tài khoản" onclick="confirmLockAccount('GVDQS', 'ThS. Dương Quang Sinh')"><i class="bi bi-lock-fill"></i></button>
-                                </td>
-                            </tr>
-                            
-                            <tr>
-                                <td class="ps-4 text-center text-muted">2</td>
-                                <td>
-                                    <div class="fw-bold text-dark">22050004</div>
-                                    <div class="small fw-bold text-primary">Lớp: 22TH01</div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <img src="https://ui-avatars.com/api/?name=Nhat+Y&background=ffc107&color=000" class="table-avatar border me-3" alt="Avatar">
-                                        <div>
-                                            <div class="fw-bold text-dark">Phạm Huỳnh Nhật Ý</div>
-                                            <div class="small text-muted">22050004@student.bdu.edu.vn</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="text-center">
-                                    <div class="d-flex flex-column align-items-center gap-1">
-                                        <span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-star-fill me-1"></i>Ban Cán Sự</span>
-                                        <span class="badge bg-info bg-opacity-10 text-info border border-info px-2 py-1"><i class="bi bi-person me-1"></i>Sinh viên</span>
-                                    </div>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1">Đang hoạt động</span>
-                                </td>
-                                <td class="pe-4 text-end">
-                                    <button class="btn btn-light action-btn text-warning border me-1" title="Khôi phục mật khẩu" onclick="confirmResetPassword('22050004', 'Phạm Huỳnh Nhật Ý')"><i class="bi bi-key-fill"></i></button>
-                                    <button class="btn btn-light action-btn text-primary border me-1" title="Sửa thông tin" data-bs-toggle="modal" data-bs-target="#accountModal" onclick="openAccountModal('edit', '22050004', 'Phạm Huỳnh Nhật Ý', '22050004@student.bdu.edu.vn', ['bcs', 'student'], '22TH01', '')"><i class="bi bi-pencil-square"></i></button>
-                                    <button class="btn btn-light action-btn text-danger border" title="Khóa tài khoản" onclick="confirmLockAccount('22050004', 'Phạm Huỳnh Nhật Ý')"><i class="bi bi-lock-fill"></i></button>
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <td class="ps-4 text-center text-muted">3</td>
-                                <td>
-                                    <div class="fw-bold text-dark">22050111</div>
-                                    <div class="small fw-bold text-primary">Lớp: 22TH02</div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <img src="https://ui-avatars.com/api/?name=Thi+C&background=17a2b8&color=fff" class="table-avatar border me-3" alt="Avatar">
-                                        <div>
-                                            <div class="fw-bold text-dark">Nguyễn Thị C</div>
-                                            <div class="small text-muted">22050111@student.bdu.edu.vn</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge bg-info bg-opacity-10 text-info border border-info px-2 py-1"><i class="bi bi-person me-1"></i>Sinh viên</span>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1">Đang hoạt động</span>
-                                </td>
-                                <td class="pe-4 text-end">
-                                    <button class="btn btn-light action-btn text-warning border me-1" title="Khôi phục mật khẩu" onclick="confirmResetPassword('22050111', 'Nguyễn Thị C')"><i class="bi bi-key-fill"></i></button>
-                                    <button class="btn btn-light action-btn text-primary border me-1" title="Sửa thông tin" data-bs-toggle="modal" data-bs-target="#accountModal" onclick="openAccountModal('edit', '22050111', 'Nguyễn Thị C', '22050111@student.bdu.edu.vn', ['student'], '22TH02', '')"><i class="bi bi-pencil-square"></i></button>
-                                    <button class="btn btn-light action-btn text-danger border" title="Khóa tài khoản" onclick="confirmLockAccount('22050111', 'Nguyễn Thị C')"><i class="bi bi-lock-fill"></i></button>
-                                </td>
+                                <td class="text-center text-muted py-4" colspan="6">Đang tải dữ liệu...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -247,7 +164,7 @@
             <i class="bi bi-info-circle-fill me-1"></i> Mật khẩu mặc định: <strong>Bdu@123456</strong>
         </div>
 
-        <form id="accountForm" onsubmit="return handleAccountSubmit(event)">
+        <form id="accountForm">
           <div class="row">
               <div class="col-md-6 mb-3">
                 <label class="form-label fw-bold">Mã GV/MSSV <span class="text-danger">*</span></label>
@@ -283,33 +200,12 @@
           
           <div class="mb-4 bg-light p-3 rounded border">
             <label class="form-label fw-bold d-block mb-3">Vai trò trong hệ thống <span class="text-danger">*</span></label>
-            <div class="row role-checkbox-group">
-                <div class="col-md-6 border-end border-secondary border-opacity-25">
-                    <p class="small fw-bold text-muted mb-2">QUẢN TRỊ & GIẢNG DẠY</p>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input group-staff" type="checkbox" value="super_admin" id="roleSuperAdmin">
-                        <label class="form-check-label fw-bold text-danger" for="roleSuperAdmin">Giáo vụ khoa</label>
-                    </div>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input group-staff" type="checkbox" value="teacher" id="roleTeacher">
-                        <label class="form-check-label fw-bold text-success" for="roleTeacher">Giảng viên</label>
-                    </div>
-                </div>
-                <div class="col-md-6 ps-md-4">
-                    <p class="small fw-bold text-muted mb-2">KHỐI NGƯỜI HỌC</p>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input group-student" type="checkbox" value="bcs" id="roleBcs">
-                        <label class="form-check-label fw-bold text-warning text-dark" for="roleBcs">Ban Cán Sự</label>
-                    </div>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input group-student" type="checkbox" value="student" id="roleStudent">
-                        <label class="form-check-label fw-bold text-info text-dark" for="roleStudent">Sinh viên</label>
-                    </div>
-                </div>
-            </div>
-            <div class="small text-danger mt-3" id="roleValidationMsg" style="display: none;">
-                <i class="bi bi-x-circle-fill me-1"></i>Vui lòng chọn ít nhất 1 vai trò!
-            </div>
+            <select class="form-select" id="modalRoleSingle" required>
+                <option value="admin">Admin (Giáo vụ khoa)</option>
+                <option value="teacher">Giảng viên</option>
+                <option value="bcs">Ban Cán Sự</option>
+                <option value="student" selected>Sinh viên</option>
+            </select>
           </div>
 
           <div class="text-end">
@@ -340,12 +236,12 @@
         </div>
         <div class="mb-3">
             <label class="form-label fw-bold">Chọn file Excel (.xlsx, .xls) <span class="text-danger">*</span></label>
-            <input type="file" class="form-control border-success" accept=".xlsx, .xls" required>
+            <input type="file" class="form-control border-success" id="accountImportFile" accept=".xlsx, .xls" required>
         </div>
       </div>
       <div class="modal-footer bg-light border-0">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
-        <button type="button" class="btn btn-success fw-bold px-4" onclick="handleImportSubmit()">TIẾN HÀNH IMPORT</button>
+                <button type="button" class="btn btn-success fw-bold px-4" id="accountImportBtn">TIẾN HÀNH IMPORT</button>
       </div>
     </div>
   </div>
@@ -354,107 +250,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../../public/js/script.js"></script>
 <script src="../../public/js/admin/admin-layout.js"></script>
-
-<script>
-    document.getElementById('sidebarToggle').addEventListener('click', function() {
-        document.getElementById('sidebar').classList.toggle('active');
-    });
-
-    const staffCheckboxes = document.querySelectorAll('.group-staff');
-    const studentCheckboxes = document.querySelectorAll('.group-student');
-    const classInputGroup = document.getElementById('classInputGroup');
-    const modalClassInput = document.getElementById('modalClass');
-    const academicRankGroup = document.getElementById('academicRankGroup');
-    const modalAcademicRank = document.getElementById('modalAcademicRank');
-
-    // Tự động ẩn hiện ô Lớp học dựa vào vai trò
-    function updateRoleConstraints() {
-        const isStaffChecked = Array.from(staffCheckboxes).some(cb => cb.checked);
-        const isStudentChecked = Array.from(studentCheckboxes).some(cb => cb.checked);
-        const isBcsChecked = document.getElementById('roleBcs').checked;
-        const isStdChecked = document.getElementById('roleStudent').checked;
-
-        studentCheckboxes.forEach(cb => { cb.disabled = isStaffChecked; if (isStaffChecked) cb.checked = false; });
-        staffCheckboxes.forEach(cb => { cb.disabled = isStudentChecked; if (isStudentChecked) cb.checked = false; });
-
-        // Hiển thị ô nhập Lớp học nếu chọn Sinh viên hoặc Ban Cán Sự
-        if (isStdChecked || isBcsChecked) {
-            classInputGroup.style.display = 'block';
-            modalClassInput.setAttribute('required', 'true');
-
-            // Vai trò người học: ẩn Học hàm / Học vị
-            academicRankGroup.style.display = 'none';
-            modalAcademicRank.value = '';
-        } else {
-            classInputGroup.style.display = 'none';
-            modalClassInput.removeAttribute('required');
-            modalClassInput.value = '';
-
-            // Vai trò quản trị/giảng viên: hiện Học hàm / Học vị
-            academicRankGroup.style.display = 'block';
-        }
-
-        if (isStaffChecked || isStudentChecked) document.getElementById('roleValidationMsg').style.display = 'none';
-    }
-
-    document.querySelectorAll('.role-checkbox-group .form-check-input').forEach(cb => {
-        cb.addEventListener('change', updateRoleConstraints);
-    });
-
-    function openAccountModal(mode, code = '', fullName = '', email = '', roles = [], className = '', academicRank = '') {
-        const title = document.getElementById('accountModalTitle');
-        const inputCode = document.getElementById('modalCode');
-        const inputAcademicRank = document.getElementById('modalAcademicRank');
-        document.getElementById('accountForm').reset();
-        
-        document.querySelectorAll('.form-check-input').forEach(cb => { cb.checked = false; cb.disabled = false; });
-        classInputGroup.style.display = 'none';
-        academicRankGroup.style.display = 'block';
-
-        if (mode === 'add') {
-            title.innerHTML = '<i class="bi bi-person-plus-fill me-2"></i>Thêm Tài Khoản Mới';
-            inputCode.removeAttribute('readonly'); 
-            inputAcademicRank.value = '';
-        } else {
-            title.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Cập Nhật Thông Tin';
-            inputCode.value = code;
-            inputCode.setAttribute('readonly', 'true'); 
-            document.getElementById('modalFullName').value = fullName;
-            document.getElementById('modalEmail').value = email;
-            modalClassInput.value = className;
-            inputAcademicRank.value = academicRank;
-            
-            roles.forEach(role => {
-                if (role === 'super_admin') document.getElementById('roleSuperAdmin').checked = true;
-                if (role === 'teacher') document.getElementById('roleTeacher').checked = true;
-                if (role === 'bcs') document.getElementById('roleBcs').checked = true;
-                if (role === 'student') document.getElementById('roleStudent').checked = true;
-            });
-            updateRoleConstraints();
-        }
-    }
-
-    function handleAccountSubmit(event) {
-        event.preventDefault();
-        const isRoleChecked = Array.from(document.querySelectorAll('.form-check-input')).some(cb => cb.checked);
-        if (!isRoleChecked) { document.getElementById('roleValidationMsg').style.display = 'block'; return false; }
-        alert("✅ Đã lưu dữ liệu người dùng thành công!");
-        bootstrap.Modal.getInstance(document.getElementById('accountModal')).hide();
-        return false;
-    }
-
-    function handleImportSubmit() {
-        alert("✅ Đã xử lý file Excel và import thành công danh sách tài khoản kèm thông tin Lớp học!");
-        bootstrap.Modal.getInstance(document.getElementById('importAccountModal')).hide();
-    }
-
-    function confirmResetPassword(code, fullName) {
-        if(confirm(`⚠️ Khôi phục mật khẩu cho [${fullName}] về Bdu@123456?`)) alert("✅ Đã reset thành công!");
-    }
-
-    function confirmLockAccount(code, fullName) {
-        if(confirm(`⛔ KHÓA tài khoản của [${fullName}]?`)) alert("🔒 Đã khóa tài khoản thành công!");
-    }
-</script>
+<script src="../../public/js/admin/accounts.js"></script>
 </body>
 </html>

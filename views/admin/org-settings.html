@@ -35,7 +35,7 @@
     </div>
     
     <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-        <a href="../login.html" class="nav-link logout-btn" title="Đăng xuất">
+        <a href="/auth/logout" class="nav-link logout-btn" title="Đăng xuất">
             <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
         </a>
     </div>
@@ -63,7 +63,7 @@
                 <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
                     <li><a class="dropdown-item fw-bold" href="admin-profile.html"><i class="bi bi-person-vcard text-primary me-2"></i>Hồ sơ cá nhân</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item fw-bold text-danger" href="../login.html"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
+                    <li><a class="dropdown-item fw-bold text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
                 </ul>
             </div>
         </div>
@@ -104,7 +104,7 @@
                                         <th class="text-end pe-4">HÀNH ĐỘNG</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="adminDepartmentsBody">
                                     <tr>
                                         <td class="ps-4 fw-bold text-primary">KTPM</td>
                                         <td class="fw-bold text-dark">Kỹ thuật Phần mềm</td>
@@ -165,7 +165,7 @@
                                         <th class="text-end pe-4">HÀNH ĐỘNG</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="adminSemestersBody">
                                     <tr class="bg-success bg-opacity-10">
                                         <td class="ps-4 fw-bold text-success">HK2</td>
                                         <td class="fw-bold text-dark">2025 - 2026</td>
@@ -341,5 +341,6 @@
         }
     }
 </script>
+<script src="../../public/js/admin/org-settings.js"></script>
 </body>
 </html>
