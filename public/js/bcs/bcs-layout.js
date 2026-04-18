@@ -1,4 +1,6 @@
 // Giao diện dùng chung BCS: xử lý nút mở/đóng sidebar trên mobile cho tất cả trang BCS.
+resetBcsLayoutPlaceholders();
+
 document.addEventListener('DOMContentLoaded', function () {
     const sidebarToggle = document.getElementById('sidebarToggle');
     const sidebar = document.getElementById('sidebar');
@@ -27,6 +29,52 @@ document.addEventListener('DOMContentLoaded', function () {
     hydrateBcsSharedData();
 
 });
+
+function resetBcsLayoutPlaceholders() {
+    const profileImg = document.querySelector('.bcs-profile-container img[alt="Avatar BCS"]');
+    if (profileImg) {
+        profileImg.src = 'https://ui-avatars.com/api/?name=BCS&background=6c757d&color=fff';
+    }
+
+    const nameNode = document.querySelector('.bcs-profile-container .text-white.fw-bold.fs-6');
+    if (nameNode) {
+        nameNode.textContent = 'Đang tải...';
+    }
+
+    const roleNode = document.querySelector('.bcs-profile-container .text-white-50.small.mb-1');
+    if (roleNode) {
+        roleNode.textContent = 'Vai trò: BCS';
+    }
+
+    document.querySelectorAll('.bcs-class-badge, #userClassName').forEach(function (node) {
+        if (node.classList.contains('bcs-class-badge')) {
+            node.textContent = 'LỚP: --';
+            return;
+        }
+        node.textContent = '--';
+    });
+
+    document.querySelectorAll('.bcs-notification-count').forEach(function (node) {
+        node.textContent = '0';
+    });
+
+    // Keep BCS modal/list placeholders neutral until real data arrives.
+    const textFallbacks = [
+        ['#fbSenderName', 'Đang tải...'],
+        ['#fbTime', 'Đang tải...'],
+        ['#fbStatusBadge', 'Đang tải'],
+        ['#fbSubject', 'Đang tải chủ đề...'],
+        ['#lblTeacher', '--'],
+        ['#lblTime', '--']
+    ];
+
+    textFallbacks.forEach(function (entry) {
+        const node = document.querySelector(entry[0]);
+        if (node) {
+            node.textContent = entry[1];
+        }
+    });
+}
 
 async function hydrateBcsSharedData() {
     try {

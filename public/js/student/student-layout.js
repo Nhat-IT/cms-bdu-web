@@ -1,4 +1,6 @@
 // Giao diện dùng chung Student: sidebar toggle, hồ sơ sidebar và thông báo topbar từ DB.
+resetStudentLayoutPlaceholders();
+
 document.addEventListener('DOMContentLoaded', function () {
     const sidebarToggle = document.getElementById('sidebarToggle');
     const sidebar = document.getElementById('sidebar');
@@ -15,6 +17,60 @@ document.addEventListener('DOMContentLoaded', function () {
         console.error('Shared student layout data error:', error);
     });
 });
+
+function resetStudentLayoutPlaceholders() {
+    const nameNode = document.querySelector('.profile-container .text-white.fw-bold.fs-6');
+    if (nameNode) {
+        nameNode.textContent = 'Đang tải...';
+    }
+
+    const mssvNode = document.querySelector('.profile-container .text-white-50.small.mb-1');
+    if (mssvNode) {
+        mssvNode.textContent = 'MSSV: --';
+    }
+
+    document.querySelectorAll('.student-class-badge, .profile-class').forEach(function (node) {
+        node.textContent = 'LỚP: --';
+    });
+
+    document.querySelectorAll('.notification-badge, [data-notification-count]').forEach(function (node) {
+        node.textContent = '0';
+        node.style.display = 'none';
+    });
+
+    // Reset placeholder values on student pages to avoid showing demo data before API hydrate.
+    const textFallbacks = [
+        ['#detailAuthor', 'Đang tải...'],
+        ['#detailScore', '--'],
+        ['#detailDeadline', 'Đang tải...'],
+        ['#feedbackModalAttachmentName', 'Chưa có tệp đính kèm.'],
+        ['#notifyDetailTime', 'Đang tải...'],
+        ['#notifyDetailSource', 'Hệ thống'],
+        ['#notifyDetailContent', 'Đang tải nội dung thông báo...']
+    ];
+
+    textFallbacks.forEach(function (entry) {
+        const node = document.querySelector(entry[0]);
+        if (node) {
+            node.textContent = entry[1];
+        }
+    });
+
+    const valueFallbacks = [
+        ['#profileFullName', ''],
+        ['#profileBirthDate', ''],
+        ['#profileEmail', ''],
+        ['#profilePhoneNumber', ''],
+        ['#profileAddress', '']
+    ];
+
+    valueFallbacks.forEach(function (entry) {
+        const input = document.querySelector(entry[0]);
+        if (input) {
+            input.value = entry[1];
+        }
+    });
+}
 
 function formatDateTimeVN(dateValue) {
     const d = new Date(dateValue);

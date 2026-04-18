@@ -1,4 +1,6 @@
 // Shared Teacher layout: collapse/expand sidebar like student pages.
+resetTeacherLayoutPlaceholders();
+
 document.addEventListener('DOMContentLoaded', function () {
     const sidebar = document.getElementById('sidebar');
     const mainContent = document.querySelector('.main-content');
@@ -294,3 +296,51 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+function resetTeacherLayoutPlaceholders() {
+    const profileNameNode = document.querySelector('.top-navbar-blue .text-end.me-3 b');
+    if (profileNameNode) {
+        profileNameNode.textContent = 'Đang tải...';
+    }
+
+    const topAvatar = document.getElementById('headerAvatar');
+    if (topAvatar) {
+        topAvatar.src = 'https://ui-avatars.com/api/?name=Teacher&background=6c757d&color=fff';
+    }
+
+    const sidebarBadge = document.querySelector('a[href="approve-evidences.html"] .badge');
+    if (sidebarBadge) {
+        sidebarBadge.textContent = '0';
+        sidebarBadge.classList.add('d-none');
+    }
+
+    // Reset demo placeholders shown in teacher pages/modals before API data is fetched.
+    const textFallbacks = [
+        ['#modalStudentName', 'Đang tải...'],
+        ['#modalStudentId', 'MSSV: --'],
+        ['#modalClass', '--'],
+        ['#modalDate', '--/--/----'],
+        ['#gradeStudentCountBadge', '0 students'],
+        ['#lblTime', '--']
+    ];
+
+    textFallbacks.forEach(function (entry) {
+        const node = document.querySelector(entry[0]);
+        if (node) {
+            node.textContent = entry[1];
+        }
+    });
+
+    const inputFallbacks = [
+        ['#teacherFullNameInput', ''],
+        ['#teacherEmailInput', ''],
+        ['#teacherPhoneInput', '']
+    ];
+
+    inputFallbacks.forEach(function (entry) {
+        const input = document.querySelector(entry[0]);
+        if (input) {
+            input.value = entry[1];
+        }
+    });
+}
