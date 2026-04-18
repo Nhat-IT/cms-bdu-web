@@ -2,6 +2,30 @@ const studentModel = require('../models/studentModel');
 const bcrypt = require('bcryptjs');
 
 const DEFAULT_ACCOUNT_PASSWORD = process.env.DEFAULT_ACCOUNT_PASSWORD || 'Bdu@123456';
+const SCHEMA_ERROR_CODES = new Set(['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR', 'ER_BAD_DB_ERROR']);
+
+function defaultMe(req) {
+    return {
+        id: req.user?.id || null,
+        username: req.user?.username || '',
+        full_name: req.user?.full_name || req.user?.name || '',
+        email: req.user?.email || '',
+        role: req.user?.role || '',
+        avatar: req.user?.avatar || null,
+        birth_date: null,
+        phone_number: null,
+        address: null,
+        class_name: null,
+        department_name: null
+    };
+}
+
+function handleReadError(req, res, error, fallback) {
+    if (SCHEMA_ERROR_CODES.has(error?.code)) {
+        return res.json(fallback);
+    }
+    return res.status(500).json({ error: error.message });
+}
 
 // ========== DASHBOARD SINH VIÊN ==========
 exports.getDashboard = async (req, res) => {
@@ -15,7 +39,13 @@ exports.getDashboard = async (req, res) => {
         res.json(dashboard);
     } catch (error) {
         console.error('Dashboard error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, {
+            profile: defaultMe(req),
+            attendance: { total_sessions: 0, present: 0, excused_absent: 0, unexcused_absent: 0 },
+            grades: { count: 0, averageScore: 0, recent: [] },
+            classes: { count: 0, list: [] },
+            notifications: { unread: 0 }
+        });
     }
 };
 
@@ -36,7 +66,10 @@ exports.getTeacherDashboard = async (req, res) => {
         res.json(dashboard);
     } catch (error) {
         console.error('Teacher dashboard error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, {
+            stats: { classCount: 0, weeklySessions: 0, pendingGrading: 0, pendingEvidence: 0 },
+            classes: []
+        });
     }
 };
 
@@ -57,7 +90,12 @@ exports.getBcsDashboard = async (req, res) => {
         res.json(dashboard);
     } catch (error) {
         console.error('BCS dashboard error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, {
+            stats: { totalStudents: 0, absentToday: 0, pendingEvidence: 0, newFeedback: 0 },
+            classInfo: { className: null },
+            todaySchedule: [],
+            announcements: []
+        });
     }
 };
 
@@ -77,7 +115,7 @@ exports.getMe = async (req, res) => {
         res.json(me);
     } catch (error) {
         console.error('Get me error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, defaultMe(req));
     }
 };
 
@@ -93,7 +131,7 @@ exports.getUnreadNotificationCount = async (req, res) => {
         res.json({ unreadCount });
     } catch (error) {
         console.error('Unread count error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, { unreadCount: 0 });
     }
 };
 
@@ -188,7 +226,10 @@ exports.getAdminDashboard = async (req, res) => {
         res.json(data);
     } catch (error) {
         console.error('Admin dashboard error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, {
+            stats: { totalStudents: 0, totalTeachers: 0, totalClasses: 0, totalOpenClassSubjects: 0 },
+            classSubjects: []
+        });
     }
 };
 
@@ -209,7 +250,7 @@ exports.getAdminAccounts = async (req, res) => {
         res.json(rows);
     } catch (error) {
         console.error('Admin accounts list error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, []);
     }
 };
 
@@ -324,7 +365,7 @@ exports.getTeacherGroups = async (req, res) => {
         res.json(rows);
     } catch (error) {
         console.error('Teacher groups error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, []);
     }
 };
 
@@ -348,7 +389,7 @@ exports.getTeacherAttendanceRoster = async (req, res) => {
         res.json(data);
     } catch (error) {
         console.error('Teacher roster error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, { students: [] });
     }
 };
 
@@ -418,7 +459,7 @@ exports.getBcsGroups = async (req, res) => {
         res.json(rows);
     } catch (error) {
         console.error('BCS groups error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, []);
     }
 };
 
@@ -442,7 +483,7 @@ exports.getBcsAttendanceRoster = async (req, res) => {
         res.json(data);
     } catch (error) {
         console.error('BCS roster error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, { students: [] });
     }
 };
 
@@ -477,7 +518,7 @@ exports.getBcsDocuments = async (req, res) => {
         res.json(rows);
     } catch (error) {
         console.error('BCS documents error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, []);
     }
 };
 
@@ -557,7 +598,7 @@ exports.getBcsAnnouncements = async (req, res) => {
         res.json(rows);
     } catch (error) {
         console.error('BCS announcements error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, []);
     }
 };
 
@@ -639,7 +680,7 @@ exports.getBcsFeedbacks = async (req, res) => {
         res.json(rows);
     } catch (error) {
         console.error('BCS feedbacks error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, []);
     }
 };
 
@@ -703,7 +744,10 @@ exports.getBcsDashboardDetail = async (req, res) => {
         res.json(data);
     } catch (error) {
         console.error('BCS dashboard detail error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, {
+            stats: { totalStudents: 0, warningStudents: 0, warningSubjects: 0 },
+            rows: []
+        });
     }
 };
 
@@ -717,7 +761,7 @@ exports.getAdminClassesSubjects = async (req, res) => {
         res.json(data);
     } catch (error) {
         console.error('Admin classes-subjects error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, { classes: [], subjects: [] });
     }
 };
 
@@ -736,7 +780,7 @@ exports.getAdminSystemLogs = async (req, res) => {
         res.json(rows);
     } catch (error) {
         console.error('Admin system logs error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, []);
     }
 };
 
@@ -750,7 +794,7 @@ exports.getAdminOrgSettings = async (req, res) => {
         res.json(data);
     } catch (error) {
         console.error('Admin org settings error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, { departments: [], semesters: [] });
     }
 };
 
@@ -764,7 +808,7 @@ exports.getAdminTeachingAssignments = async (req, res) => {
         res.json(data);
     } catch (error) {
         console.error('Admin teaching assignments error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, []);
     }
 };
 
@@ -783,7 +827,7 @@ exports.getTeacherEvidences = async (req, res) => {
         res.json(rows);
     } catch (error) {
         console.error('Teacher evidences error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, []);
     }
 };
 
@@ -822,7 +866,7 @@ exports.getTeacherAssignments = async (req, res) => {
         res.json(rows);
     } catch (error) {
         console.error('Teacher assignments error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, []);
     }
 };
 
@@ -905,7 +949,7 @@ exports.getTeacherAssignmentSubmissions = async (req, res) => {
         res.json(rows);
     } catch (error) {
         console.error('Teacher submissions error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, []);
     }
 };
 
@@ -954,7 +998,7 @@ exports.getTeacherGrades = async (req, res) => {
         res.json(rows);
     } catch (error) {
         console.error('Teacher grades error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, []);
     }
 };
 
@@ -998,7 +1042,7 @@ exports.getProfile = async (req, res) => {
         res.json(profile);
     } catch (error) {
         console.error('Profile error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, defaultMe(req));
     }
 };
 
@@ -1078,7 +1122,7 @@ exports.getClasses = async (req, res) => {
         res.json(classes);
     } catch (error) {
         console.error('Classes error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, []);
     }
 };
 
@@ -1099,7 +1143,10 @@ exports.getAttendance = async (req, res) => {
         });
     } catch (error) {
         console.error('Attendance error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, {
+            stats: { total_sessions: 0, present: 0, excused_absent: 0, unexcused_absent: 0 },
+            records: []
+        });
     }
 };
 
@@ -1115,7 +1162,7 @@ exports.getGrades = async (req, res) => {
         res.json(grades);
     } catch (error) {
         console.error('Grades error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, []);
     }
 };
 
@@ -1131,7 +1178,7 @@ exports.getAssignments = async (req, res) => {
         res.json(assignments);
     } catch (error) {
         console.error('Assignments error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, []);
     }
 };
 
@@ -1197,7 +1244,7 @@ exports.getDocuments = async (req, res) => {
         res.json(documents);
     } catch (error) {
         console.error('Documents error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, []);
     }
 };
 
@@ -1213,7 +1260,7 @@ exports.getNotifications = async (req, res) => {
         res.json(notifications);
     } catch (error) {
         console.error('Notifications error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, []);
     }
 };
 
@@ -1279,7 +1326,7 @@ exports.getFeedbacks = async (req, res) => {
         res.json(feedbacks);
     } catch (error) {
         console.error('Feedback list error:', error);
-        res.status(500).json({ error: error.message });
+        return handleReadError(req, res, error, []);
     }
 };
 
