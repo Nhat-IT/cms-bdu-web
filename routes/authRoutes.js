@@ -31,7 +31,15 @@ router.post('/login', async (req, res) => {
     }
 
     const user = users[0];
-    const passwordMatch = await bcrypt.compare(password, user.password || '');
+    const storedPassword = String(user.password || '');
+
+    // Support legacy plain-text passwords while keeping bcrypt for hashed ones.
+    let passwordMatch = false;
+    if (storedPassword.startsWith('$2a$') || storedPassword.startsWith('$2b$') || storedPassword.startsWith('$2y$')) {
+      passwordMatch = await bcrypt.compare(password, storedPassword);
+    } else {
+      passwordMatch = password === storedPassword;
+    }
 
     if (!passwordMatch) {
       return res.status(401).json({ success: false, message: 'Tên đăng nhập hoặc mật khẩu không chính xác' });
