@@ -6,6 +6,19 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const db = require('../src/config/db');
 
+const LOGIN_IDENTITY_COLUMNS = ['username', 'user_name', 'account', 'account_name', 'email'];
+const PASSWORD_COLUMNS = ['password', 'user_password', 'passwd'];
+
+async function resolveUsersSchema() {
+  const [columns] = await db.query('SHOW COLUMNS FROM users');
+  const columnSet = new Set(columns.map((c) => c.Field));
+
+  const identityColumns = LOGIN_IDENTITY_COLUMNS.filter((c) => columnSet.has(c));
+  const passwordColumn = PASSWORD_COLUMNS.find((c) => columnSet.has(c));
+
+  return { identityColumns, passwordColumn };
+}
+
 function ensureGoogleAuthEnabled(req, res, next) {
   if (!passport.googleAuthEnabled) {
     return res.redirect('/login.html?error=google_oauth_not_configured');
@@ -21,9 +34,21 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Vui lòng nhập tên đăng nhập và mật khẩu' });
     }
 
+    const { identityColumns, passwordColumn } = await resolveUsersSchema();
+
+    if (!identityColumns.length || !passwordColumn) {
+      return res.status(500).json({
+        success: false,
+        message: 'Cấu trúc bảng users chưa đúng (thiếu cột đăng nhập hoặc mật khẩu)'
+      });
+    }
+
+    const whereClause = identityColumns.map((col) => `${col} = ?`).join(' OR ');
+    const queryValues = identityColumns.map(() => username);
+
     const [users] = await db.query(
-      'SELECT * FROM users WHERE username = ? OR email = ?',
-      [username, username]
+      `SELECT * FROM users WHERE ${whereClause} LIMIT 1`,
+      queryValues
     );
 
     if (users.length === 0) {
@@ -31,7 +56,7 @@ router.post('/login', async (req, res) => {
     }
 
     const user = users[0];
-    const storedPassword = String(user.password || '');
+    const storedPassword = String(user[passwordColumn] || '');
 
     // Support legacy plain-text passwords while keeping bcrypt for hashed ones.
     let passwordMatch = false;
