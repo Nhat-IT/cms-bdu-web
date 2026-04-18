@@ -25,6 +25,14 @@ async function fetchSchedule() {
 	return response.json();
 }
 
+function hasValidSchedule(item) {
+	if (!item) return false;
+	const day = Number(item.day_of_week || 0);
+	const start = Number(item.start_period || 0);
+	const end = Number(item.end_period || 0);
+	return day >= 2 && day <= 8 && start > 0 && end >= start;
+}
+
 function renderScheduleList(classes) {
 	const wrapper = document.querySelector('.schedule-table-wrapper');
 	if (!wrapper) return;
@@ -34,7 +42,13 @@ function renderScheduleList(classes) {
 		return;
 	}
 
-	const cards = classes.map((item) => `
+	const scheduledClasses = classes.filter(hasValidSchedule);
+	if (!scheduledClasses.length) {
+		wrapper.innerHTML = '<div class="p-4 text-muted text-center">Bạn đã đăng ký môn học nhưng chưa được xếp lịch học.</div>';
+		return;
+	}
+
+	const cards = scheduledClasses.map((item) => `
 		<div class="subject-block mb-3">
 			<div class="subject-title">${item.subject_name} (${item.subject_code})</div>
 			<div>Nhóm: ${item.group_code || '--'} | Lớp: ${item.class_name || '--'}</div>
@@ -50,6 +64,11 @@ function renderScheduleList(classes) {
 
 async function initSchedulePage() {
 	try {
+		const wrapper = document.querySelector('.schedule-table-wrapper');
+		if (wrapper) {
+			wrapper.innerHTML = '<div class="p-4 text-muted text-center">Đang tải lịch học...</div>';
+		}
+
 		const classes = await fetchSchedule();
 		renderScheduleList(classes);
 	} catch (error) {
