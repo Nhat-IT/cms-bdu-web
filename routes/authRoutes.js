@@ -8,15 +8,41 @@ const db = require('../src/config/db');
 
 const LOGIN_IDENTITY_COLUMNS = ['username', 'user_name', 'account', 'account_name', 'email'];
 const PASSWORD_COLUMNS = ['password', 'user_password', 'passwd'];
+const USERS_SCHEMA_TTL_MS = Number(process.env.USERS_SCHEMA_CACHE_TTL_MS || 300000);
+
+let usersSchemaCache = null;
+let usersSchemaCacheAt = 0;
+let usersSchemaInFlight = null;
 
 async function resolveUsersSchema() {
-  const [columns] = await db.query('SHOW COLUMNS FROM users');
-  const columnSet = new Set(columns.map((c) => c.Field));
+  const now = Date.now();
+  if (usersSchemaCache && now - usersSchemaCacheAt < USERS_SCHEMA_TTL_MS) {
+    return usersSchemaCache;
+  }
 
-  const identityColumns = LOGIN_IDENTITY_COLUMNS.filter((c) => columnSet.has(c));
-  const passwordColumn = PASSWORD_COLUMNS.find((c) => columnSet.has(c));
+  if (usersSchemaInFlight) {
+    return usersSchemaInFlight;
+  }
 
-  return { identityColumns, passwordColumn };
+  usersSchemaInFlight = (async () => {
+    const [columns] = await db.query('SHOW COLUMNS FROM users');
+    const columnSet = new Set(columns.map((c) => c.Field));
+
+    const schema = {
+      identityColumns: LOGIN_IDENTITY_COLUMNS.filter((c) => columnSet.has(c)),
+      passwordColumn: PASSWORD_COLUMNS.find((c) => columnSet.has(c))
+    };
+
+    usersSchemaCache = schema;
+    usersSchemaCacheAt = Date.now();
+    return schema;
+  })();
+
+  try {
+    return await usersSchemaInFlight;
+  } finally {
+    usersSchemaInFlight = null;
+  }
 }
 
 function ensureGoogleAuthEnabled(req, res, next) {

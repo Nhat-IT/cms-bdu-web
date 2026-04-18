@@ -11,7 +11,7 @@ function ensureRequiredEnv() {
 
 ensureRequiredEnv();
 const isProduction = process.env.NODE_ENV === 'production';
-const defaultConnectionLimit = isProduction ? 1 : 5;
+const defaultConnectionLimit = isProduction ? 8 : 5;
 
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
@@ -21,6 +21,8 @@ const pool = mysql.createPool({
     port: Number(process.env.DB_PORT || 3306),
     waitForConnections: true,
     connectionLimit: Number(process.env.DB_CONNECTION_LIMIT || defaultConnectionLimit),
+    maxIdle: Number(process.env.DB_MAX_IDLE || defaultConnectionLimit),
+    idleTimeout: Number(process.env.DB_IDLE_TIMEOUT || 60000),
     queueLimit: 0,
     connectTimeout: Number(process.env.DB_CONNECT_TIMEOUT || 10000),
     enableKeepAlive: true,

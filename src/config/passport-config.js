@@ -9,22 +9,48 @@ const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL
 
 const USERNAME_COLUMNS = ['username', 'user_name', 'account', 'account_name'];
 const PASSWORD_COLUMNS = ['password', 'user_password', 'passwd'];
+const USERS_SCHEMA_TTL_MS = Number(process.env.USERS_SCHEMA_CACHE_TTL_MS || 300000);
+
+let usersSchemaCache = null;
+let usersSchemaCacheAt = 0;
+let usersSchemaInFlight = null;
 
 async function resolveUsersSchema() {
-    const [columns] = await db.query('SHOW COLUMNS FROM users');
-    const columnSet = new Set(columns.map((column) => column.Field));
+    const now = Date.now();
+    if (usersSchemaCache && now - usersSchemaCacheAt < USERS_SCHEMA_TTL_MS) {
+        return usersSchemaCache;
+    }
 
-    return {
-        hasId: columnSet.has('id'),
-        hasEmail: columnSet.has('email'),
-        hasName: columnSet.has('name'),
-        hasFullName: columnSet.has('full_name'),
-        hasGoogleId: columnSet.has('google_id'),
-        hasRole: columnSet.has('role'),
-        hasAvatar: columnSet.has('avatar'),
-        hasUsername: USERNAME_COLUMNS.find((column) => columnSet.has(column)) || null,
-        passwordColumn: PASSWORD_COLUMNS.find((column) => columnSet.has(column)) || null
-    };
+    if (usersSchemaInFlight) {
+        return usersSchemaInFlight;
+    }
+
+    usersSchemaInFlight = (async () => {
+        const [columns] = await db.query('SHOW COLUMNS FROM users');
+        const columnSet = new Set(columns.map((column) => column.Field));
+
+        const schema = {
+            hasId: columnSet.has('id'),
+            hasEmail: columnSet.has('email'),
+            hasName: columnSet.has('name'),
+            hasFullName: columnSet.has('full_name'),
+            hasGoogleId: columnSet.has('google_id'),
+            hasRole: columnSet.has('role'),
+            hasAvatar: columnSet.has('avatar'),
+            hasUsername: USERNAME_COLUMNS.find((column) => columnSet.has(column)) || null,
+            passwordColumn: PASSWORD_COLUMNS.find((column) => columnSet.has(column)) || null
+        };
+
+        usersSchemaCache = schema;
+        usersSchemaCacheAt = Date.now();
+        return schema;
+    })();
+
+    try {
+        return await usersSchemaInFlight;
+    } finally {
+        usersSchemaInFlight = null;
+    }
 }
 
 const googleAuthEnabled = Boolean(
