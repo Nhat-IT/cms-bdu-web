@@ -169,8 +169,8 @@ function displayTodaySchedule(classes) {
 		scheduleContainer.innerHTML = `
 			<div class="p-4 text-center border rounded border-dashed bg-white mt-1">
 				<i class="bi bi-calendar2-week text-muted fs-1 mb-2"></i>
-				<h6 class="text-muted fw-bold">Chua co lich hoc</h6>
-				<p class="small text-muted mb-0">Khi duoc phan lop, lich hoc se hien thi o day.</p>
+				<h6 class="text-muted fw-bold">Chưa có lịch học</h6>
+				<p class="small text-muted mb-0">Khi được phân lớp, lịch học sẽ hiển thị ở đây.</p>
 			</div>
 		`;
 		return;
@@ -181,10 +181,10 @@ function displayTodaySchedule(classes) {
 		<div class="p-3 mb-3 bg-light rounded border-start border-4 border-primary shadow-sm">
 			<div class="d-flex justify-content-between mb-2">
 				<span class="badge bg-primary px-2 py-1"><i class="bi bi-calendar3 me-1"></i>${formatDateDMY(cls.start_date)} - ${formatDateDMY(cls.end_date)}</span>
-				<span class="text-muted small fw-bold"><i class="bi bi-geo-alt-fill me-1 text-danger"></i>${cls.room || 'Chua cap nhat phong'}</span>
+				<span class="text-muted small fw-bold"><i class="bi bi-geo-alt-fill me-1 text-danger"></i>${cls.room || 'Chưa cập nhật phòng'}</span>
 			</div>
-			<h6 class="fw-bold text-dark mb-1">${cls.subject_name || 'Mon hoc'}</h6>
-			<p class="text-muted small mb-0"><i class="bi bi-person-badge text-primary me-1"></i>GV: ${cls.teacher_name || 'Chua phan cong'}</p>
+			<h6 class="fw-bold text-dark mb-1">${cls.subject_name || 'Môn học'}</h6>
+			<p class="text-muted small mb-0"><i class="bi bi-person-badge text-primary me-1"></i>GV: ${cls.teacher_name || 'Chưa phân công'}</p>
 		</div>
 	`).join('');
 }
@@ -197,8 +197,8 @@ function displayAttendanceWarnings(classes, attendance) {
 		attendanceCard.innerHTML = `
 			<div class="p-4 text-center border rounded border-dashed bg-white mt-1">
 				<i class="bi bi-clipboard2-pulse text-muted fs-1 mb-2"></i>
-				<h6 class="text-muted fw-bold">Chua co du lieu diem danh</h6>
-				<p class="small text-muted mb-0">Sau buoi hoc dau tien, he thong se cap nhat tai day.</p>
+				<h6 class="text-muted fw-bold">Chưa có dữ liệu điểm danh</h6>
+				<p class="small text-muted mb-0">Sau buổi học đầu tiên, hệ thống sẽ cập nhật tại đây.</p>
 			</div>
 		`;
 		return;
@@ -210,8 +210,8 @@ function displayAttendanceWarnings(classes, attendance) {
 		attendanceCard.innerHTML = `
 			<div class="p-4 text-center border rounded border-dashed bg-white mt-1">
 				<i class="bi bi-clipboard2-pulse text-muted fs-1 mb-2"></i>
-				<h6 class="text-muted fw-bold">Chua duoc diem danh</h6>
-				<p class="small text-muted mb-0">Hien tai ban chua co buoi diem danh nao.</p>
+				<h6 class="text-muted fw-bold">Chưa được điểm danh</h6>
+				<p class="small text-muted mb-0">Hiện tại bạn chưa có buổi điểm danh nào.</p>
 			</div>
 		`;
 		return;
