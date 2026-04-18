@@ -51,9 +51,10 @@ router.post('/login', async (req, res) => {
     const loginCandidates = [username];
 
     if (!String(username).includes('@') && identityColumns.length === 1 && identityColumns[0] === 'email') {
+      const normalizedUsername = String(username).replace(/_bdu$/i, '');
       const derivedEmails = [
-        `${username}@bdu.edu.vn`,
-        `${username}@student.bdu.edu.vn`
+        `${normalizedUsername}@bdu.edu.vn`,
+        `${normalizedUsername}@student.bdu.edu.vn`
       ];
       derivedEmails.forEach((candidate) => loginCandidates.push(candidate));
     }
