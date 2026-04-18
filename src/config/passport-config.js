@@ -2,13 +2,21 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const db = require('./db'); // Đường dẫn trỏ đến file kết nối MySQL của bạn
 
-const googleAuthEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL
+    || process.env.GOOGLE_REDIRECT_URI
+    || (process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}/auth/google/callback` : 'http://localhost:3000/auth/google/callback');
+
+const googleAuthEnabled = Boolean(
+    process.env.GOOGLE_CLIENT_ID
+    && process.env.GOOGLE_CLIENT_SECRET
+    && GOOGLE_CALLBACK_URL
+);
 
 if (googleAuthEnabled) {
     passport.use(new GoogleStrategy({
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: '/auth/google/callback' // Phải khớp với trên Google Cloud Console
+        callbackURL: GOOGLE_CALLBACK_URL // Phải khớp với trên Google Cloud Console
     },
     async (accessToken, refreshToken, profile, done) => {
         try {
@@ -56,8 +64,9 @@ if (googleAuthEnabled) {
             return done(err, null);
         }
     }));
+    console.log('[Auth] Google OAuth callback URL:', GOOGLE_CALLBACK_URL);
 } else {
-    console.warn('[Auth] Google OAuth disabled: missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET');
+    console.warn('[Auth] Google OAuth disabled: missing GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, or callback URL');
 }
 
 passport.googleAuthEnabled = googleAuthEnabled;
