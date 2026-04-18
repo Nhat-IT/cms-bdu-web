@@ -35,6 +35,11 @@ router.post('/login', async (req, res) => {
     }
 
     const { identityColumns, passwordColumn } = await resolveUsersSchema();
+    console.log('[Auth] Login schema:', {
+      identityColumns,
+      passwordColumn,
+      loginInputLength: String(username || '').length
+    });
 
     if (!identityColumns.length || !passwordColumn) {
       return res.status(500).json({
@@ -50,6 +55,7 @@ router.post('/login', async (req, res) => {
       `SELECT * FROM users WHERE ${whereClause} LIMIT 1`,
       queryValues
     );
+    console.log('[Auth] Login lookup result:', { found: users.length > 0 });
 
     if (users.length === 0) {
       return res.status(401).json({ success: false, message: 'Tên đăng nhập hoặc mật khẩu không chính xác' });
@@ -67,6 +73,7 @@ router.post('/login', async (req, res) => {
     }
 
     if (!passwordMatch) {
+      console.log('[Auth] Login password mismatch for matched user');
       return res.status(401).json({ success: false, message: 'Tên đăng nhập hoặc mật khẩu không chính xác' });
     }
 
