@@ -6,6 +6,23 @@ const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL
     || process.env.GOOGLE_REDIRECT_URI
     || (process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}/auth/google/callback` : 'http://localhost:3000/auth/google/callback');
 
+const USERNAME_COLUMNS = ['username', 'user_name', 'account', 'account_name'];
+
+async function resolveUsersSchema() {
+    const [columns] = await db.query('SHOW COLUMNS FROM users');
+    const columnSet = new Set(columns.map((column) => column.Field));
+
+    return {
+        hasId: columnSet.has('id'),
+        hasEmail: columnSet.has('email'),
+        hasFullName: columnSet.has('full_name'),
+        hasGoogleId: columnSet.has('google_id'),
+        hasRole: columnSet.has('role'),
+        hasAvatar: columnSet.has('avatar'),
+        hasUsername: USERNAME_COLUMNS.find((column) => columnSet.has(column)) || null
+    };
+}
+
 const googleAuthEnabled = Boolean(
     process.env.GOOGLE_CLIENT_ID
     && process.env.GOOGLE_CLIENT_SECRET
@@ -24,6 +41,7 @@ if (googleAuthEnabled) {
             const googleId = profile.id;
             const fullName = profile.displayName;
             const avatar = profile.photos[0].value;
+            const schema = await resolveUsersSchema();
 
             // 1. Kiểm tra domain email trường BDU
             const isStudent = email.endsWith('@student.bdu.edu.vn');
@@ -52,9 +70,38 @@ if (googleAuthEnabled) {
             }
 
             // Chưa có: Tự động đăng ký tài khoản mới và gán Role
+            const insertColumns = [];
+            const insertValues = [];
+
+            if (schema.hasUsername) {
+                insertColumns.push(schema.hasUsername);
+                insertValues.push(username);
+            }
+            if (schema.hasFullName) {
+                insertColumns.push('full_name');
+                insertValues.push(fullName);
+            }
+            if (schema.hasEmail) {
+                insertColumns.push('email');
+                insertValues.push(email);
+            }
+            if (schema.hasGoogleId) {
+                insertColumns.push('google_id');
+                insertValues.push(googleId);
+            }
+            if (schema.hasRole) {
+                insertColumns.push('role');
+                insertValues.push(role);
+            }
+            if (schema.hasAvatar) {
+                insertColumns.push('avatar');
+                insertValues.push(avatar);
+            }
+
+            const placeholders = insertColumns.map(() => '?').join(', ');
             const [result] = await db.query(
-                'INSERT INTO users (username, full_name, email, google_id, role, avatar) VALUES (?, ?, ?, ?, ?, ?)',
-                [username, fullName, email, googleId, role, avatar]
+                `INSERT INTO users (${insertColumns.join(', ')}) VALUES (${placeholders})`,
+                insertValues
             );
 
             const newUser = { id: result.insertId, username, email, role };
