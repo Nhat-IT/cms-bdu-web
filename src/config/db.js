@@ -10,6 +10,8 @@ function ensureRequiredEnv() {
 }
 
 ensureRequiredEnv();
+const isProduction = process.env.NODE_ENV === 'production';
+const defaultConnectionLimit = isProduction ? 1 : 5;
 
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
@@ -18,20 +20,39 @@ const pool = mysql.createPool({
     database: process.env.DB_NAME,
     port: Number(process.env.DB_PORT || 3306),
     waitForConnections: true,
-    connectionLimit: Number(process.env.DB_CONNECTION_LIMIT || 10),
+    connectionLimit: Number(process.env.DB_CONNECTION_LIMIT || defaultConnectionLimit),
     queueLimit: 0,
+    connectTimeout: Number(process.env.DB_CONNECT_TIMEOUT || 10000),
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 0,
     charset: 'utf8mb4',
     timezone: process.env.DB_TIMEZONE || 'Z',
     ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined
 });
 
-pool.testConnection = async () => {
-    const conn = await pool.getConnection();
-    try {
-        await conn.ping();
-    } finally {
-        conn.release();
+pool.testConnection = async (options = {}) => {
+    const retries = Number(options.retries ?? 3);
+    const delayMs = Number(options.delayMs ?? 1500);
+
+    let lastError = null;
+    for (let attempt = 1; attempt <= retries; attempt += 1) {
+        try {
+            const conn = await pool.getConnection();
+            try {
+                await conn.ping();
+                return true;
+            } finally {
+                conn.release();
+            }
+        } catch (error) {
+            lastError = error;
+            if (attempt < retries) {
+                await new Promise((resolve) => setTimeout(resolve, delayMs));
+            }
+        }
     }
+
+    throw lastError;
 };
 
 module.exports = pool;

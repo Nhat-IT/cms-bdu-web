@@ -15,6 +15,7 @@ const db = require('./src/config/db');
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
+const strictDbStartup = process.env.DB_STARTUP_STRICT === 'true';
 
 if (isProduction) {
     app.set('trust proxy', 1);
@@ -130,18 +131,23 @@ const PORT = process.env.PORT || 3000;
 
 async function startServer() {
     try {
-        await db.testConnection();
+        await db.testConnection({ retries: 2, delayMs: 1000 });
         console.log('✅ Database connected successfully.');
-
-        app.listen(PORT, () => {
-            console.log(`🚀 Server is running on port ${PORT}`);
-            console.log(`📁 Thư mục tĩnh: ${path.join(__dirname, 'public')}`);
-        });
     } catch (error) {
-        console.error('❌ Cannot connect to database. Server startup aborted.');
-        console.error(error.message);
-        process.exit(1);
+        if (strictDbStartup) {
+            console.error('❌ Cannot connect to database. Server startup aborted.');
+            console.error(error.message);
+            process.exit(1);
+        }
+
+        console.error('⚠️ Database is currently unavailable at startup.');
+        console.error(`⚠️ Continuing server boot (DB_STARTUP_STRICT=false). Detail: ${error.code || error.message}`);
     }
+
+    app.listen(PORT, () => {
+        console.log(`🚀 Server is running on port ${PORT}`);
+        console.log(`📁 Thư mục tĩnh: ${path.join(__dirname, 'public')}`);
+    });
 }
 
 startServer();

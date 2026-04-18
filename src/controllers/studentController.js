@@ -2,7 +2,17 @@ const studentModel = require('../models/studentModel');
 const bcrypt = require('bcryptjs');
 
 const DEFAULT_ACCOUNT_PASSWORD = process.env.DEFAULT_ACCOUNT_PASSWORD || 'Bdu@123456';
-const SCHEMA_ERROR_CODES = new Set(['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR', 'ER_BAD_DB_ERROR']);
+const SCHEMA_ERROR_CODES = new Set([
+    'ER_NO_SUCH_TABLE',
+    'ER_BAD_FIELD_ERROR',
+    'ER_BAD_DB_ERROR',
+    'ER_USER_LIMIT_REACHED',
+    'PROTOCOL_CONNECTION_LOST',
+    'ETIMEDOUT',
+    'ECONNREFUSED',
+    'EHOSTUNREACH',
+    'EACCES'
+]);
 
 function defaultMe(req) {
     return {
