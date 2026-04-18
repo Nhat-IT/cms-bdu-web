@@ -1,5 +1,6 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const bcrypt = require('bcryptjs');
 const db = require('./db'); // Đường dẫn trỏ đến file kết nối MySQL của bạn
 
 const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL
@@ -7,6 +8,7 @@ const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL
     || (process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}/auth/google/callback` : 'http://localhost:3000/auth/google/callback');
 
 const USERNAME_COLUMNS = ['username', 'user_name', 'account', 'account_name'];
+const PASSWORD_COLUMNS = ['password', 'user_password', 'passwd'];
 
 async function resolveUsersSchema() {
     const [columns] = await db.query('SHOW COLUMNS FROM users');
@@ -20,7 +22,8 @@ async function resolveUsersSchema() {
         hasGoogleId: columnSet.has('google_id'),
         hasRole: columnSet.has('role'),
         hasAvatar: columnSet.has('avatar'),
-        hasUsername: USERNAME_COLUMNS.find((column) => columnSet.has(column)) || null
+        hasUsername: USERNAME_COLUMNS.find((column) => columnSet.has(column)) || null,
+        passwordColumn: PASSWORD_COLUMNS.find((column) => columnSet.has(column)) || null
     };
 }
 
@@ -88,9 +91,9 @@ if (googleAuthEnabled) {
                 }
 
                 if (updatePairs.length > 0) {
-                    updateValues.push(user.id);
+                    updateValues.push(email);
                     await db.query(
-                        `UPDATE users SET ${updatePairs.join(', ')} WHERE id = ?`,
+                        `UPDATE users SET ${updatePairs.join(', ')} WHERE email = ?`,
                         updateValues
                     );
                 }
@@ -128,6 +131,13 @@ if (googleAuthEnabled) {
             if (schema.hasAvatar) {
                 insertColumns.push('avatar');
                 insertValues.push(avatar);
+            }
+            if (schema.passwordColumn) {
+                // Fill password for schemas where password is mandatory for all users.
+                const googlePasswordSeed = `google_oauth_${googleId}`;
+                const googlePasswordHash = await bcrypt.hash(googlePasswordSeed, 10);
+                insertColumns.push(schema.passwordColumn);
+                insertValues.push(googlePasswordHash);
             }
 
             const placeholders = insertColumns.map(() => '?').join(', ');
