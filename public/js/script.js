@@ -160,6 +160,44 @@
         });
     }
 
+    function initLoginForm() {
+        const loginForm = document.getElementById('loginForm');
+        if (!loginForm) return;
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('usernameInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+
+            if (!username || !password) {
+                alert('Vui lòng nhập tên đăng nhập và mật khẩu');
+                return;
+            }
+
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert(data.message || 'Đăng nhập thất bại');
+                    return;
+                }
+
+                if (data.redirectUrl) {
+                    window.location.href = data.redirectUrl;
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Lỗi kết nối server');
+            }
+        });
+    }
     window.CMSMenu = {
         init: initMenu
     };
@@ -167,6 +205,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         wrapStandaloneTables();
         initLoginPasswordToggle();
+            initLoginForm();
         initMenu();
     });
 })();
