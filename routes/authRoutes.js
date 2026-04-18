@@ -48,8 +48,21 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    const whereClause = identityColumns.map((col) => `${col} = ?`).join(' OR ');
-    const queryValues = identityColumns.map(() => username);
+    const loginCandidates = [username];
+
+    if (!String(username).includes('@') && identityColumns.length === 1 && identityColumns[0] === 'email') {
+      const derivedEmails = [
+        `${username}@bdu.edu.vn`,
+        `${username}@student.bdu.edu.vn`
+      ];
+      derivedEmails.forEach((candidate) => loginCandidates.push(candidate));
+    }
+
+    const whereClause = identityColumns.map((col) => `${col} IN (${loginCandidates.map(() => '?').join(', ')})`).join(' OR ');
+    const queryValues = [];
+    identityColumns.forEach(() => {
+      queryValues.push(...loginCandidates);
+    });
 
     const [users] = await db.query(
       `SELECT * FROM users WHERE ${whereClause} LIMIT 1`,
