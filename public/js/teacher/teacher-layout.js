@@ -1,9 +1,6 @@
 // Shared Teacher layout: collapse/expand sidebar like student pages.
-<<<<<<< HEAD
-=======
 resetTeacherLayoutPlaceholders();
 
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
 document.addEventListener('DOMContentLoaded', function () {
     const sidebar = document.getElementById('sidebar');
     const mainContent = document.querySelector('.main-content');
@@ -59,12 +56,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const badge = document.createElement('span');
         badge.className = 'badge menu-profile-badge';
-<<<<<<< HEAD
-        badge.textContent = 'KHOA CNTT';
-=======
         badge.textContent = '';
         badge.classList.add('d-none');
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
         profileContainer.appendChild(badge);
 
         sidebarBrand.insertAdjacentElement('afterend', profileContainer);
@@ -194,8 +187,6 @@ document.addEventListener('DOMContentLoaded', function () {
         renderUnreadCount(unreadCount);
     }
 
-<<<<<<< HEAD
-=======
     async function hydrateTeacherProfile() {
         try {
             const response = await fetch('/api/me', {
@@ -294,7 +285,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     hydrateTeacherProfile();
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
     updateUnreadCount();
 
     if (window.CMSMenu && typeof window.CMSMenu.init === 'function') {
@@ -306,8 +296,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
-<<<<<<< HEAD
-=======
 
 function resetTeacherLayoutPlaceholders() {
     const profileNameNode = document.querySelector('.top-navbar-blue .text-end.me-3 b');
@@ -356,4 +344,3 @@ function resetTeacherLayoutPlaceholders() {
         }
     });
 }
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6

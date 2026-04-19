@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-USE  if0_41700850_cms_bdu;
-=======
-USE buzwdyz5iqgcj9toob1b;
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
-
 -- Tắt kiểm tra khóa ngoại để tạo bảng không bị lỗi thứ tự
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -271,12 +265,4 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number VARCHAR(20) NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS address VARCHAR(255) NULL;
 
 -- Bật lại kiểm tra khóa ngoại
-<<<<<<< HEAD
 SET FOREIGN_KEY_CHECKS = 1;
-
--- thêm tk admin
-INSERT INTO users (username, password, role, email)
-VALUES ('admin', '123456', 'admin', 'admin@bdu.edu.vn');
-=======
-SET FOREIGN_KEY_CHECKS = 1;
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6

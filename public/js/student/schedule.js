@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-
-=======
 function formatDateDMY(dateValue) {
     const d = new Date(dateValue);
     if (Number.isNaN(d.getTime())) return '--/--/----';
@@ -281,4 +278,3 @@ async function initSchedulePage() {
 }
 
 document.addEventListener('DOMContentLoaded', initSchedulePage);
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6

@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 // ========== Hàm lấy dữ liệu từ API ==========
 async function fetchDashboardData() {
 	try {
@@ -363,5 +361,4 @@ document.addEventListener('DOMContentLoaded', initDashboard);
 
 // ========== Cập nhật dữ liệu mỗi 30 giây ==========
 setInterval(initDashboard, 30000);
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
 

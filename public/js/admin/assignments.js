@@ -16,85 +16,18 @@ document.addEventListener('DOMContentLoaded', function () {
         singleStatus.addEventListener('change', toggleCancelReason);
     }
 
-<<<<<<< HEAD
-    initAssignmentEnhancements();
-=======
     loadAssignmentCoursesFromApi().finally(function () {
         initAssignmentEnhancements();
     });
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
 
     toggleCancelReason();
 });
 
-<<<<<<< HEAD
-const assignmentStudentsByClass = {
-    '25TH01-CSDL': [
-        { mssv: '2050001', name: 'Nguyễn Văn A', dob: '2005-01-01', email: 'a.nguyen@student.bdu.edu.vn', section: 'N1' },
-        { mssv: '2050002', name: 'Trần Thị B', dob: '2005-02-02', email: 'b.tran@student.bdu.edu.vn', section: 'N2' }
-    ]
-};
-
-const allAssignmentCourses = [
-    {
-        id: '25TH01-WEB',
-        classCode: '25TH01',
-        name: 'Lập trình Web nâng cao',
-        year: '2025',
-        semester: '1',
-        isOpen: true,
-        credits: 4,
-        openWindow: '01/09/2025 - 31/12/2025',
-        hasSchedule: false,
-        groups: [
-            { code: 'N1', teacherMain: 'GV01', teacherSub: 'GV04', day: '', start: '', end: '', room: '' },
-            { code: 'N2', teacherMain: 'GV03', teacherSub: '', day: '5', start: 1, end: 5, room: 'A201' }
-        ]
-    },
-    {
-        id: '25TH01-CSDL',
-        classCode: '25TH01',
-        name: 'An ninh Cơ sở dữ liệu',
-        year: '2025',
-        semester: '1',
-        isOpen: true,
-        credits: 3,
-        openWindow: '01/09/2025 - 31/12/2025',
-        hasSchedule: true,
-        groups: [
-            { code: 'N1', teacherMain: 'GV01', teacherSub: '', day: '2', start: 6, end: 10, room: 'PLAB' },
-            { code: 'N2', teacherMain: 'GV02', teacherSub: '', day: '2', start: 6, end: 10, room: 'PM3' }
-        ]
-    },
-    {
-        id: '25TH01-JAVA',
-        classCode: '25TH01',
-        name: 'Lập trình Java nâng cao',
-        year: '2025',
-        semester: '2',
-        isOpen: false,
-        credits: 3,
-        openWindow: '15/01/2026 - 30/04/2026',
-        hasSchedule: false,
-        groups: [
-            { code: 'N1', teacherMain: 'GV02', teacherSub: '', day: '3', start: 2, end: 5, room: 'A201' }
-        ]
-    }
-];
-
-const teachers = [
-    { id: 'GV01', name: 'ThS. Dương Quang Sinh' },
-    { id: 'GV02', name: 'ThS. Nguyễn Hồ Hải' },
-    { id: 'GV03', name: 'TS. Lê Anh Tuấn' },
-    { id: 'GV04', name: 'ThS. Hồ Ngọc Giàu' }
-];
-=======
 const assignmentStudentsByClass = {};
 
 const allAssignmentCourses = [];
 
 const teachers = [];
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
 
 const days = [
     { value: '2', label: 'Thứ 2' },
@@ -147,8 +80,6 @@ function initAssignmentEnhancements() {
     applyAssignmentFilters();
 }
 
-<<<<<<< HEAD
-=======
 async function loadAssignmentCoursesFromApi() {
     try {
         const res = await fetch('/api/admin/teaching-assignments', { headers: { Accept: 'application/json' } });
@@ -203,7 +134,6 @@ async function loadAssignmentCoursesFromApi() {
     }
 }
 
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
 function applyAssignmentFilters() {
     const filterYear = document.getElementById('assignFilterYear');
     const filterSemester = document.getElementById('assignFilterSemester');
@@ -293,17 +223,11 @@ function renderAssignmentOfferings() {
             chipDiv.innerHTML = '<span class="section-chip">' + getGroupLabel(group.code) + '</span>';
             
             const teacherDiv = document.createElement('div');
-<<<<<<< HEAD
-            teacherDiv.innerHTML = '<div class="section-label">Giảng viên</div>' +
-                '<div class="section-value">' + getTeacherName(group.teacherMain) +
-                (group.teacherSub ? ' + ' + getTeacherName(group.teacherSub) : '') + '</div>';
-=======
             const teacherMainName = group.teacherMainName || getTeacherName(group.teacherMain);
             const teacherSubName = group.teacherSubName || getTeacherName(group.teacherSub);
             teacherDiv.innerHTML = '<div class="section-label">Giảng viên</div>' +
                 '<div class="section-value">' + teacherMainName +
                 (group.teacherSub ? ' + ' + teacherSubName : '') + '</div>';
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
             
             const scheduleDiv = document.createElement('div');
             scheduleDiv.innerHTML = '<div class="section-label">Lịch học</div>' +
@@ -740,11 +664,7 @@ function renderSessionManagerRows(course, groupCode = null) {
     displayedGroups.forEach(function (group, index) {
         const hasGroupSchedule = Boolean(group.day && group.start && group.end && group.room);
         const row = document.createElement('tr');
-<<<<<<< HEAD
-        const dateLabel = hasGroupSchedule ? '02/03/2026' : '--';
-=======
         const dateLabel = '--';
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
         const teacherId = group.teacherMain || '';
 
         const dayCell = document.createElement('td');
@@ -758,13 +678,8 @@ function renderSessionManagerRows(course, groupCode = null) {
         editButton.onclick = function () {
             openEditSingleSession(
                 hasGroupSchedule ? 'edit' : 'add',
-<<<<<<< HEAD
-                hasGroupSchedule ? dateLabel : '',
-                hasGroupSchedule ? '2026-03-02' : '',
-=======
                 '',
                 '',
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
                 hasGroupSchedule ? group.day : '',
                 hasGroupSchedule ? String(group.start) : '',
                 hasGroupSchedule ? String(group.end) : '',

@@ -1,7 +1,5 @@
 (function () {
     const MOBILE_BREAKPOINT = 768;
-<<<<<<< HEAD
-=======
     const originalFetch = window.fetch ? window.fetch.bind(window) : null;
 
     function installGlobalAuthGuard() {
@@ -24,7 +22,6 @@
             return response;
         };
     }
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
 
     function ensureSidebarBackdrop() {
         let backdrop = document.getElementById('sidebarBackdrop');
@@ -107,11 +104,7 @@
 
         const backdrop = ensureSidebarBackdrop();
 
-<<<<<<< HEAD
-        if (toggle.dataset.cmsMenuBound === '1') {
-=======
         if (toggle.dataset.cmsMenuBound === '1' || toggle.dataset.cmsToggleBound === '1') {
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
             return true;
         }
 
@@ -189,8 +182,6 @@
         });
     }
 
-<<<<<<< HEAD
-=======
     function initDevBypass() {
         const btn = document.getElementById('devBypassBtn');
         if (!btn || btn.dataset.cmsBypassBound === '1') return;
@@ -265,22 +256,16 @@
             }
         });
     }
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
     window.CMSMenu = {
         init: initMenu
     };
 
     document.addEventListener('DOMContentLoaded', function () {
-<<<<<<< HEAD
-        wrapStandaloneTables();
-        initLoginPasswordToggle();
-=======
         installGlobalAuthGuard();
         wrapStandaloneTables();
         initLoginPasswordToggle();
         initDevBypass();
         initLoginForm();
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
         initMenu();
     });
 })();

@@ -1,28 +1,3 @@
-<<<<<<< HEAD
-// Giao diện dùng chung Student: xử lý nút thu gọn/mở sidebar cho tất cả trang student.
-document.addEventListener('DOMContentLoaded', function () {
-    const sidebarToggle = document.getElementById('sidebarToggle');
-    const sidebar = document.getElementById('sidebar');
-    const mainContent = document.getElementById('mainContent');
-    const bellLink = document.querySelector('.top-navbar-blue a[href="notifications-all.html"].text-decoration-none');
-
-    if (!sidebarToggle || !sidebar || !mainContent) {
-        return;
-    }
-
-    if (!bellLink) {
-        return;
-    }
-
-    const notificationItems = [
-        { source: 'BCS', time: '11/04/2026 08:20', title: 'Nhắc nộp minh chứng chuyên cần tuần 8' },
-        { source: 'Giảng viên', time: '10/04/2026 16:40', title: 'Thông báo đổi phòng học môn Lập trình Web' },
-        { source: 'Khoa CNTT', time: '10/04/2026 10:15', title: 'Lịch seminar chuyên đề tháng 4' },
-        { source: 'BCS', time: '09/04/2026 09:00', title: 'Cập nhật danh sách bài tập tuần này' }
-    ];
-
-    bellLink.classList.add('student-notify-trigger');
-=======
 // student-layout.js - CHỈ khởi tạo dữ liệu, KHÔNG bind sự kiện toggle sidebar
 // (script.js đã handle toggle sidebar rồi, tránh trùng lặp)
 resetStudentLayoutPlaceholders();
@@ -215,7 +190,6 @@ function mountNotificationDropdown(notifications) {
     if (!bellLink || bellLink.closest('.student-notify-wrapper')) {
         return;
     }
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
 
     const wrapper = document.createElement('div');
     wrapper.className = 'student-notify-wrapper';
@@ -224,32 +198,6 @@ function mountNotificationDropdown(notifications) {
 
     const dropdown = document.createElement('div');
     dropdown.className = 'student-notify-dropdown';
-<<<<<<< HEAD
-
-    const header = document.createElement('div');
-    header.className = 'student-notify-header';
-    header.innerHTML = '<div class="fw-bold text-dark"><i class="bi bi-bell-fill text-primary me-1"></i> Thông báo mới</div>';
-    dropdown.appendChild(header);
-
-    notificationItems.forEach(function (item) {
-        const row = document.createElement('a');
-        row.href = 'notifications-all.html';
-        row.className = 'student-notify-item';
-        row.innerHTML =
-            '<div class="d-flex justify-content-between align-items-center mb-1">' +
-                '<span class="student-notify-source text-primary">' + item.source + '</span>' +
-                '<span class="student-notify-time">' + item.time + '</span>' +
-            '</div>' +
-            '<div class="student-notify-title">' + item.title + '</div>';
-        dropdown.appendChild(row);
-    });
-
-    const footer = document.createElement('div');
-    footer.className = 'student-notify-footer';
-    footer.innerHTML = '<a href="notifications-all.html" class="student-notify-view-all text-primary">Xem tất cả <i class="bi bi-arrow-right"></i></a>';
-    dropdown.appendChild(footer);
-
-=======
     dropdown.innerHTML = '<div class="student-notify-header"><div class="fw-bold text-dark"><i class="bi bi-bell-fill text-primary me-1"></i> Thông báo mới</div></div>';
 
     const latest = (notifications || []).slice(0, 5);
@@ -277,7 +225,6 @@ function mountNotificationDropdown(notifications) {
     footer.className = 'student-notify-footer';
     footer.innerHTML = '<a href="/notifications" class="student-notify-view-all text-primary">Xem tất cả <i class="bi bi-arrow-right"></i></a>';
     dropdown.appendChild(footer);
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
     wrapper.appendChild(dropdown);
 
     bellLink.addEventListener('click', function (event) {
@@ -293,9 +240,6 @@ function mountNotificationDropdown(notifications) {
     document.addEventListener('click', function () {
         dropdown.classList.remove('show');
     });
-<<<<<<< HEAD
-});
-=======
 }
 
 function mountBackToBcsLink(me) {
@@ -333,4 +277,3 @@ async function initSharedStudentData() {
     mountNotificationDropdown(data.notifications);
     mountBackToBcsLink(data.me);
 }
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6

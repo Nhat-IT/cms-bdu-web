@@ -1,13 +1,3 @@
-<<<<<<< HEAD
-function prepareProofUpload(date, session) {
-        document.getElementById('proofDateInfo').innerText = `${date} (${session})`;
-    }
-
-    function submitProof() {
-        alert("✅ Đã tải file minh chứng lên thành công!\nVui lòng đợi Ban Cán Sự hoặc Giảng viên xét duyệt.");
-        bootstrap.Modal.getInstance(document.getElementById('uploadProofModal')).hide();
-    }
-=======
 let attendancePayload = { stats: {}, records: [] };
 let classes = [];
 let selectedProofRecordId = null;
@@ -234,4 +224,3 @@ async function initAttendance() {
 document.addEventListener('DOMContentLoaded', initAttendance);
 window.prepareProofUpload = prepareProofUpload;
 window.submitProof = submitProof;
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6

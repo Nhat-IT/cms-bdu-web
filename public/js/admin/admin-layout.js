@@ -1,9 +1,6 @@
 // Mô tả: Khởi tạo hành vi layout riêng cho trang Admin.
-<<<<<<< HEAD
-=======
 resetAdminLayoutPlaceholders();
 
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
 document.addEventListener('DOMContentLoaded', function () {
     // Dùng chung engine menu hiện có, nhưng chỉ định rõ selector cho Admin.
     if (window.CMSMenu && typeof window.CMSMenu.init === 'function') {
@@ -30,9 +27,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
-<<<<<<< HEAD
-});
-=======
 
     hydrateAdminSharedData();
 });
@@ -119,4 +113,3 @@ async function hydrateAdminSharedData() {
         console.error('Admin shared data hydration error:', error);
     }
 }
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6

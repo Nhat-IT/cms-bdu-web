@@ -59,8 +59,6 @@
     color: #0a58ca;
     transform: scale(1.08);
 }
-<<<<<<< HEAD
-=======
 
 /* Nút toggle hiện/ẩn mật khẩu */
 .toggle-password {
@@ -75,4 +73,3 @@
 .toggle-password:active {
     background-color: #e9ecef !important;
 }
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6

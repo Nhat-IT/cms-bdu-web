@@ -1,11 +1,12 @@
-<<<<<<< HEAD
-# Dependencies
 node_modules/
-
-# Environment files
 .env
+.env.*
+!.env.example
 .env.local
 .env.*.local
+drive-credentials.json
+*service-account*.json
+*credentials*.json
 
 # IDE
 .vscode/
@@ -39,12 +40,3 @@ public/uploads/
 
 # Private files
 config/passwords.php
-=======
-node_modules/
-.env
-.env.*
-!.env.example
-drive-credentials.json
-*service-account*.json
-*credentials*.json
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6

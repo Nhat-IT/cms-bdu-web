@@ -16,21 +16,6 @@
         }
         .schedule-table th, .schedule-table td { border: 1px solid #dee2e6; }
         .schedule-table th { background-color: #f8f9fa; text-align: center; vertical-align: middle; padding: 10px; font-size: 0.85rem; }
-<<<<<<< HEAD
-        .schedule-table td { width: 13.5%; vertical-align: top; padding: 0; position: relative; height: 40px; }
-        
-        .edge-col { 
-            /* Cột biên trái/phải đánh dấu tiết học */
-            background-color: #b71c1c !important; 
-            color: #ffffff !important; 
-            text-align: center !important; 
-            vertical-align: middle !important; 
-            font-weight: bold; 
-            width: 85px !important; 
-            min-width: 85px !important;
-            max-width: 85px !important;
-            font-size: 0.85rem; 
-=======
         .schedule-table td { vertical-align: top; padding: 0; position: relative; height: auto; min-height: 55px; }
         
         /* Header cột nút chuyển tuần - nền đỏ, chữ trắng */
@@ -65,7 +50,7 @@
         .schedule-table td.has-subject {
             background-color: #ffffff;
             vertical-align: top;
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
+        }
         }
         
         .subject-block {
@@ -112,15 +97,12 @@
             .subject-title {
                 font-size: 0.8rem;
             }
-<<<<<<< HEAD
 
             .edge-col {
                 width: 72px !important;
                 min-width: 72px !important;
                 max-width: 72px !important;
             }
-=======
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
         }
 
         /* Chế độ in ấn */
@@ -130,9 +112,5 @@
             .card { border: none !important; box-shadow: none !important; }
             .schedule-table { border: 2px solid #000; }
             .subject-block { border: 1px solid #000; background-color: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-<<<<<<< HEAD
-            .edge-col { background-color: #333 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-=======
             .edge-col-header { background-color: #333 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
         }

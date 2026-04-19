@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const passport = require('./src/config/passport-config');
-const mysql = require('mysql2/promise');
+const db = require('./src/config/db');
 const path = require('path');
 const cors = require('cors');
 const fs = require('fs');
@@ -48,19 +48,6 @@ const authRoutes = require('./routes/authRoutes');
 app.use('/api', apiRoutes);
 app.use('/auth', authRoutes);
 
-// Database pool
-const dbConfig = {
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT || 3306,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-};
-const pool = mysql.createPool(dbConfig);
-
 // Multer for file uploads
 const upload = multer({ dest: 'uploads/' });
 
@@ -72,7 +59,7 @@ app.get('/notifications', (req, res) => res.redirect('/student/notifications-all
 // Health check - DB
 app.get('/api/health/db', async (req, res) => {
     try {
-        await pool.query('SELECT 1');
+        await db.query('SELECT 1');
         res.json({ ok: true, service: 'database' });
     } catch (error) {
         res.status(500).json({ ok: false, service: 'database', error: error.message });
@@ -90,14 +77,14 @@ app.get('/api/create-test-user', async (req, res) => {
         const email = `${username}@bdu.edu.vn`;
         const fullName = `Test ${role.charAt(0).toUpperCase() + role.slice(1)}`;
 
-        const [existing] = await pool.query('SELECT id FROM users WHERE username = ?', [username]);
+        const [existing] = await db.query('SELECT id FROM users WHERE username = ?', [username]);
 
         if (existing.length > 0) {
-            await pool.query('UPDATE users SET password = ?, role = ? WHERE username = ?', 
+            await db.query('UPDATE users SET password = ?, role = ? WHERE username = ?', 
                 [hashedPassword, role, username]);
             res.json({ success: true, message: 'Da cap nhat tai khoan', username, password, role });
         } else {
-            await pool.query('INSERT INTO users (username, password, email, full_name, role) VALUES (?, ?, ?, ?, ?)',
+            await db.query('INSERT INTO users (username, password, email, full_name, role) VALUES (?, ?, ?, ?, ?)',
                 [username, hashedPassword, email, fullName, role]);
             res.json({ success: true, message: 'Da tao tai khoan moi', username, password, role });
         }

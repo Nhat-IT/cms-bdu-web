@@ -1,13 +1,3 @@
-<<<<<<< HEAD
-    function resolveFeedback() {
-        alert("✅ Đã lưu phản hồi và chuyển trạng thái thành 'Đã giải quyết'. Sinh viên sẽ nhận được thông báo!");
-    }
-    function confirmDelete() {
-        if(confirm("⚠️ Bạn có chắc chắn muốn xóa phản hồi này?")) {
-            alert("🗑️ Đã xóa thành công!");
-        }
-    }
-=======
 let bcsFeedbackList = [];
 let bcsSelectedFeedbackId = 0;
 
@@ -170,4 +160,3 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('bcsFeedbackStatusFilter')?.addEventListener('change', loadBcsFeedbacks);
     loadBcsFeedbacks();
 });
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6

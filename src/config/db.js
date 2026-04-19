@@ -1,19 +1,5 @@
 const mysql = require('mysql2/promise');
 
-<<<<<<< HEAD
-const pool = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT || 3306,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
-
-module.exports = pool;
-=======
 function ensureRequiredEnv() {
     const required = ['DB_HOST', 'DB_USER', 'DB_NAME'];
     const missing = required.filter((key) => !process.env[key]);
@@ -72,4 +58,3 @@ pool.testConnection = async (options = {}) => {
 };
 
 module.exports = pool;
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6

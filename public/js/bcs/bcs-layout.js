@@ -1,9 +1,6 @@
 // Giao diện dùng chung BCS: xử lý nút mở/đóng sidebar trên mobile cho tất cả trang BCS.
-<<<<<<< HEAD
-=======
 resetBcsLayoutPlaceholders();
 
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
 document.addEventListener('DOMContentLoaded', function () {
     const sidebarToggle = document.getElementById('sidebarToggle');
     const sidebar = document.getElementById('sidebar');
@@ -22,9 +19,6 @@ document.addEventListener('DOMContentLoaded', function () {
         toggleIcon.classList.add('fs-3');
     }
 
-<<<<<<< HEAD
-});
-=======
     if (mainContent) {
         sidebarToggle.addEventListener('click', function () {
             sidebar.classList.toggle('collapsed');
@@ -173,4 +167,3 @@ async function hydrateBcsSharedData() {
         console.error('BCS shared data hydration error:', error);
     }
 }
->>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
