@@ -1,0 +1,8 @@
+databaseApiVersion: 3
+
+services:
+  - type: web
+    name: cms-bdu
+    env: php
+    buildCommand: ""
+    startCommand: "php -S $HOST:$PORT"
