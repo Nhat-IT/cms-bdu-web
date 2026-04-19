@@ -100,52 +100,6 @@ app.get('/notifications', (req, res) => {
 
 // --- API HỆ THỐNG ---
 
-// Debug endpoint: Check database connection and user info
-app.get('/api/debug/db-check', async (req, res) => {
-    try {
-        // Check DB connection
-        await db.testConnection();
-
-        // Get table columns
-        const [columns] = await db.query('SHOW COLUMNS FROM users');
-        const columnNames = columns.map(c => c.Field);
-
-        // Count users
-        const [userCount] = await db.query('SELECT COUNT(*) as count FROM users');
-        const count = userCount[0]?.count || 0;
-
-        // Get sample users (masked password)
-        let sampleUsers = [];
-        try {
-            const [users] = await db.query('SELECT * FROM users LIMIT 3');
-            sampleUsers = users.map(u => {
-                const masked = { ...u };
-                if (masked.password) {
-                    masked.password = masked.password.substring(0, 10) + '...[HIDDEN]';
-                }
-                if (masked.google_id) {
-                    masked.google_id = '[HAS GOOGLE ID]';
-                }
-                return masked;
-            });
-        } catch (e) {
-            sampleUsers = ['Error getting users: ' + e.message];
-        }
-
-        res.json({
-            ok: true,
-            tableColumns: columnNames,
-            userCount: count,
-            sampleUsers: sampleUsers
-        });
-    } catch (error) {
-        res.status(500).json({
-            ok: false,
-            error: error.code || error.message
-        });
-    }
-});
-
 app.get('/api/health/db', async (req, res) => {
     try {
         await db.testConnection();
@@ -159,53 +113,30 @@ app.get('/api/health/db', async (req, res) => {
     }
 });
 
-// Debug endpoint: Create a test user
-app.get('/api/debug/create-test-user', async (req, res) => {
+// Tạo tài khoản test - truy cập: /api/create-test-user?role=student&username=test&password=123456
+app.get('/api/create-test-user', async (req, res) => {
     try {
         const bcrypt = require('bcryptjs');
         const role = req.query.role || 'student';
-        const testPassword = '123456';
-        const hashedPassword = await bcrypt.hash(testPassword, 10);
+        const username = req.query.username || `test_${role}`;
+        const password = req.query.password || '123456';
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        const testUsername = role === 'admin' ? 'test_admin' : role === 'bcs' ? 'test_bcs' : 'test_student';
-        const testEmail = `${testUsername}@student.bdu.edu.vn`;
-        const testName = role === 'admin' ? 'Test Admin' : role === 'bcs' ? 'Test BCS' : 'Test Student';
+        const email = `${username}@student.bdu.edu.vn`;
+        const fullName = `Test ${role.charAt(0).toUpperCase() + role.slice(1)}`;
 
-        // Check if user exists
-        const [existing] = await db.query('SELECT id FROM users WHERE username = ?', [testUsername]);
+        const [existing] = await db.query('SELECT id FROM users WHERE username = ?', [username]);
 
         if (existing.length > 0) {
-            // Update existing user
-            await db.query(
-                'UPDATE users SET password = ?, role = ?, full_name = ? WHERE username = ?',
-                [hashedPassword, role, testName, testUsername]
-            );
-            return res.json({
-                success: true,
-                message: `Đã cập nhật tài khoản test!`,
-                username: testUsername,
-                password: testPassword,
-                role: role
-            });
+            await db.query('UPDATE users SET password = ?, role = ? WHERE username = ?', [hashedPassword, role, username]);
+            return res.json({ success: true, message: 'Đã cập nhật tài khoản', username, password, role });
         } else {
-            // Create new user
-            await db.query(
-                'INSERT INTO users (username, password, email, full_name, role) VALUES (?, ?, ?, ?, ?)',
-                [testUsername, hashedPassword, testEmail, testName, role]
-            );
-            return res.json({
-                success: true,
-                message: `Đã tạo tài khoản test mới!`,
-                username: testUsername,
-                password: testPassword,
-                role: role
-            });
+            await db.query('INSERT INTO users (username, password, email, full_name, role) VALUES (?, ?, ?, ?, ?)',
+                [username, hashedPassword, email, fullName, role]);
+            return res.json({ success: true, message: 'Đã tạo tài khoản mới', username, password, role });
         }
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
