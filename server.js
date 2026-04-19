@@ -159,6 +159,56 @@ app.get('/api/health/db', async (req, res) => {
     }
 });
 
+// Debug endpoint: Create a test user
+app.get('/api/debug/create-test-user', async (req, res) => {
+    try {
+        const bcrypt = require('bcryptjs');
+        const role = req.query.role || 'student';
+        const testPassword = '123456';
+        const hashedPassword = await bcrypt.hash(testPassword, 10);
+
+        const testUsername = role === 'admin' ? 'test_admin' : role === 'bcs' ? 'test_bcs' : 'test_student';
+        const testEmail = `${testUsername}@student.bdu.edu.vn`;
+        const testName = role === 'admin' ? 'Test Admin' : role === 'bcs' ? 'Test BCS' : 'Test Student';
+
+        // Check if user exists
+        const [existing] = await db.query('SELECT id FROM users WHERE username = ?', [testUsername]);
+
+        if (existing.length > 0) {
+            // Update existing user
+            await db.query(
+                'UPDATE users SET password = ?, role = ?, full_name = ? WHERE username = ?',
+                [hashedPassword, role, testName, testUsername]
+            );
+            return res.json({
+                success: true,
+                message: `Đã cập nhật tài khoản test!`,
+                username: testUsername,
+                password: testPassword,
+                role: role
+            });
+        } else {
+            // Create new user
+            await db.query(
+                'INSERT INTO users (username, password, email, full_name, role) VALUES (?, ?, ?, ?, ?)',
+                [testUsername, hashedPassword, testEmail, testName, role]
+            );
+            return res.json({
+                success: true,
+                message: `Đã tạo tài khoản test mới!`,
+                username: testUsername,
+                password: testPassword,
+                role: role
+            });
+        }
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // 1. Upload Google Drive
 app.post('/api/upload-to-drive', upload.single('file'), async (req, res) => {
     try {
