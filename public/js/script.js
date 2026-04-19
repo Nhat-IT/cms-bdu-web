@@ -182,6 +182,42 @@
         });
     }
 
+    function initDevBypass() {
+        const btn = document.getElementById('devBypassBtn');
+        if (!btn || btn.dataset.cmsBypassBound === '1') return;
+        btn.dataset.cmsBypassBound = '1';
+
+        btn.addEventListener('click', async function () {
+            const username = document.getElementById('devUsername').value.trim();
+            if (!username) {
+                alert('Nhập username trong database trước (VD: admin, teacher1, sv001)');
+                return;
+            }
+
+            try {
+                const response = await fetch('/auth/bypass-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert(data.message || 'Bypass thất bại');
+                    return;
+                }
+
+                if (data.redirectUrl) {
+                    window.location.href = data.redirectUrl;
+                }
+            } catch (error) {
+                console.error('Bypass error:', error);
+                alert('Lỗi kết nối server');
+            }
+        });
+    }
+
     function initLoginForm() {
         const loginForm = document.getElementById('loginForm');
         if (!loginForm) return;
@@ -228,7 +264,8 @@
         installGlobalAuthGuard();
         wrapStandaloneTables();
         initLoginPasswordToggle();
-            initLoginForm();
+        initDevBypass();
+        initLoginForm();
         initMenu();
     });
 })();

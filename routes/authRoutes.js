@@ -46,54 +46,30 @@ async function resolveUsersSchema() {
 }
 
 function ensureGoogleAuthEnabled(req, res, next) {
-  if (!passport.googleAuthEnabled) {
-    return res.redirect('/login.html?error=google_oauth_not_configured');
-  }
-  return next();
+  // Dev mode: disable Google OAuth
+  return res.redirect('/login.html?info=google_disabled');
 }
-// ========== LOCAL AUTHENTICATION (USERNAME + PASSWORD) ==========
-router.post('/login', async (req, res) => {
+// ========== BYPASS LOGIN (dev only) ==========
+// Bỏ qua xác thực, đăng nhập trực tiếp với username và role chỉ định
+// Dùng để dev/test - không dùng trong production
+router.post('/bypass-login', async (req, res) => {
   try {
     const username = String(req.body?.username || '').trim();
-    const password = String(req.body?.password || '');
 
-    if (!username || !password) {
-      return res.status(400).json({ success: false, message: 'Vui lòng nhập tên đăng nhập và mật khẩu' });
+    if (!username) {
+      return res.status(400).json({ success: false, message: 'Thiếu username' });
     }
-
-    const { identityColumns, passwordColumn } = await resolveUsersSchema();
-
-    if (!identityColumns.length || !passwordColumn) {
-      return res.status(500).json({
-        success: false,
-        message: 'Cấu trúc bảng users chưa đúng'
-      });
-    }
-
-    const whereClause = identityColumns.map((col) => `LOWER(${col}) = LOWER(?)`).join(' OR ');
 
     const [users] = await db.query(
-      `SELECT * FROM users WHERE ${whereClause} LIMIT 1`,
-      identityColumns.map(() => username)
+      'SELECT * FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1',
+      [username]
     );
 
     if (users.length === 0) {
-      return res.status(401).json({ success: false, message: 'Tên đăng nhập hoặc mật khẩu không chính xác' });
+      return res.status(401).json({ success: false, message: 'Không tìm thấy user' });
     }
 
     const user = users[0];
-    const storedPassword = String(user[passwordColumn] || '');
-
-    let passwordMatch = false;
-    if (storedPassword.startsWith('$2a$') || storedPassword.startsWith('$2b$') || storedPassword.startsWith('$2y$')) {
-      passwordMatch = await bcrypt.compare(password, storedPassword);
-    } else {
-      passwordMatch = password === storedPassword;
-    }
-
-    if (!passwordMatch) {
-      return res.status(401).json({ success: false, message: 'Tên đăng nhập hoặc mật khẩu không chính xác' });
-    }
 
     req.logIn(user, (err) => {
       if (err) {
@@ -115,7 +91,7 @@ router.post('/login', async (req, res) => {
           redirectUrl = '/bcs/home.html';
         }
 
-        return res.json({ success: true, message: 'Đăng nhập thành công', redirectUrl });
+        return res.json({ success: true, message: 'Đăng nhập thành công (bypass)', redirectUrl });
       });
     });
   } catch (error) {
@@ -123,6 +99,10 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// ========== LOCAL AUTHENTICATION - DISABLED (dev only, use /auth/bypass-login) ==========
+router.post('/login', async (req, res) => {
+  return res.redirect('/login.html?info=login_disabled');
+});
 
 // ========== GOOGLE AUTHENTICATION ==========
 // Route bắt đầu đăng nhập
