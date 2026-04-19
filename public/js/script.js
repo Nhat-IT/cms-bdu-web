@@ -104,7 +104,7 @@
 
         const backdrop = ensureSidebarBackdrop();
 
-        if (toggle.dataset.cmsMenuBound === '1') {
+        if (toggle.dataset.cmsMenuBound === '1' || toggle.dataset.cmsToggleBound === '1') {
             return true;
         }
 
