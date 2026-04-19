@@ -2,14 +2,37 @@
 /**
  * CMS BDU - Database Configuration
  * Kết nối MySQL Database sử dụng MySQLi
+ * 
+ * THÔNG TIN CẤU HÌNH:
+ * - Copy file .env.example thành .env.local
+ * - Cập nhật thông tin database trong .env.local
+ * - KHÔNG commit .env.local lên git
  */
 
+// Load environment variables from .env.local if exists
+$envFile = __DIR__ . '/../.env.local';
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) continue;
+        if (strpos($line, '=') !== false) {
+            list($name, $value) = explode('=', $line, 2);
+            $name = trim($name);
+            $value = trim($value);
+            if (!empty($name) && !isset($_ENV[$name])) {
+                $_ENV[$name] = $value;
+                putenv("$name=$value");
+            }
+        }
+    }
+}
+
 // Thông tin kết nối Database
-define('DB_HOST', 'sql300.infinityfree.com');
-define('DB_NAME', 'if0_41700850_cms_bdu');
-define('DB_USER', 'if0_41700850');
-define('DB_PASS', 'Nhat472k');
-define('DB_PORT', 3306);
+define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
+define('DB_NAME', getenv('DB_NAME') ?: 'cms_bdu');
+define('DB_USER', getenv('DB_USER') ?: 'root');
+define('DB_PASS', getenv('DB_PASS') ?: '');
+define('DB_PORT', getenv('DB_PORT') ?: 3306);
 
 // Chế độ hiển thị lỗi (Tắt khi deploy)
 ini_set('display_errors', 1);
