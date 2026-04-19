@@ -16,27 +16,40 @@
         }
         .schedule-table th, .schedule-table td { border: 1px solid #dee2e6; }
         .schedule-table th { background-color: #f8f9fa; text-align: center; vertical-align: middle; padding: 10px; font-size: 0.85rem; }
-        .schedule-table td { width: 13.5%; vertical-align: top; padding: 0; position: relative; height: auto; min-height: 55px; }
+        .schedule-table td { vertical-align: top; padding: 0; position: relative; height: auto; min-height: 55px; }
         
-        .edge-col {
-            /* Cột mũi tên chuyển tuần: nền đỏ, chữ trắng */
+        /* Header cột nút chuyển tuần - nền đỏ, chữ trắng */
+        .edge-col-header {
             background-color: #b71c1c !important;
             color: #ffffff !important;
             text-align: center !important;
             vertical-align: middle !important;
             font-weight: bold;
-            width: 70px !important;
-            min-width: 70px !important;
-            max-width: 70px !important;
-            font-size: 0.85rem;
         }
 
-        /* Cot Tiet va Gio */
-        .schedule-table td:nth-child(2),
+        /* Cột tiết - nền nhạt, chữ đậm */
+        .schedule-table td:nth-child(2) {
+            background-color: #fff3f3;
+            text-align: center;
+        }
+        
+        /* Cột giờ - nền nhạt, chữ mờ */
         .schedule-table td:nth-child(3) {
             background-color: #fff3f3;
             font-size: 0.8rem;
             text-align: center;
+            color: #6c757d;
+        }
+        
+        /* Các cột ngày trong tuần - nền trắng */
+        .schedule-table td:nth-child(n+4):not(.edge-col):not(.has-subject) {
+            background-color: #ffffff;
+        }
+        
+        /* Cell có môn học */
+        .schedule-table td.has-subject {
+            background-color: #ffffff;
+            vertical-align: top;
         }
         
         .subject-block {
@@ -83,20 +96,14 @@
             .subject-title {
                 font-size: 0.8rem;
             }
-
-            .edge-col {
-                width: 60px !important;
-                min-width: 60px !important;
-                max-width: 60px !important;
-            }
         }
 
         /* Chế độ in ấn */
         @media print {
-            .sidebar, .top-navbar-blue, .filter-section, .schedule-header-bar { display: none !important; }
+            .sidebar, .top-navbar-blue, .filter-section { display: none !important; }
             .main-content { margin-left: 0 !important; padding: 0 !important; }
             .card { border: none !important; box-shadow: none !important; }
             .schedule-table { border: 2px solid #000; }
             .subject-block { border: 1px solid #000; background-color: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .edge-col { background-color: #333 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .edge-col-header { background-color: #333 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
