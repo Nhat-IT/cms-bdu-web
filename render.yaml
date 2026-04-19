@@ -3,6 +3,8 @@ databaseApiVersion: 3
 services:
   - type: web
     name: cms-bdu
-    env: php
+    runtime: php
+    region: singapore
     buildCommand: ""
-    startCommand: "php -S $HOST:$PORT"
+    startCommand: "php -S $PORT"
+    plan: free
