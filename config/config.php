@@ -9,33 +9,121 @@
  * - KHÔNG commit .env.local lên git
  */
 
-// Load environment variables from .env.local if exists
-$envFile = __DIR__ . '/../.env.local';
-if (file_exists($envFile)) {
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+// Load environment variables from common env files.
+function loadEnvFile($filePath) {
+    if (!file_exists($filePath)) {
+        return;
+    }
+
+    $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0) continue;
-        if (strpos($line, '=') !== false) {
-            list($name, $value) = explode('=', $line, 2);
-            $name = trim($name);
-            $value = trim($value);
-            if (!empty($name) && !isset($_ENV[$name])) {
-                $_ENV[$name] = $value;
-                putenv("$name=$value");
-            }
+        $line = trim($line);
+        if ($line === '' || strpos($line, '#') === 0) {
+            continue;
+        }
+
+        if (strpos($line, 'export ') === 0) {
+            $line = substr($line, 7);
+        }
+
+        if (strpos($line, '=') === false) {
+            continue;
+        }
+
+        list($name, $value) = explode('=', $line, 2);
+        $name = trim($name);
+        $value = trim($value);
+
+        // Remove wrapping quotes: KEY="value" or KEY='value'
+        if ((strlen($value) >= 2) &&
+            (($value[0] === '"' && substr($value, -1) === '"') || ($value[0] === "'" && substr($value, -1) === "'"))) {
+            $value = substr($value, 1, -1);
+        }
+
+        $currentValue = getenv($name);
+        $hasCurrent = !($currentValue === false || trim((string) $currentValue) === '');
+        if (!$hasCurrent && isset($_ENV[$name]) && trim((string) $_ENV[$name]) !== '') {
+            $hasCurrent = true;
+        }
+        if (!$hasCurrent && isset($_SERVER[$name]) && trim((string) $_SERVER[$name]) !== '') {
+            $hasCurrent = true;
+        }
+
+        if ($name !== '' && !$hasCurrent) {
+            $_ENV[$name] = $value;
+            $_SERVER[$name] = $value;
+            putenv("$name=$value");
         }
     }
 }
 
+function envOrDefault($key, $default = '') {
+    if (isset($_ENV[$key])) {
+        $value = trim((string) $_ENV[$key]);
+        if ($value !== '') {
+            return $value;
+        }
+    }
+
+    if (isset($_SERVER[$key])) {
+        $value = trim((string) $_SERVER[$key]);
+        if ($value !== '') {
+            return $value;
+        }
+    }
+
+    $value = getenv($key);
+    if ($value !== false) {
+        $value = trim((string) $value);
+        if ($value !== '') {
+            return $value;
+        }
+    }
+
+    return $default;
+}
+
+$envCandidates = [
+    __DIR__ . '/../.env.local',
+    __DIR__ . '/../.env',
+    __DIR__ . '/../env.local',
+    __DIR__ . '/.env.local',
+    __DIR__ . '/.env',
+    __DIR__ . '/env.local',
+    __DIR__ . '/env'
+];
+
+foreach ($envCandidates as $envFile) {
+    loadEnvFile($envFile);
+}
+
+function detectInfinityFreeAccountPrefix() {
+    $path = str_replace('\\', '/', __DIR__);
+    if (preg_match('/(if0_\d+)/', $path, $matches)) {
+        return $matches[1];
+    }
+    return '';
+}
+
+$ifAccountPrefix = detectInfinityFreeAccountPrefix();
+$httpHost = isset($_SERVER['HTTP_HOST']) ? strtolower((string) $_SERVER['HTTP_HOST']) : '';
+$isInfinityFreeHost =
+    strpos($httpHost, 'infinityfree') !== false ||
+    strpos($httpHost, '.ct.ws') !== false ||
+    strpos($httpHost, '.epizy.com') !== false ||
+    $ifAccountPrefix !== '';
+
 // Thông tin kết nối Database
-define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-define('DB_NAME', getenv('DB_NAME') ?: 'cms_bdu');
-define('DB_USER', getenv('DB_USER') ?: 'root');
-define('DB_PASS', getenv('DB_PASS') ?: '');
-define('DB_PORT', getenv('DB_PORT') ?: 3306);
+define('DB_HOST', envOrDefault('DB_HOST', $isInfinityFreeHost ? 'sql300.infinityfree.com' : 'localhost'));
+define('DB_NAME', envOrDefault('DB_NAME', $ifAccountPrefix !== '' ? $ifAccountPrefix . '_cms_bdu' : 'cms_bdu'));
+define('DB_USER', envOrDefault('DB_USER', $ifAccountPrefix !== '' ? $ifAccountPrefix : 'root'));
+define('DB_PASS', envOrDefault('DB_PASS', envOrDefault('DB_PASSWORD', '')));
+define('DB_PORT', (int) envOrDefault('DB_PORT', '3306'));
 
 // Chế độ hiển thị lỗi (Tắt khi deploy)
-ini_set('display_errors', 1);
+$appDebug = strtolower((string) (getenv('APP_DEBUG') ?: 'false'));
+$isDebug = in_array($appDebug, ['1', 'true', 'yes', 'on'], true);
+ini_set('display_errors', $isDebug ? '1' : '0');
 error_reporting(E_ALL);
 
 // Khởi tạo kết nối MySQLi
@@ -43,10 +131,18 @@ function getDBConnection() {
     global $conn;
     
     if (!isset($conn) || $conn === false) {
-        $conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
-        
+        try {
+            // Avoid uncaught mysqli_sql_exception on shared hosting.
+            mysqli_report(MYSQLI_REPORT_OFF);
+            $conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
+        } catch (Throwable $e) {
+            $safeHost = DB_HOST ?: '(empty-host)';
+            die("Lỗi kết nối database tới '{$safeHost}'. Vui lòng kiểm tra DB_HOST/DB_NAME/DB_USER/DB_PASS trong .env.local hoặc biến môi trường host. Chi tiết: " . $e->getMessage());
+        }
+
         if (!$conn) {
-            die("Lỗi kết nối database: " . mysqli_connect_error());
+            $safeHost = DB_HOST ?: '(empty-host)';
+            die("Lỗi kết nối database tới '{$safeHost}'. Vui lòng kiểm tra DB_HOST/DB_NAME/DB_USER/DB_PASS trong .env.local hoặc biến môi trường host. Chi tiết: " . mysqli_connect_error());
         }
         
         // Set charset
