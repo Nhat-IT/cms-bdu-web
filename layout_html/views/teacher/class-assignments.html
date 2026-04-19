@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS BDU - Quản lý Bài tập</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+    <link rel="stylesheet" href="../../public/css/layout.css">
+    <link rel="stylesheet" href="../../public/css/teacher/teacher-layout.css">
+    <link rel="stylesheet" href="../../public/css/teacher/class-assignments.css">
+</head>
+<body class="dashboard-body">
+
+    <div class="sidebar" id="sidebar">
+        <div>
+            <div class="brand-container flex-shrink-0">
+                <a href="home.html" class="text-decoration-none text-primary d-flex align-items-center">
+                    <i class="bi bi-mortarboard-fill fs-2 me-2"></i>
+                    <span class="fs-4 fw-bold hide-on-collapse">CMS BDU</span>
+                </a>
+            </div>
+            <div class="sidebar-scrollable w-100">
+            <nav class="nav flex-column ps-2 pe-2">
+                <a href="home.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-speedometer2 me-2"></i> Tổng quan</a>
+                <a href="attendance.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-calendar-check me-2"></i> Lịch & Điểm danh</a>
+                <a href="class-assignments.html" class="nav-link text-white active bg-primary bg-opacity-25 rounded py-2 mb-1"><i class="bi bi-journal-text me-2"></i> Quản lý Bài tập</a>
+                <a href="class-grades.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-file-earmark-bar-graph me-2"></i> Bảng điểm</a>
+                <a href="approve-evidences.html" class="nav-link text-white-50 hover-white py-2 mb-1 d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-file-earmark-medical me-2"></i> Duyệt minh chứng</span>
+                    <span class="badge bg-danger rounded-pill">3</span>
+                </a>
+                <a href="documents.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-folder2-open me-2"></i> Kho tài liệu</a>
+                <a href="announcements.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-megaphone-fill me-2"></i> Đăng bảng tin</a>
+            </nav>
+            </div>
+        </div>
+        
+        <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
+            <a href="../login.html" class="nav-link logout-btn" title="Đăng xuất">
+                <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 py-3 shadow-sm mb-4">
+            <h4 class="m-0 fw-bold d-flex align-items-center text-white">
+                QUẢN LÝ BÀI TẬP
+            </h4>
+            <div class="d-flex align-items-center text-white">
+                <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
+                    <div class="fs-6">Giảng viên: <b class="text-info">ThS. Nguyễn Hồ Hải</b></div>
+                </div>
+                
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
+                        <img src="https://ui-avatars.com/api/?name=H+H&background=0dcaf0&color=fff" id="headerAvatar" alt="Avatar" class="rounded-circle border border-white" width="40" height="40">
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
+                        <li><a class="dropdown-item fw-bold" href="teacher-profile.html"><i class="bi bi-person-vcard text-info me-2"></i>Hồ sơ cá nhân</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item fw-bold text-danger" href="../login.html"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 pt-0">
+            
+            <ul class="nav nav-tabs mb-4 border-bottom border-secondary border-opacity-25" id="assignmentTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active px-4 py-3" id="list-tab" data-bs-toggle="tab" data-bs-target="#list-panel" type="button" role="tab">
+                        <i class="bi bi-list-task me-2"></i> Danh sách Bài tập
+                    </button>
+                </li>
+                <li class="nav-item ms-2" role="presentation">
+                    <button class="nav-link px-4 py-3" id="grade-tab" data-bs-toggle="tab" data-bs-target="#grade-panel" type="button" role="tab">
+                        <i class="bi bi-check2-square me-2"></i> Chấm bài (Submissions)
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="list-panel" role="tabpanel">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-white pt-3 pb-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-3">
+                                <h5 class="fw-bold text-dark m-0">Bài tập đã giao</h5>
+                                <select class="form-select form-select-sm" style="width: 200px;">
+                                    <option value="">-- Tất cả lớp --</option>
+                                    <option value="25TH01">25TH01 - An ninh CSDL</option>
+                                    <option value="24CNTT02">24CNTT02 - Cấu trúc dữ liệu</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#addAssignmentModal" onclick="openAssignmentModal('add')">
+                                <i class="bi bi-plus-lg me-1"></i> Tạo Bài tập mới
+                            </button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light small text-muted fw-bold">
+                                        <tr>
+                                            <th class="ps-4">TIÊU ĐỀ BÀI TẬP</th>
+                                            <th>LỚP HỌC PHẦN</th>
+                                            <th>ĐÍNH KÈM (ĐỀ BÀI)</th>
+                                            <th>DEADLINE</th>
+                                            <th>TRẠNG THÁI</th>
+                                            <th>ĐÃ NỘP</th>
+                                            <th class="text-end pe-4">HÀNH ĐỘNG</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="ps-4 fw-bold text-primary">Báo cáo giữa kỳ - Chương 1,2</td>
+                                            <td class="fw-bold text-dark">25TH01 <span class="fw-normal text-muted">- An ninh CSDL</span></td>
+                                            <td>
+                                                <a class="text-decoration-none file-link" onclick="handleFileClick(event, 'DeBai_BaoCaoGiuaKy.pdf', 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf')">
+                                                    <i class="bi bi-file-earmark-pdf-fill text-danger fs-5" title="Xem đề bài"></i> <span class="small text-danger">Xem Đề</span>
+                                                </a>
+                                            </td>
+                                            <td><span class="text-danger fw-bold">30/03/2026 23:59</span></td>
+                                            <td><span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">Đang mở</span></td>
+                                            <td><span class="fw-bold text-primary">35</span>/40</td>
+                                            <td class="text-end pe-4">
+                                                <button class="btn btn-light action-btn text-primary border me-1" title="Sửa bài tập" data-bs-toggle="modal" data-bs-target="#addAssignmentModal" onclick="openAssignmentModal('edit', 'Báo cáo giữa kỳ - Chương 1,2', '25TH01', '2026-03-30T23:59', 'Sinh viên làm bài theo mẫu và nộp đúng hạn.')">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-light action-btn text-danger border" title="Xóa" onclick="confirmDeleteAssignment('Báo cáo giữa kỳ - Chương 1,2')">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="ps-4 fw-bold text-primary">Bài tập thực hành Lab 01</td>
+                                            <td class="fw-bold text-dark">24CNTT02 <span class="fw-normal text-muted">- Cấu trúc DL</span></td>
+                                            <td><span class="text-muted small">Không có</span></td>
+                                            <td><span class="text-muted">15/03/2026 23:59</span></td>
+                                            <td><span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25">Đã đóng</span></td>
+                                            <td><span class="fw-bold text-primary">38</span>/38</td>
+                                            <td class="text-end pe-4">
+                                                <button class="btn btn-light action-btn text-primary border me-1" title="Sửa bài tập" data-bs-toggle="modal" data-bs-target="#addAssignmentModal" onclick="openAssignmentModal('edit', 'Bài tập thực hành Lab 01', '24CNTT02', '2026-03-15T23:59', '')">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-light action-btn text-danger border" title="Xóa" onclick="confirmDeleteAssignment('Bài tập thực hành Lab 01')">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="grade-panel" role="tabpanel">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-white pt-3 pb-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-3">
+                                <h5 class="fw-bold text-dark m-0"><i class="bi bi-check2-circle text-success me-2"></i>Danh sách Nộp bài</h5>
+                                <select class="form-select form-select-sm border-success" style="width: 280px;">
+                                    <option value="">-- Chọn bài tập để chấm --</option>
+                                    <option value="1" selected>[25TH01] Báo cáo giữa kỳ - Chương 1,2</option>
+                                    <option value="2">[24CNTT02] Bài tập thực hành Lab 01</option>
+                                </select>
+                            </div>
+                            <div class="input-group input-group-sm" style="width: 200px;">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" class="form-control border-start-0" placeholder="Tìm MSSV, Họ tên...">
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light small text-muted fw-bold">
+                                        <tr>
+                                            <th class="ps-4">MSSV</th>
+                                            <th>HỌ TÊN SINH VIÊN</th>
+                                            <th>THỜI GIAN NỘP</th>
+                                            <th>FILE ĐÍNH KÈM (BÀI LÀM)</th>
+                                            <th class="text-center">ĐIỂM SỐ</th>
+                                            <th class="text-end pe-4">THAO TÁC</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="ps-4 fw-bold text-dark">22050022</td>
+                                            <td class="fw-bold">Phạm Huỳnh Nhật Ý</td>
+                                            <td><span class="text-success small"><i class="bi bi-check-circle-fill me-1"></i>28/03/2026 14:30</span></td>
+                                            <td>
+                                                <a class="text-decoration-none file-link text-primary" onclick="handleFileClick(event, 'BaoCao_22050022.pdf', 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf')">
+                                                    <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i>BaoCao_22050022.pdf
+                                                </a>
+                                            </td>
+                                            <td class="text-center"><span class="badge bg-warning text-dark">Chưa chấm</span></td>
+                                            <td class="text-end pe-4">
+                                                <button class="btn btn-sm btn-outline-primary fw-bold" data-bs-toggle="modal" data-bs-target="#gradeModal" onclick="openGradeModal('22050022', 'Phạm Huỳnh Nhật Ý', '', '')">
+                                                    <i class="bi bi-pencil-square me-1"></i> Chấm điểm
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="ps-4 fw-bold text-dark">22050111</td>
+                                            <td class="fw-bold">Nguyễn Văn A</td>
+                                            <td><span class="text-success small"><i class="bi bi-check-circle-fill me-1"></i>27/03/2026 09:15</span></td>
+                                            <td>
+                                                <a class="text-decoration-none file-link text-primary" onclick="handleFileClick(event, 'BaoCao_NguyenVanA.docx', 'https://calibre-ebook.com/downloads/demos/demo.docx')">
+                                                    <i class="bi bi-file-earmark-word-fill text-primary me-1"></i>BaoCao_NguyenVanA.docx
+                                                </a>
+                                            </td>
+                                            <td class="text-center"><span class="fw-bold text-success fs-5">8.5</span></td>
+                                            <td class="text-end pe-4">
+                                                <button class="btn btn-sm btn-light border text-secondary fw-bold" data-bs-toggle="modal" data-bs-target="#gradeModal" onclick="openGradeModal('22050111', 'Nguyễn Văn A', '8.5', 'Làm bài tốt, trình bày rõ ràng.')">
+                                                    <i class="bi bi-pencil me-1"></i> Sửa điểm
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="ps-4 fw-bold text-dark">22050222</td>
+                                            <td class="fw-bold">Trần Thị B</td>
+                                            <td><span class="text-success small"><i class="bi bi-check-circle-fill me-1"></i>26/03/2026 10:45</span></td>
+                                            <td>
+                                                <a class="text-decoration-none file-link text-primary" onclick="handleFileClick(event, 'SourceCode_TranThiB.zip', '#')">
+                                                    <i class="bi bi-file-earmark-zip-fill text-warning me-1"></i>SourceCode_TranThiB.zip
+                                                </a>
+                                            </td>
+                                            <td class="text-center"><span class="badge bg-warning text-dark">Chưa chấm</span></td>
+                                            <td class="text-end pe-4">
+                                                <button class="btn btn-sm btn-outline-primary fw-bold" data-bs-toggle="modal" data-bs-target="#gradeModal" onclick="openGradeModal('22050222', 'Trần Thị B', '', '')">
+                                                    <i class="bi bi-pencil-square me-1"></i> Chấm điểm
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addAssignmentModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="assignmentModalTitle"><i class="bi bi-journal-plus me-2"></i>Tạo Bài tập mới</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Chọn Lớp học phần <span class="text-danger">*</span></label>
+                            <select class="form-select" id="modalAssignClass">
+                                <option value="">-- Chọn lớp --</option>
+                                <option value="25TH01">25TH01 - An ninh CSDL</option>
+                                <option value="24CNTT02">24CNTT02 - Cấu trúc dữ liệu</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Hạn chót nộp bài (Deadline) <span class="text-danger">*</span></label>
+                            <input type="datetime-local" class="form-control" id="modalAssignDeadline">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tiêu đề bài tập <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="modalAssignTitle" placeholder="VD: Báo cáo giữa kỳ chương 1">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Mô tả / Yêu cầu chi tiết</label>
+                        <textarea class="form-control" rows="3" id="modalAssignDesc" placeholder="Nhập hướng dẫn làm bài cho sinh viên (không bắt buộc nếu đã đính kèm file)..."></textarea>
+                    </div>
+                    
+                    <div class="mb-2 p-3 bg-light border rounded">
+                        <label class="form-label fw-bold text-primary"><i class="bi bi-cloud-arrow-up-fill me-2"></i>Đính kèm File đề bài (Tùy chọn)</label>
+                        <input class="form-control form-control-sm" type="file" id="assignmentFile">
+                        <div class="form-text small mt-2"><i class="bi bi-info-circle me-1"></i>Hỗ trợ định dạng: PDF, DOCX, ZIP, RAR (Tối đa 15MB). Dùng để cung cấp đề bài chi tiết hoặc source code mẫu cho sinh viên.</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pb-4 px-4">
+                    <button class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                    <button class="btn btn-primary px-4" id="assignmentModalSubmitBtn" onclick="alert('Lưu thông tin thành công!');" data-bs-dismiss="modal">Giao bài tập</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="gradeModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Chấm điểm Sinh viên</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <div class="card border-0 shadow-sm mb-3">
+                        <div class="card-body py-2 px-3 d-flex align-items-center">
+                            <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center me-3" style="width: 40px; height: 40px;">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark" id="modalStudentName">Phạm Huỳnh Nhật Ý</h6>
+                                <small class="text-muted" id="modalStudentId">MSSV: 22050022</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-5">
+                            <label class="form-label fw-bold text-success">Điểm số (Hệ 10)</label>
+                            <input type="number" step="0.5" min="0" max="10" class="form-control form-control-lg fw-bold text-center text-success" id="modalScoreInput" placeholder="--">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label fw-bold">Nhận xét (Feedback)</label>
+                        <textarea class="form-control" rows="3" id="modalFeedbackInput" placeholder="Nhập phản hồi cho sinh viên này (Không bắt buộc)..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pb-4 px-4 bg-light">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button class="btn btn-success px-4" onclick="alert('Đã lưu điểm thành công!');" data-bs-dismiss="modal">Lưu Điểm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../public/js/script.js"></script>
+<script src="../../public/js/teacher/teacher-layout.js"></script>
+    
+    <script src="../../public/js/teacher/class-assignments.js"></script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS BDU - Hồ Sơ Quản Trị Viên</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+    <link rel="stylesheet" href="../../public/css/layout.css">
+    <link rel="stylesheet" href="../../public/css/admin/admin-layout.css">
+    <link rel="stylesheet" href="../../public/css/admin/admin-profile.css">
+</head>
+<body class="dashboard-body">
+
+<div class="sidebar sidebar-admin" id="sidebar">
+    <div>
+        <div class="brand-container flex-shrink-0">
+            <a href="home.html" class="text-decoration-none text-primary d-flex align-items-center">
+                <i class="bi bi-mortarboard-fill fs-2 me-2"></i>
+                <span class="fs-4 fw-bold hide-on-collapse">CMS ADMIN</span>
+            </a>
+        </div>
+        <div class="text-center mb-3 text-white-50 small fw-bold hide-on-collapse">QUẢN TRỊ HỆ THỐNG</div>
+        <div class="sidebar-scrollable w-100">
+        <nav class="d-flex flex-column mt-3">
+            <a href="home.html"><i class="bi bi-speedometer2"></i> Tổng quan hệ thống</a>
+            <a href="org-settings.html"><i class="bi bi-gear-wide-connected"></i> Cấu hình Học vụ</a>
+            <a href="accounts.html"><i class="bi bi-people"></i> Quản lý Tài khoản</a>
+            <a href="classes-subjects.html"><i class="bi bi-building"></i> Quản lý Lớp & Môn</a>
+            <a href="assignments.html"><i class="bi bi-diagram-3-fill"></i> Phân công Giảng dạy</a>
+            <a href="system-logs.html"><i class="bi bi-shield-lock"></i> Nhật ký hệ thống</a>
+        </nav>
+        </div>
+    </div>
+    
+    <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
+        <a href="../login.html" class="nav-link logout-btn" title="Đăng xuất">
+            <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
+        </a>
+    </div>
+</div>
+
+<div class="main-content admin-main-content" id="mainContent">
+    
+    <div class="top-navbar-admin d-flex justify-content-between align-items-center px-4 py-3">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+            <h4 class="m-0 text-white fw-bold d-flex align-items-center">
+                <i class="bi bi-person-badge-fill me-2 fs-3 text-warning"></i> HỒ SƠ QUẢN TRỊ VIÊN
+            </h4>
+        </div>
+        
+        <div class="d-flex align-items-center text-white">
+            <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
+                <div class="fs-6">Quản trị viên: <span class="fw-bold admin-operator-name">Admin Khoa CNTT</span></div>
+            </div>
+            
+            <div class="dropdown">
+                <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
+                    <img src="https://ui-avatars.com/api/?name=Admin+CNTT&background=0d6efd&color=fff" id="headerAvatar" class="rounded-circle border" width="32" height="32" alt="Avatar">
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
+                    <li><a class="dropdown-item fw-bold" href="admin-profile.html"><i class="bi bi-person-vcard text-primary me-2"></i>Hồ sơ cá nhân</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item fw-bold text-danger" href="../login.html"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-4">
+        
+        <div class="row g-4">
+            
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="profile-header-bg"></div>
+                    <div class="card-body text-center pt-0">
+                        
+                        <div class="avatar-wrapper mb-3">
+                            <img src="https://ui-avatars.com/api/?name=Admin+CNTT&background=0d6efd&color=fff&size=200" id="mainProfileAvatar" class="profile-avatar" alt="Admin Avatar">
+                            <label for="avatarUploadInput" class="avatar-edit-btn" title="Thay đổi ảnh đại diện">
+                                <i class="bi bi-camera-fill"></i>
+                            </label>
+                            <input type="file" id="avatarUploadInput" class="d-none" accept="image/png, image/jpeg, image/jpg">
+                        </div>
+                        
+                        <h5 class="fw-bold text-dark mb-1">Admin Khoa CNTT</h5>
+                        <p class="text-muted small mb-3"><i class="bi bi-shield-fill-check text-danger me-1"></i>Quản trị viên Hệ thống</p>
+                        
+                        <div class="d-flex justify-content-center gap-2 mb-4">
+                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">Toàn quyền (Super Admin)</span>
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success">Đang hoạt động</span>
+                        </div>
+
+                        <hr class="text-muted border-opacity-25">
+
+                        <div class="text-start mt-3">
+                            <p class="mb-2 text-muted small fw-bold">THÔNG TIN TÀI KHOẢN</p>
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Mã định danh (Username):</small>
+                                <span class="fw-bold text-dark">admin_cntt</span>
+                            </div>
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Ngày khởi tạo:</small>
+                                <span class="fw-bold text-dark">01/01/2026</span>
+                            </div>
+                            <div class="mb-0">
+                                <small class="text-muted d-block">Lần đăng nhập cuối:</small>
+                                <span class="fw-bold text-success">Hôm nay, lúc 08:30:15</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white pt-4 pb-2 border-0">
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-envelope-at-fill text-primary me-2"></i>Thông tin Liên hệ Hệ thống</h5>
+                        <p class="text-muted small mt-1 mb-0">Các cảnh báo bảo mật, báo cáo xuất file từ hệ thống sẽ được gửi về Email này.</p>
+                    </div>
+                    <div class="card-body">
+                        <form onsubmit="return handleUpdateProfile(event)">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Tên hiển thị <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control border-secondary" value="Admin Khoa CNTT" required>
+                                </div>
+                                <div class="col-md-6 mt-3 mt-md-0">
+                                    <label class="form-label fw-bold">Email nhận cảnh báo <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control border-primary" value="admin.cntt@bdu.edu.vn" required>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary fw-bold px-4 shadow-sm"><i class="bi bi-save me-1"></i>LƯU THAY ĐỔI</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 border-start border-4 border-danger">
+                    <div class="card-header bg-white pt-4 pb-2 border-0">
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-shield-lock-fill text-danger me-2"></i>Đổi Mật Khẩu Quản Trị</h5>
+                        <p class="text-muted small mt-1 mb-0">Vui lòng sử dụng mật khẩu mạnh (chứa chữ hoa, chữ thường, số và ký tự đặc biệt).</p>
+                    </div>
+                    <div class="card-body">
+                        <form onsubmit="return handleChangePassword(event)">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Mật khẩu hiện tại <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control border-secondary" placeholder="Nhập mật khẩu cũ..." required id="oldPassword">
+                            </div>
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-dark">Mật khẩu mới <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control border-danger" placeholder="Nhập mật khẩu mới..." required id="newPassword">
+                                </div>
+                                <div class="col-md-6 mt-3 mt-md-0">
+                                    <label class="form-label fw-bold text-dark">Xác nhận mật khẩu mới <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control border-danger" placeholder="Nhập lại mật khẩu mới..." required id="confirmPassword">
+                                    <div class="invalid-feedback">Mật khẩu xác nhận không khớp!</div>
+                                </div>
+                            </div>
+                            <div class="text-end border-top pt-3">
+                                <button type="submit" class="btn btn-danger fw-bold px-4 shadow-sm"><i class="bi bi-key-fill me-1"></i>CẬP NHẬT MẬT KHẨU</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../public/js/script.js"></script>
+<script src="../../public/js/admin/admin-layout.js"></script>
+
+<script>
+    // Thu gọn sidebar mobile
+    document.getElementById('sidebarToggle').addEventListener('click', function() {
+        document.getElementById('sidebar').classList.toggle('active');
+    });
+
+    // --- LOGIC UPLOAD AVATAR ---
+    document.getElementById('avatarUploadInput').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            // Kiểm tra dung lượng (Max 2MB)
+            if(file.size > 2 * 1024 * 1024) {
+                alert('⛔ Dung lượng ảnh vượt quá 2MB. Vui lòng chọn ảnh khác nhỏ hơn!');
+                this.value = ''; // Xóa file đã chọn
+                return;
+            }
+
+            // Preview ảnh
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imgUrl = e.target.result;
+                // Cập nhật ảnh to ở giữa
+                document.getElementById('mainProfileAvatar').src = imgUrl;
+                // Cập nhật luôn ảnh nhỏ trên thanh Header
+                document.getElementById('headerAvatar').src = imgUrl;
+                
+                // Hiển thị thông báo (Trong thực tế sẽ dùng AJAX gửi file lên server ở đây)
+                setTimeout(() => {
+                    alert('✅ Đã cập nhật ảnh đại diện thành công!');
+                }, 300);
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Xử lý Cập nhật Profile
+    function handleUpdateProfile(e) {
+        e.preventDefault();
+        alert('✅ Đã cập nhật Thông tin liên hệ thành công!');
+        return false;
+    }
+
+    // Xử lý Đổi Mật Khẩu kèm Validate
+    function handleChangePassword(e) {
+        e.preventDefault();
+        
+        const newPw = document.getElementById('newPassword');
+        const confirmPw = document.getElementById('confirmPassword');
+        
+        if (newPw.value !== confirmPw.value) {
+            confirmPw.classList.add('is-invalid');
+            return false;
+        } else {
+            confirmPw.classList.remove('is-invalid');
+            if(confirm('⚠️ Bạn có chắc chắn muốn đổi Mật khẩu Quản trị hệ thống không? Bạn sẽ phải đăng nhập lại sau khi đổi.')) {
+                alert('🔒 Đã đổi mật khẩu thành công! Hệ thống sẽ tự động đăng xuất.');
+                window.location.href = '../login.html';
+            }
+        }
+        return false;
+    }
+
+    // Xóa cảnh báo đỏ khi người dùng gõ lại mật khẩu
+    document.getElementById('confirmPassword').addEventListener('input', function() {
+        this.classList.remove('is-invalid');
+    });
+</script>
+</body>
+</html>

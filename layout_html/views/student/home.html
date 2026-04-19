@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS BDU - Cổng Sinh Viên</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+    <link rel="stylesheet" href="../../public/css/layout.css">
+    <!-- CSS dùng chung cho Student -->
+    <link rel="stylesheet" href="../../public/css/student/student-layout.css">
+    <link rel="stylesheet" href="../../public/css/student/home.css">
+</head>
+<body class="dashboard-body">
+
+<div class="sidebar" id="sidebar">
+    
+    <div class="brand-container flex-shrink-0">
+        <a href="home.html" class="text-decoration-none text-primary d-flex align-items-center">
+            <i class="bi bi-mortarboard-fill fs-2 me-2"></i>
+            <span class="fs-4 fw-bold hide-on-collapse">CMS BDU</span>
+        </a>
+    </div>
+    
+    <div class="profile-container text-center flex-shrink-0">
+        <a href="student-profile.html" class="profile-trigger" title="Xem hồ sơ cá nhân">
+            <img src="https://ui-avatars.com/api/?name=Nhat+Y&background=0d6efd&color=fff" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar">
+            <div class="hide-on-collapse">
+                <div class="text-white fw-bold fs-6">Phạm Huỳnh Nhật Ý</div>
+                <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">MSSV: 22050111</div>
+            </div>
+        </a>
+        <span class="badge student-class-badge mt-1 hide-on-collapse">LỚP: 25TH01</span>
+    </div>
+
+    <div class="sidebar-scrollable w-100">
+        <nav class="d-flex flex-column mt-3">
+            <div class="px-4 mb-2 small text-white-50 fw-bold hide-on-collapse" style="font-size: 0.7rem; letter-spacing: 1px;">HỌC VỤ</div>
+            
+            <a href="home.html" class="nav-link active" title="Tổng quan cá nhân">
+                <i class="bi bi-grid-1x2-fill"></i> <span class="hide-on-collapse">Tổng quan cá nhân</span>
+            </a>
+            <a href="my-attendance.html" class="nav-link" title="Xem điểm danh">
+                <i class="bi bi-person-lines-fill"></i> <span class="hide-on-collapse">Xem điểm danh</span>
+            </a>
+            <a href="schedule.html" class="nav-link" title="Xem Lịch học">
+                <i class="bi bi-calendar-week"></i> <span class="hide-on-collapse">Xem Lịch học</span>
+            </a>
+            <a href="assignments.html" class="nav-link" title="Bài tập của tôi">
+                <i class="bi bi-journal-text"></i> <span class="hide-on-collapse">Bài tập của tôi</span>
+            </a>
+            <a href="grades.html" class="nav-link" title="Kết quả học tập">
+                <i class="bi bi-bar-chart-fill"></i> <span class="hide-on-collapse">Kết quả học tập</span>
+            </a>
+            <a href="documents.html" class="nav-link" title="Kho Tài liệu lớp">
+                <i class="bi bi-folder2-open"></i> <span class="hide-on-collapse">Kho Tài liệu lớp</span>
+            </a>
+            
+            <div class="px-4 mt-3 mb-2 small text-white-50 fw-bold hide-on-collapse" style="font-size: 0.7rem; letter-spacing: 1px;">TƯƠNG TÁC</div>
+            <a href="notifications-all.html" class="nav-link" title="Xem thông báo">
+                <i class="bi bi-bell-fill"></i> <span class="hide-on-collapse">Thông báo</span>
+            </a>
+            <a href="my-feedback.html" class="nav-link" title="Gửi phản hồi">
+                <i class="bi bi-envelope-paper"></i> <span class="hide-on-collapse">Gửi phản hồi</span>
+            </a>
+        </nav>
+    </div>
+    
+    <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
+        <a href="../login.html" class="nav-link logout-btn" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?');" title="Đăng xuất">
+            <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
+        </a>
+    </div>
+</div>
+
+<div class="main-content" id="mainContent">
+    
+    <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 shadow-sm">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-outline-light me-3 border-0" id="sidebarToggle"><i class="bi bi-list fs-3"></i></button>
+            <h5 class="m-0 text-white fw-bold d-flex align-items-center">
+                TỔNG QUAN HỌC TẬP
+            </h5>
+        </div>
+        
+        <div class="d-flex align-items-center text-white">
+            <a href="notifications-all.html" class="text-white text-decoration-none" title="Xem thông báo từ BCS, Giảng viên, Khoa">
+                <i class="bi bi-bell fs-5 text-white position-relative cursor-pointer">
+                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
+                </i>
+            </a>
+        </div>
+    </div>
+
+    <div class="p-4">
+        
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card stat-card-custom h-100 p-3 shadow-sm border-0 border-start border-4 border-primary bg-white">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box-custom bg-light-primary me-3 text-primary"><i class="bi bi-journal-bookmark-fill"></i></div>
+                        <div>
+                            <p class="text-muted fw-bold mb-1" style="font-size: 0.8rem;">MÔN ĐANG HỌC</p>
+                            <h3 class="mb-0 fw-bold text-dark">5</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card-custom h-100 p-3 shadow-sm border-0 border-start border-4 border-danger bg-white">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box-custom bg-light-danger me-3 text-danger"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                        <div>
+                            <p class="text-danger fw-bold mb-1" style="font-size: 0.8rem;">MÔN CẢNH BÁO</p>
+                            <h3 class="mb-0 fw-bold text-danger">1</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card-custom h-100 p-3 shadow-sm border-0 border-start border-4 border-warning bg-white">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box-custom bg-light-warning me-3 text-warning"><i class="bi bi-calendar-x-fill"></i></div>
+                        <div>
+                            <p class="text-muted fw-bold mb-1" style="font-size: 0.8rem;">TỔNG BUỔI VẮNG</p>
+                            <h3 class="mb-0 fw-bold text-dark">4</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card-custom h-100 p-3 shadow-sm border-0 border-start border-4 border-success bg-white">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box-custom bg-light-success me-3 text-success"><i class="bi bi-envelope-check-fill"></i></div>
+                        <div>
+                            <p class="text-muted fw-bold mb-1" style="font-size: 0.8rem;">PHẢN HỒI ĐÃ XỬ LÝ</p>
+                            <h3 class="mb-0 fw-bold text-dark">2</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-white pt-3 pb-2 border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-calendar-day text-primary me-2"></i>Lịch học hôm nay</h5>
+                        <a href="schedule.html" class="btn btn-sm btn-outline-secondary">Xem toàn bộ lịch</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="p-3 mb-3 bg-light rounded border-start border-4 border-primary shadow-sm">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="badge bg-primary px-2 py-1"><i class="bi bi-clock me-1"></i>Sáng - 12/03/2026</span>
+                                <span class="text-muted small fw-bold"><i class="bi bi-geo-alt-fill me-1 text-danger"></i>Phòng A201</span>
+                            </div>
+                            <h6 class="fw-bold text-dark mb-1">Cơ sở dữ liệu</h6>
+                            <p class="text-muted small mb-0"><i class="bi bi-person-badge text-primary me-1"></i>GV: ThS. Nguyễn Văn X</p>
+                        </div>
+
+                        <div class="p-4 text-center border rounded border-dashed bg-white mt-4">
+                            <i class="bi bi-cup-hot text-muted fs-1 mb-2"></i>
+                            <h6 class="text-muted fw-bold">Chiều nay bạn được nghỉ!</h6>
+                            <p class="small text-muted mb-0">Hãy dành thời gian ôn bài nhé.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-white pt-3 pb-2 border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-activity text-danger me-2"></i>Tình trạng Chuyên cần</h5>
+                        <a href="my-attendance.html" class="btn btn-sm btn-outline-primary">Xem chi tiết</a>
+                    </div>
+                    <div class="card-body">
+                        
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-end mb-1">
+                                <div>
+                                    <h6 class="fw-bold text-danger mb-0">An ninh cơ sở dữ liệu</h6>
+                                    <small class="text-muted">Giới hạn vắng: 3 buổi</small>
+                                </div>
+                                <span class="fw-bold text-danger">Đã vắng 3/3</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-danger progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%;"></div>
+                            </div>
+                            <small class="text-danger fw-bold mt-1 d-block"><i class="bi bi-exclamation-circle me-1"></i>Bạn đang ở mức CẤM THI. <a href="my-attendance.html" class="text-danger text-decoration-underline">Vui lòng nộp minh chứng!</a></small>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-end mb-1">
+                                <div>
+                                    <h6 class="fw-bold text-dark mb-0">Chuyên đề 2</h6>
+                                    <small class="text-muted">Giới hạn vắng: 4 buổi</small>
+                                </div>
+                                <span class="fw-bold text-warning">Đã vắng 2/4</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: 50%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between align-items-end mb-1">
+                                <div>
+                                    <h6 class="fw-bold text-dark mb-0">Lập trình Web</h6>
+                                    <small class="text-muted">Giới hạn vắng: 3 buổi</small>
+                                </div>
+                                <span class="fw-bold text-success">Đã vắng 0/3</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- JS dùng chung cho Student -->
+<script src="../../public/js/script.js"></script>
+<script src="../../public/js/student/student-layout.js"></script>
+
+    <script src="../../public/js/student/home.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,156 @@
+/* Mô tả: Bố cục riêng cho BCS trong sidebar và khu vực hồ sơ.
+    Ghi chú MENU: phần menu dùng chung đã gom tại public/css/menu.css */
+
+/* Giao diện BCS: Khối hồ sơ trong sidebar */
+.bcs-profile-container {
+    /* Khung thông tin BCS trong sidebar */
+    padding: 20px 10px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.bcs-profile-trigger {
+    /* Vùng click vao thong tin/ảnh đại diện BCS */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    color: inherit;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border-radius: 10px;
+    padding: 10px 8px;
+}
+
+.bcs-profile-trigger:hover {
+    /* Hover cho thẻ profile BCS */
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+    border-left: none !important;
+    box-shadow: 0 6px 14px rgba(13, 110, 253, 0.28);
+}
+
+.bcs-profile-trigger:hover .text-white,
+.bcs-profile-trigger:hover .text-white-50 {
+    /* Đảm bảo text đổi sang trắng khi hover */
+    color: #ffffff !important;
+}
+
+.bcs-class-badge {
+    /* Badge hiển thị lớp */
+    font-size: 0.75rem;
+    background-color: rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Giao diện BCS: Nhãn nhóm menu */
+.sidebar .small.fw-bold {
+    /* Tăng độ rõ cua nhãn nhom menu */
+    letter-spacing: 1px;
+}
+.sidebar.collapsed .bcs-profile-trigger > div,
+.sidebar.collapsed .bcs-class-badge,
+.sidebar.collapsed .small.fw-bold,
+.sidebar.collapsed .hover-logout span {
+    /* Thu gọn sidebar: ẩn text, giữ lại icon/avatar */
+    display: none !important;
+}
+
+.sidebar.collapsed .bcs-profile-container {
+    /* Canh lại spacing profile o chế độ thu gọn */
+    padding: 14px 0 10px;
+}
+
+.sidebar.collapsed .bcs-profile-trigger {
+    /* Giảm padding de avatar nằm gọn o sidebar thu gon */
+    padding: 6px;
+}
+
+.sidebar.collapsed nav a i {
+    /* Tăng độ dễ nhìn icon menu khi chỉ còn icon */
+    font-size: 1.2rem;
+}
+/* Giao diện BCS: Thanh điều hướng trên cùng */
+.top-navbar-blue {
+    /* Chiều cao topbar đồng bộ với layout tổng */
+    height: 70px;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.top-navbar-blue h4,
+.top-navbar-blue h5 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.top-navbar-blue #sidebarToggle {
+    /* Bỏ viền nút toggle để gọn giao diện */
+    border: 0 !important;
+}
+
+.top-navbar-blue #sidebarToggle i {
+    /* Icon toggle to để dễ thao tác */
+    font-size: 1.75rem !important;
+}
+
+/* Giao diện BCS: Cụm thông tin header bên phải */
+.bcs-header-meta {
+    /* Cụm thông tin bên phải trên topbar */
+    gap: 14px;
+}
+
+.bcs-header-label {
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.bcs-notification-link {
+    /* Nút chuông thông báo */
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    color: #ffffff;
+    text-decoration: none;
+    background-color: rgba(255, 255, 255, 0.12);
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.bcs-notification-link:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.bcs-notification-count {
+    /* Badge số lượng thông báo chưa đọc */
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background-color: #dc3545;
+    border: 2px solid #ffffff;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+}
+
+/* Giao diện BCS: Hiển thị trên mobile */
+@media (max-width: 768px) {
+    /* Mobile: an nhãn BCS, chỉ để icon chuông */
+    .bcs-header-label {
+        display: none;
+    }
+}

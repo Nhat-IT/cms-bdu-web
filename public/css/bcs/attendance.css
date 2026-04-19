@@ -1,0 +1,79 @@
+/* Mô tả: Giao diện diem danh BCS (trạng thái, hop thong tin, bang danh sach). */
+
+                .status-select.val-1 {
+                        color: #198754 !important;
+                        -webkit-text-fill-color: #198754;
+                        font-weight: 700 !important;
+                        background-color: #ecfdf3;
+                        border-color: #86efac;
+                }
+        /* Mau trạng thái: 1 = có mặt */
+                .status-select.val-2 {
+                        color: #b58105 !important;
+                        -webkit-text-fill-color: #b58105;
+                        font-weight: 700 !important;
+                        background-color: #fffbeb;
+                        border-color: #fcd34d;
+                }
+        /* Mau trạng thái: 2 = đi muộn/vắng có phép */
+                .status-select.val-3 {
+                        color: #dc3545 !important;
+                        -webkit-text-fill-color: #dc3545;
+                        font-weight: 700 !important;
+                        background-color: #fff1f2;
+                        border-color: #fda4af;
+                }
+        /* Mau trạng thái: 3 = vắng không phép */
+
+                .status-select.val-1:focus,
+                .status-select.val-2:focus,
+                .status-select.val-3:focus {
+                        font-weight: 700 !important;
+                }
+        
+        /* CSS Khóa cứng layout chống xê dịch */
+        .fixed-info-box { min-height: 42px; display: flex; align-items: center; }
+        /* Khóa bố cục bảng điểm danh không bị xô dòng */
+        #attendanceTable { table-layout: fixed; width: 100%; }
+        #attendanceTable th, #attendanceTable td { vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+                #attendanceTable thead th {
+                        padding-top: 0.78rem;
+                        padding-bottom: 0.78rem;
+                        font-size: 0.9rem;
+                }
+
+                #attendanceTable tbody td {
+                        padding-top: 0.78rem;
+                        padding-bottom: 0.78rem;
+                }
+
+                .stt-col {
+                        font-weight: 700;
+                        color: #0f172a;
+                }
+
+        @media (max-width: 768px) {
+                #attendanceTable {
+                        min-width: 780px;
+                }
+
+                .fixed-info-box {
+                        min-height: 0;
+                        align-items: flex-start;
+                }
+
+                .card-header .input-group {
+                        width: 100% !important;
+                }
+
+                .card-footer {
+                        flex-direction: column;
+                        align-items: stretch !important;
+                        gap: 10px;
+                }
+
+                .card-footer .btn {
+                        width: 100%;
+                }
+        }

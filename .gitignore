@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Uploads
+public/uploads/
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
+
+# Compiled files
+*.min.js
+*.min.css
+
+# Database (already in repo as db.sql)
+*.sqlite
+*.db
+
+# Private files
+config/passwords.php

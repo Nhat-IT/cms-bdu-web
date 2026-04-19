@@ -1,0 +1,267 @@
+/* Mô tả: Quy định style tổng thể cho toàn bộ giao diện CMS. */
+
+/* =========================================
+   STYLE CHUNG CHO TOÀN BỘ HỆ THỐNG
+   ========================================= */
+body {
+    /* Nền và font mặc định cho toàn hệ thống */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f6f9;
+}
+
+.cursor-pointer {
+    /* Tiện ích: biến mọi phần tử thành có thể click */
+    cursor: pointer;
+}
+
+/* =========================================
+   STYLE DÀNH RIÊNG CHO TRANG ĐĂNG NHẬP
+   ========================================= */
+.login-body {
+    min-height: 100vh; /* Đổi từ height sang min-height để không bị cắt xén nội dung trên màn hình nhỏ */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 0;
+}
+
+.login-card {
+    /* Khung card tổng cho trang đăng nhập */
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    overflow: hidden;
+    width: 100%;
+    max-width: 900px;
+}
+
+.login-image {
+    /* Cột bên trái trang đăng nhập */
+    background: linear-gradient(135deg, #1e2b3c, #3498db);
+    color: white;
+    padding: 40px;
+}
+
+.login-form {
+    /* Cột bên phải chứa form đăng nhập */
+    padding: 40px;
+    background-color: white;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.google-login-btn:hover {
+    background-color: #ed4848;
+    border-color: #e15b5b;
+    color: #fff;
+}
+
+.google-login-btn:hover .google-login-icon {
+    color: #fef6f5 !important;
+}
+
+.form-control:focus {
+    /* Focus input: bỏ shadow mặc định và đổi màu viền */
+    box-shadow: none;
+    border-color: #3498db;
+}
+
+/* Sửa CSS cho input-group kết hợp với form-floating của Bootstrap */
+.input-group > .form-floating > .form-control {
+    /* Ghép input-group với form-floating không bị lệch bo góc */
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.btn-login {
+    /* Nút đăng nhập chính */
+    background-color: #3498db;
+    border: none;
+    padding: 12px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.btn-login:hover {
+    /* Màu khi rê chuột vào nút đăng nhập */
+    background-color: #2980b9;
+}
+
+/* =========================================
+   STYLE DÀNH CHO BẢNG ĐIỀU KHIỂN
+   ========================================= */
+.dashboard-body {
+    /* Nền tổng cho các trang dashboard */
+    background-color: #f4f6f9;
+}
+
+/* Các card thống kê */
+.stat-card {
+    /* Card thống kê phiên bản cơ bản */
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    /* Hiệu ứng nổi card thống kê */
+    transform: translateY(-5px);
+}
+
+.icon-box {
+    /* Hộp icon tròn cho card thống kê */
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.bg-light-primary { background-color: #e3f2fd; color: #1976d2; }
+.bg-light-danger { background-color: #fde0dc; color: #d32f2f; }
+.bg-light-warning { background-color: #fff3e0; color: #f57c00; }
+.bg-light-success { background-color: #e8f5e9; color: #388e3c; }
+
+/* =========================================
+   STYLE CẬP NHẬT CHO DASHBOARD (THEO MOCKUP MỚI)
+   ========================================= */
+.btn-logout-hover:hover {
+    /* Hiệu ứng hover cho nút đăng xuất trên thanh trên */
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.stat-card-custom {
+    /* Card thống kê phiên bản mới theo mockup */
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    transition: transform 0.2s;
+    background-color: #fff;
+}
+
+.stat-card-custom:hover {
+    /* Nhấc nhẹ card khi hover */
+    transform: translateY(-3px);
+}
+
+/* Các viền màu theo thiết kế */
+.border-left-danger {
+    /* Viền màu cạnh trái để nhấn mạnh card cảnh báo */
+    border-left: 5px solid #dc3545 !important;
+}
+
+.border-left-warning {
+    /* Viền màu cạnh trái cho card cảnh báo mức vừa */
+    border-left: 5px solid #ffc107 !important;
+}
+
+/* Icon box vuông bo góc nhẹ thay vì tròn hoàn toàn */
+.icon-box-custom {
+    /* Hộp icon vuông bo góc cho giao diện mới */
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+}
+
+/* Style cho các môn cảnh báo (nền vàng nhạt) */
+.subject-warn-card {
+    /* Card môn học cảnh báo */
+    background-color: #fef5d9; /* Màu vàng nhạt giống mẫu */
+    border-radius: 10px;
+    border: 1px solid #faebbc;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.subject-warn-card:hover {
+    /* Hiệu ứng hover card môn cảnh báo */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    transform: translateY(-2px);
+}
+
+/* Bảng tùy chỉnh cho dashboard chi tiết */
+.custom-detail-table th {
+    /* Header bảng chi tiết dashboard */
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+.custom-detail-table td {
+    /* Màu viền các ô dữ liệu bảng chi tiết */
+    border-color: #f1f3f5;
+}
+
+/* Hiệu ứng focus cho các select trên thanh bộ lọc */
+.form-select-sm:focus, .form-control-sm:focus {
+    /* Vòng sáng nhẹ khi focus bộ lọc */
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+/* =========================================
+   RESPONSIVE SAFETY BASELINE (TOÀN HỆ THỐNG)
+   ========================================= */
+* {
+    box-sizing: border-box;
+}
+
+img,
+svg,
+video,
+canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+@media (max-width: 768px) {
+    html,
+    body {
+        overflow-x: hidden;
+    }
+
+    .p-4 {
+        /* Giảm padding của p-4 trên màn hình nhỏ */
+        padding: 1rem !important;
+    }
+
+    .card-header,
+    .card-body,
+    .card-footer {
+        padding-left: 0.85rem !important;
+        padding-right: 0.85rem !important;
+    }
+
+    .btn,
+    .form-control,
+    .form-select {
+        min-height: 40px;
+    }
+
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100vw - 1rem);
+    }
+
+    .table {
+        font-size: 0.875rem;
+    }
+
+    .table-responsive > .table th,
+    .table-responsive > .table td,
+    .cms-auto-table-responsive .table th,
+    .cms-auto-table-responsive .table td {
+        white-space: nowrap;
+    }
+
+    .cms-auto-table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}

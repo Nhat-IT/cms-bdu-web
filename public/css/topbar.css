@@ -1,0 +1,45 @@
+/*
+  TOPBAR CHUNG - DÙNG CHO BCS / STUDENT / TEACHER
+  Mục tiêu: tách phần topbar dùng chung để cấu trúc CSS rõ ràng hơn.
+*/
+
+/* Nền màu, hiệu ứng dịch trái-phải khi sidebar đổi trạng thái */
+.top-navbar-blue {
+    background-color: #0d6efd !important;
+  height: var(--cms-header-height, 70px);
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  position: fixed;
+  top: 0;
+  left: var(--cms-sidebar-width, 260px);
+  right: 0;
+  z-index: 1020;
+    transition: left 0.3s ease;
+    will-change: left;
+}
+
+/* Đẩy nội dung xuống để không bị topbar fixed đè lên */
+.main-content,
+#mainContent {
+  padding-top: var(--cms-header-height, 70px) !important;
+}
+
+/* Khi sidebar thu gọn, topbar dịch trái tương ứng */
+.main-content.expanded .top-navbar-blue,
+#mainContent.expanded .top-navbar-blue {
+  left: var(--cms-sidebar-collapsed-width, 86px);
+}
+
+/* Cỡ chữ tiêu đề topbar dùng chung */
+.top-navbar-blue h4,
+.top-navbar-blue h5 {
+    font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+  .top-navbar-blue,
+  .main-content.expanded .top-navbar-blue,
+  #mainContent.expanded .top-navbar-blue {
+    left: 0;
+  }
+}

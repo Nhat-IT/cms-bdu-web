@@ -1,0 +1,90 @@
+/* Mô tả: Giao diện danh sách thông báo cua sinh viên (item, uu tien, hover). */
+
+        .notify-item {
+            /* Từng thông báo trong danh sách */
+            border-left: 4px solid transparent;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+            padding-right: 2rem;
+        }
+
+        .notify-item[data-read="false"] {
+            /* Chưa đọc: nền xanh rất nhẹ để nổi bật hơn. */
+            background-color: #f3f8ff;
+            border-left-color: #60a5fa;
+        }
+
+        .notify-item[data-read="false"]::before {
+            /* Chấm xanh báo trạng thái chưa đọc. */
+            content: "";
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #2563eb;
+            transform: translateY(-50%);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+        }
+
+        .notify-item[data-read="false"] h6 {
+            /* Tiêu đề chưa đọc đậm hơn. */
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .notify-item[data-read="true"] {
+            /* Đã đọc: nền sáng trung tính để giảm nhấn mạnh. */
+            background-color: #ffffff;
+            border-left-color: transparent;
+        }
+
+        .notify-item[data-read="true"] h6 {
+            /* Tiêu đề đã đọc nhẹ hơn một chút. */
+            font-weight: 700;
+            color: #334155;
+        }
+
+        .notify-item:hover {
+            /* Hover: doi nen va vien trai de nhãn manh */
+            background: #f8fbff;
+            border-left-color: #0d6efd;
+        }
+
+        .source-badge {
+            /* Badge nguồn thông báo (hệ thống, học vụ, mon hoc...) */
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+
+        .source-badge-bcs {
+            /* Nguồn BAN CÁN SỰ: nền đậm hơn và chữ xanh dương. */
+            background-color: #c7ddff !important;
+            color: #0d6efd !important;
+            border: 1px solid #8cb8ff;
+        }
+
+        .source-badge-lecturer {
+            /* Nguồn GIẢNG VIÊN: nền đậm hơn để nổi bật hơn. */
+            background-color: #b8f2d0 !important;
+            color: #0f8f4f !important;
+            border: 1px solid #7ad7a6;
+        }
+
+        #clearNotifyFilterBtn {
+            /* Nút xóa lọc đậm hơn để dễ nhìn. */
+            font-weight: 700;
+            color: #334155;
+            border-color: #64748b;
+        }
+
+        #clearNotifyFilterBtn:hover,
+        #clearNotifyFilterBtn:focus-visible {
+            background-color: #334155;
+            border-color: #334155;
+            color: #ffffff;
+        }

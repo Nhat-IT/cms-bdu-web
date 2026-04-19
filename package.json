@@ -1,0 +1,25 @@
+{
+  "name": "cms_bdu_project",
+  "version": "1.0.0",
+  "description": "cms-bdu-project/\r │\r ├── public/                 # KHU VỰC TÀI NGUYÊN TĨNH (Dùng chung cho cả hệ thống)\r │   ├── css/\r │   │   └── style.css       # Giao diện CSS dùng chung\r │   ├── js/\r │   │   └── script.js       # Các hàm JS (ẩn/hiện pass, modal, hiệu ứng...)\r │   └── uploads/            # Nơi lưu trữ thực tế các file được upload (Minh chứng, Tài liệu)\r │\r ├── views/                  # KHU VỰC GIAO DIỆN HTML (Phân chia theo phân quyền)\r │   ├── login.html          # Trang đăng nhập (Dùng chung, hệ thống tự điều hướng theo Role)\r │   │\r │   ├── bcs/                # 1. GIAO DIỆN BAN CÁN SỰ (Các file chúng ta vừa thiết kế)\r │   │   ├── home.html               # Tổng quan lớp học (Dashboard)\r │   │   ├── dashboard-detail.html   # Báo cáo, thống kê cảnh báo chi tiết\r │   │   ├── attendance.html         # Điểm danh, quản lý môn học, nhập danh sách\r │   │   ├── documents.html          # Quản lý kho tài liệu (Upload/Xóa thông báo, biên bản)\r │   │   └── feedback.html           # Hộp thư tương tác (Duyệt/Trả lời phản hồi của SV)\r │   │\r │   ├── student/            # 2. GIAO DIỆN SINH VIÊN (Lược bỏ bớt quyền, chỉ Xem/Gửi)\r │   │   ├── home.html               # Dashboard cá nhân (Số buổi vắng của bản thân, Lịch học)\r │   │   ├── my-attendance.html      # Xem chi tiết điểm danh cá nhân & Nút \"Nộp minh chứng vắng\"\r │   │   ├── documents.html          # Kho tài liệu (Chỉ có nút Xem/Tải xuống, KHÔNG có nút Upload/Xóa)\r │   │   └── my-feedback.html        # Form gửi thắc mắc cho BCS và xem trạng thái giải quyết\r │   │\r │   └── teacher/            # 3. GIAO DIỆN GIẢNG VIÊN (Quản lý học tập)\r │       ├── home.html               # Thống kê lớp học (Sĩ số, danh sách SV vắng môn mình dạy)\r │       ├── attendance-report.html  # Xem báo cáo điểm danh & Nút \"Xuất file Excel\" nộp về Khoa\r │       └── documents.html          # Quản lý tài liệu môn học (GV tự upload Slide, Bài tập)\r │\r ├── src/                    # KHU VỰC BACKEND NODE.JS (Xử lý dữ liệu ngầm)\r │   ├── config/\r │   │   └── db.js           # Nơi chứa code kết nối với Database MySQL\r │   │\r │   ├── controllers/        # Bộ não xử lý logic phân theo đối tượng\r │   │   ├── authController.js       # Xử lý kiểm tra tài khoản, phân quyền đăng nhập\r │   │   ├── bcsController.js        # Logic của BCS (Lưu điểm danh, Lưu môn học...)\r │   │   ├── studentController.js    # Logic của SV (Upload giấy phép, gửi phản hồi...)\r │   │   └── teacherController.js    # Logic của GV (Xuất báo cáo, thêm học liệu...)\r │   │\r │   ├── models/             # Nơi chứa các câu lệnh SQL (Select, Insert, Update)\r │   │   ├── userModel.js            # Bảng tài khoản\r │   │   ├── subjectModel.js         # Bảng môn học\r │   │   ├── attendanceModel.js      # Bảng điểm danh\r │   │   └── documentModel.js        # Bảng tài liệu\r │   │\r │   └── routes/             # Định tuyến đường dẫn (URL)\r │       ├── authRoutes.js\r │       ├── bcsRoutes.js\r │       ├── studentRoutes.js\r │       └── teacherRoutes.js\r │\r ├── .env                    # FILE BÍ MẬT: Chứa mật khẩu Database, Khóa bảo mật (Tuyệt đối không đẩy lên Github)\r ├── .gitignore              # Danh sách các file bỏ qua không lưu trữ lên Github\r ├── package.json            # File cấu hình thư viện của Node.js (Express, MySQL2...)\r └── server.js               # FILE ENTRY POINT: Khởi động server Backend",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "googleapis": "^171.4.0",
+    "multer": "^2.1.1",
+    "mysql2": "^3.19.1",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0"
+  }
+}

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS BDU - Điều Phối Lịch Dạy</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+    <link rel="stylesheet" href="../../public/css/layout.css">
+    <link rel="stylesheet" href="../../public/css/admin/admin-layout.css">
+    <link rel="stylesheet" href="../../public/css/admin/assignments.css">
+</head>
+<body class="dashboard-body">
+
+<div class="sidebar sidebar-admin" id="sidebar">
+    <div>
+        <div class="brand-container flex-shrink-0">
+            <a href="home.html" class="text-decoration-none text-primary d-flex align-items-center">
+                <i class="bi bi-mortarboard-fill fs-2 me-2"></i>
+                <span class="fs-4 fw-bold hide-on-collapse">CMS ADMIN</span>
+            </a>
+        </div>
+        <div class="text-center mb-3 text-white-50 small fw-bold hide-on-collapse">QUẢN TRỊ HỆ THỐNG</div>
+        <div class="sidebar-scrollable w-100">
+        <nav class="d-flex flex-column mt-3">
+            <a href="home.html"><i class="bi bi-speedometer2"></i> Tổng quan hệ thống</a>
+            <a href="org-settings.html"><i class="bi bi-gear-wide-connected"></i> Cấu hình Học vụ</a>
+            <a href="accounts.html"><i class="bi bi-people"></i> Quản lý Tài khoản</a>
+            <a href="classes-subjects.html"><i class="bi bi-building"></i> Quản lý Lớp & Môn</a>
+            <a href="assignments.html" class="active"><i class="bi bi-diagram-3-fill"></i> Phân công Giảng dạy</a>
+            <a href="system-logs.html"><i class="bi bi-shield-lock"></i> Nhật ký hệ thống</a>
+        </nav>
+        </div>
+    </div>
+    
+    <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
+        <a href="../login.html" class="nav-link logout-btn" title="Đăng xuất">
+            <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
+        </a>
+    </div>
+</div>
+
+<div class="main-content admin-main-content" id="mainContent">
+    <div class="top-navbar-admin d-flex justify-content-between align-items-center px-4 py-3">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+            <h4 class="m-0 text-white fw-bold d-flex align-items-center">
+                <i class="bi bi-calendar-range me-2 fs-3 text-warning"></i> HỆ THỐNG ĐIỀU PHỐI LỊCH DẠY
+            </h4>
+        </div>
+
+        <div class="d-flex align-items-center text-white">
+            <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
+                <div class="fs-6">Quản trị viên: <span class="fw-bold admin-operator-name">Admin Khoa CNTT</span></div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
+                    <i class="bi bi-person-circle fs-2"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
+                    <li><a class="dropdown-item fw-bold" href="admin-profile.html"><i class="bi bi-person-vcard text-primary me-2"></i>Hồ sơ cá nhân</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item fw-bold text-danger" href="../login.html"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-4">
+        
+        <ul class="nav nav-tabs mb-4 border-bottom" id="scheduleTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="list-tab" data-bs-toggle="tab" data-bs-target="#listView" type="button" role="tab">
+                    <i class="bi bi-list-ul me-2"></i>Xem Theo Lớp Học Phần
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="grid-tab" data-bs-toggle="tab" data-bs-target="#gridView" type="button" role="tab">
+                    <i class="bi bi-grid-3x3-gap-fill me-2"></i>Thời Khóa Biểu Tổng (Master)
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="scheduleTabsContent">
+            
+            <div class="tab-pane fade show active" id="listView" role="tabpanel">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 fw-bold text-dark">DANH SÁCH CÁC LỚP ĐỂ XẾP LỊCH</h6>
+                        <div class="input-group input-group-sm admin-assignments-search">
+                            <input type="text" class="form-control" placeholder="Tìm tên môn, mã lớp...">
+                            <button class="btn btn-primary"><i class="bi bi-search"></i></button>
+                        </div>
+                    </div>
+                    <div class="card-body border-bottom bg-light-subtle py-3">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold text-muted mb-1">NĂM HỌC</label>
+                                <select class="form-select form-select-sm" id="assignFilterYear">
+                                    <option value="all">Chọn tất cả</option>
+                                    <option value="2024">2024 - 2025</option>
+                                    <option value="2025" selected>2025 - 2026</option>
+                                    <option value="2026">2026 - 2027</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold text-muted mb-1">HỌC KỲ</label>
+                                <select class="form-select form-select-sm" id="assignFilterSemester">
+                                    <option value="all">Chọn tất cả</option>
+                                    <option value="1" selected>Học kỳ 1</option>
+                                    <option value="2">Học kỳ 2</option>
+                                    <option value="3">Học kỳ 3 (Hè)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold text-muted mb-1">TRẠNG THÁI MÔN</label>
+                                <select class="form-select form-select-sm" id="assignFilterOpenStatus">
+                                    <option value="all">Tất cả</option>
+                                    <option value="open" selected>Đang mở</option>
+                                    <option value="closed">Đã đóng</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="small text-muted mt-2">
+                            <i class="bi bi-info-circle me-1"></i>Thời gian mở môn được lấy từ cấu hình tại trang Quản lý Lớp & Môn và chỉ hiển thị để tham chiếu.
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="assignmentOfferingContainer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="gridView" role="tabpanel">
+                <div class="row g-3 align-items-end mb-3">
+                    <div class="col-md-3">
+                        <select class="form-select border-primary fw-bold text-primary shadow-sm">
+                            <option>Tuần 1 [02/03 - 08/03/2026]</option>
+                            <option selected>Tuần 2 [09/03 - 15/03/2026]</option>
+                            <option>Tuần 3 [16/03 - 22/03/2026]</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select border-secondary shadow-sm">
+                            <option value="all">-- Lọc theo Giảng viên --</option>
+                            <option value="GV01">ThS. Dương Quang Sinh</option>
+                            <option value="GV02">ThS. Nguyễn Hồ Hải</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select border-secondary shadow-sm">
+                            <option value="all">-- Lọc theo Phòng học --</option>
+                            <option value="PM3">Phòng PM3</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="schedule-wrapper shadow-sm">
+                    <table class="table master-schedule-table mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px;"><i class="bi bi-arrow-left fs-4 week-nav-btn"></i></th>
+                                <th>Thứ 2 <span class="text-muted fw-normal">(09/03)</span></th>
+                                <th>Thứ 3 <span class="text-muted fw-normal">(10/03)</span></th>
+                                <th>Thứ 4 <span class="text-muted fw-normal">(11/03)</span></th>
+                                <th>Thứ 5 <span class="text-muted fw-normal">(12/03)</span></th>
+                                <th>Thứ 6 <span class="text-muted fw-normal">(13/03)</span></th>
+                                <th>Thứ 7 <span class="text-muted fw-normal">(14/03)</span></th>
+                                <th>Chủ Nhật <span class="text-muted fw-normal">(15/03)</span></th>
+                                <th style="width: 80px;"><i class="bi bi-arrow-right fs-4 week-nav-btn"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="edge-col">Tiết 1</td>
+                                <td></td><td></td><td></td><td></td><td></td>
+                                <td rowspan="5">
+                                    <div class="subject-block" onclick="openEditSingleSession('edit', '14/03/2026', '2026-03-14', '7', '1', '5', 'PM3', 'normal', '25TH01-DATA', 'Nhập môn khoa học dữ liệu', 'GV04')">
+                                        <div class="subject-title">Nhập môn KHDL (INF0983)</div>
+                                        <div>Phòng: PM3</div>
+                                        <div>GV: Hồ Ngọc Giàu</div>
+                                        <div class="mt-1"><i class="bi bi-clock"></i> 07:00 -> 10:45</div>
+                                    </div>
+                                </td>
+                                <td></td>
+                                <td class="edge-col">07:00</td>
+                            </tr>
+                            <tr><td class="edge-col">Tiết 2</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">07:45</td></tr>
+                            <tr><td class="edge-col">Tiết 3</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">08:30</td></tr>
+                            <tr><td class="edge-col">Tiết 4</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">09:15</td></tr>
+                            <tr><td class="edge-col">Tiết 5</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">10:00</td></tr>
+                            
+                            <tr>
+                                <td class="edge-col">Tiết 6</td>
+                                <td rowspan="5">
+                                    <div class="subject-block" onclick="openEditSingleSession('edit', '09/03/2026', '2026-03-09', '2', '6', '10', 'PLAB', 'normal', '25TH01-CSDL', 'An ninh cơ sở dữ liệu', 'GV01')">
+                                        <div class="subject-title">An ninh CSDL (INF0953)</div>
+                                        <div>Phòng: P.LAB</div>
+                                        <div>GV: Dương Quang Sinh</div>
+                                        <div class="mt-1"><i class="bi bi-clock"></i> 13:00 -> 16:45</div>
+                                    </div>
+                                </td>
+                                <td></td><td></td><td></td><td></td><td></td><td></td>
+                                <td class="edge-col">13:00</td>
+                            </tr>
+                            <tr><td class="edge-col">Tiết 7</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">13:45</td></tr>
+                            <tr><td class="edge-col">Tiết 8</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">14:30</td></tr>
+                            <tr><td class="edge-col">Tiết 9</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">15:15</td></tr>
+                            <tr><td class="edge-col">Tiết 10</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">16:00</td></tr>
+
+                            <tr><td class="edge-col">Tiết 11</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">17:45</td></tr>
+                            <tr><td class="edge-col">Tiết 12</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">18:30</td></tr>
+                            <tr><td class="edge-col">Tiết 13</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">19:15</td></tr>
+                            <tr><td class="edge-col">Tiết 14</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">20:00</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="initialScheduleModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header text-white border-bottom-0 pb-3" id="initModalHeader">
+                <h5 class="modal-title fw-bold" id="initModalTitle"><i class="bi bi-calendar-plus me-2"></i>Thiết Lập Lịch Giảng Dạy Mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form onsubmit="return handleInitialScheduleSubmit(event)">
+                <div class="modal-body p-4 bg-light">
+                    <div class="alert alert-warning fw-bold small d-none" id="editBulkWarning">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> Cảnh báo: Thao tác này sẽ áp dụng thay đổi cho TẤT CẢ các buổi học nằm trong khoảng thời gian đã chọn.
+                    </div>
+
+                    <div class="alert alert-primary bg-primary bg-opacity-10 border-0 mb-4" id="initClassInfoAlert">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small class="text-muted fw-bold d-block mb-1">Mã Lớp:</small>
+                                <span class="fw-bold text-primary fs-5" id="initClassCode">--</span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted fw-bold d-block mb-1">Tên Môn Học:</small>
+                                <span class="fw-bold text-dark fs-6" id="initSubjectName">--</span>
+                            </div>
+                        </div>
+                        <div class="small text-muted mt-2">
+                            <i class="bi bi-collection me-1"></i>Nhóm đang chỉnh: <span class="fw-bold text-dark" id="initGroupLabel">Toàn bộ nhóm</span>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">1. Phân công Giảng viên</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted">Giảng viên chính <span class="text-danger">*</span></label>
+                            <select class="form-select border-secondary fw-bold" id="initTeacher" required>
+                                <option value="">-- Chọn Giảng viên phụ trách --</option>
+                                <option value="GV01">ThS. Dương Quang Sinh (Khoa CNTT)</option>
+                                <option value="GV02">ThS. Nguyễn Hồ Hải (Khoa CNTT)</option>
+                                <option value="GV04">Thầy Hồ Ngọc Giàu (Khoa CNTT)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted">Trợ giảng</label>
+                            <select class="form-select border-secondary" id="initAssistantTeacher">
+                                <option value="">-- Không có --</option>
+                                <option value="GV01">ThS. Dương Quang Sinh (Khoa CNTT)</option>
+                                <option value="GV02">ThS. Nguyễn Hồ Hải (Khoa CNTT)</option>
+                                <option value="GV04">Thầy Hồ Ngọc Giàu (Khoa CNTT)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">2. Thời gian & Lịch học cố định</h6>
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted">Thứ (Hàng tuần) <span class="text-danger">*</span></label>
+                            <select class="form-select border-secondary" id="initDayOfWeek" required>
+                                <option value="">-- Chọn --</option>
+                                <option value="2">Thứ 2</option>
+                                <option value="3">Thứ 3</option>
+                                <option value="4">Thứ 4</option>
+                                <option value="5">Thứ 5</option>
+                                <option value="6">Thứ 6</option>
+                                <option value="7">Thứ 7</option>
+                                <option value="8">Chủ Nhật</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted">Từ Tiết <span class="text-danger">*</span></label>
+                            <select class="form-select border-secondary" id="initStartPeriod" required>
+                                <option value="">-- Bắt đầu --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted">Đến Tiết <span class="text-danger">*</span></label>
+                            <select class="form-select border-secondary" id="initEndPeriod" required>
+                                <option value="">-- Kết thúc --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small text-muted">Phòng học <span class="text-danger">*</span></label>
+                            <select class="form-select border-secondary" id="initRoom" required>
+                                <option value="">-- Chọn phòng trống --</option>
+                                <option value="A201">Phòng A201 (Lý thuyết)</option>
+                                <option value="PM3">Phòng Máy PM3 (Thực hành)</option>
+                                <option value="PLAB">Phòng P.LAB</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0 bg-light">
+                    <button type="button" class="btn btn-secondary fw-bold px-4" data-bs-dismiss="modal">Hủy bỏ</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-4" id="initSubmitBtn"><i class="bi bi-shield-check me-2"></i>Lưu Lịch & Phát Sinh</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="sessionManagerModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white border-bottom-0 pb-3">
+                <div>
+                    <h5 class="modal-title fw-bold mb-1"><i class="bi bi-calendar3 me-2"></i>Lịch Trình Chi Tiết</h5>
+                    <div class="small text-white-50" id="lblClassInfo">Mã Lớp | Tên Môn | Giảng viên</div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-light p-0">
+                <div class="p-3 bg-white border-bottom d-flex justify-content-between">
+                    <button class="btn btn-warning fw-bold shadow-sm" id="btnEditWholeSchedule">
+                        <i class="bi bi-pencil-square me-1"></i> Sửa toàn bộ lịch
+                    </button>
+                    
+                    <button class="btn btn-outline-primary fw-bold shadow-sm" id="btnAddSingleSession">
+                        <i class="bi bi-plus-circle me-1"></i> Thêm buổi học bù
+                    </button>
+                </div>
+                <div class="table-responsive p-3">
+                    <table class="table table-bordered table-hover table-sessions bg-white shadow-sm mb-0">
+                        <colgroup>
+                            <col style="width: 56px;">
+                            <col style="width: 92px;">
+                            <col>
+                            <col style="width: 110px;">
+                            <col style="width: 120px;">
+                            <col style="width: 110px;">
+                            <col style="width: 130px;">
+                            <col style="width: 70px;">
+                        </colgroup>
+                        <thead>
+                            <tr class="text-center">
+                                <th>#</th><th>Nhóm</th><th>Ngày học</th><th>Thứ</th><th>Tiết</th><th>Phòng</th><th>Trạng thái</th><th>Sửa</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-center" id="sessionManagerTbody">
+                            <tr>
+                                <td colspan="8" class="text-muted py-4">Chọn lớp để xem và sửa từng ngày.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer bg-white">
+                <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="singleSessionModal" tabindex="-1" data-bs-backdrop="static" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white border-bottom-0 pb-3">
+                <h5 class="modal-title fw-bold" id="singleSessionTitle"><i class="bi bi-pencil-square me-2"></i>Chỉnh sửa buổi học</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="bg-primary bg-opacity-10 p-3 border-bottom">
+                    <h6 class="fw-bold text-primary mb-1" id="qsSubjectInfo">Tên môn học (Mã môn)</h6>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-dark fw-bold small" id="qsClassCode"><i class="bi bi-tags-fill me-1 text-muted"></i>Mã lớp</span>
+                        <span class="badge bg-secondary bg-opacity-25 text-dark border border-secondary" id="qsGroup">Nhóm: --</span>
+                    </div>
+                </div>
+                
+                <div class="p-4">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="fw-bold small text-muted"><i class="bi bi-person-badge-fill me-1"></i>Giảng viên phụ trách <span class="text-danger">*</span></label>
+                            <select class="form-select fw-bold text-primary border-secondary shadow-sm" id="singleTeacher">
+                                <option value="GV01">ThS. Dương Quang Sinh</option>
+                                <option value="GV02">ThS. Nguyễn Hồ Hải</option>
+                                <option value="GV04">Thầy Hồ Ngọc Giàu</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mt-4">
+                            <label class="fw-bold small text-muted">Ngày học <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control fw-bold text-dark border-secondary" id="singleDate" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="fw-bold small text-muted">Từ tiết</label>
+                            <select class="form-select border-secondary" id="singleStart">
+                                <option value="">-- Chọn --</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="fw-bold small text-muted">Đến tiết</label>
+                            <select class="form-select border-secondary" id="singleEnd">
+                                <option value="">-- Chọn --</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="fw-bold small text-muted">Phòng học</label>
+                            <select class="form-select border-secondary" id="singleRoom">
+                                <option value="A201">Phòng A201</option><option value="PLAB">Phòng P.LAB</option><option value="PM3">Phòng máy PM3</option><option value="C4.0.1">Phòng C4.0.1</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mt-4">
+                            <label class="fw-bold small text-muted border-bottom pb-1 mb-2 d-block">Trạng thái buổi học</label>
+                            <select class="form-select fw-bold border-secondary shadow-sm" id="singleStatus">
+                                <option value="normal" class="text-success">✅ Diễn ra Bình thường</option>
+                                <option value="makeup" class="text-warning">🔄 Học Bù / Dạy thay</option>
+                                <option value="canceled" class="text-danger">⛔ Báo Hủy / Cho nghỉ</option>
+                            </select>
+                        </div>
+                        <div class="col-12 d-none" id="cancelReasonDiv">
+                            <label class="fw-bold small text-danger">Lý do báo hủy</label>
+                            <textarea class="form-control border-danger" id="cancelReason" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0 justify-content-between">
+                <button class="btn btn-outline-danger fw-bold btn-sm" id="btnDeleteSingle" onclick="deleteSingleSession()"><i class="bi bi-trash me-1"></i> Xóa khỏi hệ thống</button>
+                <div>
+                    <button class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Hủy bỏ</button>
+                    <button class="btn btn-primary fw-bold shadow-sm" onclick="saveSingleSession()"><i class="bi bi-save me-1"></i> Lưu thay đổi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="file" id="assignmentStudentUploadInput" class="d-none" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="../../public/js/script.js"></script>
+<script src="../../public/js/admin/admin-layout.js"></script>
+<script src="../../public/js/admin/assignments.js"></script>
+</body>
+</html>

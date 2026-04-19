@@ -1,0 +1,396 @@
+<?php
+/**
+ * CMS BDU - Teacher Attendance Management
+ * Trang quản lý lịch & điểm danh
+ */
+
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../config/session.php';
+require_once __DIR__ . '/../../config/helpers.php';
+
+requireRole('teacher');
+
+// Lấy thông tin giảng viên
+$user = getCurrentUser();
+$userId = $_SESSION['user_id'];
+
+// Lấy teacher_id
+$stmtTeacher = $pdo->prepare("
+    SELECT t.id as teacher_id 
+    FROM users u
+    LEFT JOIN teachers t ON t.user_id = u.id
+    WHERE u.id = ?
+");
+$stmtTeacher->execute([$userId]);
+$teacherInfo = $stmtTeacher->fetch();
+$teacherId = $teacherInfo['teacher_id'] ?? $userId;
+
+// Lấy học kỳ hiện tại
+$stmtSemester = $pdo->query("
+    SELECT * FROM semesters 
+    WHERE start_date <= CURDATE() AND end_date >= CURDATE()
+    ORDER BY start_date DESC LIMIT 1
+");
+$currentSemester = $stmtSemester->fetch();
+$semesterId = $currentSemester['id'] ?? null;
+
+// Lấy danh sách lớp học phần của giảng viên
+$stmtClassSubjects = $pdo->prepare("
+    SELECT cs.id, cs.semester,
+           c.class_name,
+           s.subject_code, s.subject_name,
+           csg.group_code, csg.day_of_week, csg.start_period, csg.end_period, csg.room
+    FROM class_subjects cs
+    INNER JOIN semesters sem ON cs.semester_id = sem.id
+    INNER JOIN classes c ON cs.class_id = c.id
+    INNER JOIN subjects s ON cs.subject_id = s.id
+    INNER JOIN class_subject_groups csg ON csg.class_subject_id = cs.id
+    WHERE cs.teacher_id = ? AND sem.end_date >= CURDATE()
+    ORDER BY csg.day_of_week, csg.start_period
+");
+$stmtClassSubjects->execute([$teacherId]);
+$classSubjects = $stmtClassSubjects->fetchAll();
+
+// Đếm minh chứng chờ duyệt
+$stmtCountEvidence = $pdo->prepare("
+    SELECT COUNT(*) as total 
+    FROM attendance_evidences ae
+    INNER JOIN attendance_records ar ON ae.attendance_record_id = ar.id
+    INNER JOIN attendance_sessions ass ON ar.session_id = ass.id
+    INNER JOIN class_subject_groups csg ON ass.class_subject_group_id = csg.id
+    INNER JOIN class_subjects cs ON csg.class_subject_id = cs.id
+    WHERE cs.teacher_id = ? AND ae.status = 'Pending'
+");
+$stmtCountEvidence->execute([$teacherId]);
+$pendingEvidences = $stmtCountEvidence->fetch()['total'];
+
+// Ngày trong tuần
+$dayNames = ['', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ Nhật'];
+
+// Tuần hiện tại
+$currentWeek = date('W');
+$weekStart = date('d/m', strtotime('monday this week'));
+$weekEnd = date('d/m/Y', strtotime('sunday this week'));
+?>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS BDU - Lịch & Điểm danh Giảng viên</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+    <link rel="stylesheet" href="../../public/css/layout.css">
+    <link rel="stylesheet" href="../../public/css/teacher/teacher-layout.css">
+    <link rel="stylesheet" href="../../public/css/teacher/attendance.css">
+</head>
+<body class="dashboard-body">
+
+    <div class="sidebar" id="sidebar">
+        <div>
+            <div class="brand-container flex-shrink-0">
+                <a href="home.php" class="text-decoration-none text-primary d-flex align-items-center">
+                    <i class="bi bi-mortarboard-fill fs-2 me-2"></i>
+                    <span class="fs-4 fw-bold hide-on-collapse">CMS BDU</span>
+                </a>
+            </div>
+            <div class="sidebar-scrollable w-100">
+            <nav class="nav flex-column ps-2 pe-2">
+                <a href="home.php" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-speedometer2 me-2"></i> Tổng quan</a>
+                <a href="attendance.php" class="nav-link text-white active bg-primary bg-opacity-25 rounded py-2 mb-1"><i class="bi bi-calendar-check me-2"></i> Lịch & Điểm danh</a>
+                <a href="class-assignments.php" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-journal-text me-2"></i> Quản lý Bài tập</a>
+                <a href="class-grades.php" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-file-earmark-bar-graph me-2"></i> Bảng điểm</a>
+                <a href="approve-evidences.php" class="nav-link text-white-50 hover-white py-2 mb-1 d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-file-earmark-medical me-2"></i> Duyệt minh chứng</span>
+                    <?php if ($pendingEvidences > 0): ?>
+                    <span class="badge bg-danger rounded-pill"><?php echo e($pendingEvidences); ?></span>
+                    <?php endif; ?>
+                </a>
+                <a href="documents.php" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-folder2-open me-2"></i> Kho tài liệu</a>
+                <a href="announcements.php" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-megaphone-fill me-2"></i> Đăng bảng tin</a>
+            </nav>
+            </div>
+        </div>
+        
+        <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
+            <a href="../logout.php" class="nav-link logout-btn" title="Đăng xuất">
+                <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 py-3 shadow-sm mb-4">
+            <h4 class="m-0 fw-bold d-flex align-items-center text-white">
+                QUẢN LÝ LỊCH & ĐIỂM DANH
+            </h4>
+            <div class="d-flex align-items-center text-white">
+                <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
+                    <div class="fs-6">Giảng viên: <b class="text-info"><?php echo e($user['full_name'] ?? 'GV'); ?></b></div>
+                </div>
+                
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
+                        <img src="<?php echo e(getAvatarUrl($user['avatar'] ?? '', $user['full_name'] ?? 'GV', 40)); ?>" id="headerAvatar" alt="Avatar" class="rounded-circle border border-white" width="40" height="40">
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
+                        <li><a class="dropdown-item fw-bold" href="teacher-profile.php"><i class="bi bi-person-vcard text-info me-2"></i>Hồ sơ cá nhân</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item fw-bold text-danger" href="../logout.php"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 pt-0">
+            
+            <ul class="nav nav-tabs mb-4 border-bottom border-secondary border-opacity-25" id="attendanceTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active px-4 py-3" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule-panel" type="button" role="tab">
+                        <i class="bi bi-calendar-week me-2"></i> Thời Khóa Biểu (Lịch dạy)
+                    </button>
+                </li>
+                <li class="nav-item ms-2" role="presentation">
+                    <button class="nav-link px-4 py-3" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendance-panel" type="button" role="tab">
+                        <i class="bi bi-person-check me-2"></i> Điểm danh Lớp học
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="schedule-panel" role="tabpanel">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-white pt-3 pb-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <h5 class="fw-bold text-dark m-0"><i class="bi bi-calendar3 text-primary me-2"></i>Lịch giảng dạy</h5>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <select class="form-select form-select-sm border-primary fw-bold text-primary" style="width: auto; background-color: #f8f9fa;">
+                                    <option value="<?php echo e($semesterId); ?>" selected>
+                                        <?php echo e($currentSemester['semester_name'] ?? 'Học kỳ hiện tại'); ?> - <?php echo e($currentSemester['academic_year'] ?? ''); ?>
+                                    </option>
+                                </select>
+                                <div class="d-flex align-items-center gap-1">
+                                    <button class="btn btn-sm btn-outline-secondary px-2" title="Tuần trước" onclick="prevWeek()"><i class="bi bi-chevron-left"></i></button>
+                                    <span class="form-select form-select-sm border-success fw-bold text-success" style="width: auto; background-color: #f8f9fa;">
+                                        Tuần <?php echo e($currentWeek); ?> [Từ ngày <?php echo e($weekStart); ?> đến <?php echo e($weekEnd); ?>]
+                                    </span>
+                                    <button class="btn btn-sm btn-outline-secondary px-2" title="Tuần tới" onclick="nextWeek()"><i class="bi bi-chevron-right"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table schedule-table table-bordered mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Thứ 2 <br><small class="text-muted fw-normal"><?php echo date('d/m', strtotime('monday this week')); ?></small></th>
+                                            <th>Thứ 3 <br><small class="text-muted fw-normal"><?php echo date('d/m', strtotime('tuesday this week')); ?></small></th>
+                                            <th>Thứ 4 <br><small class="text-muted fw-normal"><?php echo date('d/m', strtotime('wednesday this week')); ?></small></th>
+                                            <th>Thứ 5 <br><small class="text-muted fw-normal"><?php echo date('d/m', strtotime('thursday this week')); ?></small></th>
+                                            <th>Thứ 6 <br><small class="text-muted fw-normal"><?php echo date('d/m', strtotime('friday this week')); ?></small></th>
+                                            <th>Thứ 7 <br><small class="text-muted fw-normal"><?php echo date('d/m', strtotime('saturday this week')); ?></small></th>
+                                            <th>Chủ Nhật <br><small class="text-muted fw-normal"><?php echo date('d/m', strtotime('sunday this week')); ?></small></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <?php for ($day = 1; $day <= 7; $day++): ?>
+                                            <td class="<?php echo ($day == 1 || $day == 7) ? 'bg-light' : ''; ?>">
+                                                <?php 
+                                                $dayClasses = array_filter($classSubjects, function($cs) use ($day) {
+                                                    return $cs['day_of_week'] == $day;
+                                                });
+                                                foreach ($dayClasses as $cs): 
+                                                ?>
+                                                <div class="class-card bg-<?php echo ($day % 2 == 0) ? 'success' : 'primary'; ?> bg-opacity-10 border border-<?php echo ($day % 2 == 0) ? 'success' : 'primary'; ?> rounded p-2 text-start h-100 shadow-sm mb-2" onclick="goToAttendance('<?php echo e($cs['class_name']); ?>', '<?php echo e($cs['group_code']); ?>', '<?php echo date('Y-m-d', strtotime($dayNames[$day] . ' this week')); ?>')">
+                                                    <div class="fw-bold text-<?php echo ($day % 2 == 0) ? 'success' : 'primary'; ?> mb-1"><?php echo e($cs['class_name']); ?></div>
+                                                    <div class="small fw-bold text-dark lh-sm mb-2"><?php echo e($cs['subject_name']); ?></div>
+                                                    <div class="small text-muted mb-1"><i class="bi bi-clock me-1"></i><?php echo e($cs['study_session'] ?? 'Sáng'); ?> (Tiết <?php echo e($cs['start_period']); ?>-<?php echo e($cs['end_period']); ?>)</div>
+                                                    <div class="small text-muted"><i class="bi bi-geo-alt-fill me-1"></i><?php echo e($cs['room'] ?? 'Phòng chưa xác định'); ?></div>
+                                                    <button class="btn btn-sm btn-<?php echo ($day % 2 == 0) ? 'success' : 'primary'; ?> w-100 mt-2 fw-bold"><i class="bi bi-person-check me-1"></i>Điểm danh</button>
+                                                </div>
+                                                <?php endforeach; ?>
+                                            </td>
+                                            <?php endfor; ?>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="attendance-panel" role="tabpanel">
+                    
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-2">
+                                    <label class="fw-bold small text-muted mb-1">HỌC KỲ</label>
+                                    <select class="form-select border-primary bg-light fw-bold text-primary" id="filterSemester">
+                                        <option value="<?php echo e($semesterId); ?>"><?php echo e($currentSemester['semester_name'] ?? 'Học kỳ hiện tại'); ?></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="fw-bold small text-muted mb-1">MÔN HỌC <span class="text-danger">*</span></label>
+                                    <select class="form-select border-primary fw-bold text-dark" id="subjectSelect" onchange="onSubjectChange()">
+                                        <option value="">-- Chọn môn học --</option>
+                                        <?php foreach ($classSubjects as $cs): ?>
+                                        <option value="<?php echo e($cs['id']); ?>" data-group="<?php echo e($cs['group_code']); ?>" data-day="<?php echo e($cs['day_of_week']); ?>" data-session="<?php echo e($cs['study_session'] ?? 'Sáng'); ?>">
+                                            <?php echo e($cs['class_name']); ?> - <?php echo e($cs['subject_name']); ?>
+                                        </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="fw-bold small text-muted mb-1">NHÓM <span class="text-danger">*</span></label>
+                                    <select class="form-select border-primary fw-bold text-dark" id="groupSelect" onchange="onGroupChange()">
+                                        <option value="">-- Chọn nhóm --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="fw-bold small text-muted mb-1">NGÀY HỌC <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control border-primary fw-bold" id="attendanceDate" value="<?php echo date('Y-m-d'); ?>">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="fw-bold small text-muted mb-1">BUỔI <span class="text-danger">*</span></label>
+                                    <select class="form-select border-primary fw-bold text-dark" id="attendanceSession" onchange="checkSessionReason()">
+                                        <option value="Sáng">Sáng</option>
+                                        <option value="Chiều">Chiều</option>
+                                        <option value="Tối">Tối</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row g-3 mt-1 align-items-center">
+                                <div class="col-md-8">
+                                    <div class="p-2 bg-light rounded text-dark small border-start border-3 border-primary fixed-info-box" id="subjectInfoBox">
+                                        <div class="row g-2 w-100 m-0">
+                                            <div class="col-12 p-0"><i class="bi bi-calendar2-range text-primary me-1"></i>Khung thời gian học mặc định: <strong id="lblTime">...</strong></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 invisible" id="sessionReasonDiv">
+                                    <input type="text" class="form-control border-warning bg-warning bg-opacity-10" id="sessionReason" placeholder="Nhập lý do đổi buổi (*Bắt buộc)">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white pt-3 pb-2 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-3">
+                                <h5 class="fw-bold text-dark m-0"><i class="bi bi-list-check me-2 text-primary"></i>Danh sách Sinh viên</h5>
+                                <div class="input-group input-group-sm" style="width: 250px;">
+                                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                                    <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Tìm MSSV, Họ tên..." onkeyup="filterTable()">
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-primary fw-bold" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                                    <i class="bi bi-person-plus-fill me-1"></i>Thêm SV
+                                </button>
+                                <button class="btn btn-sm btn-success fw-bold shadow-sm" onclick="exportToExcel()">
+                                    <i class="bi bi-file-earmark-excel-fill me-1"></i>Xuất Excel
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle custom-detail-table" id="attendanceTable">
+                                    <thead class="table-light text-muted small fw-bold">
+                                        <tr>
+                                            <th class="text-center" style="width: 60px;">STT</th>
+                                            <th style="width: 110px;">MSSV</th>
+                                            <th style="width: 220px;">HỌ VÀ TÊN</th>
+                                            <th style="width: 110px;">NGÀY SINH</th>
+                                            <th style="width: 100px;">LỚP</th>
+                                            <th style="width: 180px;">TRẠNG THÁI</th>
+                                            <th>GHI CHÚ / MINH CHỨNG</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="studentTableBody">
+                                        <tr class="text-center text-muted">
+                                            <td colspan="7" class="py-4">Vui lòng chọn môn học và nhóm để xem danh sách sinh viên.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white p-3 d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-primary" id="studentCountText">Sĩ số: <span id="totalCount" class="text-dark">0</span> | Có mặt: <span id="presentCount" class="text-success">0</span> | Vắng: <span id="absentCount" class="text-danger">0</span></span>
+                            <button class="btn btn-primary px-5 fw-bold shadow-sm" onclick="saveAttendance()"><i class="bi bi-floppy-fill me-2"></i>Lưu Điểm Danh</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addStudentModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title fw-bold"><i class="bi bi-person-plus-fill me-2"></i>Thêm sinh viên bị sót</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-4">
+            <div class="alert alert-info small border-0 py-2">
+                <i class="bi bi-info-circle-fill me-1"></i> Sinh viên được thêm sẽ mặc định <b>"Có mặt"</b> và lưu vào danh sách nhóm hiện tại.
+            </div>
+            <form id="addStudentForm">
+              <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Mã số (MSSV) <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="newMssv" required>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Lớp học <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="newClass" placeholder="VD: 25TH01" required>
+                  </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Họ và Tên Sinh viên <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="newFullName" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label fw-bold">Ngày sinh</label>
+                <input type="date" class="form-control" id="newDob">
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer border-0 pb-4 px-4 bg-light">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+            <button type="button" class="btn btn-primary fw-bold" onclick="addStudentToTable()"><i class="bi bi-plus-circle me-1"></i>Thêm vào danh sách</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../public/js/script.js"></script>
+    <script src="../../public/js/teacher/teacher-layout.js"></script>
+    
+    <script src="../../public/js/teacher/attendance.js"></script>
+    <script>
+        // Pass data to JavaScript
+        const classSubjectsData = <?php echo json_encode($classSubjects); ?>;
+        
+        function goToAttendance(className, groupCode, date) {
+            document.getElementById('attendance-tab').click();
+            document.getElementById('attendanceDate').value = date;
+        }
+        
+        function prevWeek() {
+            // Navigate to previous week
+        }
+        
+        function nextWeek() {
+            // Navigate to next week
+        }
+    </script>
+</body>
+</html>

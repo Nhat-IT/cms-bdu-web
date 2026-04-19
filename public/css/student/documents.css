@@ -1,0 +1,9 @@
+/* Mô tả: Giao diện tai lieu sinh viên (tệp đính kèm, lien ket, icon tệp). */
+
+/* Liên kết tệp */
+        .file-link { cursor: pointer; transition: opacity 0.2s; color: inherit; text-decoration: none; }
+        /* Link mở file tài liệu */
+        .file-link:hover { opacity: 0.8; }
+        /* Giảm độ đậm khi hover de tạo phản hồi */
+        .file-link:hover .file-title { color: #0d6efd; text-decoration: underline; }
+        /* Tô đậm tiêu đề file khi hover */

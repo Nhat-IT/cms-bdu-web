@@ -1,0 +1,20 @@
+/* Mô tả: Giao diện nhap va quan ly diem lop (o nhap diem, bảng điểm, tong ket). */
+
+        /* Chỉnh style riêng cho bảng điểm giống Excel */
+        .grade-input { width: 70px; text-align: center; font-weight: bold; border: 1px solid #ced4da; border-radius: 4px; padding: 4px; display: block; margin: 0 auto; }
+        /* Ô nhập điểm từng cột thành phần */
+        .grade-input:focus { border-color: #0d6efd; outline: none; box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25); }
+        /* Trạng thái focus ô nhập điểm */
+        .table-grades th { vertical-align: middle; text-align: center; background-color: #f8f9fa; }
+        /* Header bảng điểm */
+        .table-grades td { vertical-align: middle; }
+        .table-grades td.total-score { text-align: center; }
+        /* Cột tổng kết căn giữa */
+        
+        /* Màu sắc cho Điểm chữ */
+        .grade-A { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+        .grade-B { background-color: #cff4fc; color: #055160; border: 1px solid #b6effb; }
+        .grade-C { background-color: #fff3cd; color: #664d03; border: 1px solid #ffecb5; }
+        .grade-D { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+        .grade-F { background-color: #dc3545; color: white; border: 1px solid #dc3545; }
+        /* Bảng màu quy đổi điểm chữ */

@@ -1,0 +1,9 @@
+/*
+  LAYOUT.CSS
+    - File này giữ các phần bổ sung ngoài MENU chung.
+    - MENU teacher/bcs/student đã được gom về: public/css/menu.css
+*/
+
+@import url("./menu.css");
+@import url("./topbar.css");
+/* CSS riêng của Admin đã tách sang: public/css/admin/admin-layout.css */

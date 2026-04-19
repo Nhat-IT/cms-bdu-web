@@ -1,0 +1,121 @@
+# CMS BDU - Hệ thống Quản lý Lớp học Thông minh
+
+CMS BDU là hệ thống hỗ trợ quản lý học vụ cho 4 nhóm người dùng: Quản trị viên, Ban cán sự, Giảng viên và Sinh viên. Dự án tập trung vào điểm danh, tài liệu học tập, phản hồi và thống kê báo cáo.
+
+## 1. Tính năng chính
+
+- Đăng nhập phân quyền theo vai trò: Admin, BCS, Teacher, Student.
+- Quản lý lớp học và danh mục môn học.
+- Quản lý điểm danh, tài liệu và thông báo.
+- Theo dõi phản hồi, tổng hợp thống kê học tập.
+- API backend với Node.js + Express + MySQL.
+
+## 2. Công nghệ sử dụng
+
+- Backend: Node.js, Express (CommonJS).
+- Database: MySQL (mysql2).
+- Cấu hình môi trường: dotenv.
+- Frontend: HTML, CSS, Bootstrap, JavaScript.
+- Hỗ trợ kết nối lưu trữ tài liệu (nếu cấu hình): Google Drive API.
+
+## 3. Yêu cầu hệ thống
+
+- Node.js 18+ (khuyến nghị Node.js 20 LTS).
+- npm 9+.
+- MySQL 8+.
+
+## 4. Cài đặt và khởi động
+
+### Bước 1: Clone source
+
+```bash
+git clone <repo-url>
+cd cms-bdu-web-main
+```
+
+### Bước 2: Cài dependencies
+
+```bash
+npm install
+```
+
+### Bước 3: Tạo file .env
+
+Tạo file `.env` tại thư mục gốc với nội dung mẫu:
+
+```env
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=cms_bdu
+PORT=3000
+```
+
+### Bước 4: Chạy ứng dụng
+
+```bash
+npm start
+```
+
+Mặc định server sẽ chạy tại: `http://localhost:3000`
+
+## 5. Scripts npm
+
+- `npm start`: Chạy server bằng `node server.js`.
+- `npm test`: Chưa được cài đặt test script thực tế.
+
+## 6. Cấu trúc thư mục
+
+```text
+cms-bdu-web-main/
+|-- public/
+|   |-- css/
+|   |-- js/
+|-- views/
+|   |-- login.html
+|   |-- forgot-password.html
+|   |-- admin/
+|   |-- bcs/
+|   |-- student/
+|   `-- teacher/
+|-- src/
+|   |-- config/
+|   |   |-- db.js
+|   |   `-- driveService.js
+|   |-- controllers/
+|   |-- models/
+|-- routes/
+|   |-- apiRoutes.js
+|   `-- authRoutes.js
+|-- server.js
+|-- package.json
+|-- README.md
+`-- Readme
+```
+
+## 7. Mô tả ngắn theo vai trò
+
+- Admin: Quản lý tài khoản, lớp học, môn học, phân công, nhật ký hệ thống.
+- BCS: Quản lý điểm danh lớp, tài liệu, phản hồi lớp học.
+- Teacher: Theo dõi lớp giảng dạy, điểm danh, tài liệu và đánh giá.
+- Student: Xem lịch học, điểm danh, tài liệu, kết quả và gửi phản hồi.
+
+## 8. Lưu ý bảo mật
+
+- Không commit file `.env` và thông tin nhạy cảm lên git.
+- Nếu sử dụng Google Drive API, giữ kín file credentials.
+- Cần phân quyền DB user theo nguyên tắc tối thiểu.
+
+## 9. Hướng phát triển tiếp
+
+- Bổ sung hệ thống test (unit/integration).
+- Thêm migration và seed dữ liệu.
+- Tích hợp logging và monitoring cho production.
+- Docker hóa để dễ triển khai.
+
+## 10. Thông tin nhóm
+
+- Đơn vị: Trường Đại học Bình Dương.
+- Nhóm thực hiện: (cập nhật tên thành viên).
+- Email liên hệ: (cập nhật email). 	

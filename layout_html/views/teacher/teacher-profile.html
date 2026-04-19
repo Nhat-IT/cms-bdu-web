@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS BDU - Hồ Sơ Giảng Viên</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+    <link rel="stylesheet" href="../../public/css/layout.css">
+    <link rel="stylesheet" href="../../public/css/teacher/teacher-layout.css">
+    <link rel="stylesheet" href="../../public/css/teacher/teacher-profile.css">
+</head>
+<body class="dashboard-body">
+
+    <div class="sidebar" id="sidebar">
+        <div>
+            <div class="brand-container flex-shrink-0">
+                <a href="home.html" class="text-decoration-none text-primary d-flex align-items-center">
+                    <i class="bi bi-mortarboard-fill fs-2 me-2"></i>
+                    <span class="fs-4 fw-bold hide-on-collapse">CMS BDU</span>
+                </a>
+            </div>
+            <div class="sidebar-scrollable w-100">
+            <nav class="nav flex-column ps-2 pe-2">
+                <a href="home.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-speedometer2 me-2"></i> Tổng quan</a>
+                <a href="attendance.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-calendar-check me-2"></i> Lịch & Điểm danh</a>
+                <a href="class-assignments.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-journal-text me-2"></i> Quản lý Bài tập</a>
+                <a href="class-grades.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-file-earmark-bar-graph me-2"></i> Bảng điểm</a>
+                <a href="approve-evidences.html" class="nav-link text-white-50 hover-white py-2 mb-1 d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-file-earmark-medical me-2"></i> Duyệt minh chứng</span>
+                    <span class="badge bg-danger rounded-pill">3</span>
+                </a>
+                <a href="documents.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-folder2-open me-2"></i> Kho tài liệu</a>
+                <a href="announcements.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-megaphone-fill me-2"></i> Đăng bảng tin</a>
+            </nav>
+            </div>
+        </div>
+        
+        <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
+            <a href="../login.html" class="nav-link logout-btn" title="Đăng xuất">
+                <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 py-3 shadow-sm mb-4">
+            <h4 class="m-0 fw-bold d-flex align-items-center text-white">
+                HỒ SƠ GIẢNG VIÊN
+            </h4>
+            <div class="d-flex align-items-center text-white">
+                <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
+                    <div class="fs-6">Giảng viên: <b class="text-info">ThS. Nguyễn Hồ Hải</b></div>
+                </div>
+                
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
+                        <img src="https://ui-avatars.com/api/?name=H+H&background=0dcaf0&color=fff" id="headerAvatar" alt="Avatar" class="rounded-circle border border-white" width="40" height="40">
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
+                        <li><a class="dropdown-item fw-bold" href="teacher-profile.html"><i class="bi bi-person-vcard text-info me-2"></i>Hồ sơ cá nhân</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item fw-bold text-danger" href="../login.html"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 pt-0">
+            
+            <div class="row g-4">
+                
+                <div class="col-lg-4">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="profile-header-bg"></div>
+                        <div class="card-body text-center pt-0">
+                            
+                            <div class="avatar-wrapper mb-3">
+                                <img src="https://ui-avatars.com/api/?name=H+H&background=0dcaf0&color=fff&size=200" id="mainProfileAvatar" class="profile-avatar" alt="Teacher Avatar">
+                                <label for="avatarUploadInput" class="avatar-edit-btn" title="Thay đổi ảnh đại diện">
+                                    <i class="bi bi-camera-fill"></i>
+                                </label>
+                                <input type="file" id="avatarUploadInput" class="d-none" accept="image/png, image/jpeg, image/jpg">
+                            </div>
+                            
+                            <h5 class="fw-bold text-dark mb-1">ThS. Nguyễn Hồ Hải</h5>
+                            <p class="text-muted small mb-3"><i class="bi bi-briefcase-fill text-info me-1"></i>Giảng viên Cơ hữu</p>
+                            
+                            <div class="d-flex justify-content-center gap-2 mb-4">
+                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">Khoa CNTT</span>
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success">Đang giảng dạy</span>
+                            </div>
+
+                            <hr class="text-muted border-opacity-25">
+
+                            <div class="text-start mt-3">
+                                <p class="mb-2 text-muted small fw-bold">THÔNG TIN TÀI KHOẢN</p>
+                                <div class="mb-3">
+                                    <small class="text-muted d-block">Mã Giảng viên (Username):</small>
+                                    <span class="fw-bold text-dark">GVNHH</span>
+                                </div>
+                                <div class="mb-0">
+                                    <small class="text-muted d-block">Lần đăng nhập cuối:</small>
+                                    <span class="fw-bold text-success">Hôm nay, lúc 07:15:30</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-8">
+                    
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-header bg-white pt-4 pb-2 border-0">
+                            <h5 class="fw-bold text-dark m-0"><i class="bi bi-person-lines-fill text-info me-2"></i>Thông tin Liên hệ & Chuyên môn</h5>
+                            <p class="text-muted small mt-1 mb-0">Hệ thống sẽ dùng thông tin này để hiển thị trên danh sách Lớp học phần cho sinh viên.</p>
+                        </div>
+                        <div class="card-body">
+                            <form onsubmit="return handleUpdateProfile(event)">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Họ và tên <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control border-secondary bg-light" value="Nguyễn Hồ Hải" required readonly>
+                                    </div>
+                                    <div class="col-md-6 mt-3 mt-md-0">
+                                        <label class="form-label fw-bold">Học hàm / Học vị</label>
+                                        <input type="text" class="form-control border-secondary bg-light" value="Thạc sĩ" readonly>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Chuyên môn giảng dạy <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control border-secondary" value="Công nghệ Phần mềm" placeholder="VD: Mạng máy tính, Hệ thống thông tin..." required>
+                                </div>
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Email trường cấp <span class="text-danger">*</span></label>
+                                        <input type="email" class="form-control border-secondary" value="hai.nh@bdu.edu.vn" required>
+                                    </div>
+                                    <div class="col-md-6 mt-3 mt-md-0">
+                                        <label class="form-label fw-bold">Số điện thoại liên hệ (Zalo/Call)</label>
+                                        <input type="tel" class="form-control border-secondary" value="0987654321" placeholder="Dùng để BCS liên lạc khi cần...">
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-primary fw-bold px-4 shadow-sm"><i class="bi bi-save me-1"></i>LƯU THAY ĐỔI</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm border-0 border-start border-4 border-danger">
+                        <div class="card-header bg-white pt-4 pb-2 border-0">
+                            <h5 class="fw-bold text-dark m-0"><i class="bi bi-shield-lock-fill text-danger me-2"></i>Đổi Mật Khẩu</h5>
+                            <p class="text-muted small mt-1 mb-0">Vui lòng thay đổi mật khẩu định kỳ để bảo vệ dữ liệu điểm số của sinh viên.</p>
+                        </div>
+                        <div class="card-body">
+                            <form onsubmit="return handleChangePassword(event)">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-muted">Mật khẩu hiện tại <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control border-secondary" placeholder="Nhập mật khẩu cũ..." required id="oldPassword">
+                                </div>
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-dark">Mật khẩu mới <span class="text-danger">*</span></label>
+                                        <input type="password" class="form-control border-danger" placeholder="Nhập mật khẩu mới..." required id="newPassword">
+                                    </div>
+                                    <div class="col-md-6 mt-3 mt-md-0">
+                                        <label class="form-label fw-bold text-dark">Xác nhận mật khẩu mới <span class="text-danger">*</span></label>
+                                        <input type="password" class="form-control border-danger" placeholder="Nhập lại mật khẩu mới..." required id="confirmPassword">
+                                        <div class="invalid-feedback">Mật khẩu xác nhận không khớp!</div>
+                                    </div>
+                                </div>
+                                <div class="text-end border-top pt-3">
+                                    <button type="submit" class="btn btn-danger fw-bold px-4 shadow-sm"><i class="bi bi-key-fill me-1"></i>CẬP NHẬT MẬT KHẨU</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../public/js/script.js"></script>
+<script src="../../public/js/teacher/teacher-layout.js"></script>
+
+    
+    <script src="../../public/js/teacher/teacher-profile.js"></script>
+</body>
+</html>

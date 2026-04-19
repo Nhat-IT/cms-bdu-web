@@ -1,0 +1,108 @@
+/* Mô tả: Bố cục riêng khu vực Admin, tách khỏi layout chung để dễ bảo trì. */
+
+/* Header admin được ghim cố định và tự canh theo trạng thái sidebar. */
+.top-navbar-admin {
+    background-color: #0d6efd !important;
+    color: #ffffff;
+    height: var(--cms-header-height, 70px);
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    position: fixed;
+    top: 0;
+    left: var(--cms-sidebar-width, 260px);
+    right: 0;
+    z-index: 1020;
+    transition: left 0.3s ease;
+    will-change: left;
+}
+
+/* Cỡ chữ tiêu đề trên header admin. */
+.top-navbar-admin h4,
+.top-navbar-admin h5 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+/* Màu đỏ nhạt cho tên quản trị viên trên topbar. */
+.admin-operator-name {
+    color: #ff7f96 !important;
+}
+
+/* Nút thao tác nhỏ dùng lặp lại trong các bảng admin. */
+.action-btn {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 4px;
+}
+
+/* Đẩy nội dung xuống để không bị header fixed che khuất. */
+.admin-main-content {
+    padding-top: var(--cms-header-height, 70px) !important;
+    background-color: #f1f5f9;
+    min-height: 100vh;
+}
+
+/* Khi sidebar thu gọn, header admin dịch trái theo kích thước sidebar thu gọn. */
+.main-content.expanded .top-navbar-admin,
+#mainContent.expanded .top-navbar-admin {
+    left: var(--cms-sidebar-collapsed-width, 86px);
+}
+
+/* Khối logo CMS ADMIN có chiều cao đúng bằng header để không bị tràn nền. */
+.sidebar-admin .brand,
+.sidebar-admin .brand-container {
+    flex: 0 0 var(--cms-header-height, 70px);
+    height: var(--cms-header-height, 70px);
+    min-height: var(--cms-header-height, 70px);
+    max-height: var(--cms-header-height, 70px);
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    overflow: hidden;
+}
+
+/* Vùng click logo chiếm trọn chiều cao khối brand và không đội kích thước. */
+.sidebar-admin .brand a,
+.sidebar-admin .brand-container a {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    box-sizing: border-box;
+    justify-content: center;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* Canh lại khoảng cách tiêu đề phụ dưới logo của sidebar admin. */
+.sidebar-admin > div:first-child > .text-center.mb-3.text-white-50.small.fw-bold {
+    margin-top: 18px;
+}
+
+/* Đẩy nhóm menu chính xuống nhẹ để thoáng bố cục. */
+.sidebar-admin nav {
+    padding-top: 16px;
+}
+
+/* Khi thu gọn sidebar admin, giữ icon dễ nhìn. */
+.sidebar-admin.collapsed nav a i {
+    font-size: 1.2rem;
+}
+
+/* Mục đăng xuất trong dropdown góc phải trên header. */
+.dropdown-menu .dropdown-item.fw-bold.text-danger {
+    font-size: 1rem;
+    padding: 0.6rem 0.95rem;
+}
+
+/* Icon mục đăng xuất trong dropdown góc phải trên header. */
+.dropdown-menu .dropdown-item.fw-bold.text-danger i {
+    font-size: 1.05rem;
+}
+
+/* Mobile: header admin bám sát mép trái khi sidebar chuyển overlay. */
+@media (max-width: 768px) {
+    .top-navbar-admin,
+    .main-content.expanded .top-navbar-admin,
+    #mainContent.expanded .top-navbar-admin {
+        left: 0;
+    }
+}

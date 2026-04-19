@@ -1,0 +1,145 @@
+<?php
+/**
+ * CMS BDU - Trang đăng nhập
+ */
+
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../config/session.php';
+require_once __DIR__ . '/../config/helpers.php';
+
+// Nếu đã đăng nhập thì chuyển về trang chủ
+if (isLoggedIn()) {
+    header('Location: ' . getHomeUrl($_SESSION['role']));
+    exit;
+}
+
+$error = '';
+$success = '';
+
+// Xử lý đăng nhập
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
+    
+    if (empty($username) || empty($password)) {
+        $error = 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.';
+    } else {
+        $result = handleLogin($username, $password);
+        
+        if ($result['success']) {
+            header('Location: ' . getHomeUrl($result['role']));
+            exit;
+        } else {
+            $error = $result['message'];
+        }
+    }
+}
+
+// Xử lý thông báo quên mật khẩu (nếu có)
+if (isset($_GET['reset']) && $_GET['reset'] === 'success') {
+    $success = 'Mật khẩu mới đã được gửi đến email của bạn.';
+}
+?>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập - CMS BDU</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../public/css/style.css">
+</head>
+<body class="login-body">
+
+<div class="container px-4">
+    <div class="card login-card mx-auto">
+        <div class="row g-0">
+            
+            <div class="col-md-5 login-image d-none d-md-flex flex-column justify-content-center align-items-center text-center">
+                <i class="bi bi-mortarboard-fill" style="font-size: 5rem; margin-bottom: 20px;"></i>
+                <h2 class="fw-bold">CMS BDU</h2>
+                <p class="mt-3 px-3 text-center">Hệ thống Quản lý Lớp học Thông minh. Nhanh chóng, Minh bạch và Tiện lợi.</p>
+            </div>
+
+            <div class="col-md-7">
+                <div class="login-form">
+                    <div class="text-center mb-4 d-md-none">
+                        <h3 class="fw-bold text-primary">CMS BDU</h3>
+                    </div>
+                    
+                    <h3 class="mb-4 fw-bold text-dark">Đăng Nhập Hệ Thống</h3>
+                    <p class="text-muted mb-4">Vui lòng nhập thông tin tài khoản để tiếp tục.</p>
+
+                    <?php if ($error): ?>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-circle me-2"></i><?= e($error) ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if ($success): ?>
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="bi bi-check-circle me-2"></i><?= e($success) ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <?php endif; ?>
+
+                    <form method="POST" action="">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="usernameInput" name="username" 
+                                   value="<?= e($_POST['username'] ?? '') ?>" 
+                                   placeholder="Mã số sinh viên / Mã Admin" required>
+                            <label for="usernameInput"><i class="bi bi-person-fill me-2 text-muted"></i>Tên đăng nhập</label>
+                        </div>
+                        
+                        <div class="input-group mb-4">
+                            <div class="form-floating flex-grow-1">
+                                <input type="password" class="form-control border-end-0" id="passwordInput" 
+                                       name="password" placeholder="Mật khẩu" required>
+                                <label for="passwordInput"><i class="bi bi-lock-fill me-2 text-muted"></i>Mật khẩu</label>
+                            </div>
+                            <span class="input-group-text bg-white cursor-pointer" id="togglePassword">
+                                <i class="bi bi-eye-slash-fill text-muted"></i>
+                            </span>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" value="" id="rememberMe" name="remember">
+                                <label class="form-check-label text-muted fs-6" for="rememberMe" style="font-size: 0.9rem; padding-left: 0.2rem; margin-top: 1px;">
+                                    Ghi nhớ tài khoản
+                                </label>
+                            </div>
+                            <a href="forgot-password.php" class="text-decoration-none text-primary" style="font-size: 0.9rem;">Quên mật khẩu?</a>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-login w-100 text-uppercase rounded-pill mt-2">Đăng Nhập</button>
+                    </form> 
+                    
+                    <div class="d-flex align-items-center my-4">
+                        <hr class="flex-grow-1 text-muted" style="opacity: 0.2;">
+                        <span class="px-3 text-muted small fw-medium">HOẶC</span>
+                        <hr class="flex-grow-1 text-muted" style="opacity: 0.2;">
+                    </div>
+
+                    <a href="#" class="btn btn-outline-dark w-100 rounded-pill d-flex align-items-center justify-content-center py-2 google-login-btn" style="font-weight: 500; transition: all 0.3s ease;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-google me-2 google-login-icon" viewBox="0 0 16 16" style="color: #ed1d0a;">
+                            <path d="M15.545 6.558a9.42 9.42 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.689 7.689 0 0 1 5.352 2.082l-2.284 2.284A4.347 4.347 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.792 4.792 0 0 0 0 3.063h.003c.635 1.893 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.702 3.702 0 0 0 1.599-2.431H8v-3.08h7.545z"/>
+                        </svg>
+                        Đăng nhập bằng Email BDU
+                    </a>
+                    
+                    <div class="text-center mt-4">
+                        <p class="text-muted small mb-0">Gặp sự cố đăng nhập? <a href="#" class="text-decoration-none">Liên hệ Admin</a></p>
+                    </div>
+                </div>
+            </div>                                         
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../public/js/script.js"></script>
+</body>
+</html>
