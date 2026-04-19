@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS BDU - Qu?n lý Bài t?p</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+    <link rel="stylesheet" href="../../public/css/layout.css">
+    <link rel="stylesheet" href="../../public/css/teacher/teacher-layout.css">
+    <link rel="stylesheet" href="../../public/css/teacher/class-assignments.css">
+</head>
+<body class="dashboard-body">
+
+    <div class="sidebar" id="sidebar">
+        <div>
+            <div class="brand-container flex-shrink-0">
+                <a href="home.html" class="text-decoration-none text-primary d-flex align-items-center">
+                    <i class="bi bi-mortarboard-fill fs-2 me-2"></i>
+                    <span class="fs-4 fw-bold hide-on-collapse">CMS BDU</span>
+                </a>
+            </div>
+            <div class="sidebar-scrollable w-100">
+            <nav class="nav flex-column ps-2 pe-2">
+                <a href="home.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-speedometer2 me-2"></i> T?ng quan</a>
+                <a href="attendance.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-calendar-check me-2"></i> L?ch & Ði?m danh</a>
+                <a href="class-assignments.html" class="nav-link text-white active bg-primary bg-opacity-25 rounded py-2 mb-1"><i class="bi bi-journal-text me-2"></i> Qu?n lý Bài t?p</a>
+                <a href="class-grades.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-file-earmark-bar-graph me-2"></i> B?ng di?m</a>
+                <a href="approve-evidences.html" class="nav-link text-white-50 hover-white py-2 mb-1 d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-file-earmark-medical me-2"></i> Duy?t minh ch?ng</span>
+                    <span class="badge bg-danger rounded-pill d-none">0</span>
+                </a>
+                <a href="documents.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-folder2-open me-2"></i> Kho tài li?u</a>
+                <a href="announcements.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-megaphone-fill me-2"></i> Ðang b?ng tin</a>
+            </nav>
+            </div>
+        </div>
+        
+        <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
+            <a href="/auth/logout" class="nav-link logout-btn" title="Ðang xu?t">
+                <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Ðang xu?t</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 py-3 shadow-sm mb-4">
+            <h4 class="m-0 fw-bold d-flex align-items-center text-white">
+                QU?N LÝ BÀI T?P
+            </h4>
+            <div class="d-flex align-items-center text-white">
+                <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
+                    <div class="fs-6">Gi?ng viên: <b class="text-info" id="headerTeacherName">Ðang t?i...</b></div>
+                </div>
+                
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
+                        <img src="https://ui-avatars.com/api/?name=Teacher&background=0dcaf0&color=fff" id="headerAvatar" alt="Avatar" class="rounded-circle border border-white" width="40" height="40">
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
+                        <li><a class="dropdown-item fw-bold" href="teacher-profile.html"><i class="bi bi-person-vcard text-info me-2"></i>H? so cá nhân</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item fw-bold text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right text-danger me-2"></i>Ðang xu?t</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 pt-0">
+            
+            <ul class="nav nav-tabs mb-4 border-bottom border-secondary border-opacity-25" id="assignmentTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active px-4 py-3" id="list-tab" data-bs-toggle="tab" data-bs-target="#list-panel" type="button" role="tab">
+                        <i class="bi bi-list-task me-2"></i> Danh sách Bài t?p
+                    </button>
+                </li>
+                <li class="nav-item ms-2" role="presentation">
+                    <button class="nav-link px-4 py-3" id="grade-tab" data-bs-toggle="tab" data-bs-target="#grade-panel" type="button" role="tab">
+                        <i class="bi bi-check2-square me-2"></i> Ch?m bài (Submissions)
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="list-panel" role="tabpanel">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-white pt-3 pb-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-3">
+                                <h5 class="fw-bold text-dark m-0">Bài t?p dã giao</h5>
+                                <select class="form-select form-select-sm" style="width: 200px;" id="assignmentGroupFilter">
+                                    <option value="">-- T?t c? l?p --</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary btn-sm px-3 shadow-sm" id="createAssignmentBtn" data-bs-toggle="modal" data-bs-target="#addAssignmentModal">
+                                <i class="bi bi-plus-lg me-1"></i> T?o Bài t?p m?i
+                            </button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light small text-muted fw-bold">
+                                        <tr>
+                                            <th class="ps-4">TIÊU Ð? BÀI T?P</th>
+                                            <th>L?P H?C PH?N</th>
+                                            <th>ÐÍNH KÈM (Ð? BÀI)</th>
+                                            <th>DEADLINE</th>
+                                            <th>TR?NG THÁI</th>
+                                            <th>ÐÃ N?P</th>
+                                            <th class="text-end pe-4">HÀNH Ð?NG</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="teacherAssignmentsTbody">
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted py-4">Ðang t?i danh sách bài t?p...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="grade-panel" role="tabpanel">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-white pt-3 pb-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-3">
+                                <h5 class="fw-bold text-dark m-0"><i class="bi bi-check2-circle text-success me-2"></i>Danh sách N?p bài</h5>
+                                <select class="form-select form-select-sm border-success" style="width: 280px;" id="teacherAssignmentSelect">
+                                    <option value="">-- Ch?n bài t?p d? ch?m --</option>
+                                </select>
+                            </div>
+                            <div class="input-group input-group-sm" style="width: 200px;">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" class="form-control border-start-0" id="submissionSearchInput" placeholder="Tìm MSSV, H? tên...">
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light small text-muted fw-bold">
+                                        <tr>
+                                            <th class="ps-4">MSSV</th>
+                                            <th>H? TÊN SINH VIÊN</th>
+                                            <th>TH?I GIAN N?P</th>
+                                            <th>FILE ÐÍNH KÈM (BÀI LÀM)</th>
+                                            <th class="text-center">ÐI?M S?</th>
+                                            <th class="text-end pe-4">THAO TÁC</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="teacherSubmissionTbody">
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted py-4">Ch?n bài t?p d? xem bài n?p.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addAssignmentModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="assignmentModalTitle"><i class="bi bi-journal-plus me-2"></i>T?o Bài t?p m?i</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Ch?n L?p h?c ph?n <span class="text-danger">*</span></label>
+                            <select class="form-select" id="modalAssignClass">
+                                <!-- Du lieu duoc hydrate tu API -->
+                                <option value="">-- Ch?n l?p --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">H?n chót n?p bài (Deadline) <span class="text-danger">*</span></label>
+                            <input type="datime-local" class="form-control" id="modalAssignDeadline">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tiêu d? bài t?p <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="modalAssignTitle" placeholder="VD: Báo cáo gi?a k? chuong 1">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Mô t? / Yêu c?u chi ti?t</label>
+                        <textarea class="form-control" rows="3" id="modalAssignDesc" placeholder="Nh?p hu?ng d?n làm bài cho sinh viên (không b?t bu?c n?u dã dính kèm file)..."></textarea>
+                    </div>
+                    
+                    <div class="mb-2 p-3 bg-light border rounded">
+                        <label class="form-label fw-bold text-primary"><i class="bi bi-cloud-arrow-up-fill me-2"></i>Ðính kèm File d? bài (Tùy ch?n)</label>
+                        <input class="form-control form-control-sm" type="file" id="assignmentFile">
+                        <div class="form-text small mt-2"><i class="bi bi-info-circle me-1"></i>H? tr? d?nh d?ng: PDF, DOCX, ZIP, RAR (T?i da 15MB). Dùng d? cung c?p d? bài chi ti?t ho?c source code m?u cho sinh viên.</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pb-4 px-4">
+                    <button class="btn btn-light" data-bs-dismiss="modal">H?y</button>
+                    <button class="btn btn-primary px-4" id="assignmentModalSubmitBtn">Giao bài t?p</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="gradeModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Ch?m di?m Sinh viên</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <div class="card border-0 shadow-sm mb-3">
+                        <div class="card-body py-2 px-3 d-flex align-items-center">
+                            <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center me-3" style="width: 40px; height: 40px;">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                            <div>
+                                <!-- Du lieu duoc hydrate tu API -->
+                                <h6 class="fw-bold mb-0 text-dark" id="modalStudentName">--</h6>
+                                <small class="text-muted" id="modalStudentId">MSSV: --</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-5">
+                            <label class="form-label fw-bold text-success">Ði?m s? (H? 10)</label>
+                            <input type="number" step="0.5" min="0" max="10" class="form-control form-control-lg fw-bold text-center text-success" id="modalScoreInput" placeholder="--">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label fw-bold">Nh?n xét (Feedback)</label>
+                        <textarea class="form-control" rows="3" id="modalFeedbackInput" placeholder="Nh?p ph?n h?i cho sinh viên này (Không b?t bu?c)..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pb-4 px-4 bg-light">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Ðóng</button>
+                    <button class="btn btn-success px-4" id="gradeSaveBtn">Luu Ði?m</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../public/js/script.js"></script>
+<script src="../../public/js/teacher/teacher-layout.js"></script>
+    
+    <script src="../../public/js/teacher/class-assignments.js"></script>
+</body>
+</html>

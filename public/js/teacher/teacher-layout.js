@@ -1,4 +1,9 @@
 // Shared Teacher layout: collapse/expand sidebar like student pages.
+<<<<<<< HEAD
+=======
+resetTeacherLayoutPlaceholders();
+
+>>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
 document.addEventListener('DOMContentLoaded', function () {
     const sidebar = document.getElementById('sidebar');
     const mainContent = document.querySelector('.main-content');
@@ -54,7 +59,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const badge = document.createElement('span');
         badge.className = 'badge menu-profile-badge';
+<<<<<<< HEAD
         badge.textContent = 'KHOA CNTT';
+=======
+        badge.textContent = '';
+        badge.classList.add('d-none');
+>>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
         profileContainer.appendChild(badge);
 
         sidebarBrand.insertAdjacentElement('afterend', profileContainer);
@@ -184,6 +194,107 @@ document.addEventListener('DOMContentLoaded', function () {
         renderUnreadCount(unreadCount);
     }
 
+<<<<<<< HEAD
+=======
+    async function hydrateTeacherProfile() {
+        try {
+            const response = await fetch('/api/me', {
+                headers: { Accept: 'application/json' }
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const me = await response.json();
+            const safeName = me.full_name || profileName;
+            const avatarUrl = me.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(safeName)}&background=0dcaf0&color=fff`;
+
+            if (profileNameNode) {
+                profileNameNode.textContent = safeName;
+            }
+
+            if (topAvatar) {
+                topAvatar.src = avatarUrl;
+            }
+
+            const menuProfileName = sidebar.querySelector('.menu-profile-name');
+            if (menuProfileName) {
+                menuProfileName.textContent = safeName;
+            }
+
+            const menuProfileRole = sidebar.querySelector('.menu-profile-role');
+            if (menuProfileRole) {
+                menuProfileRole.textContent = me.role === 'teacher' ? 'Giang vien' : (me.role || 'Nguoi dung');
+            }
+
+            const menuProfileBadge = sidebar.querySelector('.menu-profile-badge');
+            if (menuProfileBadge) {
+                const badgeText = me.department_name || me.class_name || '';
+                menuProfileBadge.textContent = badgeText;
+                if (badgeText) {
+                    menuProfileBadge.classList.remove('d-none');
+                } else {
+                    menuProfileBadge.classList.add('d-none');
+                }
+            }
+
+            const menuAvatar = sidebar.querySelector('.menu-profile-trigger img');
+            if (menuAvatar) {
+                menuAvatar.src = avatarUrl;
+            }
+
+            const leafNodes = document.querySelectorAll('span, b, strong, p, h4, h5, td, option');
+            leafNodes.forEach(function (node) {
+                if (node.children.length > 0) {
+                    return;
+                }
+
+                const text = String(node.textContent || '');
+                let next = text;
+
+                if (me.class_name) {
+                    next = next.replace(/\b25TH01\b/g, me.class_name);
+                }
+                if (me.department_name) {
+                    next = next.replace(/\bKHOA\s*CNTT\b/gi, me.department_name);
+                    next = next.replace(/\bKhoa\s*CNTT\b/g, me.department_name);
+                }
+
+                if (next !== text) {
+                    node.textContent = next;
+                }
+            });
+
+            document.querySelectorAll('*').forEach(function (node) {
+                ['value', 'placeholder', 'title', 'onclick', 'data-source'].forEach(function (attr) {
+                    if (!node.hasAttribute(attr)) {
+                        return;
+                    }
+
+                    const raw = String(node.getAttribute(attr) || '');
+                    let next = raw;
+
+                    if (me.class_name) {
+                        next = next.replace(/\b25TH01\b/g, me.class_name);
+                    }
+                    if (me.department_name) {
+                        next = next.replace(/\bKHOA\s*CNTT\b/gi, me.department_name);
+                        next = next.replace(/\bKhoa\s*CNTT\b/g, me.department_name);
+                    }
+
+                    if (next !== raw) {
+                        node.setAttribute(attr, next);
+                    }
+                });
+            });
+        } catch (error) {
+            console.error('Teacher shared data hydration error:', error);
+        }
+    }
+
+    hydrateTeacherProfile();
+>>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
     updateUnreadCount();
 
     if (window.CMSMenu && typeof window.CMSMenu.init === 'function') {
@@ -195,3 +306,54 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+<<<<<<< HEAD
+=======
+
+function resetTeacherLayoutPlaceholders() {
+    const profileNameNode = document.querySelector('.top-navbar-blue .text-end.me-3 b');
+    if (profileNameNode) {
+        profileNameNode.textContent = 'Đang tải...';
+    }
+
+    const topAvatar = document.getElementById('headerAvatar');
+    if (topAvatar) {
+        topAvatar.src = 'https://ui-avatars.com/api/?name=Teacher&background=6c757d&color=fff';
+    }
+
+    const sidebarBadge = document.querySelector('a[href="approve-evidences.html"] .badge');
+    if (sidebarBadge) {
+        sidebarBadge.textContent = '0';
+        sidebarBadge.classList.add('d-none');
+    }
+
+    // Reset demo placeholders shown in teacher pages/modals before API data is fetched.
+    const textFallbacks = [
+        ['#modalStudentName', 'Đang tải...'],
+        ['#modalStudentId', 'MSSV: --'],
+        ['#modalClass', '--'],
+        ['#modalDate', '--/--/----'],
+        ['#gradeStudentCountBadge', '0 students'],
+        ['#lblTime', '--']
+    ];
+
+    textFallbacks.forEach(function (entry) {
+        const node = document.querySelector(entry[0]);
+        if (node) {
+            node.textContent = entry[1];
+        }
+    });
+
+    const inputFallbacks = [
+        ['#teacherFullNameInput', ''],
+        ['#teacherEmailInput', ''],
+        ['#teacherPhoneInput', '']
+    ];
+
+    inputFallbacks.forEach(function (entry) {
+        const input = document.querySelector(entry[0]);
+        if (input) {
+            input.value = entry[1];
+        }
+    });
+}
+>>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6

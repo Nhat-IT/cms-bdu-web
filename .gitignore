@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Dependencies
 node_modules/
 
@@ -38,3 +39,12 @@ public/uploads/
 
 # Private files
 config/passwords.php
+=======
+node_modules/
+.env
+.env.*
+!.env.example
+drive-credentials.json
+*service-account*.json
+*credentials*.json
+>>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6

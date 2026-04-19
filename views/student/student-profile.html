@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS BDU - Hồ Sơ Sinh Viên</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+    <link rel="stylesheet" href="../../public/css/layout.css">
+    <!-- CSS dùng chung cho Student -->
+    <link rel="stylesheet" href="../../public/css/student/student-layout.css">
+    <link rel="stylesheet" href="../../public/css/student/profile.css">
+</head>
+<body class="dashboard-body">
+
+<div class="sidebar" id="sidebar">
+    
+    <div class="brand-container flex-shrink-0">
+        <a href="home.html" class="text-decoration-none text-primary d-flex align-items-center">
+            <i class="bi bi-mortarboard-fill fs-2 me-2"></i>
+            <span class="fs-4 fw-bold hide-on-collapse">CMS BDU</span>
+        </a>
+    </div>
+    
+    <div class="profile-container text-center flex-shrink-0">
+        <a href="student-profile.html" class="profile-trigger" title="Xem hồ sơ cá nhân">
+            <!-- Sidebar profile: duoc hydrate tu API /api/me trong student-layout.js -->
+            <img src="https://ui-avatars.com/api/?name=User&background=6c757d&color=fff" id="sidebarAvatar" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar">
+            <div class="hide-on-collapse">
+                <div class="text-white fw-bold fs-6">Đang tải...</div>
+                <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">MSSV: --</div>
+            </div>
+        </a>
+        <span class="badge student-class-badge mt-1 hide-on-collapse">LỚP: --</span>
+    </div>
+
+    <div class="sidebar-scrollable w-100">
+        <nav class="d-flex flex-column mt-3">
+            <div class="px-4 mb-2 small text-white-50 fw-bold hide-on-collapse" style="font-size: 0.7rem; letter-spacing: 1px;">HỌC VỤ</div>
+            
+            <a href="home.html" class="nav-link" title="Tổng quan cá nhân">
+                <i class="bi bi-grid-1x2-fill"></i> <span class="hide-on-collapse">Tổng quan cá nhân</span>
+            </a>
+            <a href="my-attendance.html" class="nav-link" title="Xem điểm danh">
+                <i class="bi bi-person-lines-fill"></i> <span class="hide-on-collapse">Xem điểm danh</span>
+            </a>
+            <a href="schedule.html" class="nav-link" title="Xem Lịch học">
+                <i class="bi bi-calendar-week"></i> <span class="hide-on-collapse">Xem Lịch học</span>
+            </a>
+            <a href="assignments.html" class="nav-link" title="Bài tập của tôi">
+                <i class="bi bi-journal-text"></i> <span class="hide-on-collapse">Bài tập của tôi</span>
+            </a>
+            <a href="grades.html" class="nav-link" title="Kết quả học tập">
+                <i class="bi bi-bar-chart-fill"></i> <span class="hide-on-collapse">Kết quả học tập</span>
+            </a>
+            <a href="documents.html" class="nav-link" title="Kho Tài liệu lớp">
+                <i class="bi bi-folder2-open"></i> <span class="hide-on-collapse">Kho Tài liệu lớp</span>
+            </a>
+            
+            <div class="px-4 mt-3 mb-2 small text-white-50 fw-bold hide-on-collapse" style="font-size: 0.7rem; letter-spacing: 1px;">TƯƠNG TÁC</div>
+            <a href="notifications-all.html" class="nav-link" title="Xem thông báo">
+                <i class="bi bi-bell-fill"></i> <span class="hide-on-collapse">Thông báo</span>
+            </a>
+            <a href="my-feedback.html" class="nav-link" title="Gửi phản hồi">
+                <i class="bi bi-envelope-paper"></i> <span class="hide-on-collapse">Gửi phản hồi</span>
+            </a>
+        </nav>
+    </div>
+    
+    <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
+        <a href="/auth/logout" class="nav-link logout-btn" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?');" title="Đăng xuất">
+            <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
+        </a>
+    </div>
+</div>
+
+<div class="main-content" id="mainContent">
+    
+    <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 shadow-sm">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-outline-light me-3 border-0" id="sidebarToggle"><i class="bi bi-list fs-3"></i></button>
+            <h5 class="m-0 text-white fw-bold d-flex align-items-center">
+                HỒ SƠ CÁ NHÂN
+            </h5>
+        </div>
+        
+        <div class="d-flex align-items-center text-white">
+            <a href="notifications-all.html" class="text-white text-decoration-none" title="Xem thông báo từ BCS, Giảng viên, Khoa">
+                <i class="bi bi-bell fs-5 text-white position-relative cursor-pointer">
+                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
+                </i>
+            </a>
+        </div>
+    </div>
+
+    <div class="p-4">
+        
+        <div class="row g-4">
+            
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="profile-header-bg"></div>
+                    <div class="card-body text-center pt-0">
+                        
+                        <div class="avatar-wrapper mb-3">
+                            <img src="https://ui-avatars.com/api/?name=User&background=6c757d&color=fff&size=200" id="mainProfileAvatar" class="profile-avatar" alt="Student Avatar">
+                            <label for="avatarUploadInput" class="avatar-edit-btn" title="Thay đổi ảnh đại diện">
+                                <i class="bi bi-camera-fill"></i>
+                            </label>
+                            <input type="file" id="avatarUploadInput" class="d-none" accept="image/png, image/jpeg, image/jpg">
+                        </div>
+                        
+                        <h5 class="fw-bold text-dark mb-1" id="profileDisplayName">Đang tải...</h5>
+                        <p class="text-muted small mb-3"><i class="bi bi-mortarboard-fill text-info me-1"></i>Sinh viên Chính quy</p>
+                        
+                        <div class="d-flex justify-content-center gap-2 mb-4">
+                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary student-class-badge" id="profileClassBadge">LỚP: --</span>
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success">Đang học</span>
+                        </div>
+
+                        <hr class="text-muted border-opacity-25">
+
+                        <div class="text-start mt-3">
+                            <p class="mb-2 text-muted small fw-bold">THÔNG TIN HỌC VỤ</p>
+                            <!-- Thong tin hoc vu: duoc hydrate tu API /api/student/profile trong profile.js -->
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Mã số sinh viên:</small>
+                                <!-- Lay phan so truoc @ trong email lam MSSV khi dang nhap bang Gmail -->
+                                <span class="fw-bold text-dark" id="profileMssv">--</span>
+                            </div>
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Chức vụ (tự nhập):</small>
+                                <input type="text" id="profileRoleInput" class="form-control border-secondary" value="" placeholder="Ví dụ: Lớp trưởng, Thư ký, BTV...">
+                            </div>
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Chuyên ngành:</small>
+                                <span class="fw-bold text-dark" id="profileMajor">--</span>
+                            </div>
+                            <div class="mb-0">
+                                <small class="text-muted d-block">Niên khóa:</small>
+                                <span class="fw-bold text-dark" id="profileCohort">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white pt-4 pb-2 border-0">
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-person-lines-fill text-info me-2"></i>Thông tin Liên hệ</h5>
+                        <p class="text-muted small mt-1 mb-0">Hệ thống không cho phép tự ý đổi Họ tên và Email cấp kèm. Liên hệ Giáo vụ Khoa nếu có sai sót.</p>
+                    </div>
+                    <div class="card-body">
+                        <form onsubmit="return handleUpdateProfile(event)">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Họ và tên đầy đủ</label>
+                                    <input type="text" id="profileFullName" class="form-control border-secondary bg-light" value="" readonly title="Không thể tự thay đổi">
+                                </div>
+                                <div class="col-md-6 mt-3 mt-md-0">
+                                    <label class="form-label fw-bold">Ngày sinh <span class="text-danger">*</span></label>
+                                    <!-- Ngay sinh do admin cap, chi co the xem, khong tu thay doi -->
+                                    <input type="date" id="profileBirthDate" class="form-control border-secondary bg-light" value="" readonly title="Ngày sinh do Admin cấp, không thể tự thay đổi" required>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Email</label>
+                                    <input type="email" id="profileEmail" class="form-control border-secondary bg-light" value="" readonly title="Không thể tự thay đổi" placeholder="--">
+                                </div>
+                                <div class="col-md-6 mt-3 mt-md-0">
+                                    <label class="form-label fw-bold">Số điện thoại cá nhân <span class="text-danger">*</span></label>
+                                    <input type="tel" id="profilePhoneNumber" class="form-control border-secondary" value="" required placeholder="Dùng để GV/BCS liên lạc...">
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Địa chỉ hiện tại</label>
+                                    <input type="text" id="profileAddress" class="form-control border-secondary" value="" placeholder="Nhập địa chỉ tạm trú/thường trú...">
+                            </div>
+                            <div class="text-end border-top pt-3">
+                                <button type="submit" class="btn btn-primary fw-bold px-4 shadow-sm"><i class="bi bi-save me-1"></i>LƯU THAY ĐỔI</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 border-start border-4 border-danger">
+                    <div class="card-header bg-white pt-4 pb-2 border-0">
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-shield-lock-fill text-danger me-2"></i>Đổi Mật Khẩu</h5>
+                        <p class="text-muted small mt-1 mb-0">Vui lòng thay đổi mật khẩu định kỳ để bảo vệ tài khoản học tập của bạn.</p>
+                    </div>
+                    <div class="card-body">
+                        <form onsubmit="return handleChangePassword(event)">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Mật khẩu hiện tại <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control border-secondary" placeholder="Nhập mật khẩu cũ..." required id="oldPassword">
+                                    <span class="input-group-text bg-white cursor-pointer toggle-password" data-target="oldPassword">
+                                        <i class="bi bi-eye-slash-fill text-muted"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-dark">Mật khẩu mới <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control border-danger" placeholder="Nhập mật khẩu mới..." required id="newPassword">
+                                        <span class="input-group-text bg-white cursor-pointer toggle-password" data-target="newPassword">
+                                            <i class="bi bi-eye-slash-fill text-muted"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mt-3 mt-md-0">
+                                    <label class="form-label fw-bold text-dark">Xác nhận mật khẩu mới <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control border-danger" placeholder="Nhập lại mật khẩu mới..." required id="confirmPassword">
+                                        <span class="input-group-text bg-white cursor-pointer toggle-password" data-target="confirmPassword">
+                                            <i class="bi bi-eye-slash-fill text-muted"></i>
+                                        </span>
+                                    </div>
+                                    <div class="invalid-feedback">Mật khẩu xác nhận không khớp!</div>
+                                </div>
+                            </div>
+                            <div class="text-end border-top pt-3">
+                                <button type="submit" class="btn btn-danger fw-bold px-4 shadow-sm"><i class="bi bi-key-fill me-1"></i>CẬP NHẬT MẬT KHẨU</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- JS dùng chung cho Student -->
+<script src="../../public/js/script.js"></script>
+<script src="../../public/js/student/student-layout.js"></script>
+<!-- JS riêng cho trang hồ sơ sinh viên -->
+<script src="../../public/js/student/profile.js"></script>
+
+</body>
+</html>
+

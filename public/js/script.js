@@ -1,5 +1,30 @@
 (function () {
     const MOBILE_BREAKPOINT = 768;
+<<<<<<< HEAD
+=======
+    const originalFetch = window.fetch ? window.fetch.bind(window) : null;
+
+    function installGlobalAuthGuard() {
+        if (!originalFetch || window.__cmsAuthGuardInstalled) {
+            return;
+        }
+
+        window.__cmsAuthGuardInstalled = true;
+        window.fetch = async function (...args) {
+            const response = await originalFetch(...args);
+            const requestUrl = String(args[0] || '');
+            const isApiCall = requestUrl.startsWith('/api/');
+            const isLoginCall = requestUrl.includes('/auth/login');
+            const isOnLoginPage = window.location.pathname.endsWith('/login.html');
+
+            if (isApiCall && !isLoginCall && response.status === 401 && !isOnLoginPage) {
+                window.location.href = '/login.html?error=session_expired';
+            }
+
+            return response;
+        };
+    }
+>>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
 
     function ensureSidebarBackdrop() {
         let backdrop = document.getElementById('sidebarBackdrop');
@@ -82,7 +107,11 @@
 
         const backdrop = ensureSidebarBackdrop();
 
+<<<<<<< HEAD
         if (toggle.dataset.cmsMenuBound === '1') {
+=======
+        if (toggle.dataset.cmsMenuBound === '1' || toggle.dataset.cmsToggleBound === '1') {
+>>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
             return true;
         }
 
@@ -160,13 +189,98 @@
         });
     }
 
+<<<<<<< HEAD
+=======
+    function initDevBypass() {
+        const btn = document.getElementById('devBypassBtn');
+        if (!btn || btn.dataset.cmsBypassBound === '1') return;
+        btn.dataset.cmsBypassBound = '1';
+
+        btn.addEventListener('click', async function () {
+            const username = document.getElementById('devUsername').value.trim();
+            if (!username) {
+                alert('Nhập username trong database trước (VD: admin, teacher1, sv001)');
+                return;
+            }
+
+            try {
+                const response = await fetch('/auth/bypass-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert(data.message || 'Bypass thất bại');
+                    return;
+                }
+
+                if (data.redirectUrl) {
+                    window.location.href = data.redirectUrl;
+                }
+            } catch (error) {
+                console.error('Bypass error:', error);
+                alert('Lỗi kết nối server');
+            }
+        });
+    }
+
+    function initLoginForm() {
+        const loginForm = document.getElementById('loginForm');
+        if (!loginForm) return;
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('usernameInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+
+            if (!username || !password) {
+                alert('Vui lòng nhập tên đăng nhập và mật khẩu');
+                return;
+            }
+
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert(data.message || 'Đăng nhập thất bại');
+                    return;
+                }
+
+                if (data.redirectUrl) {
+                    window.location.href = data.redirectUrl;
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Lỗi kết nối server');
+            }
+        });
+    }
+>>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
     window.CMSMenu = {
         init: initMenu
     };
 
     document.addEventListener('DOMContentLoaded', function () {
+<<<<<<< HEAD
         wrapStandaloneTables();
         initLoginPasswordToggle();
+=======
+        installGlobalAuthGuard();
+        wrapStandaloneTables();
+        initLoginPasswordToggle();
+        initDevBypass();
+        initLoginForm();
+>>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
         initMenu();
     });
 })();

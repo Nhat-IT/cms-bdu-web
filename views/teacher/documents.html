@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMS BDU - Kho tài li?u</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../public/css/style.css">
+    <link rel="stylesheet" href="../../public/css/layout.css">
+    <link rel="stylesheet" href="../../public/css/teacher/teacher-layout.css">
+    <link rel="stylesheet" href="../../public/css/teacher/documents.css">
+</head>
+<body class="dashboard-body">
+
+    <div class="sidebar" id="sidebar">
+        <div>
+            <div class="brand-container flex-shrink-0">
+                <a href="home.html" class="text-decoration-none text-primary d-flex align-items-center">
+                    <i class="bi bi-mortarboard-fill fs-2 me-2"></i>
+                    <span class="fs-4 fw-bold hide-on-collapse">CMS BDU</span>
+                </a>
+            </div>
+            <div class="sidebar-scrollable w-100">
+            <nav class="nav flex-column ps-2 pe-2">
+                <a href="home.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-speedometer2 me-2"></i> T?ng quan</a>
+                <a href="attendance.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-calendar-check me-2"></i> L?ch & Ði?m danh</a>
+                <a href="class-assignments.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-journal-text me-2"></i> Qu?n lý Bài t?p</a>
+                <a href="class-grades.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-file-earmark-bar-graph me-2"></i> B?ng di?m</a>
+                <a href="approve-evidences.html" class="nav-link text-white-50 hover-white py-2 mb-1 d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-file-earmark-medical me-2"></i> Duy?t minh ch?ng</span>
+                    <span class="badge bg-danger rounded-pill d-none">0</span>
+                </a>
+                <a href="documents.html" class="nav-link text-white active bg-primary bg-opacity-25 rounded py-2 mb-1"><i class="bi bi-folder2-open me-2"></i> Kho tài li?u</a>
+                <a href="announcements.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-megaphone-fill me-2"></i> Ðang b?ng tin</a>
+            </nav>
+            </div>
+        </div>
+        
+        <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
+            <a href="/auth/logout" class="nav-link logout-btn" title="Ðang xu?t">
+                <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Ðang xu?t</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 py-3 shadow-sm mb-4">
+            <h4 class="m-0 fw-bold d-flex align-items-center text-white">
+                KHO TÀI LI?U & BÀI GI?NG
+            </h4>
+            <div class="d-flex align-items-center text-white">
+                <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
+                    <div class="fs-6">Gi?ng viên: <b class="text-info" id="headerTeacherName">Ðang t?i...</b></div>
+                </div>
+                
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
+                        <img src="https://ui-avatars.com/api/?name=Teacher&background=0dcaf0&color=fff" id="headerAvatar" alt="Avatar" class="rounded-circle border border-white" width="40" height="40">
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
+                        <li><a class="dropdown-item fw-bold" href="teacher-profile.html"><i class="bi bi-person-vcard text-info me-2"></i>H? so cá nhân</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item fw-bold text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right text-danger me-2"></i>Ðang xu?t</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 pt-0">
+            
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white pt-4 pb-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <select class="form-select form-select-sm border-secondary fw-bold text-dark" style="width: 220px;" id="classFilter">
+                            <!-- Du lieu duoc hydrate tu API -->
+                            <option value="">-- T?t c? L?p h?c ph?n --</option>
+                        </select>
+                        <select class="form-select form-select-sm border-secondary" style="width: 180px;" id="categoryFilter">
+                            <option value="">-- M?i danh m?c --</option>
+                            <option value="H?c li?u">Bài gi?ng / H?c li?u</option>
+                            <option value="Tham kh?o">Tài li?u tham kh?o</option>
+                            <option value="Ð? cuong">Ð? cuong chi ti?t</option>
+                        </select>
+                        <div class="input-group input-group-sm" style="width: 250px;">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                            <input type="text" class="form-control border-start-0" placeholder="Tìm tên tài li?u...">
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#docModal" onclick="openDocModal('add')">
+                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> T?i tài li?u lên
+                    </button>
+                </div>
+                
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light small text-muted fw-bold">
+                                <tr>
+                                    <th class="ps-4">TÊN TÀI LI?U</th>
+                                    <th>DANH M?C</th>
+                                    <th>L?P H?C PH?N</th>
+                                    <th>NGÀY ÐANG</th>
+                                    <th class="text-end pe-4">HÀNH Ð?NG</th>
+                                </tr>
+                            </thead>
+                            <!-- Du lieu duoc hydrate tu API -->
+                            <tbody id="teacherDocumentsTbody">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">Ðang t?i d? li?u...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-3 text-muted small">
+                <i class="bi bi-info-circle me-1"></i> File t?i lên s? du?c t? d?ng d?ng b? và luu tr? an toàn trên h? th?ng Google Drive c?a tru?ng. Gi?i h?n 50MB/file.
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal fade" id="docModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="docModalTitle"><i class="bi bi-cloud-arrow-up-fill me-2"></i>T?i tài li?u lên</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3" id="fileUploadContainer">
+                        <label class="form-label fw-bold">Ch?n File <span class="text-danger">*</span></label>
+                        <input class="form-control" type="file" id="docFile">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tiêu d? hi?n th? <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="docTitle" placeholder="VD: Slide Bài gi?ng Chuong 1">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Phân lo?i danh m?c <span class="text-danger">*</span></label>
+                        <select class="form-select" id="docCategory" onchange="toggleCustomCategory()">
+                            <option value="H?c li?u">Bài gi?ng / H?c li?u</option>
+                            <option value="Tham kh?o">Tài li?u tham kh?o</option>
+                            <option value="Ð? cuong">Ð? cuong chi ti?t</option>
+                            <option value="Thông báo">Thông báo</option>
+                            <option value="Khác" class="fw-bold text-primary">Khác (T? nh?p)...</option>
+                        </select>
+                        <div id="customCategoryDiv" class="mt-2 d-none">
+                            <input type="text" class="form-control border-primary" id="customCategoryInput" placeholder="Nh?p tên danh m?c (VD: Bài t?p m?u, Ð? thu...)">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Ch?n L?p h?c ph?n <span class="text-danger">*</span></label>
+                        <!-- Du lieu duoc hydrate tu API -->
+                        <select class="form-select" id="docClass">
+                            <option value="">-- Ch?n l?p --</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">Ghi chú thêm (Note)</label>
+                        <textarea class="form-control" id="docNote" rows="2" placeholder="VD: Sinh viên d?c tru?c ? nhà..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pb-4 px-4">
+                    <button class="btn btn-light" data-bs-dismiss="modal">H?y</button>
+                    <button class="btn btn-primary px-4 fw-bold" id="docModalSubmitBtn" onclick="saveDocument()" data-bs-dismiss="modal">T?i lên</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../public/js/script.js"></script>
+<script src="../../public/js/teacher/teacher-layout.js"></script>
+    
+    <script src="../../public/js/teacher/documents.js"></script>
+</body>
+</html>

@@ -5,13 +5,22 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+<<<<<<< HEAD
     "start": "node server.js"
+=======
+    "start": "node server.js",
+    "db:check": "node tools/check-db-schema.js"
+>>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+<<<<<<< HEAD
+=======
+    "bcryptjs": "^3.0.3",
+>>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",

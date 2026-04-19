@@ -16,11 +16,18 @@ document.addEventListener('DOMContentLoaded', function () {
         singleStatus.addEventListener('change', toggleCancelReason);
     }
 
+<<<<<<< HEAD
     initAssignmentEnhancements();
+=======
+    loadAssignmentCoursesFromApi().finally(function () {
+        initAssignmentEnhancements();
+    });
+>>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
 
     toggleCancelReason();
 });
 
+<<<<<<< HEAD
 const assignmentStudentsByClass = {
     '25TH01-CSDL': [
         { mssv: '2050001', name: 'Nguyễn Văn A', dob: '2005-01-01', email: 'a.nguyen@student.bdu.edu.vn', section: 'N1' },
@@ -81,6 +88,13 @@ const teachers = [
     { id: 'GV03', name: 'TS. Lê Anh Tuấn' },
     { id: 'GV04', name: 'ThS. Hồ Ngọc Giàu' }
 ];
+=======
+const assignmentStudentsByClass = {};
+
+const allAssignmentCourses = [];
+
+const teachers = [];
+>>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
 
 const days = [
     { value: '2', label: 'Thứ 2' },
@@ -133,6 +147,63 @@ function initAssignmentEnhancements() {
     applyAssignmentFilters();
 }
 
+<<<<<<< HEAD
+=======
+async function loadAssignmentCoursesFromApi() {
+    try {
+        const res = await fetch('/api/admin/teaching-assignments', { headers: { Accept: 'application/json' } });
+        if (!res.ok) {
+            allAssignmentCourses.splice(0, allAssignmentCourses.length);
+            teachers.splice(0, teachers.length);
+            return;
+        }
+
+        const rows = await res.json();
+        if (!Array.isArray(rows)) {
+            allAssignmentCourses.splice(0, allAssignmentCourses.length);
+            teachers.splice(0, teachers.length);
+            return;
+        }
+
+        allAssignmentCourses.splice(0, allAssignmentCourses.length, ...rows.map(function (item) {
+            return {
+                id: item.id,
+                classCode: item.classCode,
+                name: item.name,
+                year: item.year || '2025',
+                semester: item.semester || '1',
+                isOpen: Boolean(item.isOpen),
+                credits: Number(item.credits || 0),
+                openWindow: item.openWindow || '--',
+                hasSchedule: Boolean(item.hasSchedule),
+                groups: Array.isArray(item.groups) ? item.groups : []
+            };
+        }));
+
+        teachers.splice(0, teachers.length);
+        const teacherMap = new Map();
+        allAssignmentCourses.forEach(function (course) {
+            course.groups.forEach(function (group) {
+                if (group.teacherMain && group.teacherMainName && !teacherMap.has(group.teacherMain)) {
+                    teacherMap.set(group.teacherMain, group.teacherMainName);
+                }
+                if (group.teacherSub && group.teacherSubName && !teacherMap.has(group.teacherSub)) {
+                    teacherMap.set(group.teacherSub, group.teacherSubName);
+                }
+            });
+        });
+
+        Array.from(teacherMap.entries()).forEach(function (entry) {
+            teachers.push({ id: entry[0], name: entry[1] });
+        });
+    } catch (error) {
+        allAssignmentCourses.splice(0, allAssignmentCourses.length);
+        teachers.splice(0, teachers.length);
+        console.error('Không tải được dữ liệu phân công từ API:', error);
+    }
+}
+
+>>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
 function applyAssignmentFilters() {
     const filterYear = document.getElementById('assignFilterYear');
     const filterSemester = document.getElementById('assignFilterSemester');
@@ -222,9 +293,17 @@ function renderAssignmentOfferings() {
             chipDiv.innerHTML = '<span class="section-chip">' + getGroupLabel(group.code) + '</span>';
             
             const teacherDiv = document.createElement('div');
+<<<<<<< HEAD
             teacherDiv.innerHTML = '<div class="section-label">Giảng viên</div>' +
                 '<div class="section-value">' + getTeacherName(group.teacherMain) +
                 (group.teacherSub ? ' + ' + getTeacherName(group.teacherSub) : '') + '</div>';
+=======
+            const teacherMainName = group.teacherMainName || getTeacherName(group.teacherMain);
+            const teacherSubName = group.teacherSubName || getTeacherName(group.teacherSub);
+            teacherDiv.innerHTML = '<div class="section-label">Giảng viên</div>' +
+                '<div class="section-value">' + teacherMainName +
+                (group.teacherSub ? ' + ' + teacherSubName : '') + '</div>';
+>>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
             
             const scheduleDiv = document.createElement('div');
             scheduleDiv.innerHTML = '<div class="section-label">Lịch học</div>' +
@@ -661,7 +740,11 @@ function renderSessionManagerRows(course, groupCode = null) {
     displayedGroups.forEach(function (group, index) {
         const hasGroupSchedule = Boolean(group.day && group.start && group.end && group.room);
         const row = document.createElement('tr');
+<<<<<<< HEAD
         const dateLabel = hasGroupSchedule ? '02/03/2026' : '--';
+=======
+        const dateLabel = '--';
+>>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
         const teacherId = group.teacherMain || '';
 
         const dayCell = document.createElement('td');
@@ -675,8 +758,13 @@ function renderSessionManagerRows(course, groupCode = null) {
         editButton.onclick = function () {
             openEditSingleSession(
                 hasGroupSchedule ? 'edit' : 'add',
+<<<<<<< HEAD
                 hasGroupSchedule ? dateLabel : '',
                 hasGroupSchedule ? '2026-03-02' : '',
+=======
+                '',
+                '',
+>>>>>>> 667040e9222c4fa2832f8cd5ae162acf226ecff6
                 hasGroupSchedule ? group.day : '',
                 hasGroupSchedule ? String(group.start) : '',
                 hasGroupSchedule ? String(group.end) : '',
