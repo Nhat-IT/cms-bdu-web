@@ -6,10 +6,19 @@ document.addEventListener('DOMContentLoaded', function () {
     const sidebar = document.getElementById('sidebar');
     const mainContent = document.getElementById('mainContent');
 
-    if (sidebarToggle && sidebar && mainContent) {
+    // Gan su kien toggle sidebar: dam bao chi chay 1 lan, khong trung voi script.js
+    const existingToggle = sidebarToggle.dataset.cmsToggleBound;
+    if (!existingToggle) {
+        sidebarToggle.dataset.cmsToggleBound = '1';
+        sidebarToggle.style.cursor = 'pointer';
+        sidebarToggle.title = 'Mở / Thu gọn menu';
         sidebarToggle.addEventListener('click', function () {
             sidebar.classList.toggle('collapsed');
             mainContent.classList.toggle('expanded');
+            // Cap nhat aria de tot hon accessibility
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            sidebarToggle.setAttribute('aria-expanded', String(!isCollapsed));
+            sidebarToggle.setAttribute('aria-label', isCollapsed ? 'Mở menu' : 'Thu gọn menu');
         });
     }
 
@@ -61,7 +70,8 @@ function resetStudentLayoutPlaceholders() {
         ['#profileBirthDate', ''],
         ['#profileEmail', ''],
         ['#profilePhoneNumber', ''],
-        ['#profileAddress', '']
+        ['#profileAddress', ''],
+        ['#profileRoleInput', '']
     ];
 
     valueFallbacks.forEach(function (entry) {

@@ -67,6 +67,10 @@ router.put('/student/password', studentController.changePassword);
 // Classes
 router.get('/student/classes', studentController.getClasses);
 
+// Học kỳ và Tuần (dùng cho trang Lịch học)
+router.get('/student/semesters', studentController.getSemesters);
+router.get('/student/weeks', studentController.getWeeks);
+
 // Attendance
 router.get('/student/attendance', studentController.getAttendance);
 router.post('/student/attendance/evidences', studentController.submitAttendanceEvidence);

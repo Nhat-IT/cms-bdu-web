@@ -126,11 +126,12 @@
                             <!-- Thong tin hoc vu: duoc hydrate tu API /api/student/profile trong profile.js -->
                             <div class="mb-3">
                                 <small class="text-muted d-block">Mã số sinh viên:</small>
+                                <!-- Lay phan so truoc @ trong email lam MSSV khi dang nhap bang Gmail -->
                                 <span class="fw-bold text-dark" id="profileMssv">--</span>
                             </div>
                             <div class="mb-3">
-                                <small class="text-muted d-block">Chức vụ:</small>
-                                <span class="fw-bold text-dark" id="profileRole">--</span>
+                                <small class="text-muted d-block">Chức vụ (tự nhập):</small>
+                                <input type="text" id="profileRoleInput" class="form-control border-secondary" value="" placeholder="Ví dụ: Lớp trưởng, Thư ký, BTV...">
                             </div>
                             <div class="mb-3">
                                 <small class="text-muted d-block">Chuyên ngành:</small>

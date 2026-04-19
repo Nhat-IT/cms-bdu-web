@@ -542,6 +542,12 @@ exports.updateStudentProfile = async (userId, profileData) => {
             setParts.push('address = ?');
             params.push(address);
         }
+        // Cho phep sinh vien tu cap nhat chuc vu (luu vao cot role trong users)
+        const role = profileData.role;
+        if (userColumns.has('role') && role !== undefined) {
+            setParts.push('role = ?');
+            params.push(role || null);
+        }
 
         if (!setParts.length) {
             return this.getStudentProfile(userId);
@@ -594,7 +600,94 @@ exports.updateUserPasswordHash = async (userId, passwordHash) => {
     }
 };
 
-// ========== NỘP BÀI TẬP ==========
+// ========== HỌC KỲ CỦA SINH VIÊN ==========
+// Tra ve danh sach hoc ky ma sinh vien co the xem TKB
+exports.getStudentSemesters = async (userId) => {
+    try {
+        // Lay hoc ky chua co lich hoc cua sinh vien
+        const [rows] = await db.query(
+            `SELECT DISTINCT
+                sem.id,
+                sem.name AS label,
+                sem.semester_name AS semester_name,
+                sem.year,
+                sem.start_date,
+                sem.end_date,
+                CASE WHEN sem.start_date <= CURDATE() AND sem.end_date >= CURDATE() THEN 1 ELSE 0 END AS is_current
+             FROM semesters sem
+             JOIN class_subjects cs ON cs.semester_id = sem.id
+             JOIN class_subject_groups csg ON cs.id = csg.class_subject_id
+             JOIN student_subject_registration ssr ON csg.id = ssr.class_subject_group_id
+             WHERE ssr.student_id = ?
+             ORDER BY sem.start_date DESC`,
+            [userId]
+        );
+
+        // Neu khong co du lieu, tra ve tat ca hoc ky (backup)
+        if (!rows.length) {
+            const [fallback] = await db.query(
+                `SELECT id, name AS label, semester_name, year, start_date, end_date,
+                        CASE WHEN start_date <= CURDATE() AND end_date >= CURDATE() THEN 1 ELSE 0 END AS is_current
+                 FROM semesters
+                 ORDER BY start_date DESC`
+            );
+            return fallback;
+        }
+
+        return rows;
+    } catch (error) {
+        console.error('Error getting student semesters:', error);
+        return [];
+    }
+};
+
+// ========== TUẦN HỌC TRONG HỌC KỲ ==========
+exports.getStudentWeeks = async (userId, semesterId) => {
+    try {
+        if (semesterId) {
+            // Lay tuan theo hoc ky cu the
+            const [rows] = await db.query(
+                `SELECT id, week_number AS label, name, start_date, end_date
+                 FROM academic_weeks
+                 WHERE semester_id = ?
+                 ORDER BY week_number ASC`,
+                [semesterId]
+            );
+            if (rows.length) return rows;
+        }
+
+        // Fallback: lay tuan theo hoc ky dau tien cua sinh vien
+        const [weeks] = await db.query(
+            `SELECT DISTINCT
+                aw.id,
+                aw.week_number AS label,
+                aw.name,
+                aw.start_date,
+                aw.end_date
+             FROM academic_weeks aw
+             JOIN semesters sem ON aw.semester_id = sem.id
+             JOIN class_subjects cs ON cs.semester_id = sem.id
+             JOIN class_subject_groups csg ON cs.id = csg.class_subject_id
+             JOIN student_subject_registration ssr ON csg.id = ssr.class_subject_group_id
+             WHERE ssr.student_id = ?
+             ORDER BY aw.week_number ASC`,
+            [userId]
+        );
+
+        if (weeks.length) return weeks;
+
+        // Final fallback: lay tuan tu bang academic_weeks mac dinh
+        const [fallback] = await db.query(
+            `SELECT id, week_number AS label, name, start_date, end_date
+             FROM academic_weeks
+             ORDER BY semester_id DESC, week_number ASC`
+        );
+        return fallback;
+    } catch (error) {
+        console.error('Error getting student weeks:', error);
+        return [];
+    }
+};
 exports.submitAssignment = async (userId, assignmentId, driveLink, driveFileId = null) => {
     try {
         const [allowed] = await db.query(

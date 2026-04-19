@@ -132,26 +132,23 @@ const PERIOD_TIMES = [
 	'16:40', // tiet 12
 ];
 
+// Mang co dinh 12 tiet (dung khi chua co du lieu)
+const ALL_PERIODS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+// Thong tin tuan hien tai trong dropdown
+let gWeeksList = [];
+
 function renderScheduleList(classes) {
 	const tbody = document.getElementById('studentScheduleBody');
 	if (!tbody) return;
 
-	if (!classes.length) {
-		tbody.innerHTML = '<tr><td class="text-center text-muted py-4" colspan="11">Bạn chưa có lịch học.</td></tr>';
-		return;
-	}
-
 	const scheduledClasses = classes.filter(hasValidSchedule);
-	if (!scheduledClasses.length) {
-		tbody.innerHTML = '<tr><td class="text-center text-muted py-4" colspan="11">Bạn đã đăng ký môn học nhưng chưa được xếp lịch.</td></tr>';
-		return;
-	}
 
+	// Map theo thu de tra cuu nhanh
 	const dayMap = new Map();
 	for (let day = 2; day <= 8; day += 1) {
 		dayMap.set(day, []);
 	}
-
 	scheduledClasses.forEach(function (item) {
 		const day = Number(item.day_of_week || 0);
 		if (dayMap.has(day)) {
@@ -159,20 +156,22 @@ function renderScheduleList(classes) {
 		}
 	});
 
-	// Xac dinh tiet nho nhat va lon nhat trong du lieu
-	const allPeriods = scheduledClasses
-		.map((i) => [Number(i.start_period || 0), Number(i.end_period || 0)])
-		.flat()
-		.filter((p) => p > 0);
-	const minPeriod = allPeriods.length ? Math.min(...allPeriods) : 1;
-	const maxPeriod = allPeriods.length ? Math.max(...allPeriods) : 12;
+	// Neu co du lieu: chi render cac tiet co mon hoc
+	// Neu khong co du lieu: van render day du 12 tiet (khung TKB)
+	let periodsToRender = ALL_PERIODS;
+	if (scheduledClasses.length) {
+		const allPeriods = scheduledClasses
+			.map((i) => [Number(i.start_period || 0), Number(i.end_period || 0)])
+			.flat()
+			.filter((p) => p > 0);
+		const minP = allPeriods.length ? Math.min(...allPeriods) : 1;
+		const maxP = allPeriods.length ? Math.max(...allPeriods) : 12;
+		periodsToRender = [];
+		for (let p = minP; p <= maxP; p += 1) periodsToRender.push(p);
+	}
 
 	const rows = [];
-	for (let period = minPeriod; period <= maxPeriod; period += 1) {
-		const periodClasses = scheduledClasses.filter(
-			(i) => Number(i.start_period) <= period && Number(i.end_period) >= period
-		);
-
+	periodsToRender.forEach(function (period) {
 		const dayCells = [];
 		for (let day = 2; day <= 8; day += 1) {
 			const items = dayMap.get(day) || [];
@@ -181,33 +180,48 @@ function renderScheduleList(classes) {
 			);
 
 			if (!inPeriod.length) {
-				dayCells.push('<td></td>');
+				dayCells.push('<td class="bg-white"></td>');
 			} else {
-				const cellHtml = inPeriod.map(function (item) {
-					return `
-						<div class="subject-block mb-1" title="${item.subject_name || 'Môn học'}">
+				// Chi lay mon hoc dau tien o tiet bat dau
+				const item = inPeriod[0];
+				const isStart = Number(item.start_period) === period;
+				const isEnd = Number(item.end_period) === period;
+
+				let borderClass = '';
+				if (isStart && isEnd) borderClass = 'period-start period-end';
+				else if (isStart) borderClass = 'period-start';
+				else if (isEnd) borderClass = 'period-end';
+
+				dayCells.push(`
+					<td class="${borderClass}">
+						<div class="subject-block mb-1">
 							<div class="subject-title">${item.subject_name || 'Môn'}</div>
-							<div><i class="bi bi-geo-alt me-1"></i>${item.room || '--'} | ${item.group_code || '--'}</div>
+							<div><i class="bi bi-geo-alt me-1"></i>${item.room || '--'}</div>
 							<div><i class="bi bi-person me-1"></i>${item.teacher_name || 'Chưa phân công'}</div>
 						</div>
-					`;
-				}).join('');
-				dayCells.push(`<td>${cellHtml}</td>`);
+					</td>
+				`);
 			}
 		}
 
 		rows.push(`
 			<tr>
-				<td></td>
-				<td class="text-center fw-bold text-dark">${period}</td>
-				<td class="text-center text-muted small">${PERIOD_TIMES[period] || '--:--'}</td>
+				<td class="bg-white"></td>
+				<td class="text-center fw-bold text-dark bg-light">${period}</td>
+				<td class="text-center text-muted small bg-light">${PERIOD_TIMES[period] || '--:--'}</td>
 				${dayCells.join('')}
-				<td></td>
+				<td class="bg-white"></td>
 			</tr>
 		`);
-	}
+	});
 
-	tbody.innerHTML = rows.join('');
+	// Neu hoan toan khong co du lieu, hien thong bao
+	if (!scheduledClasses.length) {
+		tbody.innerHTML = rows.join('') +
+			'<tr><td class="text-center text-muted py-3" colspan="11">Bạn chưa có lịch học. Khi được phân công lớp, lịch sẽ hiển thị ở đây.</td></tr>';
+	} else {
+		tbody.innerHTML = rows.join('');
+	}
 }
 
 async function initSchedulePage() {
@@ -217,7 +231,7 @@ async function initSchedulePage() {
 			tbody.innerHTML = '<tr><td class="text-center text-muted py-4" colspan="11">Đang tải lịch học...</td></tr>';
 		}
 
-		// Populate dropdowns truoc khi load schedule
+		// Populate dropdown hoc ky
 		await populateSemesterSelect();
 
 		const semesterSel = document.getElementById('semesterSelect');
@@ -225,25 +239,43 @@ async function initSchedulePage() {
 
 		if (semesterSel?.value) {
 			await populateWeekSelect(semesterSel.value);
-		} else if (weekSel) {
-			// Neu chua co hoc ky mac dinh, populate tuan rong
-			await populateWeekSelect(null);
 		}
 
-		// Su kien: khi doi hoc ky -> load tuan
+		// Su kien: doi hoc ky -> load tuan
 		semesterSel?.addEventListener('change', async function () {
 			const semId = this.value;
 			await populateWeekSelect(semId || null);
-			const weekOpt = weekSel?.options[weekSel.selectedIndex];
+			// Sau khi populate xong, auto-chon tuan 1
+			const weekOpt = weekSel?.options[weekSel.selectedIndex] || null;
 			updateHeaderDates(weekOpt);
 		});
 
-		// Su kien: khi doi tuan -> update header dates
+		// Su kien: doi tuan -> cap nhat header dates
 		weekSel?.addEventListener('change', function () {
 			const opt = this.options[this.selectedIndex];
 			updateHeaderDates(opt);
 		});
 
+		// Nut chuyen tuan (mui ten trai/phai trong header)
+		document.getElementById('weekNavPrev')?.addEventListener('click', function () {
+			if (!weekSel || weekSel.options.length <= 1) return;
+			const current = weekSel.selectedIndex;
+			if (current > 1) {
+				weekSel.selectedIndex = current - 1;
+				weekSel.dispatchEvent(new Event('change'));
+			}
+		});
+
+		document.getElementById('weekNavNext')?.addEventListener('click', function () {
+			if (!weekSel || weekSel.options.length <= 1) return;
+			const current = weekSel.selectedIndex;
+			if (current < weekSel.options.length - 1) {
+				weekSel.selectedIndex = current + 1;
+				weekSel.dispatchEvent(new Event('change'));
+			}
+		});
+
+		// Lay lich hoc tu API
 		const classes = await fetchSchedule();
 		renderScheduleList(classes);
 	} catch (error) {

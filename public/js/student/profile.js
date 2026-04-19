@@ -29,11 +29,15 @@ function bindProfileData(profile) {
     const mainName = document.querySelector('.card-body.text-center.pt-0 h5.fw-bold.text-dark.mb-1');
     if (mainName) mainName.textContent = profile.full_name || 'Chưa cập nhật';
 
-    // Gan gia tri cho cac o input chi doc trong form
+    // Họ tên và Email (readonly): lấy từ DB do admin cấp
     const profileFullNameInput = document.getElementById('profileFullName');
     const profileEmailInput = document.getElementById('profileEmail');
     if (profileFullNameInput) profileFullNameInput.value = profile.full_name || '';
-    if (profileEmailInput) profileEmailInput.value = profile.email || '';
+    // Email: hiển thị phần trước @ nếu là Gmail (ví dụ: "22521401" thay vì "22521401@gmail.com")
+    if (profileEmailInput) {
+        const emailVal = profile.email || '';
+        profileEmailInput.value = emailVal.includes('@') ? emailVal.split('@')[0] : emailVal;
+    }
 
     const birthDateInput = document.getElementById('profileBirthDate');
     const phoneInput = document.getElementById('profilePhoneNumber');
@@ -49,16 +53,24 @@ function bindProfileData(profile) {
         addressInput.value = profile.address || '';
     }
 
-    const infoBlocks = document.querySelectorAll('.text-start.mt-3 .mb-3 .fw-bold.text-dark, .text-start.mt-3 .mb-0 .fw-bold.text-dark');
-    if (infoBlocks[0]) infoBlocks[0].textContent = profile.username || '--';
+    // MSSV: ưu tiên lấy từ username (cơ sở dữ liệu), nếu đăng nhập bằng Gmail thì lấy phần số trước @
+    const profileMssvEl = document.getElementById('profileMssv');
+    if (profileMssvEl) {
+        const rawMssv = profile.username || '';
+        // Nếu username trống nhưng có email dạng Gmail, trích phần số trước @
+        const fromEmail = rawMssv ? '' : (profile.email || '').split('@')[0];
+        profileMssvEl.textContent = rawMssv || fromEmail || '--';
+    }
 
-    // Bind them thong tin hoc vu moi
-    const roleEl = document.getElementById('profileRole');
-    if (roleEl) roleEl.textContent = profile.role || '--';
+    // Chức vụ: ô tự nhập do sinh viên khai báo
+    const roleInput = document.getElementById('profileRoleInput');
+    if (roleInput) roleInput.value = profile.role || '';
 
+    // Chuyên ngành
     const majorEl = document.getElementById('profileMajor');
     if (majorEl) majorEl.textContent = profile.major_name || profile.major || '--';
 
+    // Niên khóa
     const cohortEl = document.getElementById('profileCohort');
     if (cohortEl) cohortEl.textContent = profile.cohort || profile.nien_khoa || '--';
 }
@@ -90,7 +102,8 @@ async function handleUpdateProfile(e) {
         const payload = {
             birthDate: document.getElementById('profileBirthDate')?.value || null,
             phoneNumber: document.getElementById('profilePhoneNumber')?.value.trim() || null,
-            address: document.getElementById('profileAddress')?.value.trim() || null
+            address: document.getElementById('profileAddress')?.value.trim() || null,
+            role: document.getElementById('profileRoleInput')?.value.trim() || null
         };
 
         const response = await fetch('/api/student/profile', {

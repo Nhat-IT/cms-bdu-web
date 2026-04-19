@@ -1063,11 +1063,12 @@ exports.updateProfile = async (req, res) => {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        const { birthDate, phoneNumber, address } = req.body;
+        const { birthDate, phoneNumber, address, role } = req.body;
         const profile = await studentModel.updateStudentProfile(userId, {
             birthDate,
             phoneNumber,
-            address
+            address,
+            role
         });
 
         res.json(profile);
@@ -1117,6 +1118,37 @@ exports.changePassword = async (req, res) => {
     } catch (error) {
         console.error('Change password error:', error);
         res.status(500).json({ error: error.message });
+    }
+};
+
+// ========== HỌC KỲ ==========
+exports.getSemesters = async (req, res) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+        const semesters = await studentModel.getStudentSemesters(userId);
+        res.json(semesters);
+    } catch (error) {
+        console.error('Get semesters error:', error);
+        return handleReadError(req, res, error, []);
+    }
+};
+
+// ========== TUẦN HỌC ==========
+exports.getWeeks = async (req, res) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+        const { semester_id } = req.query;
+        const weeks = await studentModel.getStudentWeeks(userId, semester_id);
+        res.json(weeks);
+    } catch (error) {
+        console.error('Get weeks error:', error);
+        return handleReadError(req, res, error, []);
     }
 };
 

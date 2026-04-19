@@ -123,8 +123,10 @@
                     <table class="table schedule-table mb-0">
                         <thead>
                             <tr>
-                                <!-- Cot co dinh: tiet + gio -->
-                                <th style="width: 70px; vertical-align: middle;"><i class="bi bi-arrow-left fs-5 week-nav-btn" title="Tuần trước"></i></th>
+                                <!-- Cot co dinh: nut chuyen tuan (co ID de JS binding) -->
+                                <th style="width: 70px; vertical-align: middle;" class="text-center">
+                                    <i class="bi bi-arrow-left fs-5 cursor-pointer text-secondary week-nav-btn" id="weekNavPrev" title="Tuần trước"></i>
+                                </th>
                                 <th class="text-center" style="width: 60px; vertical-align: middle;">Tiết</th>
                                 <th class="text-center" style="width: 110px; vertical-align: middle;">Giờ</th>
                                 <!-- 7 cot ngay trong tuan -->
@@ -135,7 +137,9 @@
                                 <th class="text-center">Thứ 6<br><span class="fw-normal text-muted week-date" data-day="6">--/--</span></th>
                                 <th class="text-center">Thứ 7<br><span class="fw-normal text-muted week-date" data-day="7">--/--</span></th>
                                 <th class="text-center">CN<br><span class="fw-normal text-muted week-date" data-day="8">--/--</span></th>
-                                <th style="width: 70px; vertical-align: middle;"><i class="bi bi-arrow-right fs-5 week-nav-btn" title="Tuần tiếp"></i></th>
+                                <th style="width: 70px; vertical-align: middle;" class="text-center">
+                                    <i class="bi bi-arrow-right fs-5 cursor-pointer text-secondary week-nav-btn" id="weekNavNext" title="Tuần tiếp"></i>
+                                </th>
                             </tr>
                         </thead>
                         <tbody id="studentScheduleBody">
