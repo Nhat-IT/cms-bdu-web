@@ -123,17 +123,22 @@
 
                         <div class="text-start mt-3">
                             <p class="mb-2 text-muted small fw-bold">THÔNG TIN HỌC VỤ</p>
+                            <!-- Thong tin hoc vu: duoc hydrate tu API /api/student/profile trong profile.js -->
                             <div class="mb-3">
                                 <small class="text-muted d-block">Mã số sinh viên:</small>
                                 <span class="fw-bold text-dark" id="profileMssv">--</span>
                             </div>
                             <div class="mb-3">
+                                <small class="text-muted d-block">Chức vụ:</small>
+                                <span class="fw-bold text-dark" id="profileRole">--</span>
+                            </div>
+                            <div class="mb-3">
                                 <small class="text-muted d-block">Chuyên ngành:</small>
-                                <span class="fw-bold text-dark">Công nghệ thông tin</span>
+                                <span class="fw-bold text-dark" id="profileMajor">--</span>
                             </div>
                             <div class="mb-0">
                                 <small class="text-muted d-block">Niên khóa:</small>
-                                <span class="fw-bold text-dark">2022 - 2026</span>
+                                <span class="fw-bold text-dark" id="profileCohort">--</span>
                             </div>
                         </div>
                     </div>
@@ -156,7 +161,8 @@
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold">Ngày sinh <span class="text-danger">*</span></label>
-                                    <input type="date" id="profileBirthDate" class="form-control border-secondary" value="" required>
+                                    <!-- Ngay sinh do admin cap, chi co the xem, khong tu thay doi -->
+                                    <input type="date" id="profileBirthDate" class="form-control border-secondary bg-light" value="" readonly title="Ngày sinh do Admin cấp, không thể tự thay đổi" required>
                                 </div>
                             </div>
                             <div class="row mb-3">

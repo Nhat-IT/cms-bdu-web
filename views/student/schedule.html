@@ -98,16 +98,15 @@
         <div class="filter-section mb-3">
             <div class="row g-2 align-items-center">
                 <div class="col-12 col-md-4 col-lg-3">
-                    <select class="form-select fw-bold text-dark shadow-sm border-secondary">
-                        <option value="HK2" selected>Học kỳ 2 (2025 - 2026)</option>
-                        <option value="HK1">Học kỳ 1 (2025 - 2026)</option>
+                    <!-- Dropdown hoc ky: duoc populate tu API trong schedule.js -->
+                    <select class="form-select fw-bold text-dark shadow-sm border-secondary" id="semesterSelect">
+                        <option value="">-- Chọn học kỳ --</option>
                     </select>
                 </div>
                 <div class="col-12 col-md-6 col-lg-5">
-                    <select class="form-select fw-bold text-primary shadow-sm border-primary">
-                        <option value="T29">Tu?n 29 [t? --/--/---- d?n --/--/----]</option>
-                        <option value="T30" selected>Tu?n 30 [t? --/--/---- d?n --/--/----]</option>
-                        <option value="T31">Tu?n 31 [t? --/--/---- d?n --/--/----]</option>
+                    <!-- Dropdown tuan: duoc populate tu API trong schedule.js -->
+                    <select class="form-select fw-bold text-primary shadow-sm border-primary" id="weekSelect">
+                        <option value="">-- Chọn tuần --</option>
                     </select>
                 </div>
                 <div class="col-12 col-md-2 col-lg-4 text-md-end">
@@ -124,21 +123,23 @@
                     <table class="table schedule-table mb-0">
                         <thead>
                             <tr>
-                                <th style="width: 85px; vertical-align: middle;"><i class="bi bi-arrow-left fs-5 week-nav-btn" title="Tuần trước"></i></th>
-                                <th>Thứ 2 <br><span class="fw-normal text-muted">(30/03)</span></th>
-                                <th>Thứ 3 <br><span class="fw-normal text-muted">(31/03)</span></th>
-                                <th>Thứ 4 <br><span class="fw-normal text-muted">(01/04)</span></th>
-                                <th>Thứ 5 <br><span class="fw-normal text-muted">(02/04)</span></th>
-                                <th>Thứ 6 <br><span class="fw-normal text-muted">(03/04)</span></th>
-                                <th>Thứ 7 <br><span class="fw-normal text-muted">(04/04)</span></th>
-                                <th>Chủ Nhật <br><span class="fw-normal text-muted">(05/04)</span></th>
-                                <th style="width: 85px; vertical-align: middle;"><i class="bi bi-arrow-right fs-5 week-nav-btn" title="Tuần tiếp"></i></th>
+                                <!-- Cot co dinh: tiet + gio -->
+                                <th style="width: 70px; vertical-align: middle;"><i class="bi bi-arrow-left fs-5 week-nav-btn" title="Tuần trước"></i></th>
+                                <th class="text-center" style="width: 60px; vertical-align: middle;">Tiết</th>
+                                <th class="text-center" style="width: 110px; vertical-align: middle;">Giờ</th>
+                                <!-- 7 cot ngay trong tuan -->
+                                <th class="text-center">Thứ 2<br><span class="fw-normal text-muted week-date" data-day="2">--/--</span></th>
+                                <th class="text-center">Thứ 3<br><span class="fw-normal text-muted week-date" data-day="3">--/--</span></th>
+                                <th class="text-center">Thứ 4<br><span class="fw-normal text-muted week-date" data-day="4">--/--</span></th>
+                                <th class="text-center">Thứ 5<br><span class="fw-normal text-muted week-date" data-day="5">--/--</span></th>
+                                <th class="text-center">Thứ 6<br><span class="fw-normal text-muted week-date" data-day="6">--/--</span></th>
+                                <th class="text-center">Thứ 7<br><span class="fw-normal text-muted week-date" data-day="7">--/--</span></th>
+                                <th class="text-center">CN<br><span class="fw-normal text-muted week-date" data-day="8">--/--</span></th>
+                                <th style="width: 70px; vertical-align: middle;"><i class="bi bi-arrow-right fs-5 week-nav-btn" title="Tuần tiếp"></i></th>
                             </tr>
                         </thead>
                         <tbody id="studentScheduleBody">
-                            <tr>
-                                <td class="text-center text-muted py-4" colspan="9">Đang tải lịch học...</td>
-                            </tr>
+                            <tr><td colspan="11" class="text-center text-muted py-4">Đang tải lịch học...</td></tr>
                         </tbody>
                     </table>
                 </div>

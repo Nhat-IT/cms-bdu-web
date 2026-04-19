@@ -16,19 +16,27 @@
         }
         .schedule-table th, .schedule-table td { border: 1px solid #dee2e6; }
         .schedule-table th { background-color: #f8f9fa; text-align: center; vertical-align: middle; padding: 10px; font-size: 0.85rem; }
-        .schedule-table td { width: 13.5%; vertical-align: top; padding: 0; position: relative; height: 40px; }
+        .schedule-table td { width: 13.5%; vertical-align: top; padding: 0; position: relative; height: auto; min-height: 55px; }
         
-        .edge-col { 
-            /* Cột biên trái/phải đánh dấu tiết học */
-            background-color: #b71c1c !important; 
-            color: #ffffff !important; 
-            text-align: center !important; 
-            vertical-align: middle !important; 
-            font-weight: bold; 
-            width: 85px !important; 
-            min-width: 85px !important;
-            max-width: 85px !important;
-            font-size: 0.85rem; 
+        .edge-col {
+            /* Cột mũi tên chuyển tuần: nền đỏ, chữ trắng */
+            background-color: #b71c1c !important;
+            color: #ffffff !important;
+            text-align: center !important;
+            vertical-align: middle !important;
+            font-weight: bold;
+            width: 70px !important;
+            min-width: 70px !important;
+            max-width: 70px !important;
+            font-size: 0.85rem;
+        }
+
+        /* Cot Tiet va Gio */
+        .schedule-table td:nth-child(2),
+        .schedule-table td:nth-child(3) {
+            background-color: #fff3f3;
+            font-size: 0.8rem;
+            text-align: center;
         }
         
         .subject-block {
@@ -77,9 +85,9 @@
             }
 
             .edge-col {
-                width: 72px !important;
-                min-width: 72px !important;
-                max-width: 72px !important;
+                width: 60px !important;
+                min-width: 60px !important;
+                max-width: 60px !important;
             }
         }
 

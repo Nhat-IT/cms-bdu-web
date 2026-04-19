@@ -29,9 +29,11 @@ function bindProfileData(profile) {
     const mainName = document.querySelector('.card-body.text-center.pt-0 h5.fw-bold.text-dark.mb-1');
     if (mainName) mainName.textContent = profile.full_name || 'Chưa cập nhật';
 
-    const readonlyInputs = document.querySelectorAll('form input[readonly]');
-    if (readonlyInputs[0]) readonlyInputs[0].value = profile.full_name || '';
-    if (readonlyInputs[1]) readonlyInputs[1].value = profile.email || '';
+    // Gan gia tri cho cac o input chi doc trong form
+    const profileFullNameInput = document.getElementById('profileFullName');
+    const profileEmailInput = document.getElementById('profileEmail');
+    if (profileFullNameInput) profileFullNameInput.value = profile.full_name || '';
+    if (profileEmailInput) profileEmailInput.value = profile.email || '';
 
     const birthDateInput = document.getElementById('profileBirthDate');
     const phoneInput = document.getElementById('profilePhoneNumber');
@@ -49,6 +51,16 @@ function bindProfileData(profile) {
 
     const infoBlocks = document.querySelectorAll('.text-start.mt-3 .mb-3 .fw-bold.text-dark, .text-start.mt-3 .mb-0 .fw-bold.text-dark');
     if (infoBlocks[0]) infoBlocks[0].textContent = profile.username || '--';
+
+    // Bind them thong tin hoc vu moi
+    const roleEl = document.getElementById('profileRole');
+    if (roleEl) roleEl.textContent = profile.role || '--';
+
+    const majorEl = document.getElementById('profileMajor');
+    if (majorEl) majorEl.textContent = profile.major_name || profile.major || '--';
+
+    const cohortEl = document.getElementById('profileCohort');
+    if (cohortEl) cohortEl.textContent = profile.cohort || profile.nien_khoa || '--';
 }
 
 document.getElementById('avatarUploadInput').addEventListener('change', function (event) {
