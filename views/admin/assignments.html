@@ -52,7 +52,7 @@
 
         <div class="d-flex align-items-center text-white">
             <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
-                <div class="fs-6">Quản trị viên: <span class="fw-bold admin-operator-name">Admin Khoa CNTT</span></div>
+                <div class="fs-6">Quản trị viên: <span class="fw-bold admin-operator-name" id="headerAdminName">Đang tải...</span></div>
             </div>
 
             <div class="dropdown">
@@ -136,23 +136,21 @@
             <div class="tab-pane fade" id="gridView" role="tabpanel">
                 <div class="row g-3 align-items-end mb-3">
                     <div class="col-md-3">
-                        <select class="form-select border-primary fw-bold text-primary shadow-sm">
-                            <option>Tuần 1 [02/03 - 08/03/2026]</option>
-                            <option selected>Tuần 2 [09/03 - 15/03/2026]</option>
-                            <option>Tuần 3 [16/03 - 22/03/2026]</option>
+                        <!-- Du lieu duoc hydrate tu API -->
+                        <select class="form-select border-primary fw-bold text-primary shadow-sm" id="masterWeekSelect">
+                            <option value="">-- Chọn tuần --</option>
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <select class="form-select border-secondary shadow-sm">
-                            <option value="all">-- Lọc theo Giảng viên --</option>
-                            <option value="GV01">ThS. Dương Quang Sinh</option>
-                            <option value="GV02">ThS. Nguyễn Hồ Hải</option>
+                        <!-- Du lieu duoc hydrate tu API -->
+                        <select class="form-select border-secondary shadow-sm" id="masterTeacherFilter">
+                            <option value="">-- Lọc theo Giảng viên --</option>
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <select class="form-select border-secondary shadow-sm">
-                            <option value="all">-- Lọc theo Phòng học --</option>
-                            <option value="PM3">Phòng PM3</option>
+                        <!-- Du lieu duoc hydrate tu API -->
+                        <select class="form-select border-secondary shadow-sm" id="masterRoomFilter">
+                            <option value="">-- Lọc theo Phòng học --</option>
                         </select>
                     </div>
                 </div>
@@ -162,58 +160,22 @@
                         <thead>
                             <tr>
                                 <th style="width: 80px;"><i class="bi bi-arrow-left fs-4 week-nav-btn"></i></th>
-                                <th>Thứ 2 <span class="text-muted fw-normal">(09/03)</span></th>
-                                <th>Thứ 3 <span class="text-muted fw-normal">(10/03)</span></th>
-                                <th>Thứ 4 <span class="text-muted fw-normal">(11/03)</span></th>
-                                <th>Thứ 5 <span class="text-muted fw-normal">(12/03)</span></th>
-                                <th>Thứ 6 <span class="text-muted fw-normal">(13/03)</span></th>
-                                <th>Thứ 7 <span class="text-muted fw-normal">(14/03)</span></th>
-                                <th>Chủ Nhật <span class="text-muted fw-normal">(15/03)</span></th>
+                                <!-- Du lieu duoc hydrate tu API -->
+                                <th>Thứ 2 <span class="text-muted fw-normal">(--/--)</span></th>
+                                <th>Thứ 3 <span class="text-muted fw-normal">(--/--)</span></th>
+                                <th>Thứ 4 <span class="text-muted fw-normal">(--/--)</span></th>
+                                <th>Thứ 5 <span class="text-muted fw-normal">(--/--)</span></th>
+                                <th>Thứ 6 <span class="text-muted fw-normal">(--/--)</span></th>
+                                <th>Thứ 7 <span class="text-muted fw-normal">(--/--)</span></th>
+                                <th>Chủ Nhật <span class="text-muted fw-normal">(--/--)</span></th>
                                 <th style="width: 80px;"><i class="bi bi-arrow-right fs-4 week-nav-btn"></i></th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <!-- Du lieu duoc hydrate tu API -->
+                        <tbody id="masterScheduleTbody">
                             <tr>
-                                <td class="edge-col">Tiết 1</td>
-                                <td></td><td></td><td></td><td></td><td></td>
-                                <td rowspan="5">
-                                    <div class="subject-block" onclick="openEditSingleSession('edit', '14/03/2026', '2026-03-14', '7', '1', '5', 'PM3', 'normal', '25TH01-DATA', 'Nhập môn khoa học dữ liệu', 'GV04')">
-                                        <div class="subject-title">Nhập môn KHDL (INF0983)</div>
-                                        <div>Phòng: PM3</div>
-                                        <div>GV: Hồ Ngọc Giàu</div>
-                                        <div class="mt-1"><i class="bi bi-clock"></i> 07:00 -> 10:45</div>
-                                    </div>
-                                </td>
-                                <td></td>
-                                <td class="edge-col">07:00</td>
+                                <td colspan="9" class="p-4 text-center text-muted">Đang tải thời khóa biểu...</td>
                             </tr>
-                            <tr><td class="edge-col">Tiết 2</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">07:45</td></tr>
-                            <tr><td class="edge-col">Tiết 3</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">08:30</td></tr>
-                            <tr><td class="edge-col">Tiết 4</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">09:15</td></tr>
-                            <tr><td class="edge-col">Tiết 5</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">10:00</td></tr>
-                            
-                            <tr>
-                                <td class="edge-col">Tiết 6</td>
-                                <td rowspan="5">
-                                    <div class="subject-block" onclick="openEditSingleSession('edit', '09/03/2026', '2026-03-09', '2', '6', '10', 'PLAB', 'normal', '25TH01-CSDL', 'An ninh cơ sở dữ liệu', 'GV01')">
-                                        <div class="subject-title">An ninh CSDL (INF0953)</div>
-                                        <div>Phòng: P.LAB</div>
-                                        <div>GV: Dương Quang Sinh</div>
-                                        <div class="mt-1"><i class="bi bi-clock"></i> 13:00 -> 16:45</div>
-                                    </div>
-                                </td>
-                                <td></td><td></td><td></td><td></td><td></td><td></td>
-                                <td class="edge-col">13:00</td>
-                            </tr>
-                            <tr><td class="edge-col">Tiết 7</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">13:45</td></tr>
-                            <tr><td class="edge-col">Tiết 8</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">14:30</td></tr>
-                            <tr><td class="edge-col">Tiết 9</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">15:15</td></tr>
-                            <tr><td class="edge-col">Tiết 10</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">16:00</td></tr>
-
-                            <tr><td class="edge-col">Tiết 11</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">17:45</td></tr>
-                            <tr><td class="edge-col">Tiết 12</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">18:30</td></tr>
-                            <tr><td class="edge-col">Tiết 13</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">19:15</td></tr>
-                            <tr><td class="edge-col">Tiết 14</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">20:00</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -257,19 +219,14 @@
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-muted">Giảng viên chính <span class="text-danger">*</span></label>
                             <select class="form-select border-secondary fw-bold" id="initTeacher" required>
+                                <!-- Du lieu duoc hydrate tu API -->
                                 <option value="">-- Chọn Giảng viên phụ trách --</option>
-                                <option value="GV01">ThS. Dương Quang Sinh (Khoa CNTT)</option>
-                                <option value="GV02">ThS. Nguyễn Hồ Hải (Khoa CNTT)</option>
-                                <option value="GV04">Thầy Hồ Ngọc Giàu (Khoa CNTT)</option>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-muted">Trợ giảng</label>
                             <select class="form-select border-secondary" id="initAssistantTeacher">
                                 <option value="">-- Không có --</option>
-                                <option value="GV01">ThS. Dương Quang Sinh (Khoa CNTT)</option>
-                                <option value="GV02">ThS. Nguyễn Hồ Hải (Khoa CNTT)</option>
-                                <option value="GV04">Thầy Hồ Ngọc Giàu (Khoa CNTT)</option>
                             </select>
                         </div>
                     </div>
@@ -308,10 +265,8 @@
                         <div class="col-md-12">
                             <label class="form-label fw-bold small text-muted">Phòng học <span class="text-danger">*</span></label>
                             <select class="form-select border-secondary" id="initRoom" required>
+                                <!-- Du lieu duoc hydrate tu API -->
                                 <option value="">-- Chọn phòng trống --</option>
-                                <option value="A201">Phòng A201 (Lý thuyết)</option>
-                                <option value="PM3">Phòng Máy PM3 (Thực hành)</option>
-                                <option value="PLAB">Phòng P.LAB</option>
                             </select>
                         </div>
                     </div>
@@ -397,10 +352,9 @@
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="fw-bold small text-muted"><i class="bi bi-person-badge-fill me-1"></i>Giảng viên phụ trách <span class="text-danger">*</span></label>
+                            <!-- Du lieu duoc hydrate tu API -->
                             <select class="form-select fw-bold text-primary border-secondary shadow-sm" id="singleTeacher">
-                                <option value="GV01">ThS. Dương Quang Sinh</option>
-                                <option value="GV02">ThS. Nguyễn Hồ Hải</option>
-                                <option value="GV04">Thầy Hồ Ngọc Giàu</option>
+                                <option value="">-- Chọn Giảng viên --</option>
                             </select>
                         </div>
                         <div class="col-12 mt-4">
@@ -421,8 +375,9 @@
                         </div>
                         <div class="col-12">
                             <label class="fw-bold small text-muted">Phòng học</label>
+                            <!-- Du lieu duoc hydrate tu API -->
                             <select class="form-select border-secondary" id="singleRoom">
-                                <option value="A201">Phòng A201</option><option value="PLAB">Phòng P.LAB</option><option value="PM3">Phòng máy PM3</option><option value="C4.0.1">Phòng C4.0.1</option>
+                                <option value="">-- Chọn phòng --</option>
                             </select>
                         </div>
                         <div class="col-12 mt-4">
@@ -454,7 +409,7 @@
 <input type="file" id="assignmentStudentUploadInput" class="d-none" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.1--/dist/xlsx.full.min.js"></script>
 <script src="../../public/js/script.js"></script>
 <script src="../../public/js/admin/admin-layout.js"></script>
 <script src="../../public/js/admin/assignments.js"></script>

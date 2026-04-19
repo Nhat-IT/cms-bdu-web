@@ -25,13 +25,14 @@
     
     <div class="profile-container text-center flex-shrink-0">
         <a href="student-profile.html" class="profile-trigger" title="Xem hồ sơ cá nhân">
-            <img src="https://ui-avatars.com/api/?name=Thi+C&background=0d6efd&color=fff" id="sidebarAvatar" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar">
+            <!-- Sidebar profile: duoc hydrate tu API /api/me trong student-layout.js -->
+            <img src="https://ui-avatars.com/api/?name=User&background=6c757d&color=fff" id="sidebarAvatar" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar">
             <div class="hide-on-collapse">
-                <div class="text-white fw-bold fs-6">Phạm Huỳnh Nhật Ý</div>
-                <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">MSSV: 22050111</div>
+                <div class="text-white fw-bold fs-6">Đang tải...</div>
+                <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">MSSV: --</div>
             </div>
         </a>
-        <span class="badge student-class-badge mt-1 hide-on-collapse">LỚP: 25TH01</span>
+        <span class="badge student-class-badge mt-1 hide-on-collapse">LỚP: --</span>
     </div>
 
     <div class="sidebar-scrollable w-100">
@@ -103,18 +104,18 @@
                     <div class="card-body text-center pt-0">
                         
                         <div class="avatar-wrapper mb-3">
-                            <img src="https://ui-avatars.com/api/?name=Thi+C&background=0d6efd&color=fff&size=200" id="mainProfileAvatar" class="profile-avatar" alt="Student Avatar">
+                            <img src="https://ui-avatars.com/api/?name=User&background=6c757d&color=fff&size=200" id="mainProfileAvatar" class="profile-avatar" alt="Student Avatar">
                             <label for="avatarUploadInput" class="avatar-edit-btn" title="Thay đổi ảnh đại diện">
                                 <i class="bi bi-camera-fill"></i>
                             </label>
                             <input type="file" id="avatarUploadInput" class="d-none" accept="image/png, image/jpeg, image/jpg">
                         </div>
                         
-                        <h5 class="fw-bold text-dark mb-1">Phạm Huỳnh Nhật Ý</h5>
+                        <h5 class="fw-bold text-dark mb-1" id="profileDisplayName">Đang tải...</h5>
                         <p class="text-muted small mb-3"><i class="bi bi-mortarboard-fill text-info me-1"></i>Sinh viên Chính quy</p>
                         
                         <div class="d-flex justify-content-center gap-2 mb-4">
-                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">25TH01</span>
+                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary student-class-badge" id="profileClassBadge">LỚP: --</span>
                             <span class="badge bg-success bg-opacity-10 text-success border border-success">Đang học</span>
                         </div>
 
@@ -124,7 +125,7 @@
                             <p class="mb-2 text-muted small fw-bold">THÔNG TIN HỌC VỤ</p>
                             <div class="mb-3">
                                 <small class="text-muted d-block">Mã số sinh viên:</small>
-                                <span class="fw-bold text-dark">22050111</span>
+                                <span class="fw-bold text-dark" id="profileMssv">--</span>
                             </div>
                             <div class="mb-3">
                                 <small class="text-muted d-block">Chuyên ngành:</small>
@@ -151,26 +152,26 @@
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Họ và tên đầy đủ</label>
-                                    <input type="text" id="profileFullName" class="form-control border-secondary bg-light" value="Phạm Huỳnh Nhật Ý" readonly title="Không thể tự thay đổi">
+                                    <input type="text" id="profileFullName" class="form-control border-secondary bg-light" value="" readonly title="Không thể tự thay đổi">
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold">Ngày sinh <span class="text-danger">*</span></label>
-                                    <input type="date" id="profileBirthDate" class="form-control border-secondary" value="2004-01-01" required>
+                                    <input type="date" id="profileBirthDate" class="form-control border-secondary" value="" required>
                                 </div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Email trường cấp</label>
-                                    <input type="email" id="profileEmail" class="form-control border-secondary bg-light" value="22050111@student.bdu.edu.vn" readonly title="Không thể tự thay đổi">
+                                    <input type="email" id="profileEmail" class="form-control border-secondary bg-light" value="" readonly title="Không thể tự thay đổi">
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold">Số điện thoại cá nhân <span class="text-danger">*</span></label>
-                                    <input type="tel" id="profilePhoneNumber" class="form-control border-secondary" value="0987654321" required placeholder="Dùng để GV/BCS liên lạc...">
+                                    <input type="tel" id="profilePhoneNumber" class="form-control border-secondary" value="" required placeholder="Dùng để GV/BCS liên lạc...">
                                 </div>
                             </div>
                             <div class="mb-4">
                                 <label class="form-label fw-bold">Địa chỉ hiện tại</label>
-                                <input type="text" id="profileAddress" class="form-control border-secondary" value="Ký túc xá BDU, Thủ Dầu Một, Bình Dương" placeholder="Nhập địa chỉ tạm trú/thường trú...">
+                                    <input type="text" id="profileAddress" class="form-control border-secondary" value="" placeholder="Nhập địa chỉ tạm trú/thường trú...">
                             </div>
                             <div class="text-end border-top pt-3">
                                 <button type="submit" class="btn btn-primary fw-bold px-4 shadow-sm"><i class="bi bi-save me-1"></i>LƯU THAY ĐỔI</button>

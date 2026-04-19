@@ -34,39 +34,69 @@ function hasValidSchedule(item) {
 }
 
 function renderScheduleList(classes) {
-	const wrapper = document.querySelector('.schedule-table-wrapper');
-	if (!wrapper) return;
+	const tbody = document.getElementById('studentScheduleBody');
+	if (!tbody) return;
 
 	if (!classes.length) {
-		wrapper.innerHTML = '<div class="p-4 text-muted text-center">Bạn chưa có lịch học.</div>';
+		tbody.innerHTML = '<tr><td class="text-center text-muted py-4" colspan="9">Bạn chưa có lịch học.</td></tr>';
 		return;
 	}
 
 	const scheduledClasses = classes.filter(hasValidSchedule);
 	if (!scheduledClasses.length) {
-		wrapper.innerHTML = '<div class="p-4 text-muted text-center">Bạn đã đăng ký môn học nhưng chưa được xếp lịch học.</div>';
+		tbody.innerHTML = '<tr><td class="text-center text-muted py-4" colspan="9">Bạn đã đăng ký môn học nhưng chưa được xếp lịch học.</td></tr>';
 		return;
 	}
 
-	const cards = scheduledClasses.map((item) => `
-		<div class="subject-block mb-3">
-			<div class="subject-title">${item.subject_name} (${item.subject_code})</div>
-			<div>Nhóm: ${item.group_code || '--'} | Lớp: ${item.class_name || '--'}</div>
-			<div>Phòng: ${item.room || '--'} | ${dayText(item.day_of_week)}</div>
-			<div>Tiết: ${item.start_period || '--'} - ${item.end_period || '--'} | Buổi: ${item.study_session || '--'}</div>
-			<div>GV: ${item.teacher_name || 'Chưa phân công'}</div>
-			<div class="mt-1 fw-bold text-danger"><i class="bi bi-calendar-range"></i> ${formatDateDMY(item.start_date)} - ${formatDateDMY(item.end_date)}</div>
-		</div>
-	`).join('');
+	const dayMap = new Map();
+	for (let day = 2; day <= 8; day += 1) {
+		dayMap.set(day, []);
+	}
 
-	wrapper.innerHTML = `<div class="p-3">${cards}</div>`;
+	scheduledClasses.forEach(function (item) {
+		const day = Number(item.day_of_week || 0);
+		if (dayMap.has(day)) {
+			dayMap.get(day).push(item);
+		}
+	});
+
+	const dayCells = [];
+	for (let day = 2; day <= 8; day += 1) {
+		const items = dayMap.get(day) || [];
+		if (!items.length) {
+			dayCells.push('<td></td>');
+			continue;
+		}
+
+		const cellHtml = items.map(function (item) {
+			return `
+				<div class="subject-block mb-2" title="${item.subject_name || 'Môn học'}">
+					<div class="subject-title">${item.subject_name || 'Môn học'} (${item.subject_code || '--'})</div>
+					<div>Nhóm: ${item.group_code || '--'} | Lớp: ${item.class_name || '--'}</div>
+					<div>Phòng: ${item.room || '--'} | ${dayText(item.day_of_week)}</div>
+					<div>Tiết: ${item.start_period || '--'} - ${item.end_period || '--'} | Buổi: ${item.study_session || '--'}</div>
+					<div>GV: ${item.teacher_name || 'Chưa phân công'}</div>
+					<div class="mt-1 fw-bold text-danger"><i class="bi bi-calendar-range"></i> ${formatDateDMY(item.start_date)} - ${formatDateDMY(item.end_date)}</div>
+				</div>
+			`;
+		}).join('');
+		dayCells.push(`<td>${cellHtml}</td>`);
+	}
+
+	tbody.innerHTML = `
+		<tr>
+			<td class="edge-col text-muted fw-bold">Lịch</td>
+			${dayCells.join('')}
+			<td class="edge-col text-muted">--:--</td>
+		</tr>
+	`;
 }
 
 async function initSchedulePage() {
 	try {
-		const wrapper = document.querySelector('.schedule-table-wrapper');
-		if (wrapper) {
-			wrapper.innerHTML = '<div class="p-4 text-muted text-center">Đang tải lịch học...</div>';
+		const tbody = document.getElementById('studentScheduleBody');
+		if (tbody) {
+			tbody.innerHTML = '<tr><td class="text-center text-muted py-4" colspan="9">Đang tải lịch học...</td></tr>';
 		}
 
 		const classes = await fetchSchedule();

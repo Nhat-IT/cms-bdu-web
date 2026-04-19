@@ -53,7 +53,7 @@
         
         <div class="d-flex align-items-center text-white">
             <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
-                <div class="fs-6">Quản trị viên: <span class="fw-bold admin-operator-name">Admin Khoa CNTT</span></div>
+                <div class="fs-6">Quản trị viên: <span class="fw-bold admin-operator-name" id="headerAdminName">Đang tải...</span></div>
             </div>
             
             <div class="dropdown">
@@ -118,45 +118,9 @@
                                     </tr>
                                 </thead>
                                 <tbody id="adminClassTableBody">
+                                    <!-- Du lieu duoc hydrate tu API -->
                                     <tr>
-                                        <td class="ps-4 text-muted">1</td>
-                                        <td class="fw-bold text-primary fs-6">25TH01</td>
-                                        <td>2025 - 2029</td>
-                                        <td class="text-center"><span class="badge student-count-soft">68 SV</span></td>
-                                        <td class="text-center"><span class="badge class-status-open">Đang mở</span></td>
-                                        <td class="text-end pe-4">
-                                            <div class="action-btn-group">
-                                                <button class="btn btn-light action-btn text-success border" title="Nhập danh sách Sinh viên vào lớp" onclick="openImportStudentModal('25TH01')" data-bs-toggle="modal" data-bs-target="#importStudentModal">
-                                                <i class="bi bi-person-lines-fill"></i>
-                                            </button>
-                                                <button class="btn btn-light action-btn text-primary border" title="Sửa thông tin lớp" onclick="openClassModal('edit', '25TH01', '2025 - 2029', 'open')" data-bs-toggle="modal" data-bs-target="#classModal">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </button>
-                                                <button class="btn btn-light action-btn text-danger border" title="Xóa lớp" onclick="confirmDelete('Lớp hành chính', '25TH01')">
-                                                <i class="bi bi-trash-fill"></i>
-                                            </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="ps-4 text-muted">2</td>
-                                        <td class="fw-bold text-primary fs-6">25TH02</td>
-                                        <td>2024 - 2028</td>
-                                        <td class="text-center"><span class="badge student-count-empty">Chưa có SV</span></td>
-                                        <td class="text-center"><span class="badge class-status-open">Đang mở</span></td>
-                                        <td class="text-end pe-4">
-                                            <div class="action-btn-group">
-                                                <button class="btn btn-light action-btn text-success border" title="Nhập danh sách Sinh viên vào lớp" onclick="openImportStudentModal('25TH02')" data-bs-toggle="modal" data-bs-target="#importStudentModal">
-                                                    <i class="bi bi-person-lines-fill"></i>
-                                                </button>
-                                                <button class="btn btn-light action-btn text-primary border" title="Sửa thông tin lớp" onclick="openClassModal('edit', '25TH02', '2024 - 2028', 'open')" data-bs-toggle="modal" data-bs-target="#classModal">
-                                                    <i class="bi bi-pencil-square"></i>
-                                                </button>
-                                                <button class="btn btn-light action-btn text-danger border" title="Xóa lớp" onclick="confirmDelete('Lớp hành chính', '25TH02')">
-                                                    <i class="bi bi-trash-fill"></i>
-                                                </button>
-                                            </div>
-                                        </td>
+                                        <td colspan="6" class="text-center text-muted py-4">Đang tải dữ liệu...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -199,41 +163,9 @@
                                     </tr>
                                 </thead>
                                 <tbody id="adminSubjectTableBody">
+                                    <!-- Du lieu duoc hydrate tu API -->
                                     <tr>
-                                        <td class="ps-4 fw-bold text-success">IT001</td>
-                                        <td class="fw-bold">An ninh cơ sở dữ liệu</td>
-                                        <td class="text-muted"><i class="bi bi-link-45deg me-1"></i>Cơ sở dữ liệu (IT003)</td>
-                                        <td class="text-center"><span class="badge bg-light text-dark border">3</span></td>
-                                        <td class="text-center"><span class="badge class-status-open">Đang mở</span></td>
-                                        <td class="text-end pe-4">
-                                            <button class="btn btn-light action-btn text-warning border me-1" title="Quản lý trạng thái mở/đóng theo học kỳ" onclick="openSubjectStatusModal('IT001', 'An ninh cơ sở dữ liệu')" data-bs-toggle="modal" data-bs-target="#subjectStatusModal">
-                                                <i class="bi bi-clock-history"></i>
-                                            </button>
-                                            <button class="btn btn-light action-btn text-primary border me-1" title="Sửa môn học" onclick="openSubjectModal('edit', 'IT001', 'An ninh cơ sở dữ liệu', 'IT003', 3, '2025-2026', '1', 'open', '2025-09-01', '2025-12-31')" data-bs-toggle="modal" data-bs-target="#subjectModal">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </button>
-                                            <button class="btn btn-light action-btn text-danger border" title="Xóa môn học" onclick="confirmDelete('Môn học', 'IT001 - An ninh cơ sở dữ liệu')">
-                                                <i class="bi bi-trash-fill"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="ps-4 fw-bold text-success">IT002</td>
-                                        <td class="fw-bold">Cấu trúc dữ liệu & Giải thuật</td>
-                                        <td class="text-muted fst-italic">-- Không --</td>
-                                        <td class="text-center"><span class="badge bg-light text-dark border">4</span></td>
-                                        <td class="text-center"><span class="badge class-status-closed">Đã đóng</span></td>
-                                        <td class="text-end pe-4">
-                                                <button class="btn btn-light action-btn text-warning border me-1" title="Quản lý trạng thái mở/đóng theo học kỳ" onclick="openSubjectStatusModal('IT002', 'Cấu trúc dữ liệu & Giải thuật')" data-bs-toggle="modal" data-bs-target="#subjectStatusModal">
-                                                    <i class="bi bi-clock-history"></i>
-                                                </button>
-                                            <button class="btn btn-light action-btn text-primary border me-1" title="Sửa môn học" onclick="openSubjectModal('edit', 'IT002', 'Cấu trúc dữ liệu & Giải thuật', '', 4, '2025-2026', '1', 'closed', '', '')" data-bs-toggle="modal" data-bs-target="#subjectModal">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </button>
-                                            <button class="btn btn-light action-btn text-danger border" title="Xóa môn học" onclick="confirmDelete('Môn học', 'IT002 - Cấu trúc dữ liệu & Giải thuật')">
-                                                <i class="bi bi-trash-fill"></i>
-                                            </button>
-                                        </td>
+                                        <td colspan="6" class="text-center text-muted py-4">Đang tải dữ liệu...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -331,11 +263,10 @@
         </div>
         <div class="mb-3">
             <label class="form-label fw-bold">Chọn Lớp Học <span class="text-danger">*</span></label>
-            <select class="form-select border-primary fw-bold text-dark" id="importStudentClassSelect" required>
-                <option value="" disabled selected>-- Vui lòng chọn lớp để import sinh viên --</option>
-                <option value="25TH01">25TH01</option>
-                <option value="25TH02">25TH02</option>
-            </select>
+                            <!-- Du lieu duoc hydrate tu API -->
+                            <select class="form-select border-primary fw-bold text-dark" id="importStudentClassSelect" required>
+                                <option value="" disabled selected>-- Vui lòng chọn lớp để import sinh viên --</option>
+                            </select>
         </div>
         <div class="mb-3">
             <label class="form-label fw-bold">Chọn file Excel trúng tuyển <span class="text-danger">*</span></label>
@@ -394,11 +325,11 @@
                         <input type="text" class="form-control form-control-sm border-primary" id="prereqSearchInput" placeholder="Gõ để tìm môn học...">
                     </li>
                     <li><a class="dropdown-item prereq-item active rounded mb-1" href="#" data-value="">-- Không có môn tiên quyết --</a></li>
-                    <li><a class="dropdown-item prereq-item rounded mb-1" href="#" data-value="IT000">IT000 - Nhập môn lập trình</a></li>
+                    <li><a class="dropdown-item prereq-item rounded mb-1" href="#" data-value="IT000">IT000 - Nhap monh</a></li>
                     <li><a class="dropdown-item prereq-item rounded mb-1" href="#" data-value="IT003">IT003 - Cơ sở dữ liệu</a></li>
                     <li><a class="dropdown-item prereq-item rounded mb-1" href="#" data-value="IT001">IT001 - An ninh cơ sở dữ liệu</a></li>
                     <li><a class="dropdown-item prereq-item rounded mb-1" href="#" data-value="IT002">IT002 - Cấu trúc dữ liệu & Giải thuật</a></li>
-                    <li><a class="dropdown-item prereq-item rounded mb-1" href="#" data-value="IT005">IT005 - Lập trình Web</a></li>
+                    <Lap trinh Web</a></li>
                     <li><a class="dropdown-item prereq-item rounded mb-1" href="#" data-value="IT009">IT009 - Trí tuệ nhân tạo</a></li>
                 </ul>
             </div>
@@ -554,7 +485,7 @@
                             <tr>
                                 <td class="text-muted">2025-2026</td>
                                 <td class="fw-bold">HK1</td>
-                                <td>01/09/2025</td>
+                                <td>--/--/----</td>
                                 <td>31/12/2025</td>
                                 <td><span class="badge bg-success">Đã mở</span></td>
                             </tr>

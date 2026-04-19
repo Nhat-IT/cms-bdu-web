@@ -26,13 +26,14 @@
     
     <div class="profile-container text-center flex-shrink-0">
         <a href="student-profile.html" class="profile-trigger" title="Xem hồ sơ cá nhân">
-            <img src="https://ui-avatars.com/api/?name=Thi+C&background=0d6efd&color=fff" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar">
+            <!-- Sidebar profile: avatar + ten + MSSV + lop -> duoc hydrate tu API /api/me trong student-layout.js -->
+            <img src="https://ui-avatars.com/api/?name=User&background=6c757d&color=fff" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar">
             <div class="hide-on-collapse">
-                <div class="text-white fw-bold fs-6">Nguyễn Thị C</div>
-                <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">MSSV: 22050111</div>
+                <div class="text-white fw-bold fs-6">Đang tải...</div>
+                <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">MSSV: --</div>
             </div>
         </a>
-        <span class="badge student-class-badge mt-1 hide-on-collapse">LỚP: 25TH01</span>
+        <span class="badge student-class-badge mt-1 hide-on-collapse">LỚP: --</span>
     </div>
 
     <div class="sidebar-scrollable w-100">
@@ -101,31 +102,33 @@
                 <div class="row g-3 align-items-center mb-3">
                     <div class="col-md-2">
                         <label class="attendance-filter-label mb-1">HỌC KỲ</label>
+                        <!-- Sidebar profile: duoc hydrate tu API /api/me trong student-layout.js -->
                         <select class="form-select attendance-select bg-light" id="studentSemesterSelect">
-                            <option selected>HK2 (25-26)</option>
+                            <option value="">-- Chọn học kỳ --</option>
                         </select>
                     </div>
                     <div class="col-md-4">
                         <label class="attendance-filter-label mb-1">CHỌN MÔN HỌC</label>
+                        <!-- Danh sach mon hoc: duoc render tu API /api/student/classes trong my-attendance.js -->
                         <select class="form-select attendance-select border-primary text-primary" id="studentSubjectSelect">
-                            <option value="subj_3" selected>An ninh cơ sở dữ liệu</option>
-                            <option value="subj_2">Lập trình Web - Nhóm 02</option>
-                            <option value="subj_1">Cơ sở dữ liệu - Nhóm 01</option>
+                            <option value="">-- Chọn môn học --</option>
                         </select>
                     </div>
                     <div class="col-md-6 text-md-end mt-md-4">
-                        <span class="badge bg-light text-dark border attendance-summary-badge me-2">Tổng buổi: 15</span>
-                        <span class="badge bg-success bg-opacity-10 text-success border border-success attendance-summary-badge me-2">Có mặt: 12</span>
-                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger attendance-summary-badge">Đã vắng: 3</span>
+                        <!-- So lieu chuyen can: duoc cap nhat tu API trong my-attendance.js -->
+                        <span class="badge bg-light text-dark border attendance-summary-badge me-2">Tổng buổi: <span id="totalSessions">--</span></span>
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success attendance-summary-badge me-2">Có mặt: <span id="presentSessions">--</span></span>
+                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger attendance-summary-badge">Đã vắng: <span id="absentSessions">--</span></span>
                     </div>
                 </div>
 
                 <div class="row g-3">
                     <div class="col-md-7">
                         <div id="studentSubjectInfo" class="attendance-info-box p-2 bg-light rounded border-start border-3 border-primary shadow-sm d-flex align-items-center">
+                            <!-- Thong tin mon hoc + GV + thoi gian: duoc cap nhat tu API trong my-attendance.js -->
                             <div class="row w-100 text-dark small m-0">
-                                <div class="col-md-5 p-0"><i class="bi bi-person-badge text-primary me-2"></i>Giảng viên: <strong>ThS. Dương Quang Sinh</strong></div>
-                                <div class="col-md-7 p-0"><i class="bi bi-calendar2-range text-primary me-2"></i>Thời gian: <strong>12/01/2026 - 05/05/2026</strong></div>
+                                <div class="col-md-5 p-0"><i class="bi bi-person-badge text-primary me-2"></i>Giảng viên: <strong id="subjectTeacher">Đang tải...</strong></div>
+                                <div class="col-md-7 p-0"><i class="bi bi-calendar2-range text-primary me-2"></i>Thời gian: <strong id="subjectDateRange">--</strong></div>
                             </div>
                         </div>
                     </div>
@@ -157,71 +160,9 @@
                                 <th class="pe-4 py-3 text-center">XÉT DUYỆT (BCS/GV)</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td class="ps-4 py-3 text-center attendance-col-stt">1</td>
-                                <td class="attendance-col-date text-dark">12/01/2026</td>
-                                <td class="text-dark">Sáng</td>
-                                <td><span class="badge bg-success px-3 py-1 rounded-pill"><i class="bi bi-check-circle me-1"></i>Có mặt</span></td>
-                                <td class="text-muted small">--</td>
-                                <td class="pe-4 text-center text-muted">--</td>
-                            </tr>
-                            
-                            <tr class="bg-warning bg-opacity-10">
-                                <td class="ps-4 py-3 text-center attendance-col-stt">2</td>
-                                <td class="attendance-col-date text-dark">19/01/2026</td>
-                                <td class="text-dark">Sáng</td>
-                                <td><span class="badge bg-warning text-dark px-3 py-1 rounded-pill"><i class="bi bi-exclamation-circle me-1"></i>Vắng có phép</span></td>
-                                <td>
-                                    <a href="#" class="btn btn-sm btn-light text-primary border"><i class="bi bi-image me-1"></i>giay_kham_benh.jpg</a>
-                                </td>
-                                <td class="pe-4 text-center">
-                                    <span class="badge attendance-approved-pill border px-2 py-1"><i class="bi bi-check-all me-1"></i>Đã duyệt hợp lệ</span>
-                                </td>
-                            </tr>
-
-                            <tr class="bg-danger bg-opacity-10">
-                                <td class="ps-4 py-3 text-center attendance-col-stt text-danger">3</td>
-                                <td class="attendance-col-date text-danger">02/02/2026</td>
-                                <td class="text-dark">Sáng</td>
-                                <td><span class="badge bg-danger px-3 py-1 rounded-pill"><i class="bi bi-x-circle me-1"></i>Vắng không phép</span></td>
-                                <td>
-                                    <a href="#" class="btn btn-sm btn-light text-primary border"><i class="bi bi-file-pdf me-1"></i>don_xin_phep.pdf</a>
-                                </td>
-                                <td class="pe-4 text-center">
-                                    <span class="badge bg-warning bg-opacity-25 text-dark border border-warning px-2 py-1" title="Vui lòng chờ BCS hoặc Giảng viên kiểm duyệt file bạn vừa nộp"><i class="bi bi-hourglass-split me-1"></i>Đang chờ duyệt</span>
-                                </td>
-                            </tr>
-
-                            <tr class="bg-danger bg-opacity-10">
-                                <td class="ps-4 py-3 text-center attendance-col-stt text-danger">4</td>
-                                <td class="attendance-col-date text-danger">16/02/2026</td>
-                                <td class="text-dark">Sáng</td>
-                                <td><span class="badge bg-danger px-3 py-1 rounded-pill"><i class="bi bi-x-circle me-1"></i>Vắng không phép</span></td>
-                                <td class="text-danger small fw-bold"><i class="bi bi-exclamation-triangle me-1"></i>Chưa có minh chứng!</td>
-                                <td class="pe-4 text-center">
-                                    <button class="btn btn-sm btn-danger fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#uploadProofModal" onclick="prepareProofUpload('16/02/2026', 'Sáng')">
-                                        <i class="bi bi-cloud-upload me-1"></i> Nộp bổ sung
-                                    </button>
-                                </td>
-                            </tr>
-
-                            <tr class="bg-danger bg-opacity-10">
-                                <td class="ps-4 py-3 text-center attendance-col-stt text-danger">5</td>
-                                <td class="attendance-col-date text-danger">02/03/2026</td>
-                                <td class="text-dark">Sáng</td>
-                                <td><span class="badge bg-danger px-3 py-1 rounded-pill"><i class="bi bi-x-circle me-1"></i>Vắng không phép</span></td>
-                                <td>
-                                    <span class="text-decoration-line-through text-muted small me-2">anh_kham_benh.jpg</span>
-                                </td>
-                                <td class="pe-4 text-center">
-                                    <div class="d-flex flex-column align-items-center">
-                                        <span class="badge bg-danger bg-opacity-25 text-danger border border-danger px-2 py-1 mb-1" title="Ảnh mờ không đọc được chữ, vui lòng chụp lại"><i class="bi bi-x-octagon-fill me-1"></i>Bị từ chối (Ảnh mờ)</span>
-                                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#uploadProofModal"><i class="bi bi-arrow-repeat me-1"></i>Nộp lại</button>
-                                    </div>
-                                </td>
-                            </tr>
-
+                        <!-- Bang diem danh: duoc render tu API /api/student/attendance trong my-attendance.js -->
+                        <tbody id="attendanceTableBody">
+                            <tr><td colspan="6" class="text-center text-muted py-4">Đang tải dữ liệu điểm danh...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -241,7 +182,7 @@
       <div class="modal-body p-4">
         
         <div class="alert alert-warning small mb-3 border-warning border-opacity-50">
-            <strong>Thông tin buổi vắng:</strong> Môn <span class="fw-bold">An ninh cơ sở dữ liệu</span> - Ngày <span id="proofDateInfo" class="fw-bold text-danger">16/02/2026 (Sáng)</span>
+            <strong>Thông tin buổi vắng:</strong> Môn <span class="fw-bold">An ninh cơ sở dữ liệu</span> - Ngày <span id="proofDateInfo" class="fw-bold text-danger">--/--/---- (Sáng)</span>
         </div>
 
         <form id="proofForm">

@@ -25,13 +25,14 @@
     
     <div class="profile-container text-center flex-shrink-0">
         <a href="student-profile.html" class="profile-trigger" title="Xem hồ sơ cá nhân">
-            <img src="https://ui-avatars.com/api/?name=Nhat+Y&background=0d6efd&color=fff" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar">
+            <!-- Sidebar profile: duoc hydrate tu API /api/me trong student-layout.js -->
+            <img src="https://ui-avatars.com/api/?name=User&background=6c757d&color=fff" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar">
             <div class="hide-on-collapse">
-                <div class="text-white fw-bold fs-6">Phạm Huỳnh Nhật Ý</div>
-                <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">MSSV: 22050111</div>
+                <div class="text-white fw-bold fs-6">Đang tải...</div>
+                <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">MSSV: --</div>
             </div>
         </a>
-        <span class="badge student-class-badge mt-1 hide-on-collapse">LỚP: 25TH01</span>
+        <span class="badge student-class-badge mt-1 hide-on-collapse">LỚP: --</span>
     </div>
 
     <div class="sidebar-scrollable w-100">
@@ -102,10 +103,10 @@
                         <h5 class="fw-bold text-dark m-0"><i class="bi bi-bar-chart-fill text-primary me-2"></i>Chi Tiết Điểm Các Học Phần</h5>
                         <p class="text-muted small mb-0 mt-1">Bảng tổng hợp điểm thành phần và chuyên cần của sinh viên.</p>
                     </div>
-                    <select class="form-select w-auto border-secondary text-primary fw-bold shadow-sm">
-                        <option value="HK2" selected>Học kỳ 2 (2025 - 2026)</option>
-                        <option value="HK1">Học kỳ 1 (2025 - 2026)</option>
-                    </select>
+                        <!-- Danh sach hoc phan: duoc render tu API /api/student/grades trong grades.js -->
+                        <select class="form-select w-auto border-secondary text-primary fw-bold shadow-sm" id="semesterSelect">
+                            <option value="">-- Chọn học kỳ --</option>
+                        </select>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -121,47 +122,10 @@
                                     <th class="text-center pe-4">CHI TIẾT</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="ps-4 fw-bold text-dark">An ninh cơ sở dữ liệu</td>
-                                    <td class="text-center text-muted">8.5</td>
-                                    <td class="text-center text-muted">8.0</td>
-                                    <td class="text-center text-muted">7.5</td>
-                                    <td class="text-center fw-bold score-box text-primary">7.9</td>
-                                    <td class="text-center fw-bold grade-b">B+</td>
-                                    <td class="text-center pe-4">
-                                        <button class="btn btn-outline-primary btn-detail px-3" onclick='openDetailModal("An ninh cơ sở dữ liệu", "1/3", [{"name": "Báo cáo giữa kỳ - Chương 1,2", "score": 8.0}, {"name": "Thực hành Lab 1 trên Server", "score": 8.5}, {"name": "Tiểu luận cuối môn", "score": 9.0}])'>
-                                            <i class="bi bi-eye-fill me-1"></i> Xem
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="ps-4 fw-bold text-dark">Lập trình Web nâng cao</td>
-                                    <td class="text-center text-muted">9.0</td>
-                                    <td class="text-center text-muted">8.5</td>
-                                    <td class="text-center text-muted">9.0</td>
-                                    <td class="text-center fw-bold score-box text-primary">8.9</td>
-                                    <td class="text-center fw-bold grade-a">A</td>
-                                    <td class="text-center pe-4">
-                                        <button class="btn btn-outline-primary btn-detail px-3" onclick='openDetailModal("Lập trình Web nâng cao", "0/3", [{"name": "Bài tập cá nhân Tuần 1", "score": 9.0}, {"name": "Đồ án Website bán hàng (Phase 1)", "score": 9.0}, {"name": "Đồ án Website bán hàng (Phase 2)", "score": 9.0}])'>
-                                            <i class="bi bi-eye-fill me-1"></i> Xem
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="ps-4 fw-bold text-dark">Nhập môn khoa học dữ liệu</td>
-                                    <td class="text-center text-muted">7.0</td>
-                                    <td class="text-center text-muted">6.5</td>
-                                    <td class="text-center text-muted">8.0</td>
-                                    <td class="text-center fw-bold score-box text-primary">7.4</td>
-                                    <td class="text-center fw-bold grade-b">B</td>
-                                    <td class="text-center pe-4">
-                                        <button class="btn btn-outline-primary btn-detail px-3" onclick='openDetailModal("Nhập môn khoa học dữ liệu", "2/4", [{"name": "Crawl dữ liệu Shopee", "score": 7.5}, {"name": "Phân tích và Trực quan hóa EDA", "score": 6.0}, {"name": "Xây dựng Model Dự đoán", "score": 7.5}])'>
-                                            <i class="bi bi-eye-fill me-1"></i> Xem
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
+                            <!-- Bang diem hoc phan: duoc render tu API /api/student/grades trong grades.js -->
+                        <tbody id="gradesTableBody">
+                            <tr><td colspan="7" class="text-center text-muted py-4">Đang tải dữ liệu điểm...</td></tr>
+                        </tbody>
                         </table>
                     </div>
                 </div>

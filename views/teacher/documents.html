@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CMS BDU - Kho tài liệu</title>
+    <title>CMS BDU - Kho t�i li?u</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../../public/css/style.css">
@@ -23,23 +23,23 @@
             </div>
             <div class="sidebar-scrollable w-100">
             <nav class="nav flex-column ps-2 pe-2">
-                <a href="home.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-speedometer2 me-2"></i> Tổng quan</a>
-                <a href="attendance.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-calendar-check me-2"></i> Lịch & Điểm danh</a>
-                <a href="class-assignments.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-journal-text me-2"></i> Quản lý Bài tập</a>
-                <a href="class-grades.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-file-earmark-bar-graph me-2"></i> Bảng điểm</a>
+                <a href="home.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-speedometer2 me-2"></i> T?ng quan</a>
+                <a href="attendance.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-calendar-check me-2"></i> L?ch & �i?m danh</a>
+                <a href="class-assignments.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-journal-text me-2"></i> Qu?n l� B�i t?p</a>
+                <a href="class-grades.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-file-earmark-bar-graph me-2"></i> B?ng di?m</a>
                 <a href="approve-evidences.html" class="nav-link text-white-50 hover-white py-2 mb-1 d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-file-earmark-medical me-2"></i> Duyệt minh chứng</span>
-                    <span class="badge bg-danger rounded-pill">3</span>
+                    <span><i class="bi bi-file-earmark-medical me-2"></i> Duy?t minh ch?ng</span>
+                    <span class="badge bg-danger rounded-pill d-none">0</span>
                 </a>
-                <a href="documents.html" class="nav-link text-white active bg-primary bg-opacity-25 rounded py-2 mb-1"><i class="bi bi-folder2-open me-2"></i> Kho tài liệu</a>
-                <a href="announcements.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-megaphone-fill me-2"></i> Đăng bảng tin</a>
+                <a href="documents.html" class="nav-link text-white active bg-primary bg-opacity-25 rounded py-2 mb-1"><i class="bi bi-folder2-open me-2"></i> Kho t�i li?u</a>
+                <a href="announcements.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-megaphone-fill me-2"></i> �ang b?ng tin</a>
             </nav>
             </div>
         </div>
         
         <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-            <a href="/auth/logout" class="nav-link logout-btn" title="Đăng xuất">
-                <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
+            <a href="/auth/logout" class="nav-link logout-btn" title="�ang xu?t">
+                <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">�ang xu?t</span>
             </a>
         </div>
     </div>
@@ -47,21 +47,21 @@
     <div class="main-content">
         <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 py-3 shadow-sm mb-4">
             <h4 class="m-0 fw-bold d-flex align-items-center text-white">
-                KHO TÀI LIỆU & BÀI GIẢNG
+                KHO T�I LI?U & B�I GI?NG
             </h4>
             <div class="d-flex align-items-center text-white">
                 <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
-                    <div class="fs-6">Giảng viên: <b class="text-info">ThS. Nguyễn Hồ Hải</b></div>
+                    <div class="fs-6">Gi?ng vi�n: <b class="text-info" id="headerTeacherName">�ang t?i...</b></div>
                 </div>
                 
                 <div class="dropdown">
                     <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
-                        <img src="https://ui-avatars.com/api/?name=H+H&background=0dcaf0&color=fff" id="headerAvatar" alt="Avatar" class="rounded-circle border border-white" width="40" height="40">
+                        <img src="https://ui-avatars.com/api/?name=Teacher&background=0dcaf0&color=fff" id="headerAvatar" alt="Avatar" class="rounded-circle border border-white" width="40" height="40">
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
-                        <li><a class="dropdown-item fw-bold" href="teacher-profile.html"><i class="bi bi-person-vcard text-info me-2"></i>Hồ sơ cá nhân</a></li>
+                        <li><a class="dropdown-item fw-bold" href="teacher-profile.html"><i class="bi bi-person-vcard text-info me-2"></i>H? so c� nh�n</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item fw-bold text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
+                        <li><a class="dropdown-item fw-bold text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right text-danger me-2"></i>�ang xu?t</a></li>
                     </ul>
                 </div>
             </div>
@@ -73,24 +73,23 @@
                 <div class="card-header bg-white pt-4 pb-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div class="d-flex align-items-center gap-2 flex-wrap">
                         <select class="form-select form-select-sm border-secondary fw-bold text-dark" style="width: 220px;" id="classFilter">
-                            <option value="">-- Tất cả Lớp học phần --</option>
-                            <option value="25TH01">25TH01 - An ninh CSDL</option>
-                            <option value="24CNTT02">24CNTT02 - Cấu trúc DL</option>
+                            <!-- Du lieu duoc hydrate tu API -->
+                            <option value="">-- T?t c? L?p h?c ph?n --</option>
                         </select>
                         <select class="form-select form-select-sm border-secondary" style="width: 180px;" id="categoryFilter">
-                            <option value="">-- Mọi danh mục --</option>
-                            <option value="Học liệu">Bài giảng / Học liệu</option>
-                            <option value="Tham khảo">Tài liệu tham khảo</option>
-                            <option value="Đề cương">Đề cương chi tiết</option>
+                            <option value="">-- M?i danh m?c --</option>
+                            <option value="H?c li?u">B�i gi?ng / H?c li?u</option>
+                            <option value="Tham kh?o">T�i li?u tham kh?o</option>
+                            <option value="�? cuong">�? cuong chi ti?t</option>
                         </select>
                         <div class="input-group input-group-sm" style="width: 250px;">
                             <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
-                            <input type="text" class="form-control border-start-0" placeholder="Tìm tên tài liệu...">
+                            <input type="text" class="form-control border-start-0" placeholder="T�m t�n t�i li?u...">
                         </div>
                     </div>
                     
                     <button class="btn btn-primary btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#docModal" onclick="openDocModal('add')">
-                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> Tải tài liệu lên
+                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> T?i t�i li?u l�n
                     </button>
                 </div>
                 
@@ -99,88 +98,17 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light small text-muted fw-bold">
                                 <tr>
-                                    <th class="ps-4">TÊN TÀI LIỆU</th>
-                                    <th>DANH MỤC</th>
-                                    <th>LỚP HỌC PHẦN</th>
-                                    <th>NGÀY ĐĂNG</th>
-                                    <th class="text-end pe-4">HÀNH ĐỘNG</th>
+                                    <th class="ps-4">T�N T�I LI?U</th>
+                                    <th>DANH M?C</th>
+                                    <th>L?P H?C PH?N</th>
+                                    <th>NG�Y �ANG</th>
+                                    <th class="text-end pe-4">H�NH �?NG</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <!-- Du lieu duoc hydrate tu API -->
+                            <tbody id="teacherDocumentsTbody">
                                 <tr>
-                                    <td class="ps-4">
-                                        <a href="#" class="file-link d-flex align-items-center" onclick="handleFileView(event, 'Chương 1 - Tổng quan.pdf')">
-                                            <i class="bi bi-file-earmark-pdf-fill file-icon icon-pdf me-3"></i>
-                                            <div>
-                                                <h6 class="mb-0 fw-bold file-title">Chương 1 - Tổng quan về An ninh CSDL.pdf</h6>
-                                                <small class="text-muted">Bài giảng tuần 1. Sinh viên đọc trước khi lên lớp.</small>
-                                            </div>
-                                        </a>
-                                    </td>
-                                    <td><span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">Học liệu</span></td>
-                                    <td class="text-muted small">25TH01 - An ninh CSDL</td>
-                                    <td>15/03/2026</td>
-                                    <td class="text-end pe-4">
-                                        <button class="btn btn-light action-btn text-primary border me-1" title="Sửa thông tin" data-bs-toggle="modal" data-bs-target="#docModal" onclick="openDocModal('edit', 'Chương 1 - Tổng quan về An ninh CSDL.pdf', 'Bài giảng tuần 1. Sinh viên đọc trước khi lên lớp.', 'Học liệu', '25TH01')"><i class="bi bi-pencil"></i></button>
-                                        <button class="btn btn-light action-btn text-danger border" title="Xóa" onclick="confirmDeleteDoc('Chương 1 - Tổng quan về An ninh CSDL.pdf')"><i class="bi bi-trash"></i></button>
-                                    </td>
-                                </tr>
-                                
-                                <tr>
-                                    <td class="ps-4">
-                                        <a href="#" class="file-link d-flex align-items-center" onclick="handleFileView(event, 'Slide_Chuong2.pptx')">
-                                            <i class="bi bi-file-earmark-ppt-fill file-icon icon-ppt me-3"></i>
-                                            <div>
-                                                <h6 class="mb-0 fw-bold file-title">Slide Bài giảng Chương 2.pptx</h6>
-                                                <small class="text-muted">Mô hình mã hóa và bảo mật dữ liệu</small>
-                                            </div>
-                                        </a>
-                                    </td>
-                                    <td><span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">Học liệu</span></td>
-                                    <td class="text-muted small">25TH01 - An ninh CSDL</td>
-                                    <td>20/03/2026</td>
-                                    <td class="text-end pe-4">
-                                        <button class="btn btn-light action-btn text-primary border me-1" title="Sửa thông tin" data-bs-toggle="modal" data-bs-target="#docModal" onclick="openDocModal('edit', 'Slide Bài giảng Chương 2.pptx', 'Mô hình mã hóa và bảo mật dữ liệu', 'Học liệu', '25TH01')"><i class="bi bi-pencil"></i></button>
-                                        <button class="btn btn-light action-btn text-danger border" title="Xóa" onclick="confirmDeleteDoc('Slide Bài giảng Chương 2.pptx')"><i class="bi bi-trash"></i></button>
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td class="ps-4">
-                                        <a href="#" class="file-link d-flex align-items-center" onclick="handleFileView(event, 'De_cuong_chi_tiet_CTDL.docx')">
-                                            <i class="bi bi-file-earmark-word-fill file-icon icon-word me-3"></i>
-                                            <div>
-                                                <h6 class="mb-0 fw-bold file-title">Đề cương chi tiết học phần.docx</h6>
-                                                <small class="text-muted">Quy định tính điểm và nội dung 15 tuần học</small>
-                                            </div>
-                                        </a>
-                                    </td>
-                                    <td><span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">Đề cương</span></td>
-                                    <td class="text-muted small">24CNTT02 - Cấu trúc DL</td>
-                                    <td>05/03/2026</td>
-                                    <td class="text-end pe-4">
-                                        <button class="btn btn-light action-btn text-primary border me-1" title="Sửa thông tin" data-bs-toggle="modal" data-bs-target="#docModal" onclick="openDocModal('edit', 'Đề cương chi tiết học phần.docx', 'Quy định tính điểm và nội dung 15 tuần học', 'Đề cương', '24CNTT02')"><i class="bi bi-pencil"></i></button>
-                                        <button class="btn btn-light action-btn text-danger border" title="Xóa" onclick="confirmDeleteDoc('Đề cương chi tiết học phần.docx')"><i class="bi bi-trash"></i></button>
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td class="ps-4">
-                                        <a href="#" class="file-link d-flex align-items-center" onclick="handleFileView(event, 'SourceCode_Mau.zip')">
-                                            <i class="bi bi-file-earmark-zip-fill file-icon icon-zip me-3"></i>
-                                            <div>
-                                                <h6 class="mb-0 fw-bold file-title">SourceCode_Mau_CayNhiPhan.zip</h6>
-                                                <small class="text-muted">Source code mẫu viết bằng C++</small>
-                                            </div>
-                                        </a>
-                                    </td>
-                                    <td><span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25">Bài tập thực hành</span></td>
-                                    <td class="text-muted small">24CNTT02 - Cấu trúc DL</td>
-                                    <td>18/03/2026</td>
-                                    <td class="text-end pe-4">
-                                        <button class="btn btn-light action-btn text-primary border me-1" title="Sửa thông tin" data-bs-toggle="modal" data-bs-target="#docModal" onclick="openDocModal('edit', 'SourceCode_Mau_CayNhiPhan.zip', 'Source code mẫu viết bằng C++', 'Bài tập thực hành', '24CNTT02')"><i class="bi bi-pencil"></i></button>
-                                        <button class="btn btn-light action-btn text-danger border" title="Xóa" onclick="confirmDeleteDoc('SourceCode_Mau_CayNhiPhan.zip')"><i class="bi bi-trash"></i></button>
-                                    </td>
+                                    <td colspan="5" class="text-center text-muted py-4">�ang t?i d? li?u...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -189,7 +117,7 @@
             </div>
 
             <div class="mt-3 text-muted small">
-                <i class="bi bi-info-circle me-1"></i> File tải lên sẽ được tự động đồng bộ và lưu trữ an toàn trên hệ thống Google Drive của trường. Giới hạn 50MB/file.
+                <i class="bi bi-info-circle me-1"></i> File t?i l�n s? du?c t? d?ng d?ng b? v� luu tr? an to�n tr�n h? th?ng Google Drive c?a tru?ng. Gi?i h?n 50MB/file.
             </div>
 
         </div>
@@ -199,48 +127,48 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title fw-bold" id="docModalTitle"><i class="bi bi-cloud-arrow-up-fill me-2"></i>Tải tài liệu lên</h5>
+                    <h5 class="modal-title fw-bold" id="docModalTitle"><i class="bi bi-cloud-arrow-up-fill me-2"></i>T?i t�i li?u l�n</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
                     <div class="mb-3" id="fileUploadContainer">
-                        <label class="form-label fw-bold">Chọn File <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold">Ch?n File <span class="text-danger">*</span></label>
                         <input class="form-control" type="file" id="docFile">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Tiêu đề hiển thị <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="docTitle" placeholder="VD: Slide Bài giảng Chương 1">
+                        <label class="form-label fw-bold">Ti�u d? hi?n th? <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="docTitle" placeholder="VD: Slide B�i gi?ng Chuong 1">
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Phân loại danh mục <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold">Ph�n lo?i danh m?c <span class="text-danger">*</span></label>
                         <select class="form-select" id="docCategory" onchange="toggleCustomCategory()">
-                            <option value="Học liệu">Bài giảng / Học liệu</option>
-                            <option value="Tham khảo">Tài liệu tham khảo</option>
-                            <option value="Đề cương">Đề cương chi tiết</option>
-                            <option value="Thông báo">Thông báo</option>
-                            <option value="Khác" class="fw-bold text-primary">Khác (Tự nhập)...</option>
+                            <option value="H?c li?u">B�i gi?ng / H?c li?u</option>
+                            <option value="Tham kh?o">T�i li?u tham kh?o</option>
+                            <option value="�? cuong">�? cuong chi ti?t</option>
+                            <option value="Th�ng b�o">Th�ng b�o</option>
+                            <option value="Kh�c" class="fw-bold text-primary">Kh�c (T? nh?p)...</option>
                         </select>
                         <div id="customCategoryDiv" class="mt-2 d-none">
-                            <input type="text" class="form-control border-primary" id="customCategoryInput" placeholder="Nhập tên danh mục (VD: Bài tập mẫu, Đề thi cũ...)">
+                            <input type="text" class="form-control border-primary" id="customCategoryInput" placeholder="Nh?p t�n danh m?c (VD: B�i t?p m?u, �? thu...)">
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Chọn Lớp học phần <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold">Ch?n L?p h?c ph?n <span class="text-danger">*</span></label>
+                        <!-- Du lieu duoc hydrate tu API -->
                         <select class="form-select" id="docClass">
-                            <option value="25TH01">25TH01 - An ninh CSDL</option>
-                            <option value="24CNTT02">24CNTT02 - Cấu trúc DL</option>
+                            <option value="">-- Ch?n l?p --</option>
                         </select>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label fw-bold">Ghi chú thêm (Note)</label>
-                        <textarea class="form-control" id="docNote" rows="2" placeholder="VD: Sinh viên đọc trước ở nhà..."></textarea>
+                        <label class="form-label fw-bold">Ghi ch� th�m (Note)</label>
+                        <textarea class="form-control" id="docNote" rows="2" placeholder="VD: Sinh vi�n d?c tru?c ? nh�..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer border-0 pb-4 px-4">
-                    <button class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
-                    <button class="btn btn-primary px-4 fw-bold" id="docModalSubmitBtn" onclick="saveDocument()" data-bs-dismiss="modal">Tải lên</button>
+                    <button class="btn btn-light" data-bs-dismiss="modal">H?y</button>
+                    <button class="btn btn-primary px-4 fw-bold" id="docModalSubmitBtn" onclick="saveDocument()" data-bs-dismiss="modal">T?i l�n</button>
                 </div>
             </div>
         </div>

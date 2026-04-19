@@ -53,7 +53,7 @@
         
         <div class="d-flex align-items-center text-white">
             <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
-                <div class="fs-6">Quản trị viên: <span class="fw-bold admin-operator-name">Admin Khoa CNTT</span></div>
+                <div class="fs-6">Quản trị viên: <span class="fw-bold admin-operator-name" id="headerAdminName">Đang tải...</span></div>
             </div>
             
             <div class="dropdown">
@@ -133,59 +133,9 @@
                             </tr>
                         </thead>
                         <tbody id="adminSystemLogsBody">
+                            <!-- Du lieu duoc hydrate tu API -->
                             <tr>
-                                <td class="ps-4 text-dark log-time">05/04/2026 15:42:11</td>
-                                <td>
-                                    <div class="fw-bold text-dark">Admin Khoa CNTT</div>
-                                    <div class="small text-muted"><i class="bi bi-shield-fill text-danger me-1"></i>admin_cntt</div>
-                                </td>
-                                <td><span class="badge bg-danger">XÓA (DELETE)</span></td>
-                                <td class="text-dark">Đã xóa Lớp học phần <span class="fw-bold">25TH02 - Cấu trúc dữ liệu & Giải thuật</span> khỏi hệ thống.</td>
-                                <td class="pe-4 text-end text-muted small">192.168.1.45<br>Chrome / Windows</td>
-                            </tr>
-                            
-                            <tr>
-                                <td class="ps-4 text-dark log-time">05/04/2026 15:30:05</td>
-                                <td>
-                                    <div class="fw-bold text-dark">Admin Khoa CNTT</div>
-                                    <div class="small text-muted"><i class="bi bi-shield-fill text-danger me-1"></i>admin_cntt</div>
-                                </td>
-                                <td><span class="badge bg-success">THÊM (CREATE)</span></td>
-                                <td class="text-dark">Đã import danh sách sinh viên hàng loạt vào lớp <span class="fw-bold">25TH01</span> (68 accounts created).</td>
-                                <td class="pe-4 text-end text-muted small">192.168.1.45<br>Chrome / Windows</td>
-                            </tr>
-
-                            <tr>
-                                <td class="ps-4 text-dark log-time">05/04/2026 14:15:22</td>
-                                <td>
-                                    <div class="fw-bold text-dark">ThS. Dương Quang Sinh</div>
-                                    <div class="small text-muted"><i class="bi bi-person-video3 text-primary me-1"></i>GVDQS</div>
-                                </td>
-                                <td><span class="badge bg-primary">SỬA (UPDATE)</span></td>
-                                <td class="text-dark">Đã duyệt minh chứng điểm danh cho sinh viên <span class="fw-bold">22050111</span> môn An ninh CSDL. Trạng thái: Có phép.</td>
-                                <td class="pe-4 text-end text-muted small">14.238.22.10<br>Safari / MacOS</td>
-                            </tr>
-
-                            <tr class="bg-warning bg-opacity-10">
-                                <td class="ps-4 text-dark log-time fw-bold text-danger">05/04/2026 10:05:12</td>
-                                <td>
-                                    <div class="fw-bold text-dark">Unknown / Guest</div>
-                                    <div class="small text-muted"><i class="bi bi-question-circle text-warning me-1"></i>Unauthenticated</div>
-                                </td>
-                                <td><span class="badge bg-warning text-dark border border-warning"><i class="bi bi-exclamation-triangle-fill me-1"></i>CẢNH BÁO</span></td>
-                                <td class="text-danger fw-bold">Đăng nhập thất bại 5 lần liên tiếp vào tài khoản [GVNHH]. Hệ thống đã tạm khóa IP.</td>
-                                <td class="pe-4 text-end text-danger small fw-bold">103.11.23.44<br>Firefox / iOS</td>
-                            </tr>
-
-                            <tr>
-                                <td class="ps-4 text-dark log-time">05/04/2026 08:00:01</td>
-                                <td>
-                                    <div class="fw-bold text-dark">Phạm Huỳnh Nhật Ý</div>
-                                    <div class="small text-muted"><i class="bi bi-star-fill text-warning me-1"></i>22050004 (BCS)</div>
-                                </td>
-                                <td><span class="badge bg-info text-dark">ĐĂNG NHẬP</span></td>
-                                <td class="text-dark">Đăng nhập thành công vào Cổng Ban Cán Sự.</td>
-                                <td class="pe-4 text-end text-muted small">113.185.10.2<br>Chrome / Android</td>
+                                <td colspan="6" class="text-center text-muted py-4">Đang tải nhật ký...</td>
                             </tr>
                         </tbody>
                     </table>

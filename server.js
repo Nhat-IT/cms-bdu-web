@@ -16,6 +16,7 @@ const db = require('./src/config/db');
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
 const strictDbStartup = process.env.DB_STARTUP_STRICT === 'true';
+const staticMaxAge = isProduction ? '7d' : '0';
 
 if (isProduction) {
     app.set('trust proxy', 1);
@@ -44,8 +45,29 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // --- CẤU HÌNH FILE TĨNH ---
-app.use('/public', express.static(path.join(__dirname, 'public')));
-app.use('/', express.static(path.join(__dirname, 'views')));
+app.use('/public', express.static(path.join(__dirname, 'public'), {
+    maxAge: staticMaxAge,
+    etag: true,
+    setHeaders: (res, filePath) => {
+        if (/\.(css|js|png|jpg|jpeg|gif|svg|webp|woff|woff2|ttf)$/i.test(filePath)) {
+            res.setHeader('Cache-Control', isProduction
+                ? 'public, max-age=604800, stale-while-revalidate=86400'
+                : 'no-cache');
+        }
+    }
+}));
+
+app.use('/', express.static(path.join(__dirname, 'views'), {
+    etag: true,
+    setHeaders: (res, filePath) => {
+        if (/\.html$/i.test(filePath)) {
+            // Always revalidate HTML to reduce stale markup and FOUC-style flashes.
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        }
+    }
+}));
 
 // --- SỬ DỤNG CÁC ROUTES ---
 app.use('/api', apiRoutes);
@@ -66,6 +88,14 @@ const upload = multer({ dest: 'uploads/' });
 // --- CÁC ĐƯỜNG DẪN GIAO DIỆN ---
 app.get('/', (req, res) => {
     res.redirect('/login.html'); 
+});
+
+app.get('/student', (req, res) => {
+    res.redirect('/student/home.html');
+});
+
+app.get('/notifications', (req, res) => {
+    res.redirect('/student/notifications-all.html');
 });
 
 // --- API HỆ THỐNG ---

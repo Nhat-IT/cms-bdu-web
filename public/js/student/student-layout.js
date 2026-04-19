@@ -93,13 +93,14 @@ function escapeHtml(value) {
 }
 
 async function fetchSharedStudentData() {
-    const [profileRes, classesRes, notificationsRes] = await Promise.all([
+    const [profileRes, classesRes, notificationsRes, meRes] = await Promise.all([
         fetch('/api/student/profile'),
         fetch('/api/student/classes'),
-        fetch('/api/student/notifications')
+        fetch('/api/student/notifications'),
+        fetch('/api/me')
     ]);
 
-    if (profileRes.status === 401 || classesRes.status === 401 || notificationsRes.status === 401) {
+    if (profileRes.status === 401 || classesRes.status === 401 || notificationsRes.status === 401 || meRes.status === 401) {
         window.location.href = '/login.html';
         return null;
     }
@@ -107,8 +108,9 @@ async function fetchSharedStudentData() {
     const profile = profileRes.ok ? await profileRes.json() : null;
     const classes = classesRes.ok ? await classesRes.json() : [];
     const notifications = notificationsRes.ok ? await notificationsRes.json() : [];
+    const me = meRes.ok ? await meRes.json() : null;
 
-    return { profile, classes, notifications };
+    return { profile, classes, notifications, me };
 }
 
 function updateSidebarProfile(profile, classes) {
@@ -193,7 +195,7 @@ function updateNotificationBadge(notifications) {
 }
 
 function mountNotificationDropdown(notifications) {
-    const bellLink = document.querySelector('.top-navbar-blue a[href="notifications-all.html"].text-decoration-none');
+    const bellLink = document.querySelector('.top-navbar-blue a[href="notifications-all.html"].text-decoration-none, .top-navbar-blue a[href="/notifications"].text-decoration-none');
     if (!bellLink || bellLink.closest('.student-notify-wrapper')) {
         return;
     }
@@ -216,7 +218,7 @@ function mountNotificationDropdown(notifications) {
     } else {
         latest.forEach(function (item) {
             const row = document.createElement('a');
-            row.href = 'notifications-all.html';
+            row.href = '/notifications';
             row.className = 'student-notify-item';
             row.innerHTML =
                 '<div class="d-flex justify-content-between align-items-center mb-1">' +
@@ -230,7 +232,7 @@ function mountNotificationDropdown(notifications) {
 
     const footer = document.createElement('div');
     footer.className = 'student-notify-footer';
-    footer.innerHTML = '<a href="notifications-all.html" class="student-notify-view-all text-primary">Xem tất cả <i class="bi bi-arrow-right"></i></a>';
+    footer.innerHTML = '<a href="/notifications" class="student-notify-view-all text-primary">Xem tất cả <i class="bi bi-arrow-right"></i></a>';
     dropdown.appendChild(footer);
     wrapper.appendChild(dropdown);
 
@@ -249,6 +251,32 @@ function mountNotificationDropdown(notifications) {
     });
 }
 
+function mountBackToBcsLink(me) {
+    if (!me || String(me.role || '').toLowerCase() !== 'bcs') {
+        return;
+    }
+
+    const nav = document.querySelector('.sidebar-scrollable nav');
+    if (!nav || nav.querySelector('.back-to-bcs-link')) {
+        return;
+    }
+
+    const section = document.createElement('div');
+    section.className = 'px-4 mt-3 mb-2 small text-white-50 fw-bold hide-on-collapse';
+    section.style.fontSize = '0.7rem';
+    section.style.letterSpacing = '1px';
+    section.textContent = 'BCS';
+
+    const link = document.createElement('a');
+    link.href = '/bcs/home.html';
+    link.className = 'nav-link text-warning back-to-bcs-link';
+    link.title = 'Quay lại trang quản lý BCS';
+    link.innerHTML = '<i class="bi bi-arrow-return-left"></i> <span class="hide-on-collapse">Quay lại trang quản lý BCS</span>';
+
+    nav.appendChild(section);
+    nav.appendChild(link);
+}
+
 async function initSharedStudentData() {
     const data = await fetchSharedStudentData();
     if (!data) return;
@@ -256,4 +284,5 @@ async function initSharedStudentData() {
     replaceStaticStudentPlaceholders(data.profile, data.classes);
     updateNotificationBadge(data.notifications);
     mountNotificationDropdown(data.notifications);
+    mountBackToBcsLink(data.me);
 }

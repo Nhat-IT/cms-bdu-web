@@ -48,7 +48,7 @@ function esc(value) {
 }
 
 async function fetchNotifications() {
-    const response = await fetch('/api/student/notifications');
+    const response = await fetch('/api/notifications');
     if (response.status === 401) {
         window.location.href = '/login.html';
         return;
@@ -125,7 +125,7 @@ function renderNotifications() {
 
 async function markAllAsRead() {
     try {
-        const response = await fetch('/api/student/notifications/mark-read', {
+        const response = await fetch('/api/notifications/mark-read', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
         });

@@ -24,13 +24,13 @@
 
         <div class="bcs-profile-container text-center flex-shrink-0">
             <a href="profile.html" class="bcs-profile-trigger" title="Xem hồ sơ ban cán sự">
-                <img src="https://ui-avatars.com/api/?name=Pham+H+Nhat+Y&background=0d6efd&color=fff" id="sidebarAvatar" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar BCS">
+                <img src="https://ui-avatars.com/api/?name=BCS&background=0d6efd&color=fff" id="sidebarAvatar" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar BCS">
                 <div class="hide-on-collapse">
-                    <div class="text-white fw-bold fs-6">Phạm Huyền Nhật Ý</div>
-                    <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">Vai trò: <span id="sidebarRoleText">Lớp trưởng</span></div>
+                    <div class="text-white fw-bold fs-6" id="sidebarBcsName">Đang tải...</div>
+                    <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">Vai trò: <span id="sidebarRoleText">BCS</span></div>
                 </div>
             </a>
-            <span class="badge bcs-class-badge mt-1 hide-on-collapse">LỚP: 25TH01</span>
+            <span class="badge bcs-class-badge mt-1 hide-on-collapse" id="sidebarClassBadge">LỚP: --</span>
         </div>
 
         <div class="sidebar-scrollable w-100">
@@ -60,10 +60,10 @@
             <h5 class="m-0 text-white fw-bold d-flex align-items-center">HỒ SƠ BAN CÁN SỰ</h5>
         </div>
         <div class="bcs-header-meta d-flex align-items-center text-white">
-            <span class="bcs-header-label fw-bold">BAN CÁN SỰ</span>
-            <a href="feedback.html" class="bcs-notification-link" title="Có 4 thông báo hệ thống">
+            <span class="bcs-header-label fw-bold" id="bcsHeaderTitle">BCS - --</span>
+            <a href="feedback.html" class="bcs-notification-link" title="Có thông báo hệ thống">
                 <i class="bi bi-bell fs-5"></i>
-                <span class="bcs-notification-count">4</span>
+                <span class="bcs-notification-count" id="bcsNotifCount">--</span>
             </a>
         </div>
     </div>
@@ -75,18 +75,19 @@
                     <div class="profile-header-bg"></div>
                     <div class="card-body text-center pt-0">
                         <div class="avatar-wrapper mb-3">
-                            <img src="https://ui-avatars.com/api/?name=Pham+H+Nhat+Y&background=0d6efd&color=fff&size=200" id="mainProfileAvatar" class="profile-avatar" alt="Avatar BCS">
+                            <img src="https://ui-avatars.com/api/?name=BCS&background=0d6efd&color=fff&size=200" id="mainProfileAvatar" class="profile-avatar" alt="Avatar BCS">
                             <label for="avatarUploadInput" class="avatar-edit-btn" title="Thay đổi ảnh đại diện">
                                 <i class="bi bi-camera-fill"></i>
                             </label>
                             <input type="file" id="avatarUploadInput" class="d-none" accept="image/png, image/jpeg, image/jpg">
                         </div>
 
-                        <h5 class="fw-bold text-dark mb-1">Phạm Huyền Nhật Ý</h5>
-                        <p class="text-muted small mb-3"><i class="bi bi-mortarboard-fill text-info me-1"></i><span id="profileRoleText">Lớp trưởng</span> - BCS</p>
+                        <h5 class="fw-bold text-dark mb-1" id="profileDisplayName">Đang tải...</h5>
+                        <p class="text-muted small mb-3"><i class="bi bi-mortarboard-fill text-info me-1"></i><span id="profileRoleText">BCS</span></p>
 
                         <div class="d-flex justify-content-center gap-2 mb-4">
-                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">25TH01</span>
+                            <!-- Du lieu duoc hydrate tu API -->
+                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary" id="profileClassBadge">--</span>
                             <span class="badge bg-success bg-opacity-10 text-success border border-success">Đang hoạt động</span>
                         </div>
 
@@ -96,15 +97,18 @@
                             <p class="mb-2 text-muted small fw-bold">THÔNG TIN HỌC VỤ</p>
                             <div class="mb-3">
                                 <small class="text-muted d-block">Mã số sinh viên:</small>
-                                <span class="fw-bold text-dark">22050111</span>
+                                <!-- Du lieu duoc hydrate tu API -->
+                                <span class="fw-bold text-dark" id="profileStudentCode">--</span>
                             </div>
                             <div class="mb-3">
                                 <small class="text-muted d-block">Lớp:</small>
-                                <span class="fw-bold text-dark">25TH01</span>
+                                <!-- Du lieu duoc hydrate tu API -->
+                                <span class="fw-bold text-dark" id="profileClass">--</span>
                             </div>
                             <div class="mb-0">
                                 <small class="text-muted d-block">Niên khóa:</small>
-                                <span class="fw-bold text-dark">2022 - 2026</span>
+                                <!-- Du lieu duoc hydrate tu API -->
+                                <span class="fw-bold text-dark" id="profileAcademicYear">--</span>
                             </div>
                         </div>
                     </div>
@@ -122,33 +126,33 @@
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Họ và tên đầy đủ</label>
-                                    <input type="text" class="form-control border-secondary" id="bcsFullNameInput" value="Phạm Huyền Nhật Ý" required>
+                                    <input type="text" class="form-control border-secondary" id="bcsFullNameInput" value="" required>
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold">Ngày sinh <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control border-secondary" id="bcsBirthDateInput" value="2004-01-01" required>
+                                    <input type="date" class="form-control border-secondary" id="bcsBirthDateInput" value="" required>
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Email trường cấp</label>
-                                    <input type="email" class="form-control border-secondary" id="bcsEmailInput" value="22050111@student.bdu.edu.vn" required>
+                                    <input type="email" class="form-control border-secondary" id="bcsEmailInput" value="" required>
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold">Số điện thoại cá nhân <span class="text-danger">*</span></label>
-                                    <input type="tel" class="form-control border-secondary" id="bcsPhoneInput" value="0987654321" required placeholder="Dùng để liên lạc">
+                                    <input type="tel" class="form-control border-secondary" id="bcsPhoneInput" value="" required placeholder="Dùng để liên lạc">
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">MSSV</label>
-                                    <input type="text" class="form-control border-secondary bg-light" id="bcsCodeInput" value="22050111" readonly>
+                                    <input type="text" class="form-control border-secondary bg-light" id="bcsCodeInput" value="" readonly>
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold">Chức vụ BCS <span class="text-danger">*</span></label>
-                                    <input type="text" id="roleInput" class="form-control border-secondary" list="roleOptions" value="Lớp trưởng" required placeholder="Nhập chức vụ">
+                                    <input type="text" id="roleInput" class="form-control border-secondary" list="roleOptions" value="" required placeholder="Nhập chức vụ">
                                     <datalist id="roleOptions">
                                         <option value="Lớp trưởng"></option>
                                         <option value="Lớp phó"></option>
@@ -158,7 +162,7 @@
 
                             <div class="mb-4">
                                 <label class="form-label fw-bold">Địa chỉ hiện tại</label>
-                                <input type="text" class="form-control border-secondary" id="bcsAddressInput" value="KTX BDU, Thủ Dầu Một, Bình Dương" placeholder="Nhập địa chỉ tạm trú/thường trú">
+                                <input type="text" class="form-control border-secondary" id="bcsAddressInput" value="" placeholder="Nhập địa chỉ tạm trú/thường trú">
                             </div>
 
                             <div class="text-end border-top pt-3">

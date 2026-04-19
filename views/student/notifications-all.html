@@ -23,13 +23,13 @@
 
     <div class="profile-container text-center flex-shrink-0">
         <a href="student-profile.html" class="profile-trigger" title="Xem hồ sơ cá nhân">
-            <img src="https://ui-avatars.com/api/?name=Nhat+Y&background=0d6efd&color=fff" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar">
+            <img src="https://ui-avatars.com/api/?name=User&background=6c757d&color=fff" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar">
             <div class="hide-on-collapse">
-                <div class="text-white fw-bold fs-6">Phạm Huỳnh Nhật Ý</div>
-                <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">MSSV: 22050111</div>
+                <div class="text-white fw-bold fs-6">Đang tải...</div>
+                <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">MSSV: --</div>
             </div>
         </a>
-        <span class="badge student-class-badge mt-1 hide-on-collapse">LỚP: 25TH01</span>
+        <span class="badge student-class-badge mt-1 hide-on-collapse">LỚP: --</span>
     </div>
 
     <div class="sidebar-scrollable w-100">
@@ -55,7 +55,7 @@
             </a>
 
             <div class="px-4 mt-3 mb-2 small text-white-50 fw-bold hide-on-collapse" style="font-size: 0.7rem; letter-spacing: 1px;">TƯƠNG TÁC</div>
-            <a href="notifications-all.html" class="nav-link active" title="Xem thông báo">
+            <a href="/notifications" class="nav-link active" title="Xem thông báo">
                 <i class="bi bi-bell-fill"></i> <span class="hide-on-collapse">Thông báo</span>
             </a>
             <a href="my-feedback.html" class="nav-link" title="Gửi phản hồi">
@@ -81,9 +81,9 @@
         </div>
 
         <div class="d-flex align-items-center text-white">
-            <a href="notifications-all.html" class="text-white text-decoration-none" title="Thông báo mới chưa đọc">
+            <a href="/notifications" class="text-white text-decoration-none" title="Thông báo mới chưa đọc">
                 <i class="bi bi-bell fs-5 text-white position-relative cursor-pointer">
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">4</span>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0</span>
                 </i>
             </a>
         </div>
@@ -99,7 +99,7 @@
                 <button type="button" class="btn btn-outline-success fw-bold" id="markAllReadBtn">
                     <i class="bi bi-check2-all me-1"></i> Đánh dấu tất cả là đã đọc
                 </button>
-                <a href="notifications-all.html" class="btn btn-outline-primary fw-bold">
+                <a href="/notifications" class="btn btn-outline-primary fw-bold">
                     <i class="bi bi-arrow-clockwise me-1"></i> Làm mới
                 </a>
             </div>
@@ -138,71 +138,7 @@
 
         <div class="card shadow-sm border-0">
             <div class="list-group list-group-flush" id="notifyList">
-                <div class="list-group-item notify-item py-3" data-source="BAN CÁN SỰ" data-read="false" title="Nhấp để xem chi tiết">
-                    <div class="d-flex justify-content-between flex-wrap gap-2">
-                        <div>
-                            <div class="mb-1"><span class="badge source-badge source-badge-bcs">BAN CÁN SỰ</span></div>
-                            <h6 class="fw-bold mb-1">Nhắc nộp minh chứng chuyên cần tuần 8</h6>
-                            <p class="text-muted mb-0">Nộp trước 17:00 hôm nay qua mục phản hồi.</p>
-                        </div>
-                        <small class="text-muted">11/04/2026 08:20</small>
-                    </div>
-                </div>
-
-                <div class="list-group-item notify-item py-3" data-source="GIẢNG VIÊN" data-read="false" title="Nhấp để xem chi tiết">
-                    <div class="d-flex justify-content-between flex-wrap gap-2">
-                        <div>
-                            <div class="mb-1"><span class="badge source-badge source-badge-lecturer">GIẢNG VIÊN</span></div>
-                            <h6 class="fw-bold mb-1">Thông báo đổi phòng học môn Lập trình Web</h6>
-                            <p class="text-muted mb-0">Buổi học chiều thứ 3 chuyển sang phòng B305.</p>
-                        </div>
-                        <small class="text-muted">10/04/2026 16:40</small>
-                    </div>
-                </div>
-
-                <div class="list-group-item notify-item py-3" data-source="KHOA CNTT" data-read="false" title="Nhấp để xem chi tiết">
-                    <div class="d-flex justify-content-between flex-wrap gap-2">
-                        <div>
-                            <div class="mb-1"><span class="badge bg-warning text-dark source-badge">Khoa CNTT</span></div>
-                            <h6 class="fw-bold mb-1">Lịch seminar chuyên đề tháng 4</h6>
-                            <p class="text-muted mb-0">Mở cổng đăng ký đến hết 14/04/2026.</p>
-                        </div>
-                        <small class="text-muted">10/04/2026 10:15</small>
-                    </div>
-                </div>
-
-                <div class="list-group-item notify-item py-3" data-source="BAN CÁN SỰ" data-read="true" title="Nhấp để xem chi tiết">
-                    <div class="d-flex justify-content-between flex-wrap gap-2">
-                        <div>
-                            <div class="mb-1"><span class="badge source-badge source-badge-bcs">BAN CÁN SỰ</span></div>
-                            <h6 class="fw-bold mb-1">Cập nhật danh sách bài tập tuần này</h6>
-                            <p class="text-muted mb-0">Các môn đã cập nhật deadline mới.</p>
-                        </div>
-                        <small class="text-muted">09/04/2026 09:00</small>
-                    </div>
-                </div>
-
-                <div class="list-group-item notify-item py-3" data-source="GIẢNG VIÊN" data-read="true" title="Nhấp để xem chi tiết">
-                    <div class="d-flex justify-content-between flex-wrap gap-2">
-                        <div>
-                            <div class="mb-1"><span class="badge source-badge source-badge-lecturer">GIẢNG VIÊN</span></div>
-                            <h6 class="fw-bold mb-1">Bổ sung tài liệu chương 5 môn CSDL</h6>
-                            <p class="text-muted mb-0">Đã đăng file mới tại mục Kho Tài liệu lớp.</p>
-                        </div>
-                        <small class="text-muted">08/04/2026 15:10</small>
-                    </div>
-                </div>
-
-                <div class="list-group-item notify-item py-3" data-source="KHOA CNTT" data-read="true" title="Nhấp để xem chi tiết">
-                    <div class="d-flex justify-content-between flex-wrap gap-2">
-                        <div>
-                            <div class="mb-1"><span class="badge bg-warning text-dark source-badge">Khoa CNTT</span></div>
-                            <h6 class="fw-bold mb-1">Khảo sát cải tiến chương trình đào tạo</h6>
-                            <p class="text-muted mb-0">Sinh viên hoàn thành khảo sát trước 20/04/2026.</p>
-                        </div>
-                        <small class="text-muted">07/04/2026 11:30</small>
-                    </div>
-                </div>
+                <div class="list-group-item py-4 text-center text-muted">Đang tải danh sách thông báo...</div>
             </div>
         </div>
     </div>

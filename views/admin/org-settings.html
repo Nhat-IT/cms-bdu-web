@@ -53,7 +53,7 @@
         
         <div class="d-flex align-items-center text-white">
             <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
-                <div class="fs-6">Quản trị viên: <span class="fw-bold admin-operator-name">Admin Khoa CNTT</span></div>
+                <div class="fs-6">Quản trị viên: <span class="fw-bold admin-operator-name" id="headerAdminName">Đang tải...</span></div>
             </div>
             
             <div class="dropdown">
@@ -105,38 +105,9 @@
                                     </tr>
                                 </thead>
                                 <tbody id="adminDepartmentsBody">
+                                    <!-- Du lieu duoc hydrate tu API -->
                                     <tr>
-                                        <td class="ps-4 fw-bold text-primary">KTPM</td>
-                                        <td class="fw-bold text-dark">Kỹ thuật Phần mềm</td>
-                                        <td>20/03/2026</td>
-                                        <td class="text-end pe-4">
-                                            <button class="btn btn-light action-btn text-primary border me-1" data-bs-toggle="modal" data-bs-target="#majorModal" onclick="openMajorModal('edit', 'KTPM', 'Kỹ thuật Phần mềm')" title="Sửa">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <button class="btn btn-light action-btn text-danger border" onclick="confirmDelete('Ngành Kỹ thuật Phần mềm')" title="Xóa"><i class="bi bi-trash"></i></button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="ps-4 fw-bold text-primary">KHMT</td>
-                                        <td class="fw-bold text-dark">Khoa học Máy tính</td>
-                                        <td>21/03/2026</td>
-                                        <td class="text-end pe-4">
-                                            <button class="btn btn-light action-btn text-primary border me-1" data-bs-toggle="modal" data-bs-target="#majorModal" onclick="openMajorModal('edit', 'KHMT', 'Khoa học Máy tính')" title="Sửa">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <button class="btn btn-light action-btn text-danger border" onclick="confirmDelete('Ngành Khoa học Máy tính')" title="Xóa"><i class="bi bi-trash"></i></button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="ps-4 fw-bold text-primary">HTTT</td>
-                                        <td class="fw-bold text-dark">Hệ thống Thông tin</td>
-                                        <td>22/03/2026</td>
-                                        <td class="text-end pe-4">
-                                            <button class="btn btn-light action-btn text-primary border me-1" data-bs-toggle="modal" data-bs-target="#majorModal" onclick="openMajorModal('edit', 'HTTT', 'Hệ thống Thông tin')" title="Sửa">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <button class="btn btn-light action-btn text-danger border" onclick="confirmDelete('Ngành Hệ thống Thông tin')" title="Xóa"><i class="bi bi-trash"></i></button>
-                                        </td>
+                                        <td colspan="4" class="text-center text-muted py-4">Đang tải dữ liệu...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -166,34 +137,9 @@
                                     </tr>
                                 </thead>
                                 <tbody id="adminSemestersBody">
-                                    <tr class="bg-success bg-opacity-10">
-                                        <td class="ps-4 fw-bold text-success">HK2</td>
-                                        <td class="fw-bold text-dark">2025 - 2026</td>
-                                        <td>01/01/2026 <i class="bi bi-arrow-right mx-1 text-muted"></i> 30/06/2026</td>
-                                        <td class="text-center">
-                                            <span class="badge bg-success px-3 py-2 rounded-pill shadow-sm"><i class="bi bi-check-circle-fill me-1"></i>Học kỳ Hiện tại</span>
-                                        </td>
-                                        <td class="text-end pe-4">
-                                            <button class="btn btn-light action-btn text-primary border" data-bs-toggle="modal" data-bs-target="#semesterModal" onclick="openSemesterModal('edit', 'HK2', '2025 - 2026', '2026-01-01', '2026-06-30', true)" title="Sửa">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
+                                    <!-- Du lieu duoc hydrate tu API -->
                                     <tr>
-                                        <td class="ps-4 fw-bold text-muted">HK1</td>
-                                        <td class="fw-bold text-dark">2025 - 2026</td>
-                                        <td>15/08/2025 <i class="bi bi-arrow-right mx-1 text-muted"></i> 31/12/2025</td>
-                                        <td class="text-center">
-                                            <span class="badge bg-secondary bg-opacity-25 text-secondary border">Đã kết thúc</span>
-                                        </td>
-                                        <td class="text-end pe-4">
-                                            <button class="btn btn-light action-btn text-primary border" data-bs-toggle="modal" data-bs-target="#semesterModal" onclick="openSemesterModal('edit', 'HK1', '2025 - 2026', '2025-08-15', '2025-12-31', false)" title="Sửa">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-success border" onclick="setActiveSemester('HK1', '2025 - 2026')" title="Thiết lập làm Học kỳ hiện tại">
-                                                <i class="bi bi-check2-circle"></i> Chọn hiện tại
-                                            </button>
-                                        </td>
+                                        <td colspan="5" class="text-center text-muted py-4">Đang tải dữ liệu...</td>
                                     </tr>
                                 </tbody>
                             </table>

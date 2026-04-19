@@ -85,6 +85,9 @@ router.get('/student/documents', studentController.getDocuments);
 // Notifications
 router.get('/student/notifications', studentController.getNotifications);
 router.post('/student/notifications/mark-read', studentController.markNotificationsAsRead);
+// Shared aliases for notifications page and bell preview.
+router.get('/notifications', studentController.getNotifications);
+router.post('/notifications/mark-read', studentController.markNotificationsAsRead);
 
 // Feedbacks
 router.get('/student/feedbacks', studentController.getFeedbacks);

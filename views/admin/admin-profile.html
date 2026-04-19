@@ -53,12 +53,12 @@
         
         <div class="d-flex align-items-center text-white">
             <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
-                <div class="fs-6">Quản trị viên: <span class="fw-bold admin-operator-name">Admin Khoa CNTT</span></div>
+                <div class="fs-6">Quản trị viên: <span class="fw-bold admin-operator-name" id="headerAdminName">Đang tải...</span></div>
             </div>
             
             <div class="dropdown">
                 <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
-                    <img src="https://ui-avatars.com/api/?name=Admin+CNTT&background=0d6efd&color=fff" id="headerAvatar" class="rounded-circle border" width="32" height="32" alt="Avatar">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=0d6efd&color=fff" id="headerAvatar" class="rounded-circle border" width="32" height="32" alt="Avatar">
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
                     <li><a class="dropdown-item fw-bold" href="admin-profile.html"><i class="bi bi-person-vcard text-primary me-2"></i>Hồ sơ cá nhân</a></li>
@@ -79,14 +79,14 @@
                     <div class="card-body text-center pt-0">
                         
                         <div class="avatar-wrapper mb-3">
-                            <img src="https://ui-avatars.com/api/?name=Admin+CNTT&background=0d6efd&color=fff&size=200" id="mainProfileAvatar" class="profile-avatar" alt="Admin Avatar">
+                            <img src="https://ui-avatars.com/api/?name=Admin&background=0d6efd&color=fff&size=200" id="mainProfileAvatar" class="profile-avatar" alt="Admin Avatar">
                             <label for="avatarUploadInput" class="avatar-edit-btn" title="Thay đổi ảnh đại diện">
                                 <i class="bi bi-camera-fill"></i>
                             </label>
                             <input type="file" id="avatarUploadInput" class="d-none" accept="image/png, image/jpeg, image/jpg">
                         </div>
                         
-                        <h5 class="fw-bold text-dark mb-1">Admin Khoa CNTT</h5>
+                        <h5 class="fw-bold text-dark mb-1" id="profileDisplayName">Đang tải...</h5>
                         <p class="text-muted small mb-3"><i class="bi bi-shield-fill-check text-danger me-1"></i>Quản trị viên Hệ thống</p>
                         
                         <div class="d-flex justify-content-center gap-2 mb-4">
@@ -100,15 +100,18 @@
                             <p class="mb-2 text-muted small fw-bold">THÔNG TIN TÀI KHOẢN</p>
                             <div class="mb-3">
                                 <small class="text-muted d-block">Mã định danh (Username):</small>
-                                <span class="fw-bold text-dark" id="adminUsernameText">admin_cntt</span>
+                                <!-- Du lieu duoc hydrate tu API -->
+                                <span class="fw-bold text-dark" id="adminUsernameText">--</span>
                             </div>
                             <div class="mb-3">
                                 <small class="text-muted d-block">Ngày khởi tạo:</small>
-                                <span class="fw-bold text-dark" id="adminCreatedAtText">01/01/2026</span>
+                                <!-- Du lieu duoc hydrate tu API -->
+                                <span class="fw-bold text-dark" id="adminCreatedAtText">--</span>
                             </div>
                             <div class="mb-0">
                                 <small class="text-muted d-block">Lần đăng nhập cuối:</small>
-                                <span class="fw-bold text-success">Hôm nay, lúc 08:30:15</span>
+                                <!-- Du lieu duoc hydrate tu API -->
+                                <span class="fw-bold text-success" id="adminLastLoginText">--</span>
                             </div>
                         </div>
                     </div>
@@ -127,11 +130,13 @@
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Tên hiển thị <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control border-secondary" id="adminFullNameInput" value="Admin Khoa CNTT" required>
+                                    <!-- Du lieu duoc hydrate tu API -->
+                                    <input type="text" class="form-control border-secondary" id="adminFullNameInput" value="" required>
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold">Email nhận cảnh báo <span class="text-danger">*</span></label>
-                                    <input type="email" class="form-control border-primary" id="adminEmailInput" value="admin.cntt@bdu.edu.vn" required>
+                                    <!-- Du lieu duoc hydrate tu API -->
+                                    <input type="email" class="form-control border-primary" id="adminEmailInput" value="" required>
                                 </div>
                             </div>
                             <div class="text-end">

@@ -25,13 +25,14 @@
     
     <div class="profile-container text-center flex-shrink-0">
         <a href="student-profile.html" class="profile-trigger" title="Xem hồ sơ cá nhân">
-            <img src="https://ui-avatars.com/api/?name=Thi+C&background=0d6efd&color=fff" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar">
+            <!-- Sidebar profile: duoc hydrate tu API /api/me trong student-layout.js -->
+            <img src="https://ui-avatars.com/api/?name=User&background=6c757d&color=fff" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar">
             <div class="hide-on-collapse">
-                <div class="text-white fw-bold fs-6">Phạm Huỳnh Nhật Ý</div>
-                <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">MSSV: 22050111</div>
+                <div class="text-white fw-bold fs-6">Đang tải...</div>
+                <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">MSSV: --</div>
             </div>
         </a>
-        <span class="badge student-class-badge mt-1 hide-on-collapse">LỚP: 25TH01</span>
+        <span class="badge student-class-badge mt-1 hide-on-collapse">LỚP: --</span>
     </div>
 
     <div class="sidebar-scrollable w-100">
@@ -138,7 +139,7 @@
                         <tbody>
                             <tr>
                                 <td class="ps-4 py-3">
-                                    <a href="#" class="file-link d-flex align-items-center" onclick="handleFileDownload(event, 'ThongBao_NghiTet.pdf', false)">
+                                    <a href="#" class="file-link d-flex align-items-center" onclick="handleFileDownload(event, 'file_1.pdf', false)">
                                         <i class="bi bi-file-earmark-pdf-fill fs-3 text-danger me-3"></i>
                                         <div>
                                             <h6 class="mb-0 fw-bold text-dark file-title">Thông báo Lịch nghỉ Tết Nguyên Đán 2026.pdf</h6>
@@ -148,10 +149,10 @@
                                 </td>
                                 <td><span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">Thông báo</span></td>
                                 <td><span class="badge bg-light text-dark border"><i class="bi bi-person-badge me-1"></i>Lớp Trưởng</span></td>
-                                <td class="text-center text-dark">15/01/2026</td>
-                                <td class="text-center text-muted small">1.2 MB</td>
+                                <td class="text-center text-dark">--/--/----</td>
+                                <td class="text-center text-muted small">--</td>
                                 <td class="pe-4 text-end">
-                                    <button class="btn btn-sm btn-outline-primary fw-bold px-3 rounded-pill shadow-sm" onclick="handleFileDownload(event, 'ThongBao_NghiTet.pdf', true)">
+                                    <button class="btn btn-sm btn-outline-primary fw-bold px-3 rounded-pill shadow-sm" onclick="handleFileDownload(event, 'file_1.pdf', true)">
                                         <i class="bi bi-download me-1"></i> Tải về
                                     </button>
                                 </td>
@@ -159,7 +160,7 @@
                             
                             <tr>
                                 <td class="ps-4 py-3">
-                                    <a href="#" class="file-link d-flex align-items-center" onclick="handleFileDownload(event, 'DeCuong_AnNinhCSDL.docx', false)">
+                                    <a href="#" class="file-link d-flex align-items-center" onclick="handleFileDownload(event, 'file_2.docx', false)">
                                         <i class="bi bi-file-earmark-word-fill fs-3 text-primary me-3"></i>
                                         <div>
                                             <h6 class="mb-0 fw-bold text-dark file-title">Đề cương môn An ninh CSDL.docx</h6>
@@ -169,10 +170,10 @@
                                 </td>
                                 <td><span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1">Học liệu</span></td>
                                 <td><span class="badge bg-primary text-white"><i class="bi bi-person-video3 me-1"></i>Giảng Viên</span></td>
-                                <td class="text-center text-dark">12/01/2026</td>
-                                <td class="text-center text-muted small">245 KB</td>
+                                <td class="text-center text-dark">--/--/----</td>
+                                <td class="text-center text-muted small">--</td>
                                 <td class="pe-4 text-end">
-                                    <button class="btn btn-sm btn-outline-primary fw-bold px-3 rounded-pill shadow-sm" onclick="handleFileDownload(event, 'DeCuong_AnNinhCSDL.docx', true)">
+                                    <button class="btn btn-sm btn-outline-primary fw-bold px-3 rounded-pill shadow-sm" onclick="handleFileDownload(event, 'file_2.docx', true)">
                                         <i class="bi bi-download me-1"></i> Tải về
                                     </button>
                                 </td>
@@ -180,20 +181,20 @@
                             
                             <tr>
                                 <td class="ps-4 py-3">
-                                    <a href="#" class="file-link d-flex align-items-center" onclick="handleFileDownload(event, 'Slide_Tuan1.zip', false)">
+                                    <a href="#" class="file-link d-flex align-items-center" onclick="handleFileDownload(event, 'file_3.zip', false)">
                                         <i class="bi bi-file-earmark-zip-fill fs-3 text-warning me-3"></i>
                                         <div>
-                                            <h6 class="mb-0 fw-bold text-dark file-title">Slide Bài giảng An Ninh CSDL (Tuần 1-5).zip</h6>
+                                            <h6 class="mb-0 fw-bold text-dark file-title">Slide Bai giang An Ninh CSDL.zip</h6>
                                             <small class="text-muted">Các bạn tải về giải nén để xem nhé</small>
                                         </div>
                                     </a>
                                 </td>
                                 <td><span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1">Học liệu</span></td>
                                 <td><span class="badge bg-light text-dark border"><i class="bi bi-person-badge me-1"></i>Lớp Phó HT</span></td>
-                                <td class="text-center text-dark">02/02/2026</td>
-                                <td class="text-center text-muted small">15.4 MB</td>
+                                <td class="text-center text-dark">--/--/----</td>
+                                <td class="text-center text-muted small">--</td>
                                 <td class="pe-4 text-end">
-                                    <button class="btn btn-sm btn-outline-primary fw-bold px-3 rounded-pill shadow-sm" onclick="handleFileDownload(event, 'Slide_Tuan1.zip', true)">
+                                    <button class="btn btn-sm btn-outline-primary fw-bold px-3 rounded-pill shadow-sm" onclick="handleFileDownload(event, 'file_3.zip', true)">
                                         <i class="bi bi-download me-1"></i> Tải về
                                     </button>
                                 </td>

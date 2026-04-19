@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CMS BDU - Quản lý Bảng điểm</title>
+    <title>CMS BDU - Qu?n l� B?ng di?m</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../../public/css/style.css">
@@ -23,23 +23,23 @@
             </div>
             <div class="sidebar-scrollable w-100">
             <nav class="nav flex-column ps-2 pe-2">
-                <a href="home.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-speedometer2 me-2"></i> Tổng quan</a>
-                <a href="attendance.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-calendar-check me-2"></i> Lịch & Điểm danh</a>
-                <a href="class-assignments.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-journal-text me-2"></i> Quản lý Bài tập</a>
-                <a href="class-grades.html" class="nav-link text-white active bg-primary bg-opacity-25 rounded py-2 mb-1"><i class="bi bi-file-earmark-bar-graph me-2"></i> Bảng điểm</a>
+                <a href="home.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-speedometer2 me-2"></i> T?ng quan</a>
+                <a href="attendance.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-calendar-check me-2"></i> L?ch & �i?m danh</a>
+                <a href="class-assignments.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-journal-text me-2"></i> Qu?n l� B�i t?p</a>
+                <a href="class-grades.html" class="nav-link text-white active bg-primary bg-opacity-25 rounded py-2 mb-1"><i class="bi bi-file-earmark-bar-graph me-2"></i> B?ng di?m</a>
                 <a href="approve-evidences.html" class="nav-link text-white-50 hover-white py-2 mb-1 d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-file-earmark-medical me-2"></i> Duyệt minh chứng</span>
-                    <span class="badge bg-danger rounded-pill">3</span>
+                    <span><i class="bi bi-file-earmark-medical me-2"></i> Duy?t minh ch?ng</span>
+                    <span class="badge bg-danger rounded-pill d-none">0</span>
                 </a>
-                <a href="documents.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-folder2-open me-2"></i> Kho tài liệu</a>
-                <a href="announcements.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-megaphone-fill me-2"></i> Đăng bảng tin</a>
+                <a href="documents.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-folder2-open me-2"></i> Kho t�i li?u</a>
+                <a href="announcements.html" class="nav-link text-white-50 hover-white py-2 mb-1"><i class="bi bi-megaphone-fill me-2"></i> �ang b?ng tin</a>
             </nav>
             </div>
         </div>
         
         <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-            <a href="/auth/logout" class="nav-link logout-btn" title="Đăng xuất">
-                <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
+            <a href="/auth/logout" class="nav-link logout-btn" title="�ang xu?t">
+                <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">�ang xu?t</span>
             </a>
         </div>
     </div>
@@ -47,21 +47,21 @@
     <div class="main-content">
         <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 py-3 shadow-sm mb-4">
             <h4 class="m-0 fw-bold d-flex align-items-center text-white">
-                BẢNG ĐIỂM LỚP HỌC PHẦN
+                B?NG �I?M L?P H?C PH?N
             </h4>
             <div class="d-flex align-items-center text-white">
                 <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
-                    <div class="fs-6">Giảng viên: <b class="text-info">ThS. Nguyễn Hồ Hải</b></div>
+                    <div class="fs-6">Gi?ng vi�n: <b class="text-info" id="headerTeacherName">�ang t?i...</b></div>
                 </div>
                 
                 <div class="dropdown">
                     <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
-                        <img src="https://ui-avatars.com/api/?name=H+H&background=0dcaf0&color=fff" id="headerAvatar" alt="Avatar" class="rounded-circle border border-white" width="40" height="40">
+                        <img src="https://ui-avatars.com/api/?name=Teacher&background=0dcaf0&color=fff" id="headerAvatar" alt="Avatar" class="rounded-circle border border-white" width="40" height="40">
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
-                        <li><a class="dropdown-item fw-bold" href="teacher-profile.html"><i class="bi bi-person-vcard text-info me-2"></i>Hồ sơ cá nhân</a></li>
+                        <li><a class="dropdown-item fw-bold" href="teacher-profile.html"><i class="bi bi-person-vcard text-info me-2"></i>H? so c� nh�n</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item fw-bold text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
+                        <li><a class="dropdown-item fw-bold text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right text-danger me-2"></i>�ang xu?t</a></li>
                     </ul>
                 </div>
             </div>
@@ -74,17 +74,17 @@
                 <div class="card-header bg-white p-4 border-bottom border-secondary border-opacity-10 d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div class="d-flex align-items-center gap-3">
                         <div>
-                            <label class="form-label small fw-bold text-muted mb-1">Chọn Học kỳ</label>
+                            <label class="form-label small fw-bold text-muted mb-1">Ch?n H?c k?</label>
                             <select id="semesterSelect" class="form-select border-info fw-bold text-dark" style="width: 200px;">
-                                <option value="HK1-2025" selected>Học kỳ 1 - 2025-2026</option>
-                                <option value="HK2-2025">Học kỳ 2 - 2025-2026</option>
-                                <option value="HK3-2025">Học kỳ hè - 2025-2026</option>
+                                <option value="HK1-2025" selected>H?c k? 1 - 2025-2026</option>
+                                <option value="HK2-2025">H?c k? 2 - 2025-2026</option>
+                                <option value="HK3-2025">H?c k? h� - 2025-2026</option>
                             </select>
                         </div>
                         <div>
-                            <label class="form-label small fw-bold text-muted mb-1">Chọn Lớp học phần</label>
+                            <label class="form-label small fw-bold text-muted mb-1">Ch?n L?p h?c ph?n</label>
                             <select id="classSelect" class="form-select border-info fw-bold text-dark" style="width: 300px;">
-                                <option value="">-- Chọn lớp học phần --</option>
+                                <option value="">-- Ch?n l?p h?c ph?n --</option>
                             </select>
                         </div>
                         <div class="ms-2">
@@ -93,8 +93,8 @@
                     </div>
                     
                     <div class="mt-4">
-                        <button class="btn btn-outline-success me-2"><i class="bi bi-file-earmark-excel me-1"></i>Xuất Excel</button>
-                        <button class="btn btn-primary px-4 shadow-sm" onclick="saveGrades()"><i class="bi bi-floppy-fill me-2"></i>Lưu Bảng Điểm</button>
+                        <button class="btn btn-outline-success me-2"><i class="bi bi-file-earmark-excel me-1"></i>Xu?t Excel</button>
+                        <button class="btn btn-primary px-4 shadow-sm" onclick="saveGrades()"><i class="bi bi-floppy-fill me-2"></i>Luu B?ng �i?m</button>
                     </div>
                 </div>
 
@@ -105,19 +105,20 @@
                                 <tr>
                                     <th style="width: 60px;">STT</th>
                                     <th style="width: 120px;">MSSV</th>
-                                    <th class="text-start">HỌ VÀ TÊN</th>
-                                    <th style="width: 120px;">LỚP</th>
-                                    <th style="width: 130px;">Đ. GIỮA KỲ</th>
-                                    <th style="width: 130px;">Đ. CUỐI KỲ</th>
-                                    <th style="width: 120px;" class="bg-light">TỔNG KẾT</th>
-                                    <th style="width: 100px;" class="bg-light">ĐIỂM CHỮ</th>
-                                    <th style="width: 110px;" class="bg-light">KẾT QUẢ</th>
-                                    <th style="width: 180px;">GHI CHÚ</th>
+                                    <th class="text-start">H? V� T�N</th>
+                                    <th style="width: 120px;">L?P</th>
+                                    <th style="width: 130px;">�. GI?A K?</th>
+                                    <th style="width: 130px;">�. CU?I K?</th>
+                                    <th style="width: 120px;" class="bg-light">T?NG K?T</th>
+                                    <th style="width: 100px;" class="bg-light">�I?M CH?</th>
+                                    <th style="width: 110px;" class="bg-light">K?T QU?</th>
+                                    <th style="width: 180px;">GHI CH�</th>
                                 </tr>
                             </thead>
                             <tbody id="teacherGradesTbody">
+                                <!-- Du lieu duoc hydrate tu API -->
                                 <tr>
-                                    <td colspan="10" class="text-center text-muted py-4">Đang tải bảng điểm...</td>
+                                    <td colspan="10" class="text-center text-muted py-4">�ang t?i d? li?u...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -128,8 +129,8 @@
             <div class="mt-3 alert alert-info border-0 shadow-sm d-flex">
                 <i class="bi bi-info-circle-fill fs-4 me-3 mt-1"></i>
                 <div>
-                    <strong>Quy chế tính điểm:</strong> Điểm Tổng Kết = (Điểm Bài Tập * 20%) + (Điểm Giữa Kỳ * 30%) + (Điểm Cuối Kỳ * 50%).<br>
-                    <strong>Quy đổi Điểm chữ:</strong> Từ 8.5 đến 10 (A) | Từ 7.0 đến 8.4 (B) | Từ 5.5 đến 6.9 (C) | Từ 4.0 đến 5.4 (D) | Dưới 4.0 (F).
+                    <strong>Quy ch? t�nh di?m:</strong> �i?m T?ng K?t = (�i?m B�i T?p * 20%) + (�i?m Gi?a K? * 30%) + (�i?m Cu?i K? * 50%).<br>
+                    <strong>Quy d?i �i?m ch?:</strong> T? -- d?n 10 (A) | T? 7.0 d?n 8.4 (B) | T? 5.5 d?n 6.9 (C) | T? 4.0 d?n 5.4 (D) | Du?i 4.0 (F).
                 </div>
             </div>
 

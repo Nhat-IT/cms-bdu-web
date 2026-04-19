@@ -25,13 +25,13 @@
     
     <div class="profile-container text-center flex-shrink-0">
         <a href="student-profile.html" class="profile-trigger" title="Xem hồ sơ cá nhân">
-            <img src="https://ui-avatars.com/api/?name=Thi+C&background=0d6efd&color=fff" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar">
+            <img src="https://ui-avatars.com/api/?name=User&background=6c757d&color=fff" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar">
             <div class="hide-on-collapse">
-                <div class="text-white fw-bold fs-6">Nguyễn Thị C</div>
-                <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">MSSV: 22050111</div>
+                <div class="text-white fw-bold fs-6">Đang tải...</div>
+                <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">MSSV: --</div>
             </div>
         </a>
-        <span class="badge student-class-badge mt-1 hide-on-collapse">LỚP: 25TH01</span>
+        <span class="badge student-class-badge mt-1 hide-on-collapse">LỚP: --</span>
     </div>
 
     <div class="sidebar-scrollable w-100">
@@ -105,9 +105,9 @@
                 </div>
                 <div class="col-12 col-md-6 col-lg-5">
                     <select class="form-select fw-bold text-primary shadow-sm border-primary">
-                        <option value="T29">Tuần 29 [từ 23/03/2026 đến 29/03/2026]</option>
-                        <option value="T30" selected>Tuần 30 [từ 30/03/2026 đến 05/04/2026]</option>
-                        <option value="T31">Tuần 31 [từ 06/04/2026 đến 12/04/2026]</option>
+                        <option value="T29">Tu?n 29 [t? --/--/---- d?n --/--/----]</option>
+                        <option value="T30" selected>Tu?n 30 [t? --/--/---- d?n --/--/----]</option>
+                        <option value="T31">Tu?n 31 [t? --/--/---- d?n --/--/----]</option>
                     </select>
                 </div>
                 <div class="col-12 col-md-2 col-lg-4 text-md-end">
@@ -135,58 +135,10 @@
                                 <th style="width: 85px; vertical-align: middle;"><i class="bi bi-arrow-right fs-5 week-nav-btn" title="Tuần tiếp"></i></th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="studentScheduleBody">
                             <tr>
-                                <td class="edge-col">Tiết 1</td>
-                                <td></td><td></td><td></td><td></td><td></td>
-                                <td rowspan="5">
-                                    <div class="subject-block" title="Nhập môn khoa học dữ liệu">
-                                        <div class="subject-title">Nhập môn khoa học dữ liệu (INF0983)</div>
-                                        <div>Nhóm: 02</div>
-                                        <div>Phòng: PM3-Phòng máy 3</div>
-                                        <div>GV: Hồ Ngọc Giàu</div>
-                                        <div class="mt-1 fw-bold text-danger"><i class="bi bi-clock"></i> 07:00 - 10:45</div>
-                                    </div>
-                                </td>
-                                <td></td><td class="edge-col">07:00</td>
+                                <td class="text-center text-muted py-4" colspan="9">Đang tải lịch học...</td>
                             </tr>
-                            <tr><td class="edge-col">Tiết 2</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">07:45</td></tr>
-                            <tr><td class="edge-col">Tiết 3</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">08:30</td></tr>
-                            <tr><td class="edge-col">Tiết 4</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">09:15</td></tr>
-                            <tr><td class="edge-col">Tiết 5</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">10:00</td></tr>
-                            
-                            <tr>
-                                <td class="edge-col">Tiết 6</td>
-                                <td rowspan="5">
-                                    <div class="subject-block" title="An ninh cơ sở dữ liệu">
-                                        <div class="subject-title">An ninh cơ sở dữ liệu (INF0953)</div>
-                                        <div>Nhóm: 01</div>
-                                        <div>Phòng: PLAB-Cơ sở 1</div>
-                                        <div>GV: Dương Quang Sinh</div>
-                                        <div class="mt-1 fw-bold text-danger"><i class="bi bi-clock"></i> 13:00 - 16:45</div>
-                                    </div>
-                                </td>
-                                <td rowspan="5">
-                                    <div class="subject-block" title="Nhật ngữ sơ cấp 2">
-                                        <div class="subject-title">Nhật ngữ sơ cấp 2 (JAP0024)</div>
-                                        <div>Nhóm: 02</div>
-                                        <div>Phòng: C4.0.1-C4.0.1</div>
-                                        <div>GV: Đinh Thị Thanh Hương</div>
-                                        <div class="mt-1 fw-bold text-danger"><i class="bi bi-clock"></i> 13:00 - 16:45</div>
-                                    </div>
-                                </td>
-                                <td></td><td></td><td></td><td></td><td></td><td class="edge-col">13:00</td>
-                            </tr>
-                            <tr><td class="edge-col">Tiết 7</td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">13:45</td></tr>
-                            <tr><td class="edge-col">Tiết 8</td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">14:30</td></tr>
-                            <tr><td class="edge-col">Tiết 9</td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">15:15</td></tr>
-                            <tr><td class="edge-col">Tiết 10</td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">16:00</td></tr>
-
-                            <tr><td class="edge-col">Tiết 11</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">16:45</td></tr>
-                            <tr><td class="edge-col">Tiết 12</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">17:30</td></tr>
-                            <tr><td class="edge-col">Tiết 13</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">18:15</td></tr>
-                            <tr><td class="edge-col">Tiết 14</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">19:00</td></tr>
-                            <tr><td class="edge-col">Tiết 15</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="edge-col">20:00</td></tr>
                         </tbody>
                     </table>
                 </div>

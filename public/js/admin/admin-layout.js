@@ -1,4 +1,6 @@
 // Mô tả: Khởi tạo hành vi layout riêng cho trang Admin.
+resetAdminLayoutPlaceholders();
+
 document.addEventListener('DOMContentLoaded', function () {
     // Dùng chung engine menu hiện có, nhưng chỉ định rõ selector cho Admin.
     if (window.CMSMenu && typeof window.CMSMenu.init === 'function') {
@@ -28,6 +30,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     hydrateAdminSharedData();
 });
+
+function resetAdminLayoutPlaceholders() {
+    document.querySelectorAll('.admin-operator-name, .admin-display-name').forEach(function (node) {
+        node.textContent = 'Đang tải...';
+    });
+
+    const headerAvatar = document.getElementById('headerAvatar');
+    if (headerAvatar) {
+        headerAvatar.src = 'https://ui-avatars.com/api/?name=Admin&background=6c757d&color=fff';
+    }
+}
 
 async function hydrateAdminSharedData() {
     try {

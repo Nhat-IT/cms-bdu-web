@@ -54,7 +54,8 @@ function ensureGoogleAuthEnabled(req, res, next) {
 // ========== LOCAL AUTHENTICATION (USERNAME + PASSWORD) ==========
 router.post('/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const username = String(req.body?.username || '').trim();
+    const password = String(req.body?.password || '');
 
     if (!username || !password) {
       return res.status(400).json({ success: false, message: 'Vui lòng nhập tên đăng nhập và mật khẩu' });
@@ -85,11 +86,11 @@ router.post('/login', async (req, res) => {
       derivedEmails.forEach((candidate) => loginCandidates.push(candidate));
     }
 
-    const whereClause = identityColumns.map((col) => `${col} IN (${loginCandidates.map(() => '?').join(', ')})`).join(' OR ');
-    const queryValues = [];
-    identityColumns.forEach(() => {
-      queryValues.push(...loginCandidates);
-    });
+    const whereClause = identityColumns.map((col) => {
+      const candidatePredicates = loginCandidates.map(() => `LOWER(${col}) = LOWER(?)`).join(' OR ');
+      return `(${candidatePredicates})`;
+    }).join(' OR ');
+    const queryValues = identityColumns.flatMap(() => loginCandidates);
 
     const [users] = await db.query(
       `SELECT * FROM users WHERE ${whereClause} LIMIT 1`,
@@ -123,12 +124,13 @@ router.post('/login', async (req, res) => {
         return res.status(500).json({ success: false, message: 'Lỗi đăng nhập' });
       }
 
+      const normalizedRole = String(user.role || '').trim().toLowerCase();
       let redirectUrl = '/student/home.html';
-      if (user.role === 'teacher') {
+      if (normalizedRole === 'teacher') {
         redirectUrl = '/teacher/home.html';
-      } else if (user.role === 'admin') {
+      } else if (normalizedRole === 'admin') {
         redirectUrl = '/admin/home.html';
-      } else if (user.role === 'bcs') {
+      } else if (normalizedRole === 'bcs') {
         redirectUrl = '/bcs/home.html';
       }
 
