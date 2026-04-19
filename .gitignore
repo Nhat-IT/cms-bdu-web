@@ -1,12 +1,9 @@
-node_modules/
+# Environment files
 .env
 .env.*
 !.env.example
 .env.local
 .env.*.local
-drive-credentials.json
-*service-account*.json
-*credentials*.json
 
 # IDE
 .vscode/
@@ -30,13 +27,14 @@ public/uploads/
 *.bak
 *.cache
 
-# Compiled files
-*.min.js
-*.min.css
-
-# Database (already in repo as db.sql)
+# Database
 *.sqlite
 *.db
+
+# Credentials
+drive-credentials.json
+*service-account*.json
+*credentials*.json
 
 # Private files
 config/passwords.php
