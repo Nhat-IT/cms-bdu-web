@@ -57,18 +57,17 @@ router.post('/login', async (req, res) => {
     const username = String(req.body?.username || '').trim();
     const password = String(req.body?.password || '');
 
+    console.log('[Auth] Login attempt for username:', username);
+
     if (!username || !password) {
       return res.status(400).json({ success: false, message: 'Vui lòng nhập tên đăng nhập và mật khẩu' });
     }
 
     const { identityColumns, passwordColumn } = await resolveUsersSchema();
-    console.log('[Auth] Login schema:', {
-      identityColumns,
-      passwordColumn,
-      loginInputLength: String(username || '').length
-    });
+    console.log('[Auth] Schema resolved:', { identityColumns, passwordColumn });
 
     if (!identityColumns.length || !passwordColumn) {
+      console.error('[Auth] Schema error: missing identity or password column');
       return res.status(500).json({
         success: false,
         message: 'Cấu trúc bảng users chưa đúng (thiếu cột đăng nhập hoặc mật khẩu)'
@@ -92,37 +91,51 @@ router.post('/login', async (req, res) => {
     }).join(' OR ');
     const queryValues = identityColumns.flatMap(() => loginCandidates);
 
+    console.log('[Auth] Query:', `SELECT * FROM users WHERE ${whereClause}`);
+    console.log('[Auth] Query values:', queryValues);
+
     const [users] = await db.query(
       `SELECT * FROM users WHERE ${whereClause} LIMIT 1`,
       queryValues
     );
-    console.log('[Auth] Login lookup result:', { found: users.length > 0 });
+    console.log('[Auth] User found:', users.length > 0, users.length > 0 ? 'Yes' : 'No');
 
     if (users.length === 0) {
       return res.status(401).json({ success: false, message: 'Tên đăng nhập hoặc mật khẩu không chính xác' });
     }
 
     const user = users[0];
+    console.log('[Auth] User data keys:', Object.keys(user));
+    console.log('[Auth] User role:', user.role);
+    console.log('[Auth] Password column used:', passwordColumn);
+    console.log('[Auth] Stored password (first 20 chars):', String(user[passwordColumn] || '').substring(0, 20));
+
     const storedPassword = String(user[passwordColumn] || '');
 
     // Support legacy plain-text passwords while keeping bcrypt for hashed ones.
     let passwordMatch = false;
     if (storedPassword.startsWith('$2a$') || storedPassword.startsWith('$2b$') || storedPassword.startsWith('$2y$')) {
       passwordMatch = await bcrypt.compare(password, storedPassword);
+      console.log('[Auth] Using bcrypt comparison, result:', passwordMatch);
     } else {
       passwordMatch = password === storedPassword;
+      console.log('[Auth] Using plain text comparison, result:', passwordMatch);
     }
 
     if (!passwordMatch) {
-      console.log('[Auth] Login password mismatch for matched user');
+      console.log('[Auth] Password mismatch');
       return res.status(401).json({ success: false, message: 'Tên đăng nhập hoặc mật khẩu không chính xác' });
     }
 
+    console.log('[Auth] Password matched, attempting session login...');
+
     req.logIn(user, (err) => {
       if (err) {
-        console.error('Login error:', err);
-        return res.status(500).json({ success: false, message: 'Lỗi đăng nhập' });
+        console.error('[Auth] Session login error:', err);
+        return res.status(500).json({ success: false, message: 'Lỗi đăng nhập: ' + err.message });
       }
+
+      console.log('[Auth] Session login successful, user id:', req.session?.passport?.user);
 
       const normalizedRole = String(user.role || '').trim().toLowerCase();
       let redirectUrl = '/student/home.html';
@@ -134,11 +147,21 @@ router.post('/login', async (req, res) => {
         redirectUrl = '/bcs/home.html';
       }
 
-      return res.json({ success: true, message: 'Đăng nhập thành công', redirectUrl });
+      console.log('[Auth] Redirect URL:', redirectUrl);
+
+      // Ensure session is saved before sending response
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error('[Auth] Session save error:', saveErr);
+          return res.status(500).json({ success: false, message: 'Lỗi lưu phiên đăng nhập' });
+        }
+        console.log('[Auth] Session saved successfully');
+        return res.json({ success: true, message: 'Đăng nhập thành công', redirectUrl });
+      });
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ success: false, message: 'Lỗi server' });
+    console.error('[Auth] Catch error:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server: ' + error.message });
   }
 });
 

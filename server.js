@@ -100,6 +100,52 @@ app.get('/notifications', (req, res) => {
 
 // --- API HỆ THỐNG ---
 
+// Debug endpoint: Check database connection and user info
+app.get('/api/debug/db-check', async (req, res) => {
+    try {
+        // Check DB connection
+        await db.testConnection();
+
+        // Get table columns
+        const [columns] = await db.query('SHOW COLUMNS FROM users');
+        const columnNames = columns.map(c => c.Field);
+
+        // Count users
+        const [userCount] = await db.query('SELECT COUNT(*) as count FROM users');
+        const count = userCount[0]?.count || 0;
+
+        // Get sample users (masked password)
+        let sampleUsers = [];
+        try {
+            const [users] = await db.query('SELECT * FROM users LIMIT 3');
+            sampleUsers = users.map(u => {
+                const masked = { ...u };
+                if (masked.password) {
+                    masked.password = masked.password.substring(0, 10) + '...[HIDDEN]';
+                }
+                if (masked.google_id) {
+                    masked.google_id = '[HAS GOOGLE ID]';
+                }
+                return masked;
+            });
+        } catch (e) {
+            sampleUsers = ['Error getting users: ' + e.message];
+        }
+
+        res.json({
+            ok: true,
+            tableColumns: columnNames,
+            userCount: count,
+            sampleUsers: sampleUsers
+        });
+    } catch (error) {
+        res.status(500).json({
+            ok: false,
+            error: error.code || error.message
+        });
+    }
+});
+
 app.get('/api/health/db', async (req, res) => {
     try {
         await db.testConnection();
