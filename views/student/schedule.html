@@ -95,6 +95,36 @@
 
     <div class="p-4">
         
+        <!-- KHUNG THỜI KHÓA BIỂU - HIỂN THỊ NGÀY/TR TUẦN HIỆN TẠI -->
+        <div class="schedule-header-bar mb-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex gap-2 align-items-center">
+                    <button class="btn btn-sm fw-bold schedule-view-btn active" id="viewByWeekBtn" onclick="switchScheduleView('week')">
+                        <i class="bi bi-calendar-week me-1"></i> Xem theo tuần
+                    </button>
+                    <button class="btn btn-sm fw-bold schedule-view-btn" id="viewByDayBtn" onclick="switchScheduleView('day')">
+                        <i class="bi bi-calendar-day me-1"></i> Xem theo ngày
+                    </button>
+                </div>
+                <div class="d-flex gap-1 flex-wrap" id="weekdayChips">
+                    <!-- Các chip ngày trong tuần, active theo ngày hiện tại -->
+                    <button class="btn btn-sm weekday-chip" data-day="2">T2</button>
+                    <button class="btn btn-sm weekday-chip" data-day="3">T3</button>
+                    <button class="btn btn-sm weekday-chip" data-day="4">T4</button>
+                    <button class="btn btn-sm weekday-chip" data-day="5">T5</button>
+                    <button class="btn btn-sm weekday-chip" data-day="6">T6</button>
+                    <button class="btn btn-sm weekday-chip" data-day="7">T7</button>
+                    <button class="btn btn-sm weekday-chip" data-day="8">CN</button>
+                </div>
+                <div class="today-info">
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">
+                        <i class="bi bi-calendar3 me-1"></i>
+                        <span id="currentWeekdayText">--</span>, <span id="currentDateText">--/--/----</span>, Tuần <span id="currentWeekText">--</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+        
         <div class="filter-section mb-3">
             <div class="row g-2 align-items-center">
                 <div class="col-12 col-md-4 col-lg-3">

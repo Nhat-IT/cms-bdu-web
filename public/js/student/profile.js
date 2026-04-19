@@ -33,7 +33,7 @@ function bindProfileData(profile) {
     const profileFullNameInput = document.getElementById('profileFullName');
     const profileEmailInput = document.getElementById('profileEmail');
     if (profileFullNameInput) profileFullNameInput.value = profile.full_name || '';
-    // Email: hiển thị phần trước @ nếu là Gmail (ví dụ: "22521401" thay vì "22521401@gmail.com")
+    // Email: luôn hiển thị phần trước @ (ví dụ: "22521401" thay vì "22521401@gmail.com")
     if (profileEmailInput) {
         const emailVal = profile.email || '';
         profileEmailInput.value = emailVal.includes('@') ? emailVal.split('@')[0] : emailVal;
@@ -53,13 +53,17 @@ function bindProfileData(profile) {
         addressInput.value = profile.address || '';
     }
 
-    // MSSV: ưu tiên lấy từ username (cơ sở dữ liệu), nếu đăng nhập bằng Gmail thì lấy phần số trước @
+    // MSSV: ưu tiên lấy từ username (cơ sở dữ liệu)
+    // Nếu đăng nhập bằng Gmail, username có thể là email -> trích phần số trước @
     const profileMssvEl = document.getElementById('profileMssv');
     if (profileMssvEl) {
-        const rawMssv = profile.username || '';
-        // Nếu username trống nhưng có email dạng Gmail, trích phần số trước @
-        const fromEmail = rawMssv ? '' : (profile.email || '').split('@')[0];
-        profileMssvEl.textContent = rawMssv || fromEmail || '--';
+        const rawUsername = profile.username || '';
+        let mssv = rawUsername;
+        // Neu username chua @ (dang nhap Gmail), trich phan so truoc @
+        if (mssv.includes('@')) {
+            mssv = mssv.split('@')[0];
+        }
+        profileMssvEl.textContent = mssv || '--';
     }
 
     // Chức vụ: ô tự nhập do sinh viên khai báo
