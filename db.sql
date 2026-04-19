@@ -15,6 +15,7 @@ CREATE TABLE users (
     email VARCHAR(100) NOT NULL UNIQUE,
     google_id VARCHAR(255),
     role ENUM('student', 'bcs', 'teacher', 'admin') DEFAULT 'student',
+    position VARCHAR(100) DEFAULT NULL COMMENT 'Chức vụ (BCS): Lớp trưởng, Thư ký, BTV...',
     avatar VARCHAR(255),
     birth_date DATE NULL,
     phone_number VARCHAR(20) NULL,

@@ -1049,6 +1049,9 @@ exports.getProfile = async (req, res) => {
             return res.status(404).json({ error: 'Profile not found' });
         }
 
+        // Thêm cờ is_bcs để frontend hiển thị ô chức vụ
+        profile.is_bcs = profile.role === 'bcs' || profile.position !== null;
+
         res.json(profile);
     } catch (error) {
         console.error('Profile error:', error);
@@ -1063,12 +1066,12 @@ exports.updateProfile = async (req, res) => {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        const { birthDate, phoneNumber, address, role } = req.body;
+        const { birthDate, phoneNumber, address, position } = req.body;
         const profile = await studentModel.updateStudentProfile(userId, {
             birthDate,
             phoneNumber,
             address,
-            role
+            position
         });
 
         res.json(profile);

@@ -112,7 +112,7 @@ function renderAssignmentList() {
         `;
     }).join('');
 
-    groupsContainer.innerHTML = html || '<div class="text-muted">Không có bài tập.</div>';
+    groupsContainer.innerHTML = html || '<div class="text-center text-muted py-5"><i class="bi bi-journal-x fs-1 d-block mb-3"></i>Chưa có bài tập nào được giao.</div>';
 }
 
 function filterSubjects() {

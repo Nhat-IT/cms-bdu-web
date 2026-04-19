@@ -29,14 +29,14 @@ function bindProfileData(profile) {
     const mainName = document.querySelector('.card-body.text-center.pt-0 h5.fw-bold.text-dark.mb-1');
     if (mainName) mainName.textContent = profile.full_name || 'Chưa cập nhật';
 
-    // Họ tên và Email (readonly): lấy từ DB do admin cấp
+    // Họ tên (readonly): lấy từ DB do admin cấp
     const profileFullNameInput = document.getElementById('profileFullName');
-    const profileEmailInput = document.getElementById('profileEmail');
     if (profileFullNameInput) profileFullNameInput.value = profile.full_name || '';
-    // Email: luôn hiển thị phần trước @ (ví dụ: "22521401" thay vì "22521401@gmail.com")
+
+    // Email: hiển thị FULL email (không cắt @)
+    const profileEmailInput = document.getElementById('profileEmail');
     if (profileEmailInput) {
-        const emailVal = profile.email || '';
-        profileEmailInput.value = emailVal.includes('@') ? emailVal.split('@')[0] : emailVal;
+        profileEmailInput.value = profile.email || '';
     }
 
     const birthDateInput = document.getElementById('profileBirthDate');
@@ -53,22 +53,34 @@ function bindProfileData(profile) {
         addressInput.value = profile.address || '';
     }
 
-    // MSSV: ưu tiên lấy từ username (cơ sở dữ liệu)
-    // Nếu đăng nhập bằng Gmail, username có thể là email -> trích phần số trước @
+    // MSSV: lấy phần số trước @ trong email (khi đăng nhập bằng Gmail)
     const profileMssvEl = document.getElementById('profileMssv');
     if (profileMssvEl) {
+        // Ưu tiên username, nếu là email thì lấy phần trước @
         const rawUsername = profile.username || '';
         let mssv = rawUsername;
-        // Neu username chua @ (dang nhap Gmail), trich phan so truoc @
+        // Nếu username chứa @ (đăng nhập bằng Gmail), trích phần số trước @
         if (mssv.includes('@')) {
             mssv = mssv.split('@')[0];
+        }
+        // Nếu vẫn trống, thử lấy từ email
+        if (!mssv && profile.email) {
+            mssv = profile.email.split('@')[0];
         }
         profileMssvEl.textContent = mssv || '--';
     }
 
-    // Chức vụ: ô tự nhập do sinh viên khai báo
+    // Chức vụ: CHỈ hiện cho tài khoản BCS (Ban cán sự)
     const roleInput = document.getElementById('profileRoleInput');
-    if (roleInput) roleInput.value = profile.role || '';
+    const roleContainer = roleInput ? roleInput.closest('.mb-3') : null;
+    if (roleInput) {
+        roleInput.value = profile.position || '';
+    }
+    if (roleContainer) {
+        // Ẩn/hiện dựa trên role từ API /api/me
+        const isBcs = profile.is_bcs || false;
+        roleContainer.style.display = isBcs ? '' : 'none';
+    }
 
     // Chuyên ngành
     const majorEl = document.getElementById('profileMajor');
@@ -107,7 +119,7 @@ async function handleUpdateProfile(e) {
             birthDate: document.getElementById('profileBirthDate')?.value || null,
             phoneNumber: document.getElementById('profilePhoneNumber')?.value.trim() || null,
             address: document.getElementById('profileAddress')?.value.trim() || null,
-            role: document.getElementById('profileRoleInput')?.value.trim() || null
+            position: document.getElementById('profileRoleInput')?.value.trim() || null
         };
 
         const response = await fetch('/api/student/profile', {
@@ -181,6 +193,24 @@ async function handleChangePassword(e) {
 
 document.getElementById('confirmPassword').addEventListener('input', function () {
     this.classList.remove('is-invalid');
+});
+
+// ==== Nút hiện/ẩn mật khẩu ====
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.toggle-password').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const targetId = this.dataset.target;
+            const input = document.getElementById(targetId);
+            if (!input) return;
+
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            const icon = this.querySelector('i');
+            if (icon) {
+                icon.className = isPassword ? 'bi bi-eye-fill text-muted' : 'bi bi-eye-slash-fill text-muted';
+            }
+        });
+    });
 });
 
 document.addEventListener('DOMContentLoaded', async () => {

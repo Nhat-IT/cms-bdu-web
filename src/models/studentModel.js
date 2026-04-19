@@ -27,6 +27,7 @@ exports.getStudentProfile = async (userId) => {
     try {
         const userColumns = await getUsersColumns();
         const hasRole = userColumns.has('role');
+        const hasPosition = userColumns.has('position');
         const [rows] = await db.query(
             `SELECT
                 u.id,
@@ -38,7 +39,8 @@ exports.getStudentProfile = async (userId) => {
                 ${selectUserColumn(userColumns, 'u', 'created_at')} AS created_at,
                 ${selectUserColumn(userColumns, 'u', 'birth_date')} AS birth_date,
                 ${selectUserColumn(userColumns, 'u', 'phone_number')} AS phone_number,
-                ${selectUserColumn(userColumns, 'u', 'address')} AS address
+                ${selectUserColumn(userColumns, 'u', 'address')} AS address,
+                ${selectUserColumn(userColumns, 'u', 'position')} AS position
              FROM users u
              WHERE u.id = ? ${hasRole ? "AND u.role = 'student'" : ''}`,
             [userId]
@@ -451,6 +453,7 @@ exports.getCurrentUser = async (userId) => {
                     ${selectUserColumn(userColumns, 'u', 'phone_number')} AS phone_number,
                     ${selectUserColumn(userColumns, 'u', 'address')} AS address,
                     ${selectUserColumn(userColumns, 'u', 'created_at')} AS created_at,
+                    ${selectUserColumn(userColumns, 'u', 'position')} AS position,
                     (
                         SELECT c.class_name
                         FROM class_students cs
@@ -489,6 +492,7 @@ exports.getCurrentUser = async (userId) => {
                     ${selectUserColumn(userColumns, 'u', 'phone_number')} AS phone_number,
                     ${selectUserColumn(userColumns, 'u', 'address')} AS address,
                     ${selectUserColumn(userColumns, 'u', 'created_at')} AS created_at,
+                    NULL AS position,
                     NULL AS class_name,
                     NULL AS department_name
                  FROM users u
@@ -542,22 +546,21 @@ exports.updateStudentProfile = async (userId, profileData) => {
             setParts.push('address = ?');
             params.push(address);
         }
-        // Cho phep sinh vien tu cap nhat chuc vu (luu vao cot role trong users)
-        const role = profileData.role;
-        if (userColumns.has('role') && role !== undefined) {
-            setParts.push('role = ?');
-            params.push(role || null);
+        // Cho phep sinh vien tu cap nhat chuc vu BCS (luu vao cot position trong users)
+        const position = profileData.position;
+        if (userColumns.has('position') && position !== undefined) {
+            setParts.push('position = ?');
+            params.push(position || null);
         }
 
         if (!setParts.length) {
             return this.getStudentProfile(userId);
         }
-        const roleClause = userColumns.has('role') ? " AND role = 'student'" : '';
 
         await db.query(
             `UPDATE users
              SET ${setParts.join(', ')}
-             WHERE id = ?${roleClause}`,
+             WHERE id = ?`,
             [...params, userId]
         );
 

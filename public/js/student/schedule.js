@@ -35,10 +35,14 @@ async function fetchSchedule() {
 	return response.json();
 }
 
-// Bien global luu du lieu lich de dung lai khi chuyen view
-window.gScheduleClasses = [];
-
 // Tra ve mang hoc ky {id, label} tu API
+async function fetchSemesters() {
+	const response = await fetch('/api/student/semesters');
+	if (!response.ok) return [];
+	return response.json().catch(() => []);
+}
+
+// Tra ve mang tuan {id, label, start_date, end_date} tu API
 async function fetchWeeks(semesterId) {
 	const url = semesterId ? `/api/student/weeks?semester_id=${semesterId}` : '/api/student/weeks';
 	const response = await fetch(url);
@@ -131,153 +135,21 @@ const PERIOD_TIMES = [
 // Mang co dinh 12 tiet (dung khi chua co du lieu)
 const ALL_PERIODS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
-// Thong tin tuan hien tai trong dropdown
-let gWeeksList = [];
-let gCurrentView = 'week'; // 'week' hoặc 'day'
-let gSelectedDay = null; // 2-8
-
-// Cap nhat thong tin ngay hien tai trong header bar
-function updateTodayInfo() {
-    const now = new Date();
-    const dayOfWeek = now.getDay(); // 0=CN, 1=T2
-    const weekdays = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
-    const displayDay = dayOfWeek === 0 ? 8 : dayOfWeek + 1; // CN = 8
-
-    const weekdayText = document.getElementById('currentWeekdayText');
-    const dateText = document.getElementById('currentDateText');
-    const weekText = document.getElementById('currentWeekText');
-
-    if (weekdayText) weekdayText.textContent = weekdays[dayOfWeek];
-    if (dateText) {
-        const dd = String(now.getDate()).padStart(2, '0');
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        dateText.textContent = `${dd}/${mm}/${now.getFullYear()}`;
-    }
-
-    // Cap nhat chip ngay active
-    const chips = document.querySelectorAll('.weekday-chip');
-    chips.forEach(chip => {
-        const chipDay = parseInt(chip.dataset.day || '0', 10);
-        chip.classList.toggle('active', chipDay === displayDay);
-    });
-
-    // Lay tuan hien tai
-    const weekSel = document.getElementById('weekSelect');
-    if (weekSel && weekSel.value) {
-        const opt = weekSel.options[weekSel.selectedIndex];
-        if (weekText && opt) {
-            weekText.textContent = opt.textContent.replace(/^Tuần\s*/i, '') || '--';
-        }
-    } else if (weekText) {
-        weekText.textContent = '--';
-    }
-
-    return displayDay;
-}
-
-// Chuyen doi giua xem theo tuan / xem theo ngay
-function switchScheduleView(view) {
-    gCurrentView = view;
-    const weekBtn = document.getElementById('viewByWeekBtn');
-    const dayBtn = document.getElementById('viewByDayBtn');
-    if (weekBtn) weekBtn.classList.toggle('active', view === 'week');
-    if (dayBtn) dayBtn.classList.toggle('active', view === 'day');
-
-    // Neu la xem theo ngay, auto chon ngay hien tai
-    if (view === 'day' && !gSelectedDay) {
-        const today = updateTodayInfo();
-        gSelectedDay = today;
-        highlightDayChip(today);
-    }
-
-    // Re-render schedule
-    renderScheduleByView();
-}
-
-// Highlight chip ngay duoc chon
-function highlightDayChip(day) {
-    const chips = document.querySelectorAll('.weekday-chip');
-    chips.forEach(chip => {
-        const chipDay = parseInt(chip.dataset.day || '0', 10);
-        chip.classList.toggle('active', chipDay === day);
-    });
-}
-
-// Danh dau nhung ngay co lich hoc
-function markDaysWithClasses(classes) {
-    const daysWithClass = new Set();
-    classes.forEach(item => {
-        if (hasValidSchedule(item)) {
-            daysWithClass.add(Number(item.day_of_week));
-        }
-    });
-
-    const chips = document.querySelectorAll('.weekday-chip');
-    chips.forEach(chip => {
-        const chipDay = parseInt(chip.dataset.day || '0', 10);
-        // CN = 8 trong HTML, nhung API tra ve 0 cho CN
-        const apiDay = chipDay === 8 ? 0 : chipDay;
-        chip.classList.toggle('has-class', daysWithClass.has(apiDay));
-    });
-}
-
-// Render schedule dua tren view hien tai
-function renderScheduleByView() {
-    // Lay du lieu lich tu API (da load san trong gClasses)
-    const classes = window.gScheduleClasses || [];
-    if (gCurrentView === 'day' && gSelectedDay) {
-        renderScheduleList(classes, gSelectedDay);
-    } else {
-        renderScheduleList(classes, null);
-    }
-}
-
-// Xu ly click chip ngay
-document.addEventListener('DOMContentLoaded', function() {
-    document.addEventListener('click', function(e) {
-        const chip = e.target.closest('.weekday-chip');
-        if (!chip) return;
-
-        const day = parseInt(chip.dataset.day || '0', 10);
-        if (day < 2 || day > 8) return;
-
-        gSelectedDay = day;
-        highlightDayChip(day);
-        switchScheduleView('day');
-    });
-});
-
-window.switchScheduleView = switchScheduleView;
-
-function renderScheduleList(classes, filterDay) {
+function renderScheduleList(classes) {
 	const tbody = document.getElementById('studentScheduleBody');
 	if (!tbody) return;
 
 	const scheduledClasses = classes.filter(hasValidSchedule);
-
-	// Neu co filter theo ngay, chi hien thi ngay do
-	let filteredByDay = scheduledClasses;
-	if (filterDay) {
-		filteredByDay = scheduledClasses.filter(item => {
-			const itemDay = Number(item.day_of_week || 0);
-			// Chuyen doi: filterDay=8 (CN) can khop voi itemDay=0 (API tra ve 0 cho CN)
-			if (filterDay === 8) return itemDay === 0;
-			return itemDay === filterDay;
-		});
-	}
 
 	// Map theo thu de tra cuu nhanh
 	const dayMap = new Map();
 	for (let day = 2; day <= 8; day += 1) {
 		dayMap.set(day, []);
 	}
-	filteredByDay.forEach(function (item) {
+	scheduledClasses.forEach(function (item) {
 		const day = Number(item.day_of_week || 0);
 		if (dayMap.has(day)) {
 			dayMap.get(day).push(item);
-		} else if (day === 0) {
-			// CN = 0 trong API
-			dayMap.get(8).push(item);
 		}
 	});
 
@@ -341,9 +213,9 @@ function renderScheduleList(classes, filterDay) {
 	});
 
 	// Neu hoan toan khong co du lieu, hien thong bao
-	if (!filteredByDay.length) {
+	if (!scheduledClasses.length) {
 		tbody.innerHTML = rows.join('') +
-			`<tr><td class="text-center text-muted py-3" colspan="11">${filterDay ? 'Ngày này không có lịch học.' : 'Bạn chưa có lịch học. Khi được phân công lớp, lịch sẽ hiển thị ở đây.'}</td></tr>`;
+			'<tr><td class="text-center text-muted py-3" colspan="11">Bạn chưa có lịch học. Khi được phân công lớp, lịch sẽ hiển thị ở đây.</td></tr>';
 	} else {
 		tbody.innerHTML = rows.join('');
 	}
@@ -402,10 +274,7 @@ async function initSchedulePage() {
 
 		// Lay lich hoc tu API
 		const classes = await fetchSchedule();
-		window.gScheduleClasses = classes;
-		updateTodayInfo();
-		markDaysWithClasses(classes);
-		renderScheduleByView();
+		renderScheduleList(classes);
 	} catch (error) {
 		console.error(error);
 		const tbody = document.getElementById('studentScheduleBody');
@@ -414,4 +283,3 @@ async function initSchedulePage() {
 }
 
 document.addEventListener('DOMContentLoaded', initSchedulePage);
-

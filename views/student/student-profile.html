@@ -169,7 +169,7 @@
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Email</label>
-                                    <input type="text" id="profileEmail" class="form-control border-secondary bg-light" value="" readonly title="Không thể tự thay đổi" placeholder="--">
+                                    <input type="email" id="profileEmail" class="form-control border-secondary bg-light" value="" readonly title="Không thể tự thay đổi" placeholder="--">
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold">Số điện thoại cá nhân <span class="text-danger">*</span></label>
@@ -196,16 +196,31 @@
                         <form onsubmit="return handleChangePassword(event)">
                             <div class="mb-3">
                                 <label class="form-label fw-bold text-muted">Mật khẩu hiện tại <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control border-secondary" placeholder="Nhập mật khẩu cũ..." required id="oldPassword">
+                                <div class="input-group">
+                                    <input type="password" class="form-control border-secondary" placeholder="Nhập mật khẩu cũ..." required id="oldPassword">
+                                    <span class="input-group-text bg-white cursor-pointer toggle-password" data-target="oldPassword">
+                                        <i class="bi bi-eye-slash-fill text-muted"></i>
+                                    </span>
+                                </div>
                             </div>
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-dark">Mật khẩu mới <span class="text-danger">*</span></label>
-                                    <input type="password" class="form-control border-danger" placeholder="Nhập mật khẩu mới..." required id="newPassword">
+                                    <div class="input-group">
+                                        <input type="password" class="form-control border-danger" placeholder="Nhập mật khẩu mới..." required id="newPassword">
+                                        <span class="input-group-text bg-white cursor-pointer toggle-password" data-target="newPassword">
+                                            <i class="bi bi-eye-slash-fill text-muted"></i>
+                                        </span>
+                                    </div>
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold text-dark">Xác nhận mật khẩu mới <span class="text-danger">*</span></label>
-                                    <input type="password" class="form-control border-danger" placeholder="Nhập lại mật khẩu mới..." required id="confirmPassword">
+                                    <div class="input-group">
+                                        <input type="password" class="form-control border-danger" placeholder="Nhập lại mật khẩu mới..." required id="confirmPassword">
+                                        <span class="input-group-text bg-white cursor-pointer toggle-password" data-target="confirmPassword">
+                                            <i class="bi bi-eye-slash-fill text-muted"></i>
+                                        </span>
+                                    </div>
                                     <div class="invalid-feedback">Mật khẩu xác nhận không khớp!</div>
                                 </div>
                             </div>
