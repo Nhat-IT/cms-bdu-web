@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/helpers.php';
@@ -85,6 +85,18 @@ foreach ($rawGroups as $g) {
     $groupsByCsId[$g['class_subject_id']][] = $g;
 }
 
+// Map môn học
+$subjectMap = [];
+foreach ($rawSubjects as $s) {
+    $subjectMap[$s['subject_id']] = $s;
+}
+
+// Group phân công theo class_name
+$asgByClass = [];
+foreach ($rawAssignments as $a) {
+    $asgByClass[$a['class_name']][] = $a;
+}
+
 // Build courses array
 $dbCourses = [];
 // Map teacher_id -> name for quick lookup
@@ -93,16 +105,23 @@ foreach ($teachers as $t) {
     $teacherMap[(string)$t['id']] = ($t['academic_title'] ? $t['academic_title'] . '. ' : '') . $t['name'];
 }
 
-foreach ($rawSubjects as $s) {
-    $subjId   = $s['subject_id'];
+foreach ($classes as $c) {
+    $className = $c['class_name'];
     $assignments = [];
-    foreach ($asgBySubj[$subjId] ?? [] as $a) {
+    $hasOpen = false;
+    
+    foreach ($asgByClass[$className] ?? [] as $a) {
         $csId   = $a['cs_id'];
         $groups = $groupsByCsId[$csId] ?? [['group_code'=>'N1','room'=>null,'day_of_week'=>null,'start_period'=>null,'end_period'=>null,'sub_teacher_id'=>null]];
         $openFmt = (!empty($a['start_date']) || !empty($a['end_date']))
             ? date('d/m/Y', strtotime($a['start_date']??'now')) . ' - ' . date('d/m/Y', strtotime($a['end_date']??'now'))
             : 'Chưa xác định';
         $mainTeacherName = $a['main_teacher_id'] ? ($teacherMap[(string)$a['main_teacher_id']] ?? null) : null;
+        
+        $subjInfo = $subjectMap[$a['subject_id']] ?? null;
+        if (!$subjInfo) continue;
+        if ($subjInfo['subject_open']) $hasOpen = true;
+
         $csStart = !empty($a['start_date']) ? strtotime($a['start_date']) : null;
         $csEnd   = !empty($a['end_date'])   ? strtotime($a['end_date'])   : null;
         $nowTs   = time();
@@ -111,17 +130,23 @@ foreach ($rawSubjects as $s) {
         } else {
             $computedStatus = '1'; // trong thời gian hoặc chưa xác định → mở
         }
+
         $assignments[] = [
-            'id'         => $s['subject_code'] . '-' . $csId,
-            'csId'       => $csId,
-            'classCode'  => $a['class_name'],
-            'year'       => $a['academic_year'] ?? '',
-            'semester'   => $a['hk'] ?? '',
-            'openWindow' => $openFmt,
+            'id'             => $subjInfo['subject_code'] . '-' . $csId,
+            'csId'           => $csId,
+            'subjectId'      => $a['subject_id'],
+            'subjectCode'    => $subjInfo['subject_code'],
+            'subjectName'    => $subjInfo['subject_name'],
+            'classCode'      => $className,
+            'credits'        => (int)$subjInfo['credits'],
+            'isOpen'         => (bool)$subjInfo['subject_open'],
+            'year'           => $a['academic_year'] ?? '',
+            'semester'       => $a['hk'] ?? '',
+            'openWindow'     => $openFmt,
             'computedStatus' => $computedStatus,
-            'teacherMain'=> $a['main_teacher_id'] ? (string)$a['main_teacher_id'] : null,
-            'teacherMainName' => $mainTeacherName,
-            'groups'     => array_map(fn($g) => [
+            'teacherMain'    => $a['main_teacher_id'] ? (string)$a['main_teacher_id'] : null,
+            'teacherMainName'=> $mainTeacherName,
+            'groups'         => array_map(fn($g) => [
                 'code'        => $g['group_code'],
                 'teacherMain' => $a['main_teacher_id'] ? (string)$a['main_teacher_id'] : null,
                 'teacherMainName' => $mainTeacherName,
@@ -131,18 +156,19 @@ foreach ($rawSubjects as $s) {
                 'start'       => $g['start_period'] ? (string)$g['start_period'] : null,
                 'end'         => $g['end_period']   ? (string)$g['end_period']   : null,
                 'room'        => $g['room'] ?? null,
-            ], $groups),
+            ], $groups)
         ];
     }
-    $dbCourses[] = [
-        'id'          => 'subj-' . $subjId,
-        'subjectId'   => $subjId,
-        'subjectCode' => $s['subject_code'],
-        'name'        => $s['subject_name'],
-        'credits'     => (int)$s['credits'],
-        'isOpen'      => (bool)$s['subject_open'],
-        'assignments' => $assignments,
-    ];
+    
+    if (!empty($assignments)) {
+        $dbCourses[] = [
+            'id'          => 'class-' . $className,
+            'classCode'   => $className,
+            'name'        => 'Lớp ' . $className,
+            'hasOpen'     => $hasOpen,
+            'assignments' => $assignments,
+        ];
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -600,25 +626,25 @@ window.days = [
     {value:'5',label:'Thứ 5'},{value:'6',label:'Thứ 6'},{value:'7',label:'Thứ 7'},{value:'8',label:'Chủ Nhật'}
 ];
 
-// Dữ liệu từ DB — subjects catalogue với assignments lồng trong
-window.allSubjects = <?= json_encode($dbCourses, JSON_UNESCAPED_UNICODE) ?>;
+// Dữ liệu từ DB — classes catalogue với assignments lồng trong
+window.allClasses = <?= json_encode($dbCourses, JSON_UNESCAPED_UNICODE) ?>;
 // Flat version cho backward compat (openSessionManager, addGroupToClass, v.v.)
 window.allAssignmentCourses = [];
-window.allSubjects.forEach(function(subj) {
-    (subj.assignments || []).forEach(function(asg) {
+window.allClasses.forEach(function(cls) {
+    (cls.assignments || []).forEach(function(asg) {
         window.allAssignmentCourses.push({
             id:          asg.id,
             csId:        asg.csId,
-            name:        subj.name,
-            credits:     subj.credits,
-            classCode:   asg.classCode,
+            name:        asg.subjectName,
+            credits:     asg.credits,
+            classCode:   cls.classCode,
             year:        asg.year,
             semester:    asg.semester,
-            isOpen:      subj.isOpen,
+            isOpen:      asg.isOpen,
             openWindow:  asg.openWindow,
             groups:      asg.groups,
-            subjectCode: subj.subjectCode,
-            subjectId:   subj.subjectId
+            subjectCode: asg.subjectCode,
+            subjectId:   asg.subjectId
         });
     });
 });

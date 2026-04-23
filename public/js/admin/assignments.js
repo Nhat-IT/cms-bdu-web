@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
     const sidebarToggle = document.getElementById('sidebarToggle');
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', function () {
@@ -130,17 +130,17 @@ function applyAssignmentFilters() {
     const semester = filterSemester.value;
     const status = filterStatus.value;
 
-    // Filter the nested structure: each subject shows assignments matching filters
-    assignmentOfferingsFiltered = (window.allSubjects || []).map(function(subj) {
-        const filteredAssignments = subj.assignments.filter(function(asg) {
+    // Filter the nested structure: each class shows assignments matching filters
+    assignmentOfferingsFiltered = (window.allClasses || []).map(function(cls) {
+        const filteredAssignments = cls.assignments.filter(function(asg) {
             const matchYear = year === 'all' || asg.year === year;
             const matchSemester = semester === 'all' || asg.semester === semester;
-            const matchStatus = status === 'all' || (status === 'open' ? subj.isOpen : !subj.isOpen);
+            const matchStatus = status === 'all' || (status === 'open' ? asg.isOpen : !asg.isOpen);
             return matchYear && matchSemester && matchStatus;
         });
-        return Object.assign({}, subj, { assignments: filteredAssignments });
-    }).filter(function(subj) {
-        return subj.assignments.length > 0;
+        return Object.assign({}, cls, { assignments: filteredAssignments });
+    }).filter(function(cls) {
+        return cls.assignments.length > 0;
     });
 
     renderAssignmentOfferings();
@@ -165,7 +165,7 @@ function renderAssignmentOfferings() {
         document.head.appendChild(style);
     }
 
-    assignmentOfferingsFiltered.forEach(function(subj) {
+    assignmentOfferingsFiltered.forEach(function(cls) {
         const card = document.createElement('div');
         card.className = 'card mb-4 bg-white shadow-sm';
         card.style.border = '1px solid #dee2e6';
@@ -173,14 +173,11 @@ function renderAssignmentOfferings() {
         card.style.overflow = 'hidden';
 
         // ─── CARD HEADER ───
-        const subjectCodeStr = subj.subjectCode || '';
-        const totalGroups = subj.assignments.reduce(function(s, a) { return s + a.groups.length; }, 0);
-        const scheduledGroups = subj.assignments.reduce(function(s, a) {
+        const classCodeStr = cls.classCode || '';
+        const totalGroups = cls.assignments.reduce(function(s, a) { return s + a.groups.length; }, 0);
+        const scheduledGroups = cls.assignments.reduce(function(s, a) {
             return s + a.groups.filter(function(g) { return g.day && g.start && g.end && g.room; }).length;
         }, 0);
-        const statusBadge = subj.isOpen
-            ? '<span class="badge me-1" style="background:#d1fae5;color:#0f766e;border:1px solid #10b981">Đang mở</span>'
-            : '<span class="badge me-1" style="background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db">Đã đóng</span>';
 
         let headerBadge = '';
         if (scheduledGroups === 0 && totalGroups > 0) {
@@ -194,30 +191,31 @@ function renderAssignmentOfferings() {
         const headHtml =
             '<div class="d-flex justify-content-between align-items-center p-4 pb-3">' +
                 '<div>' +
-                    '<h5 class="fw-bold mb-1 text-dark"><i class="bi bi-book me-2 text-primary"></i>' + subjectCodeStr + ' - ' + subj.name + '</h5>' +
-                    '<div class="small text-muted">' + subj.credits + ' tín chỉ' + headerBadge + '</div>' +
+                    '<h5 class="fw-bold mb-1 text-dark"><i class="bi bi-building me-2 text-primary"></i>' + cls.name + '</h5>' +
+                    '<div class="small text-muted">' + cls.assignments.length + ' môn học' + headerBadge + '</div>' +
                 '</div>' +
                 '<div class="d-flex gap-2 flex-wrap">' +
-                    '<button class="btn btn-sm btn-outline-secondary" onclick="uploadAllSubjectsStudentList(\'' + subj.subjectId + '\')"><i class="bi bi-upload me-1"></i> Tải lên SV</button>' +
-                    '<button class="btn btn-sm btn-outline-success" onclick="downloadAllSubjectsStudentList(\'' + subj.subjectId + '\')"><i class="bi bi-download me-1"></i> Tải xuống SV</button>' +
-                    '<button class="btn btn-sm btn-primary" onclick="addSubjectClass(\'' + subj.subjectId + '\', \'' + subj.name + '\')"><i class="bi bi-plus-circle me-1"></i> Thêm lớp HP</button>' +
+                    '<button class="btn btn-sm btn-outline-secondary" onclick="uploadClassStudentList(\'' + cls.classCode + '\')"><i class="bi bi-upload me-1"></i> Tải lên SV</button>' +
+                    '<button class="btn btn-sm btn-outline-success" onclick="downloadClassStudentList(\'' + cls.classCode + '\')"><i class="bi bi-download me-1"></i> Tải xuống SV</button>' +
+                    '<button class="btn btn-sm btn-primary" onclick="addClassSubject(\'' + cls.classCode + '\')"><i class="bi bi-plus-circle me-1"></i> Thêm môn học</button>' +
                 '</div>' +
             '</div>';
 
         // ─── TABLE HEADER ROW ───
         const tableHeaderHtml =
             '<div class="row align-items-center py-2 mx-0" style="background:#f1f5f9;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;font-size:0.75rem;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:0.04em">' +
-                '<div class="col-md-2">Lớp-Nhóm</div>' +
-                '<div class="col-md-2">Học kỳ</div>' +
-                '<div class="col-md-2">Giảng viên</div>' +
+                '<div class="col-md-2">Mã môn</div>' +
+                '<div class="col-md-2">Tên môn học</div>' +
+                '<div class="col-md-2">Giảng viên chính</div>' +
                 '<div class="col-md-2">Lịch học</div>' +
                 '<div class="col-md-2 text-center">Trạng thái</div>' +
                 '<div class="col-md-2 text-center">Hành động</div>' +
             '</div>';
 
         // ─── ASSIGNMENT ROWS ───
+        // ─── ASSIGNMENT ROWS ───
         let rowsHtml = '';
-        subj.assignments.forEach(function(asg, idx) {
+        cls.assignments.forEach(function(asg, idx) {
             const scheduledInAsg = asg.groups.filter(function(g) { return g.day && g.start && g.end && g.room; }).length;
 
             // Primary teacher (use group-level if main not set)
@@ -248,28 +246,28 @@ function renderAssignmentOfferings() {
             } else if (scheduledInAsg === 0) {
                 statusHtml = '<span class="badge" style="background:#fee2e2;color:#b91c1c">Chưa xếp lịch</span>';
             } else if (scheduledInAsg === asg.groups.length) {
-                statusHtml = '<span class="badge" style="background:#d1fae5;color:#0f766e">Đã xếp lịch</span>';
+                statusHtml = '<span class="badge" style="background:#d1fae5;color:#0f766e">Đã xếp (' + asg.groups.length + ' nhóm)</span>';
             } else {
-                statusHtml = '<span class="badge" style="background:#fef3c7;color:#b45309">' + scheduledInAsg + '/' + asg.groups.length + ' nhóm</span>';
+                statusHtml = '<span class="badge" style="background:#fef3c7;color:#b45309">Đang xếp (' + scheduledInAsg + '/' + asg.groups.length + ' nhóm)</span>';
             }
 
             // Action buttons
-            const openBtnDisabled = !subj.isOpen ? ' disabled title="Môn đã đóng"' : '';
+            const openBtnDisabled = !asg.isOpen ? ' disabled title="Môn đã đóng"' : '';
             const hasAnySchedule = asg.groups.some(function(g) { return g.day && g.start && g.end && g.room; });
             let actionBtn = '';
-            if (subj.isOpen) {
+            if (asg.isOpen) {
                 if (hasAnySchedule) {
-                    actionBtn = '<button class="btn btn-sm btn-outline-primary px-2"' + openBtnDisabled + ' onclick="openSessionManager(\'' + (asg.csId || asg.id) + '\', \'' + subj.name + '\', \'' + teacherDisplay.replace(/'/g, "\\'") + '\')"><i class="bi bi-calendar3 me-1"></i>QL lịch</button>';
+                    actionBtn = '<button class="btn btn-sm btn-outline-primary px-2"' + openBtnDisabled + ' onclick="openSessionManager(\'' + (asg.csId || asg.id) + '\', \'' + asg.subjectName + '\', \'' + teacherDisplay.replace(/'/g, "\\'") + '\')"><i class="bi bi-calendar3 me-1"></i>QL lịch</button>';
                 } else {
-                    actionBtn = '<button class="btn btn-sm btn-primary px-2"' + openBtnDisabled + ' onclick="openGroupScheduleModal(\'' + (asg.csId || asg.id) + '\', \'' + subj.name + '\', \'' + (asg.groups[0] ? asg.groups[0].code : 'N1') + '\', \'' + (asg.groups[0] ? asg.groups[0].teacherMain : '') + '\', \'' + (asg.groups[0] ? asg.groups[0].teacherSub : '') + '\', \'' + (asg.groups[0] ? asg.groups[0].day : '') + '\', \'\', \'\', \'\', \'' + asg.classCode + '\')"><i class="bi bi-calendar-plus me-1"></i>Xếp lịch</button>';
+                    actionBtn = '<button class="btn btn-sm btn-primary px-2"' + openBtnDisabled + ' onclick="openGroupScheduleModal(\'' + (asg.csId || asg.id) + '\', \'' + asg.subjectName + '\', \'' + (asg.groups[0] ? asg.groups[0].code : 'N1') + '\', \'' + (asg.groups[0] ? asg.groups[0].teacherMain : '') + '\', \'' + (asg.groups[0] ? asg.groups[0].teacherSub : '') + '\', \'' + (asg.groups[0] ? asg.groups[0].day : '') + '\', \'\', \'\', \'\', \'' + asg.classCode + '\')"><i class="bi bi-calendar-plus me-1"></i>Xếp lịch</button>';
                 }
             }
 
             const rowClass = (idx % 2 === 0) ? '' : 'style="background:#fafafa"';
             rowsHtml +=
                 '<div class="row align-items-center py-3 border-bottom mx-0 group-row" ' + rowClass + '>' +
-                    '<div class="col-md-2 fw-bold text-primary">' + asg.classCode + '</div>' +
-                    '<div class="col-md-2 small">' + (asg.semester ? 'HK' + asg.semester.replace('HK','') : '--') + ' ' + asg.year + '</div>' +
+                    '<div class="col-md-2 fw-bold text-primary" title="' + asg.subjectCode + '">' + asg.subjectCode + '</div>' +
+                    '<div class="col-md-2 small">' + asg.subjectName + '</div>' +
                     '<div class="col-md-2 small">' + teacherDisplay + '</div>' +
                     '<div class="col-md-2 small ' + scheduleClass + ' fw-bold">' + scheduleDisplay + '</div>' +
                     '<div class="col-md-2 text-center">' + statusHtml + '</div>' +
@@ -278,7 +276,7 @@ function renderAssignmentOfferings() {
         });
 
         // ─── FOOTER ───
-        const openWindow = subj.assignments[0] ? subj.assignments[0].openWindow : '--';
+        const openWindow = cls.assignments[0] ? cls.assignments[0].openWindow : '--';
         const footClass = scheduledGroups === totalGroups && totalGroups > 0
             ? 'style="background:#d1fae5;color:#0f766e;border-top:1px solid #10b981"'
             : (totalGroups > 0 && scheduledGroups === 0
