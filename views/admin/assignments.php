@@ -46,7 +46,6 @@ $rawAssignments = db_fetch_all("
         cs.subject_id,
         cs.start_date,
         cs.end_date,
-        cs.is_open             AS cs_is_open,
         c.class_name,
         sm.semester_name       AS hk,
         sm.academic_year,
@@ -104,18 +103,13 @@ foreach ($rawSubjects as $s) {
             ? date('d/m/Y', strtotime($a['start_date']??'now')) . ' - ' . date('d/m/Y', strtotime($a['end_date']??'now'))
             : 'Chưa xác định';
         $mainTeacherName = $a['main_teacher_id'] ? ($teacherMap[(string)$a['main_teacher_id']] ?? null) : null;
-        $csOpen = isset($a['cs_is_open']) ? (int)$a['cs_is_open'] : 1;
         $csStart = !empty($a['start_date']) ? strtotime($a['start_date']) : null;
         $csEnd   = !empty($a['end_date'])   ? strtotime($a['end_date'])   : null;
         $nowTs   = time();
-        if ($csOpen === 0) {
-            $computedStatus = '0'; // đã đóng
-        } elseif ($csStart && $csEnd && $nowTs >= $csStart && $nowTs <= $csEnd) {
-            $computedStatus = '1'; // đang mở
-        } elseif ($csStart && $nowTs < $csStart) {
-            $computedStatus = '1'; // chưa đến ngày mở, vẫn tính là mở
+        if ($csEnd && $nowTs > $csEnd) {
+            $computedStatus = '0'; // đã hết hạn → đóng
         } else {
-            $computedStatus = '0'; // đã hết hạn hoặc không xác định
+            $computedStatus = '1'; // trong thời gian hoặc chưa xác định → mở
         }
         $assignments[] = [
             'id'         => $s['subject_code'] . '-' . $csId,
