@@ -194,6 +194,18 @@
     font-weight: 700;
 }
 
+.assignment-teacher-main {
+    display: block;
+}
+
+.assignment-teacher-sub {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #334155;
+    margin-top: 2px;
+}
+
 .assignment-col-value.text-muted-soft {
     color: #64748b;
 }

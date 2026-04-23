@@ -200,6 +200,9 @@ function renderAssignmentOfferingsTable() {
             const mainTeacher = g.teacherMainName || getTeacherName(g.teacherMain) || '';
             const subTeacher = g.teacherSubName || getTeacherName(g.teacherSub) || '';
             const teacherDisplay = (mainTeacher && subTeacher) ? (mainTeacher + ' + ' + subTeacher) : (mainTeacher || subTeacher || '--');
+            const teacherHtml = mainTeacher && subTeacher
+                ? ('<span class="assignment-col-value assignment-teacher-main">' + mainTeacher + '</span><span class="assignment-teacher-sub">+ ' + subTeacher + '</span>')
+                : ('<span class="assignment-col-value">' + teacherDisplay + '</span>');
             const hasSchedule = Boolean(g.day && g.start && g.end && g.room);
             const scheduleDisplay = hasSchedule
                 ? (getDayLabel(String(g.day)) + ' | Tiết ' + g.start + '-' + g.end)
@@ -219,7 +222,7 @@ function renderAssignmentOfferingsTable() {
             return '' +
                 '<div class="assignment-group-row">' +
                     '<div><span class="assignment-group-pill">Lớp - ' + groupCode + '</span></div>' +
-                    '<div><span class="assignment-col-value">' + teacherDisplay + '</span></div>' +
+                    '<div>' + teacherHtml + '</div>' +
                     '<div><span class="assignment-col-value ' + (hasSchedule ? '' : 'text-muted-soft') + '">' + scheduleDisplay + '</span></div>' +
                     '<div><span class="assignment-col-value">' + roomDisplay + '</span></div>' +
                     '<div><span class="assignment-col-value">' + statusDisplay + '</span></div>' +
