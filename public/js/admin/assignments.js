@@ -101,18 +101,36 @@ function initAssignmentEnhancements() {
     const filterYear = document.getElementById('assignFilterYear');
     const filterSemester = document.getElementById('assignFilterSemester');
     const filterStatus = document.getElementById('assignFilterOpenStatus');
+    const searchInput = document.getElementById('searchAssignment');
     const uploadInput = document.getElementById('assignmentStudentUploadInput');
 
-    if (!filterYear || !filterSemester || !filterStatus || !uploadInput) {
+    if (!filterYear || !filterSemester || !filterStatus) {
         return;
     }
 
     filterYear.addEventListener('change', applyAssignmentFilters);
     filterSemester.addEventListener('change', applyAssignmentFilters);
     filterStatus.addEventListener('change', applyAssignmentFilters);
-    uploadInput.addEventListener('change', handleAssignmentUploadChange);
+    if (searchInput) {
+        searchInput.addEventListener('input', debounce(applyAssignmentFilters, 300));
+    }
+    if (uploadInput) {
+        uploadInput.addEventListener('change', handleAssignmentUploadChange);
+    }
 
     applyAssignmentFilters();
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 }
 
 
@@ -121,6 +139,7 @@ function applyAssignmentFilters() {
     const filterYear = document.getElementById('assignFilterYear');
     const filterSemester = document.getElementById('assignFilterSemester');
     const filterStatus = document.getElementById('assignFilterOpenStatus');
+    const searchInput = document.getElementById('searchAssignment');
 
     if (!filterYear || !filterSemester || !filterStatus) {
         return;
@@ -129,171 +148,127 @@ function applyAssignmentFilters() {
     const year = filterYear.value;
     const semester = filterSemester.value;
     const status = filterStatus.value;
+    const search = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
-    // Filter the nested structure: each class shows assignments matching filters
-    assignmentOfferingsFiltered = (window.allClasses || []).map(function(cls) {
-        const filteredAssignments = cls.assignments.filter(function(asg) {
-            const matchYear = year === 'all' || asg.year === year;
-            const matchSemester = semester === 'all' || asg.semester === semester;
-            const matchStatus = status === 'all' || (status === 'open' ? asg.isOpen : !asg.isOpen);
-            return matchYear && matchSemester && matchStatus;
+    // Flatten all assignments from all classes
+    let flatAssignments = [];
+    (window.allClasses || []).forEach(function(cls) {
+        (cls.assignments || []).forEach(function(asg) {
+            flatAssignments.push(Object.assign({}, asg, { classCode: cls.classCode, className: cls.name }));
         });
-        return Object.assign({}, cls, { assignments: filteredAssignments });
-    }).filter(function(cls) {
-        return cls.assignments.length > 0;
     });
 
-    renderAssignmentOfferings();
+    // Filter
+    assignmentOfferingsFiltered = flatAssignments.filter(function(asg) {
+        const matchYear = year === 'all' || asg.year === year;
+        const matchSemester = semester === 'all' || asg.semester === semester;
+        const matchStatus = status === 'all' || (status === 'open' ? asg.isOpen : !asg.isOpen);
+        
+        // Search filter
+        let matchSearch = true;
+        if (search) {
+            const searchText = search;
+            const classCode = (asg.classCode || '').toLowerCase();
+            const subjectName = (asg.subjectName || '').toLowerCase();
+            const subjectCode = (asg.subjectCode || '').toLowerCase();
+            const teacherName = (asg.teacherMainName || '').toLowerCase();
+            matchSearch = classCode.includes(searchText) || subjectName.includes(searchText) || 
+                         subjectCode.includes(searchText) || teacherName.includes(searchText);
+        }
+        
+        return matchYear && matchSemester && matchStatus && matchSearch;
+    });
+
+    renderAssignmentOfferingsTable();
 }
 
-function renderAssignmentOfferings() {
+function renderAssignmentOfferingsTable() {
     const container = document.getElementById('assignmentOfferingContainer');
     if (!container) return;
-
     container.innerHTML = '';
 
     if (assignmentOfferingsFiltered.length === 0) {
-        container.innerHTML = '<div class="text-center py-5 text-muted"><i class="bi bi-inbox fs-1"></i><br>Không có môn học nào trong bộ lọc đã chọn.</div>';
+        container.innerHTML = '<div class="text-center py-5 text-muted"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Không có dữ liệu phù hợp</div>';
         return;
     }
 
-    // Inject custom hover style once
-    if (!document.getElementById('custom-group-hover-style')) {
-        const style = document.createElement('style');
-        style.id = 'custom-group-hover-style';
-        style.innerHTML = '.group-row:hover { background-color: #f8f9fa !important; }';
-        document.head.appendChild(style);
-    }
+    assignmentOfferingsFiltered.forEach(function(asg) {
+        const groups = (asg.groups && asg.groups.length) ? asg.groups : [{ code: 'N1' }];
+        const firstUnscheduled = groups.find(function(g) { return !(g.day && g.start && g.end && g.room); });
 
-    assignmentOfferingsFiltered.forEach(function(cls) {
-        const card = document.createElement('div');
-        card.className = 'card mb-4 bg-white shadow-sm';
-        card.style.border = '1px solid #dee2e6';
-        card.style.borderRadius = '8px';
-        card.style.overflow = 'hidden';
-
-        // ─── CARD HEADER ───
-        const classCodeStr = cls.classCode || '';
-        const totalGroups = cls.assignments.reduce(function(s, a) { return s + a.groups.length; }, 0);
-        const scheduledGroups = cls.assignments.reduce(function(s, a) {
-            return s + a.groups.filter(function(g) { return g.day && g.start && g.end && g.room; }).length;
-        }, 0);
-
-        let headerBadge = '';
-        if (scheduledGroups === 0 && totalGroups > 0) {
-            headerBadge = '<span class="badge ms-2" style="background:#ffc107;color:#000;border:1px solid #f59e0b">Chưa xếp lịch</span>';
-        } else if (scheduledGroups >= totalGroups && totalGroups > 0) {
-            headerBadge = '<span class="badge ms-2" style="background:#d1fae5;color:#0f766e;border:1px solid #10b981">Đã xếp lịch</span>';
-        } else {
-            headerBadge = '<span class="badge ms-2" style="background:#dbeafe;color:#1d4ed8;border:1px solid #93c5fd">' + scheduledGroups + '/' + totalGroups + ' nhóm</span>';
-        }
-
-        const headHtml =
-            '<div class="d-flex justify-content-between align-items-center p-4 pb-3">' +
-                '<div>' +
-                    '<h5 class="fw-bold mb-1 text-dark"><i class="bi bi-building me-2 text-primary"></i>' + cls.name + '</h5>' +
-                    '<div class="small text-muted">' + cls.assignments.length + ' môn học' + headerBadge + '</div>' +
-                '</div>' +
-                '<div class="d-flex gap-2 flex-wrap">' +
-                    '<button class="btn btn-sm btn-outline-secondary" onclick="uploadClassStudentList(\'' + cls.classCode + '\')"><i class="bi bi-upload me-1"></i> Tải lên SV</button>' +
-                    '<button class="btn btn-sm btn-outline-success" onclick="downloadClassStudentList(\'' + cls.classCode + '\')"><i class="bi bi-download me-1"></i> Tải xuống SV</button>' +
-                    '<button class="btn btn-sm btn-primary" onclick="addClassSubject(\'' + cls.classCode + '\')"><i class="bi bi-plus-circle me-1"></i> Thêm môn học</button>' +
-                '</div>' +
-            '</div>';
-
-        // ─── TABLE HEADER ROW ───
-        const tableHeaderHtml =
-            '<div class="row align-items-center py-2 mx-0" style="background:#f1f5f9;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;font-size:0.75rem;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:0.04em">' +
-                '<div class="col-md-2">Mã môn</div>' +
-                '<div class="col-md-2">Tên môn học</div>' +
-                '<div class="col-md-2">Giảng viên chính</div>' +
-                '<div class="col-md-2">Lịch học</div>' +
-                '<div class="col-md-2 text-center">Trạng thái</div>' +
-                '<div class="col-md-2 text-center">Hành động</div>' +
-            '</div>';
-
-        // ─── ASSIGNMENT ROWS ───
-        // ─── ASSIGNMENT ROWS ───
-        let rowsHtml = '';
-        cls.assignments.forEach(function(asg, idx) {
-            const scheduledInAsg = asg.groups.filter(function(g) { return g.day && g.start && g.end && g.room; }).length;
-
-            // Primary teacher (use group-level if main not set)
-            const primaryGroup = asg.groups[0] || {};
-            const teacherDisplay = primaryGroup.teacherMainName || primaryGroup.teacherSubName || getTeacherName(primaryGroup.teacherMain) || '<span class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Chưa PC</span>';
-
-            // Schedule summary: show first scheduled group or "Chưa xếp"
-            const scheduledGroup = asg.groups.find(function(g) { return g.day && g.start && g.end && g.room; });
-            let scheduleDisplay = 'Chưa xếp';
-            let scheduleClass = 'text-danger';
-            if (scheduledGroup) {
-                scheduleDisplay = getDayLabel(scheduledGroup.day) + ' | T' + scheduledGroup.start + '-' + scheduledGroup.end;
-                scheduleClass = 'text-success';
-            }
-
-            // Room
-            let roomDisplay = scheduledGroup ? scheduledGroup.room : '--';
-            if (asg.groups.length > 1 && scheduledGroup) {
-                roomDisplay = scheduledGroup.room;
-            }
-
-            // Status from computed_status (same logic as classes-subjects.php)
-            let statusHtml = '';
-            if (asg.groups.length === 0) {
-                statusHtml = '<span class="badge" style="background:#f3f4f6;color:#6b7280">Chưa có nhóm</span>';
-            } else if (asg.computedStatus === '0') {
-                statusHtml = '<span class="badge" style="background:#f3f4f6;color:#6b7280">Đã đóng</span>';
-            } else if (scheduledInAsg === 0) {
-                statusHtml = '<span class="badge" style="background:#fee2e2;color:#b91c1c">Chưa xếp lịch</span>';
-            } else if (scheduledInAsg === asg.groups.length) {
-                statusHtml = '<span class="badge" style="background:#d1fae5;color:#0f766e">Đã xếp (' + asg.groups.length + ' nhóm)</span>';
-            } else {
-                statusHtml = '<span class="badge" style="background:#fef3c7;color:#b45309">Đang xếp (' + scheduledInAsg + '/' + asg.groups.length + ' nhóm)</span>';
-            }
-
-            // Action buttons
-            const openBtnDisabled = !asg.isOpen ? ' disabled title="Môn đã đóng"' : '';
-            const hasAnySchedule = asg.groups.some(function(g) { return g.day && g.start && g.end && g.room; });
-            let actionBtn = '';
+        const rowsHtml = groups.map(function(g) {
+            const mainTeacher = g.teacherMainName || getTeacherName(g.teacherMain) || '';
+            const subTeacher = g.teacherSubName || getTeacherName(g.teacherSub) || '';
+            const teacherDisplay = (mainTeacher && subTeacher) ? (mainTeacher + ' + ' + subTeacher) : (mainTeacher || subTeacher || '--');
+            const hasSchedule = Boolean(g.day && g.start && g.end && g.room);
+            const scheduleDisplay = hasSchedule
+                ? (getDayLabel(String(g.day)) + ' | Tiết ' + g.start + '-' + g.end)
+                : 'Chưa xếp lịch';
+            const roomDisplay = hasSchedule ? g.room : '--';
+            const statusDisplay = asg.computedStatus === '0' ? 'Đã đóng' : 'Đang mở';
+            const groupCode = g.code || 'N1';
+            const manageBtn = '<button class="btn btn-outline-primary" onclick="openSessionManager(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(mainTeacher || teacherDisplay) + '\', \'' + escapeHtml(groupCode) + '\')"><i class="bi bi-calendar-week me-1"></i>Quản lý lịch</button>';
+            let scheduleBtn = '';
             if (asg.isOpen) {
-                if (hasAnySchedule) {
-                    actionBtn = '<button class="btn btn-sm btn-outline-primary px-2"' + openBtnDisabled + ' onclick="openSessionManager(\'' + (asg.csId || asg.id) + '\', \'' + asg.subjectName + '\', \'' + teacherDisplay.replace(/'/g, "\\'") + '\')"><i class="bi bi-calendar3 me-1"></i>QL lịch</button>';
-                } else {
-                    actionBtn = '<button class="btn btn-sm btn-primary px-2"' + openBtnDisabled + ' onclick="openGroupScheduleModal(\'' + (asg.csId || asg.id) + '\', \'' + asg.subjectName + '\', \'' + (asg.groups[0] ? asg.groups[0].code : 'N1') + '\', \'' + (asg.groups[0] ? asg.groups[0].teacherMain : '') + '\', \'' + (asg.groups[0] ? asg.groups[0].teacherSub : '') + '\', \'' + (asg.groups[0] ? asg.groups[0].day : '') + '\', \'\', \'\', \'\', \'' + asg.classCode + '\')"><i class="bi bi-calendar-plus me-1"></i>Xếp lịch</button>';
-                }
+                scheduleBtn = hasSchedule
+                    ? ''
+                    : '<button class="btn btn-primary" onclick="openGroupScheduleModal(\'' + (asg.csId || '') + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(g.teacherMain || '') + '\', \'' + escapeHtml(g.teacherSub || '') + '\', \'' + escapeHtml(g.day || '') + '\', \'' + escapeHtml(g.start || '') + '\', \'' + escapeHtml(g.end || '') + '\', \'' + escapeHtml(g.room || '') + '\', \'' + escapeHtml(asg.classCode || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>';
+            } else {
+                scheduleBtn = '<button class="btn btn-outline-secondary" disabled><i class="bi bi-lock me-1"></i>Môn đã đóng</button>';
             }
+            const actionButtons = manageBtn + (scheduleBtn ? (' ' + scheduleBtn) : '');
 
-            const rowClass = (idx % 2 === 0) ? '' : 'style="background:#fafafa"';
-            rowsHtml +=
-                '<div class="row align-items-center py-3 border-bottom mx-0 group-row" ' + rowClass + '>' +
-                    '<div class="col-md-2 fw-bold text-primary" title="' + asg.subjectCode + '">' + asg.subjectCode + '</div>' +
-                    '<div class="col-md-2 small">' + asg.subjectName + '</div>' +
-                    '<div class="col-md-2 small">' + teacherDisplay + '</div>' +
-                    '<div class="col-md-2 small ' + scheduleClass + ' fw-bold">' + scheduleDisplay + '</div>' +
-                    '<div class="col-md-2 text-center">' + statusHtml + '</div>' +
-                    '<div class="col-md-2 text-center">' + actionBtn + '</div>' +
+            return '' +
+                '<div class="assignment-group-row">' +
+                    '<div><span class="assignment-group-pill">Lớp - ' + groupCode + '</span></div>' +
+                    '<div><span class="assignment-col-value">' + teacherDisplay + '</span></div>' +
+                    '<div><span class="assignment-col-value ' + (hasSchedule ? '' : 'text-muted-soft') + '">' + scheduleDisplay + '</span></div>' +
+                    '<div><span class="assignment-col-value">' + roomDisplay + '</span></div>' +
+                    '<div><span class="assignment-col-value">' + statusDisplay + '</span></div>' +
+                    '<div class="assignment-action">' + actionButtons + '</div>' +
                 '</div>';
-        });
+        }).join('');
 
-        // ─── FOOTER ───
-        const openWindow = cls.assignments[0] ? cls.assignments[0].openWindow : '--';
-        const footClass = scheduledGroups === totalGroups && totalGroups > 0
-            ? 'style="background:#d1fae5;color:#0f766e;border-top:1px solid #10b981"'
-            : (totalGroups > 0 && scheduledGroups === 0
-                ? 'style="background:#fff8e1;color:#b45309;border-top:1px solid #f59e0b"'
-                : 'style="background:#f8fafc;color:#64748b;border-top:1px solid #eef2f7"');
-        const footStatus = totalGroups === 0
-            ? 'Chưa có nhóm'
-            : (scheduledGroups === totalGroups ? 'Đã xếp lịch' : 'Chưa xếp lịch');
-
-        const footHtml =
-            '<div class="px-4 py-2 small fw-bold" ' + footClass + '>' +
-                'Số nhóm: ' + totalGroups + ' | Thời gian mở: ' + openWindow + ' | ' + footStatus +
+        const warningText = firstUnscheduled ? ('Chưa xếp lịch nhóm ' + getGroupLabel(firstUnscheduled.code || 'N1')) : '';
+        const actionDisabled = asg.isOpen ? '' : ' disabled';
+        const card = document.createElement('div');
+        card.className = 'assignment-offering-card';
+        card.innerHTML = '' +
+            '<div class="assignment-offering-head">' +
+                '<div>' +
+                    '<div class="assignment-offering-title">' + (asg.subjectCode || '--') + ' - ' + (asg.subjectName || '') + '</div>' +
+                    '<div class="assignment-offering-subtitle">' + (asg.credits || 0) + ' tín chỉ | Năm học: ' + (asg.year || '--') + '</div>' +
+                '</div>' +
+                '<div class="assignment-head-actions">' +
+                    '<button class="btn btn-outline-dark" onclick="uploadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"' + actionDisabled + '><i class="bi bi-upload me-1"></i>Tải lên SV</button>' +
+                    '<button class="btn btn-outline-success" onclick="downloadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"><i class="bi bi-download me-1"></i>Tải xuống SV</button>' +
+                    '<button class="btn btn-outline-primary" onclick="addGroupToClass(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(asg.subjectName) + '\')"' + actionDisabled + '><i class="bi bi-plus-circle me-1"></i>Thêm nhóm</button>' +
+                '</div>' +
+            '</div>' +
+            '<div class="assignment-grid-head">' +
+                '<div class="assignment-grid-head-item">NHÓM</div>' +
+                '<div class="assignment-grid-head-item">GIẢNG VIÊN</div>' +
+                '<div class="assignment-grid-head-item">LỊCH HỌC</div>' +
+                '<div class="assignment-grid-head-item">PHÒNG</div>' +
+                '<div class="assignment-grid-head-item">TRẠNG THÁI</div>' +
+                '<div class="assignment-grid-head-item assignment-grid-head-action">Hành động</div>' +
+            '</div>' +
+            rowsHtml +
+            '<div class="assignment-offering-foot">' +
+                '<span>Số nhóm: ' + groups.length + ' | Thời gian mở: ' + (asg.openWindow || '--') + '</span>' +
+                (warningText ? '<span class="assignment-warning-chip">' + warningText + '</span>' : '') +
             '</div>';
-
-        card.innerHTML = headHtml + tableHeaderHtml + rowsHtml + footHtml;
         container.appendChild(card);
     });
+}
+
+function escapeHtml(str) {
+    if (typeof str !== 'string') return '';
+    return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
+
+function renderAssignmentOfferings() {
+    renderAssignmentOfferingsTable();
 }
 
 

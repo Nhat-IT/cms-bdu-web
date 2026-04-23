@@ -213,57 +213,54 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
 
             <!-- Tab 1: Danh sách lớp học phần -->
             <div class="tab-pane fade show active" id="listView" role="tabpanel">
-                <div class="card border-0 shadow-sm rounded-0">
-                    <!-- Header -->
-                    <div class="card-header bg-white py-3 px-4 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-                        <h5 class="m-0 fw-bold text-dark"><i class="bi bi-calendar-week me-2 text-primary"></i>DANH SÁCH CÁC NHÓM ĐỂ XẾP LỊCH</h5>
-                        <div class="input-group admin-assignments-search" style="max-width: 320px;">
-                            <input type="text" class="form-control" placeholder="Tìm kiếm..." id="searchAssignment">
-                            <button class="btn btn-primary" type="button"><i class="bi bi-search"></i></button>
+                <div class="assignment-page-shell">
+                    <div class="assignment-page-header">
+                        <h5 class="assignment-page-title mb-0">DANH SÁCH CÁC LỚP ĐỂ XẾP LỊCH</h5>
+                        <div class="assignment-search-wrap">
+                            <div class="input-group">
+                                <input type="text" class="form-control assignment-search-input" placeholder="Tìm tên môn, mã lớp..." id="searchAssignment">
+                                <button class="btn btn-primary assignment-search-btn" type="button" aria-label="Tìm kiếm"><i class="bi bi-search"></i></button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Filters -->
-                    <div class="card-body bg-light py-3 px-4 border-bottom">
-                        <div class="row g-3 align-items-end">
-                            <div class="col-12 col-md-3">
-                                <label class="form-label small fw-bold text-muted mb-1">NĂM HỌC</label>
-                                <select class="form-select form-select-sm" id="assignFilterYear">
+                    <div class="assignment-filter-panel">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-4">
+                                <label class="assignment-filter-label">NĂM HỌC</label>
+                                <select class="form-select assignment-filter-select" id="assignFilterYear">
                                     <option value="all">Chọn tất cả</option>
                                     <?php foreach ($dbYears as $y): ?>
                                         <option value="<?= e($y['academic_year']) ?>"><?= e($y['academic_year']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-12 col-md-3">
-                                <label class="form-label small fw-bold text-muted mb-1">HỌC KỲ</label>
-                                <select class="form-select form-select-sm" id="assignFilterSemester">
+                            <div class="col-12 col-md-4">
+                                <label class="assignment-filter-label">HỌC KỲ</label>
+                                <select class="form-select assignment-filter-select" id="assignFilterSemester">
                                     <option value="all">Chọn tất cả</option>
                                     <?php foreach ($dbSemesters as $v => $l): ?>
                                         <option value="<?= $v ?>"><?= e($l) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-12 col-md-3">
-                                <label class="form-label small fw-bold text-muted mb-1">TRẠNG THÁI MÔN</label>
-                                <select class="form-select form-select-sm" id="assignFilterOpenStatus">
+                            <div class="col-12 col-md-4">
+                                <label class="assignment-filter-label">TRẠNG THÁI MÔN</label>
+                                <select class="form-select assignment-filter-select" id="assignFilterOpenStatus">
                                     <option value="all">Tất cả</option>
                                     <option value="open">Đang mở</option>
                                     <option value="closed">Đã đóng</option>
                                 </select>
                             </div>
-                            <div class="col-12 col-md-3 d-flex justify-content-end">
-                                <div class="small text-muted mt-2">
-                                    <i class="bi bi-info-circle me-1"></i>Thời gian mở môn được lấy từ cấu hình tại trang Quản lý Lớp &amp; Môn
-                                </div>
-                            </div>
+                        </div>
+                        <div class="assignment-filter-note">
+                            <i class="bi bi-info-circle"></i>
+                            <span>Thời gian mở môn được lấy từ cấu hình tại trang Quản lý Lớp &amp; Môn và chỉ hiển thị để tham chiếu.</span>
                         </div>
                     </div>
 
-                    <!-- Table -->
-                    <div class="card-body p-0">
-                        <div id="assignmentOfferingContainer"></div>
-                    </div>
+                    <div id="assignmentOfferingContainer" class="assignment-offering-list"></div>
+                    <div id="assignmentTableBody" class="d-none"></div>
                 </div>
             </div>
 
