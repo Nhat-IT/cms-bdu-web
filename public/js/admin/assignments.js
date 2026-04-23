@@ -270,6 +270,7 @@ function renderAssignmentOfferingsTable() {
             });
         });
 
+        const totalRows = rows.length;
         const rowsHtml = rows.map(function(row) {
             const asg = row.asg;
             const g = row.g;
@@ -297,8 +298,8 @@ function renderAssignmentOfferingsTable() {
             const downloadIconBtn = asg.hasStudents
                 ? '<button class="btn btn-outline-success btn-icon-only" title="Tải xuống danh sách sinh viên" onclick="downloadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"><i class="bi bi-download"></i></button>'
                 : '<button class="btn btn-outline-secondary btn-icon-only" title="Chưa có danh sách sinh viên trong DB" disabled><i class="bi bi-download"></i></button>';
-            const deleteGroupBtn = groupIndex > 0
-                ? '<button class="btn btn-outline-danger btn-icon-only assignment-delete-group" title="Xóa nhóm" onclick="deleteGroupFromClass(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-trash"></i></button>'
+            const deleteGroupBtn = totalRows > 1
+                ? '<button class="btn btn-outline-danger btn-icon-only assignment-delete-group" title="Xóa nhóm" onclick="deleteGroupFromClass(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(asg.subjectName || '') + '\', \'' + escapeHtml(String(asg.subjectId || '')) + '\')"><i class="bi bi-trash"></i></button>'
                 : '';
             const actionButtons = primaryActionBtn + '<span class="assignment-action-icons">' + uploadIconBtn + downloadIconBtn + deleteGroupBtn + '</span>';
 
@@ -1035,16 +1036,21 @@ function addGroupToClass(courseId, subjectName) {
         });
 }
 
-function deleteGroupFromClass(courseId, groupCode, subjectName) {
+function deleteGroupFromClass(courseId, groupCode, subjectName, subjectId) {
     let course = allAssignmentCourses.find(function(c) { return c.id === courseId; }) || null;
     if (!course) {
         alert('Không tìm thấy môn học.');
         return;
     }
 
-    const groupList = Array.isArray(course.groups) ? course.groups : [];
-    if (groupList.length <= 1) {
-        alert('Mỗi môn học phải có ít nhất 1 nhóm, không thể xóa nhóm cuối cùng.');
+    // Tổng số nhóm của toàn bộ cùng môn (gộp nhiều lớp), phải giữ lại ít nhất 1.
+    const totalGroupsInSubject = allAssignmentCourses.reduce(function(sum, c) {
+        const sameSubject = String(c.subjectId || '') === String(subjectId || '');
+        if (!sameSubject) return sum;
+        return sum + ((c.groups && c.groups.length) ? c.groups.length : 0);
+    }, 0);
+    if (totalGroupsInSubject <= 1) {
+        alert('Mỗi môn học phải có ít nhất 1 nhóm, không thể xóa nhóm cuối cùng của môn.');
         return;
     }
 
