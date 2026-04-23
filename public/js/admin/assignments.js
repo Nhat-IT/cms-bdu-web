@@ -264,7 +264,7 @@ function renderAssignmentOfferingsTable() {
             const uploadIconBtn = '<button class="btn btn-outline-dark btn-icon-only" title="Tải lên danh sách sinh viên" onclick="uploadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"' + (asg.isOpen ? '' : ' disabled') + '><i class="bi bi-upload"></i></button>';
             const downloadIconBtn = asg.hasStudents
                 ? '<button class="btn btn-outline-success btn-icon-only" title="Tải xuống danh sách sinh viên" onclick="downloadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"><i class="bi bi-download"></i></button>'
-                : '';
+                : '<button class="btn btn-outline-secondary btn-icon-only" title="Chưa có danh sách sinh viên trong DB" disabled><i class="bi bi-download"></i></button>';
             const deleteGroupBtn = groupIndex > 0
                 ? '<button class="btn btn-outline-danger btn-icon-only" title="Xóa nhóm" onclick="deleteGroupFromClass(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-trash"></i></button>'
                 : '';
