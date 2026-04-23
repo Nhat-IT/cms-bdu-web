@@ -79,6 +79,14 @@ let pendingAssignmentUploadClass = '';
 let currentSessionCourse = null;
 let currentSessionGroupCode = null;
 
+function resolveClassSubjectId(asg) {
+    const direct = parseInt(asg && asg.csId, 10);
+    if (Number.isFinite(direct) && direct > 0) return direct;
+    const idText = String((asg && asg.id) || '');
+    const m = idText.match(/-(\d+)$/);
+    return m ? parseInt(m[1], 10) : 0;
+}
+
 function getTeacherName(teacherId) {
     const list = window.teachers || teachers || [];
     const teacher = list.find(function (t) { return t.id === teacherId; });
@@ -211,7 +219,8 @@ function renderAssignmentOfferingsTable() {
             const statusDisplay = asg.computedStatus === '0' ? 'Đã đóng' : 'Đang mở';
             const groupCode = g.code || 'N1';
             const manageBtn = '<button class="btn btn-outline-primary" onclick="openSessionManager(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(mainTeacher || teacherDisplay) + '\', \'' + escapeHtml(groupCode) + '\')"><i class="bi bi-calendar-week me-1"></i>Quản lý lịch</button>';
-            const scheduleBtn = '<button class="btn btn-primary" onclick="openGroupScheduleModal(\'' + (asg.csId || '') + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(g.teacherMain || '') + '\', \'' + escapeHtml(g.teacherSub || '') + '\', \'' + escapeHtml(g.day || '') + '\', \'' + escapeHtml(g.start || '') + '\', \'' + escapeHtml(g.end || '') + '\', \'' + escapeHtml(g.room || '') + '\', \'' + escapeHtml(asg.classCode || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>';
+            const classSubjectId = resolveClassSubjectId(asg);
+            const scheduleBtn = '<button class="btn btn-primary" onclick="openGroupScheduleModal(\'' + classSubjectId + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(g.teacherMain || '') + '\', \'' + escapeHtml(g.teacherSub || '') + '\', \'' + escapeHtml(g.day || '') + '\', \'' + escapeHtml(g.start || '') + '\', \'' + escapeHtml(g.end || '') + '\', \'' + escapeHtml(g.room || '') + '\', \'' + escapeHtml(asg.classCode || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>';
             const actionButtons = (!hasSchedule && asg.isOpen) ? scheduleBtn : manageBtn;
 
             return '' +
@@ -515,7 +524,13 @@ function openInitialScheduleModal(mode, csId, classCode, subjectName, teacher = 
 }
 
 function openGroupScheduleModal(csId, subjectName, groupCode, teacherId, assistantId, dayOfWeek, startPeriod, endPeriod, room, classCode) {
-    openInitialScheduleModal('edit', csId, classCode || csId, subjectName, teacherId, '', '', dayOfWeek, startPeriod, endPeriod, room, assistantId, groupCode);
+    const parsedCsId = parseInt(csId, 10);
+    if (!Number.isFinite(parsedCsId) || parsedCsId <= 0) {
+        if (window.showToast) window.showToast('Không xác định được lớp học phần để xếp lịch.', 'error');
+        else alert('Không xác định được lớp học phần để xếp lịch.');
+        return;
+    }
+    openInitialScheduleModal('edit', parsedCsId, classCode || parsedCsId, subjectName, teacherId, '', '', dayOfWeek, startPeriod, endPeriod, room, assistantId, groupCode);
 }
 
 function handleInitialScheduleSubmit(event) {
@@ -574,6 +589,11 @@ function handleInitialScheduleSubmit(event) {
 
 function openSessionManager(courseId, subjectName, teacherName, groupCode = null) {
     const course = allAssignmentCourses.find(function (item) { return item.id === courseId; });
+    if (!course) {
+        if (window.showToast) window.showToast('Không tìm thấy dữ liệu lớp học phần để quản lý lịch.', 'error');
+        else alert('Không tìm thấy dữ liệu lớp học phần để quản lý lịch.');
+        return;
+    }
     const displayClassCode = course && course.classCode ? course.classCode : courseId;
     const groupText = groupCode ? ' | ' + getGroupLabel(groupCode) : '';
     document.getElementById('lblClassInfo').innerText = displayClassCode + ' | ' + subjectName + groupText + ' | GV: ' + teacherName;
