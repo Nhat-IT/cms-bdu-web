@@ -184,6 +184,26 @@ try {
             }
         }
 
+        // Chặn xếp lịch cho môn đã đóng
+        $subjectStatus = db_fetch_one(
+            'SELECT s.is_active, s.open_date, s.close_date
+             FROM class_subjects cs
+             JOIN subjects s ON s.id = cs.subject_id
+             WHERE cs.id = ?
+             LIMIT 1',
+            [$classSubjectId]
+        );
+        if ($subjectStatus) {
+            $today = date('Y-m-d');
+            $isActive = (int)($subjectStatus['is_active'] ?? 0) === 1;
+            $openDate = $subjectStatus['open_date'] ?? null;
+            $closeDate = $subjectStatus['close_date'] ?? null;
+            $isOpenByDate = !empty($openDate) && $openDate <= $today && (empty($closeDate) || $closeDate >= $today);
+            if (!$isActive || !$isOpenByDate) {
+                jsonResponse(['ok' => false, 'message' => 'subject_closed'], 400);
+            }
+        }
+
         $groupData = db_fetch_one('SELECT id, sub_teacher_id FROM class_subject_groups WHERE class_subject_id = ? AND group_code = ? LIMIT 1', [$classSubjectId, $groupCode]);
         $isUpdate = (bool) $groupData;
 

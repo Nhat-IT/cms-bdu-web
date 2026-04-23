@@ -116,7 +116,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                     <div class="d-flex align-items-center">
                         <div class="icon-box-custom bg-light-danger me-3 text-danger"><i class="bi bi-journal-bookmark-fill"></i></div>
                         <div>
-                            <p class="text-danger fw-bold mb-1 small">LỚP ĐANG MỞ</p>
+                            <p class="text-danger fw-bold mb-1 small">MÔN HỌC ĐANG MỞ</p>
                             <h3 class="mb-0 fw-bold text-dark"><?php echo number_format($openClassSubjects); ?></h3>
                         </div>
                     </div>

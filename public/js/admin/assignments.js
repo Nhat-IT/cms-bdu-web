@@ -79,6 +79,26 @@ let pendingAssignmentUploadClass = '';
 let currentSessionCourse = null;
 let currentSessionGroupCode = null;
 
+function findAssignmentCourse(ref) {
+    const refText = String(ref || '');
+    let course = allAssignmentCourses.find(function (c) { return String(c.id) === refText; }) || null;
+    if (course) return course;
+
+    const refNum = parseInt(refText, 10);
+    if (Number.isFinite(refNum) && refNum > 0) {
+        course = allAssignmentCourses.find(function (c) { return Number(c.csId) === refNum; }) || null;
+    }
+    return course;
+}
+
+function isSubjectOpen(subjectId) {
+    const sid = String(subjectId || '').trim();
+    if (!sid) return true;
+    const matched = allAssignmentCourses.find(function (c) { return String(c.subjectId || '') === sid; });
+    if (!matched) return true;
+    return !!matched.isOpen;
+}
+
 function triggerAssignmentFilePicker() {
     const uploadInput = document.getElementById('assignmentStudentUploadInput');
     if (!uploadInput) return;
@@ -275,8 +295,15 @@ function renderAssignmentOfferingsTable() {
             const asg = row.asg;
             const g = row.g;
             const groupIndex = row.groupIndex;
-            const mainTeacher = g.teacherMainName || getTeacherName(g.teacherMain) || '';
-            const subTeacher = g.teacherSubName || getTeacherName(g.teacherSub) || '';
+
+            function normalizeTeacherName(name) {
+                const text = String(name || '').trim();
+                if (!text || text === '—' || text === '--' || text === '-') return '';
+                return text;
+            }
+
+            const mainTeacher = normalizeTeacherName(g.teacherMainName || getTeacherName(g.teacherMain));
+            const subTeacher = normalizeTeacherName(g.teacherSubName || getTeacherName(g.teacherSub));
             const teacherDisplay = (mainTeacher && subTeacher) ? (mainTeacher + ' + ' + subTeacher) : (mainTeacher || subTeacher || '--');
             const teacherHtml = mainTeacher && subTeacher
                 ? ('<span class="assignment-col-value assignment-teacher-main">' + mainTeacher + '</span><span class="assignment-teacher-sub">+ ' + subTeacher + '</span>')
@@ -294,23 +321,28 @@ function renderAssignmentOfferingsTable() {
             const isFirstGroup = groupIndex === 0 || normalizedGroupCode === 'N1';
             const classSubjectId = resolveClassSubjectId(asg);
             const hasClassSubject = Number.isFinite(classSubjectId) && classSubjectId > 0;
-            const manageBtn = hasClassSubject
+            const isClosedSubject = !subj.isOpen;
+            const manageBtn = (hasClassSubject && !isClosedSubject)
                 ? '<button class="btn btn-outline-primary" onclick="openSessionManager(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(mainTeacher || teacherDisplay) + '\', \'' + escapeHtml(groupCode) + '\')"><i class="bi bi-calendar-week me-1"></i>Quản lý lịch</button>'
-                : '<button class="btn btn-primary" onclick="addSubjectClass(\'' + escapeHtml(String(asg.subjectId || '')) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>';
-            const scheduleBtn = hasClassSubject
+                : (isClosedSubject
+                    ? '<button class="btn btn-secondary" disabled title="Môn đã đóng, không thể xếp lịch"><i class="bi bi-lock me-1"></i>Môn đã đóng</button>'
+                    : '<button class="btn btn-primary" onclick="addSubjectClass(\'' + escapeHtml(String(asg.subjectId || '')) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>');
+            const scheduleBtn = (hasClassSubject && !isClosedSubject)
                 ? '<button class="btn btn-primary" onclick="openGroupScheduleModal(\'' + classSubjectId + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(g.teacherMain || '') + '\', \'' + escapeHtml(g.teacherSub || '') + '\', \'' + escapeHtml(g.day || '') + '\', \'' + escapeHtml(g.start || '') + '\', \'' + escapeHtml(g.end || '') + '\', \'' + escapeHtml(g.room || '') + '\', \'' + escapeHtml(asg.classCode || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>'
-                : '<button class="btn btn-primary" onclick="addSubjectClass(\'' + escapeHtml(String(asg.subjectId || '')) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>';
+                : (isClosedSubject
+                    ? '<button class="btn btn-secondary" disabled title="Môn đã đóng, không thể xếp lịch"><i class="bi bi-lock me-1"></i>Môn đã đóng</button>'
+                    : '<button class="btn btn-primary" onclick="addSubjectClass(\'' + escapeHtml(String(asg.subjectId || '')) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>');
             const primaryActionBtn = hasClassSubject ? ((!hasSchedule && subj.isOpen) ? scheduleBtn : manageBtn) : manageBtn;
             const uploadIconBtn = hasClassSubject
                 ? '<button class="btn btn-outline-dark btn-icon-only" title="Tải lên danh sách sinh viên" onclick="uploadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"><i class="bi bi-upload"></i></button>'
-                : '<button class="btn btn-outline-primary btn-icon-only" title="Xếp lịch ngay để tạo lớp học phần trước khi tải lên" onclick="addSubjectClass(\'' + escapeHtml(String(asg.subjectId || '')) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-upload"></i></button>';
+                : '<button class="btn btn-outline-secondary btn-icon-only" title="Cần xếp lịch trước khi tải lên danh sách sinh viên" disabled><i class="bi bi-upload"></i></button>';
             const downloadIconBtn = asg.hasStudents
                 ? (hasClassSubject
                     ? '<button class="btn btn-outline-success btn-icon-only" title="Tải xuống danh sách sinh viên" onclick="downloadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"><i class="bi bi-download"></i></button>'
-                    : '<button class="btn btn-outline-primary btn-icon-only" title="Xếp lịch ngay để tạo lớp học phần trước khi tải xuống" onclick="addSubjectClass(\'' + escapeHtml(String(asg.subjectId || '')) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-download"></i></button>')
+                    : '<button class="btn btn-outline-secondary btn-icon-only" title="Cần xếp lịch trước khi tải xuống danh sách sinh viên" disabled><i class="bi bi-download"></i></button>')
                 : (hasClassSubject
                     ? '<button class="btn btn-outline-secondary btn-icon-only" title="Chưa có danh sách sinh viên trong DB" disabled><i class="bi bi-download"></i></button>'
-                    : '<button class="btn btn-outline-primary btn-icon-only" title="Xếp lịch ngay để tạo lớp học phần trước khi tải xuống" onclick="addSubjectClass(\'' + escapeHtml(String(asg.subjectId || '')) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-download"></i></button>');
+                    : '<button class="btn btn-outline-secondary btn-icon-only" title="Cần xếp lịch trước khi tải xuống danh sách sinh viên" disabled><i class="bi bi-download"></i></button>');
             const deleteGroupBtn = (totalRows > 1 && hasClassSubject && !isFirstGroup)
                 ? '<button class="btn btn-outline-danger btn-icon-only assignment-delete-group" title="Xóa nhóm ' + groupCode + ' (total:' + totalRows + ')" onclick="deleteGroupFromClass(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(asg.subjectName || '') + '\', \'' + escapeHtml(String(asg.subjectId || '')) + '\')"><i class="bi bi-trash"></i></button>'
                 : '';
@@ -387,8 +419,8 @@ function uploadAssignmentStudentList(courseId) {
 
     const csId = resolveClassSubjectId(course);
     if (!csId) {
-        if (window.showToast) window.showToast('Môn này chưa có lớp học phần. Vui lòng xếp lịch trước.', 'warning');
-        addSubjectClass(course.subjectId || '', course.name || '');
+        if (window.showToast) window.showToast('Môn này chưa có lớp học phần. Vui lòng xếp lịch trước khi tải lên.', 'warning');
+        else alert('Môn này chưa có lớp học phần. Vui lòng xếp lịch trước khi tải lên.');
         return;
     }
 
@@ -603,8 +635,8 @@ function downloadAssignmentStudentList(courseId) {
 
     const csId = resolveClassSubjectId(course);
     if (!csId) {
-        if (window.showToast) window.showToast('Môn này chưa có lớp học phần. Vui lòng xếp lịch trước.', 'warning');
-        addSubjectClass(course.subjectId || '', course.name || '');
+        if (window.showToast) window.showToast('Môn này chưa có lớp học phần. Vui lòng xếp lịch trước khi tải xuống.', 'warning');
+        else alert('Môn này chưa có lớp học phần. Vui lòng xếp lịch trước khi tải xuống.');
         return;
     }
 
@@ -739,11 +771,26 @@ function openGroupScheduleModal(csId, subjectName, groupCode, teacherId, assista
         else alert('Không xác định được lớp học phần để xếp lịch.');
         return;
     }
+    const course = findAssignmentCourse(parsedCsId);
+    if (course && !course.isOpen) {
+        if (window.showToast) window.showToast('Môn học đã đóng, không thể xếp lịch.', 'warning');
+        else alert('Môn học đã đóng, không thể xếp lịch.');
+        return;
+    }
     openInitialScheduleModal('edit', parsedCsId, classCode || parsedCsId, subjectName, teacherId, '', '', dayOfWeek, startPeriod, endPeriod, room, assistantId, groupCode);
 }
 
 function handleInitialScheduleSubmit(event) {
     event.preventDefault();
+
+    const currentCsId = parseInt(window._currentCsId, 10);
+    const currentSubjectId = window._currentSubjectId || '';
+    if ((Number.isFinite(currentCsId) && currentCsId > 0 && (findAssignmentCourse(currentCsId)?.isOpen === false))
+        || (currentSubjectId && !isSubjectOpen(currentSubjectId))) {
+        if (window.showToast) window.showToast('Môn học đã đóng, không thể xếp lịch.', 'warning');
+        else alert('Môn học đã đóng, không thể xếp lịch.');
+        return false;
+    }
 
     const start = parseInt(document.getElementById('initStartPeriod').value, 10);
     const end = parseInt(document.getElementById('initEndPeriod').value, 10);
@@ -787,6 +834,7 @@ function handleInitialScheduleSubmit(event) {
                     let msg = 'Có lỗi xảy ra khi lưu lịch.';
                     if (res.message === 'conflict_room') msg = res.detail || 'Phòng học đã bị trùng trong thời gian này.';
                     else if (res.message === 'conflict_teacher') msg = res.detail || 'Giảng viên đã bị trùng lịch trong thời gian này.';
+                    else if (res.message === 'subject_closed') msg = 'Môn học đã đóng, không thể xếp lịch.';
                     window.showToast(msg, 'error');
                 }
             })
@@ -1041,19 +1089,7 @@ function deleteSingleSession() {
 }
 
 function addGroupToClass(courseId, subjectName) {
-    let course = null;
-    // Try flat list first
-    course = allAssignmentCourses.find(function (c) { return c.id === courseId; });
-    // Try nested allSubjects
-    if (!course && window.allSubjects) {
-        window.allSubjects.forEach(function(subj) {
-            (subj.assignments || []).forEach(function(asg) {
-                if (asg.id === courseId || asg.csId == courseId) {
-                    course = asg;
-                }
-            });
-        });
-    }
+    let course = findAssignmentCourse(courseId);
     if (!course) {
         alert('Không tìm thấy môn học.');
         return;
@@ -1191,9 +1227,7 @@ function downloadAllSubjectsStudentList(subjectId) {
 
 // Thêm lớp HP mới cho 1 môn (gọi modal phân công mới)
 function addSubjectClass(subjectId, subjectName) {
-    // Find the subject to check if it's open
-    const subj = (window.allSubjects || []).find(function(s) { return String(s.subjectId) === String(subjectId); });
-    if (subj && !subj.isOpen) {
+    if (!isSubjectOpen(subjectId)) {
         alert('Môn học đã đóng, không thể thêm lớp HP mới.');
         return;
     }
