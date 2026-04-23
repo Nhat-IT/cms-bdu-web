@@ -34,7 +34,8 @@ $rooms   = db_fetch_all("SELECT room_code, room_name, room_type FROM rooms WHERE
 
 // Query tất cả môn học từ danh mục
 $rawSubjects = db_fetch_all("
-    SELECT id AS subject_id, subject_code, subject_name, credits, is_active AS subject_open
+    SELECT id AS subject_id, subject_code, subject_name, credits, is_active AS subject_open,
+           semester, academic_year, open_date, close_date
     FROM subjects
     ORDER BY subject_code ASC
 ");
@@ -186,6 +187,61 @@ foreach ($classes as $c) {
             'assignments' => $assignments,
         ];
     }
+}
+
+// Bổ sung các môn đã tạo trong danh mục nhưng chưa có lớp học phần nào
+$assignedSubjectIds = [];
+foreach ($rawAssignments as $a) {
+    $assignedSubjectIds[(int)($a['subject_id'] ?? 0)] = true;
+}
+
+$unassignedAssignments = [];
+foreach ($rawSubjects as $s) {
+    $subjectId = (int)($s['subject_id'] ?? 0);
+    if ($subjectId <= 0 || isset($assignedSubjectIds[$subjectId])) continue;
+
+    $openDate = $s['open_date'] ?? null;
+    $closeDate = $s['close_date'] ?? null;
+    $openWindow = (!empty($openDate) || !empty($closeDate))
+        ? (!empty($openDate) ? date('d/m/Y', strtotime($openDate)) : '--') . ' - ' . (!empty($closeDate) ? date('d/m/Y', strtotime($closeDate)) : '--')
+        : 'Chưa xác định';
+
+    $today = date('Y-m-d');
+    if (empty($openDate) || $openDate > $today || (!empty($closeDate) && $closeDate < $today)) {
+        $computedStatus = '0';
+    } else {
+        $computedStatus = '1';
+    }
+
+    $unassignedAssignments[] = [
+        'id'             => 'subject_pending_' . $subjectId,
+        'csId'           => null,
+        'subjectId'      => $subjectId,
+        'subjectCode'    => $s['subject_code'],
+        'subjectName'    => $s['subject_name'],
+        'classCode'      => '--',
+        'credits'        => (int)($s['credits'] ?? 0),
+        'isOpen'         => (bool)($s['subject_open'] ?? 0),
+        'year'           => $s['academic_year'] ?? '',
+        'semester'       => $s['semester'] ?? '',
+        'openWindow'     => $openWindow,
+        'computedStatus' => $computedStatus,
+        'hasStudents'    => false,
+        'studentCount'   => 0,
+        'teacherMain'    => null,
+        'teacherMainName'=> null,
+        'groups'         => []
+    ];
+}
+
+if (!empty($unassignedAssignments)) {
+    $dbCourses[] = [
+        'id'          => 'class-unassigned',
+        'classCode'   => '--',
+        'name'        => 'Môn chưa tạo lớp học phần',
+        'hasOpen'     => true,
+        'assignments' => $unassignedAssignments,
+    ];
 }
 ?>
 <!DOCTYPE html>
