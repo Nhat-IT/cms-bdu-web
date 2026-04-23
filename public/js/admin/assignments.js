@@ -294,7 +294,7 @@ function renderAssignmentOfferingsTable() {
             const classSubjectId = resolveClassSubjectId(asg);
             const scheduleBtn = '<button class="btn btn-primary" onclick="openGroupScheduleModal(\'' + classSubjectId + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(g.teacherMain || '') + '\', \'' + escapeHtml(g.teacherSub || '') + '\', \'' + escapeHtml(g.day || '') + '\', \'' + escapeHtml(g.start || '') + '\', \'' + escapeHtml(g.end || '') + '\', \'' + escapeHtml(g.room || '') + '\', \'' + escapeHtml(asg.classCode || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>';
             const primaryActionBtn = (!hasSchedule && subj.isOpen) ? scheduleBtn : manageBtn;
-            const uploadIconBtn = '<button class="btn btn-outline-dark btn-icon-only" title="Tải lên danh sách sinh viên" onclick="uploadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"' + (subj.isOpen ? '' : ' disabled') + '><i class="bi bi-upload"></i></button>';
+            const uploadIconBtn = '<button class="btn btn-outline-dark btn-icon-only" title="Tải lên danh sách sinh viên" onclick="uploadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"><i class="bi bi-upload"></i></button>';
             const downloadIconBtn = asg.hasStudents
                 ? '<button class="btn btn-outline-success btn-icon-only" title="Tải xuống danh sách sinh viên" onclick="downloadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"><i class="bi bi-download"></i></button>'
                 : '<button class="btn btn-outline-secondary btn-icon-only" title="Chưa có danh sách sinh viên trong DB" disabled><i class="bi bi-download"></i></button>';
@@ -364,11 +364,6 @@ function uploadAssignmentStudentList(courseId) {
     const course = allAssignmentCourses.find(function (c) { return c.id === courseId; });
     if (!course) {
         alert('Không tìm thấy môn học.');
-        return;
-    }
-
-    if (!course.isOpen) {
-        alert('Môn học đã đóng, không thể tải lên danh sách sinh viên.');
         return;
     }
 
@@ -516,10 +511,46 @@ function handleAssignmentUploadChange(event) {
             return;
         }
 
-        assignmentStudentsByClass[pendingAssignmentUploadClass] = parsed;
-        alert('Đã tải lên ' + parsed.length + ' sinh viên cho ' + pendingAssignmentUploadClass + '.');
-        pendingAssignmentUploadClass = '';
-        updateAssignmentDownloadButtons();
+        const course = allAssignmentCourses.find(function (c) { return c.id === pendingAssignmentUploadClass; });
+        if (!course) {
+            alert('Không xác định được lớp học phần để import.');
+            return;
+        }
+
+        const csId = resolveClassSubjectId(course);
+        if (!csId) {
+            alert('Không xác định được class_subject_id để import.');
+            return;
+        }
+
+        if (!window.callApi) {
+            alert('Không thể kết nối API import.');
+            return;
+        }
+
+        window.callApi('import_group_students', {
+            class_subject_id: csId,
+            group_code: 'N1',
+            students: JSON.stringify(parsed)
+        })
+            .then(function(res) {
+                if (res && res.ok) {
+                    if (window.showToast) {
+                        const imported = typeof res.imported === 'number' ? res.imported : parsed.length;
+                        const skipped = typeof res.skipped === 'number' ? res.skipped : 0;
+                        window.showToast('Import thành công: ' + imported + ' SV, bỏ qua: ' + skipped + '.', 'success');
+                    } else {
+                        alert('Đã import danh sách sinh viên thành công.');
+                    }
+                    pendingAssignmentUploadClass = '';
+                    window.location.reload();
+                    return;
+                }
+                alert('Import thất bại. Vui lòng thử lại.');
+            })
+            .catch(function() {
+                alert('Lỗi kết nối server khi import danh sách sinh viên.');
+            });
     };
 
     reader.onerror = function () {
