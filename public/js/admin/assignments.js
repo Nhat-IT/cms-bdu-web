@@ -319,27 +319,49 @@ function parseAssignmentCsv(content) {
     const lines = content.replace(/\r/g, '').split('\n').filter(function (line) {
         return line.trim().length > 0;
     });
-    if (lines.length < 2) {
+    if (lines.length < 1) {
         return [];
     }
 
+    function normalizeCsvDate(value) {
+        const raw = String(value || '').trim();
+        if (raw === '') return '';
+        if (/^\d+$/.test(raw)) {
+            const serial = parseInt(raw, 10);
+            if (serial > 20000) {
+                const base = new Date(Date.UTC(1899, 11, 30));
+                base.setUTCDate(base.getUTCDate() + serial);
+                const dd = String(base.getUTCDate()).padStart(2, '0');
+                const mm = String(base.getUTCMonth() + 1).padStart(2, '0');
+                const yyyy = base.getUTCFullYear();
+                return dd + '/' + mm + '/' + yyyy;
+            }
+        }
+        return raw;
+    }
+
+    function parseByColumns(cols) {
+        const c = cols.map(function (item) { return String(item || '').trim(); });
+        const hasSttFirst = /^\d*$/.test(c[0] || '') && (c[1] || '') !== '';
+        const mssv = hasSttFirst ? (c[1] || '') : (c[0] || '');
+        const name = hasSttFirst ? (c[2] || '') : (c[1] || '');
+        const dob = normalizeCsvDate(hasSttFirst ? (c[3] || '') : (c[2] || ''));
+        const className = hasSttFirst ? (c[4] || '') : (c[3] || '');
+        if (!mssv || !name) return null;
+        return { mssv: mssv, name: name, dob: dob, className: className, section: 'N1' };
+    }
+
     const parsed = [];
-    for (let i = 1; i < lines.length; i += 1) {
-        const cols = lines[i].split(',').map(function (item) { return item.trim(); });
-        if (cols.length < 5) {
-            continue;
-        }
+    let startIndex = 0;
+    const first = lines[0].toLowerCase();
+    if (first.includes('mssv') || first.includes('họ và tên') || first.includes('ho va ten')) {
+        startIndex = 1;
+    }
 
-        const mssv = cols[1] || '';
-        const name = cols[2] || '';
-        const dob = cols[3] || '';
-        const email = cols[4] || '';
-        const section = cols[6] || cols[5] || 'N1';
-        if (!mssv || !name) {
-            continue;
-        }
-
-        parsed.push({ mssv: mssv, name: name, dob: dob, email: email, section: section });
+    for (let i = startIndex; i < lines.length; i += 1) {
+        const cols = lines[i].split(',');
+        const row = parseByColumns(cols);
+        if (row) parsed.push(row);
     }
 
     return parsed;
@@ -357,23 +379,43 @@ function parseAssignmentXlsx(buffer) {
 
     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
-    if (!rows || rows.length < 2) {
+    if (!rows || rows.length < 1) {
         return [];
     }
 
-    const parsed = [];
-    for (let i = 1; i < rows.length; i += 1) {
-        const row = rows[i].map(function (cell) { return String(cell).trim(); });
-        const mssv = row[1] || '';
-        const name = row[2] || '';
-        const dob = row[3] || '';
-        const email = row[4] || '';
-        const section = row[6] || row[5] || 'N1';
-
-        if (!mssv || !name) {
-            continue;
+    function normalizeXlsxDate(value) {
+        if (value === null || value === undefined || value === '') return '';
+        if (typeof value === 'number' && value > 20000) {
+            const date = XLSX.SSF.parse_date_code(value);
+            if (date && date.d && date.m && date.y) {
+                return String(date.d).padStart(2, '0') + '/' + String(date.m).padStart(2, '0') + '/' + String(date.y);
+            }
         }
-        parsed.push({ mssv: mssv, name: name, dob: dob, email: email, section: section });
+        return String(value).trim();
+    }
+
+    function parseByColumns(cols) {
+        const c = cols.map(function (item) { return String(item || '').trim(); });
+        const hasSttFirst = /^\d*$/.test(c[0] || '') && (c[1] || '') !== '';
+        const mssv = hasSttFirst ? (c[1] || '') : (c[0] || '');
+        const name = hasSttFirst ? (c[2] || '') : (c[1] || '');
+        const dob = normalizeXlsxDate(hasSttFirst ? cols[3] : cols[2]);
+        const className = hasSttFirst ? (c[4] || '') : (c[3] || '');
+        if (!mssv || !name) return null;
+        return { mssv: mssv, name: name, dob: dob, className: className, section: 'N1' };
+    }
+
+    const parsed = [];
+    let startIndex = 0;
+    if (rows[0] && rows[0].length) {
+        const firstLine = rows[0].map(function (x) { return String(x || '').toLowerCase(); }).join(' ');
+        if (firstLine.includes('mssv') || firstLine.includes('họ và tên') || firstLine.includes('ho va ten')) {
+            startIndex = 1;
+        }
+    }
+    for (let i = startIndex; i < rows.length; i += 1) {
+        const parsedRow = parseByColumns(rows[i] || []);
+        if (parsedRow) parsed.push(parsedRow);
     }
 
     return parsed;

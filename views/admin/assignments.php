@@ -593,16 +593,17 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
             </div>
             <div class="modal-body p-4">
                 <p class="mb-3">File hỗ trợ: <strong>CSV</strong>, <strong>XLSX</strong>, <strong>XLS</strong></p>
-                <p class="fw-bold mb-2">Cột bắt buộc (theo thứ tự):</p>
+                <p class="fw-bold mb-2">Cột chuẩn theo file điểm danh (khớp DB):</p>
                 <ul class="list-group list-group-flush mb-3">
-                    <li class="list-group-item px-0 py-1"><strong>Mã số sinh viên (MSSV)</strong></li>
-                    <li class="list-group-item px-0 py-1"><strong>Họ và tên</strong></li>
-                    <li class="list-group-item px-0 py-1"><strong>Ngày sinh</strong> <span class="text-muted">— dd/mm/yyyy</span></li>
-                    <li class="list-group-item px-0 py-1"><strong>Lớp</strong></li>
+                    <li class="list-group-item px-0 py-1"><strong>Cột A:</strong> STT <span class="text-muted">(có thể bỏ trống)</span></li>
+                    <li class="list-group-item px-0 py-1"><strong>Cột B:</strong> MSSV <span class="text-danger">*</span></li>
+                    <li class="list-group-item px-0 py-1"><strong>Cột C:</strong> Họ và tên <span class="text-danger">*</span></li>
+                    <li class="list-group-item px-0 py-1"><strong>Cột D:</strong> Ngày sinh <span class="text-muted">— dd/mm/yyyy hoặc định dạng ngày Excel</span></li>
+                    <li class="list-group-item px-0 py-1"><strong>Cột E:</strong> Lớp</li>
                 </ul>
                 <div class="alert alert-info py-2 mb-0 small">
                     <i class="bi bi-lightbulb me-1"></i>
-                    <strong>Quy trình:</strong> Sinh viên chưa có tài khoản vẫn được ghi nhận vào nhóm. Khi tài khoản SV (theo MSSV) được tạo sau đó, sinh viên sẽ tự động xem được thời khóa biểu của nhóm.
+                    <strong>Lưu ý:</strong> Hệ thống ưu tiên đọc đúng mẫu điểm danh: <code>STT | MSSV | HỌ VÀ TÊN | NGÀY SINH | LỚP</code>.
                 </div>
             </div>
             <div class="modal-footer bg-light border-0 pt-0">
