@@ -51,7 +51,7 @@ function respondOrRedirect(bool $ok, string $message, string $returnPage): void 
     redirect('../../views/admin/' . $returnPage . '?class_subject_' . $code . '=' . urlencode($message));
 }
 
-if ($classSubjectId <= 0 && $action !== 'add_group' && $action !== 'get_group_student_counts') {
+if ($classSubjectId <= 0 && $action !== 'add_group' && $action !== 'get_group_student_counts' && $action !== 'save_group_schedule') {
     respondOrRedirect(false, 'missing_id', $returnPage);
 }
 
@@ -103,9 +103,85 @@ try {
         $startPeriod = (int) ($_POST['start_period'] ?? 0);
         $endPeriod = (int) ($_POST['end_period'] ?? 0);
         $room = trim($_POST['room'] ?? '');
+        $subjectId = (int) ($_POST['subject_id'] ?? 0);
+        $classCode = trim((string) ($_POST['class_code'] ?? ''));
+        $semesterName = trim((string) ($_POST['semester_name'] ?? ''));
+        $academicYear = trim((string) ($_POST['academic_year'] ?? ''));
 
-        if ($classSubjectId <= 0 || $groupCode === '' || $teacherMain <= 0 || $dayOfWeek < 2 || $dayOfWeek > 8 || $startPeriod < 1 || $endPeriod < $startPeriod || $room === '') {
+        if ($groupCode === '' || $teacherMain <= 0 || $dayOfWeek < 2 || $dayOfWeek > 8 || $startPeriod < 1 || $endPeriod < $startPeriod || $room === '') {
             respondOrRedirect(false, 'invalid_schedule_data', $returnPage);
+        }
+
+        // Nếu chưa có class_subject_id (môn mới từ danh mục), tự tạo lớp học phần trước
+        if ($classSubjectId <= 0) {
+            if ($subjectId <= 0 || $classCode === '') {
+                respondOrRedirect(false, 'missing_id', $returnPage);
+            }
+
+            $classRow = db_fetch_one('SELECT id FROM classes WHERE class_name = ? LIMIT 1', [$classCode]);
+            if (!$classRow) {
+                respondOrRedirect(false, 'class_not_found', $returnPage);
+            }
+            $classId = (int) $classRow['id'];
+
+            $semesterRow = null;
+            if ($semesterName !== '' && $academicYear !== '' && $semesterName !== 'all' && $academicYear !== 'all') {
+                $semesterRow = db_fetch_one(
+                    'SELECT id, start_date, end_date FROM semesters WHERE semester_name = ? AND academic_year = ? LIMIT 1',
+                    [$semesterName, $academicYear]
+                );
+            }
+            if (!$semesterRow) {
+                $semesterRow = db_fetch_one(
+                    'SELECT id, start_date, end_date
+                     FROM semesters
+                     WHERE CURDATE() BETWEEN start_date AND end_date
+                     ORDER BY start_date DESC
+                     LIMIT 1'
+                );
+            }
+            if (!$semesterRow) {
+                $semesterRow = db_fetch_one(
+                    'SELECT id, start_date, end_date
+                     FROM semesters
+                     ORDER BY academic_year DESC, semester_name DESC
+                     LIMIT 1'
+                );
+            }
+            if (!$semesterRow) {
+                respondOrRedirect(false, 'semester_not_found', $returnPage);
+            }
+            $semesterId = (int) $semesterRow['id'];
+
+            $existingCs = db_fetch_one(
+                'SELECT id FROM class_subjects WHERE class_id = ? AND subject_id = ? AND semester_id = ? LIMIT 1',
+                [$classId, $subjectId, $semesterId]
+            );
+            if ($existingCs) {
+                $classSubjectId = (int) $existingCs['id'];
+            } else {
+                db_query(
+                    'INSERT INTO class_subjects (semester_id, class_id, subject_id, teacher_id, start_date, end_date)
+                     VALUES (?, ?, ?, ?, ?, ?)',
+                    [
+                        $semesterId,
+                        $classId,
+                        $subjectId,
+                        $teacherMain > 0 ? $teacherMain : null,
+                        $semesterRow['start_date'] ?? null,
+                        $semesterRow['end_date'] ?? null
+                    ]
+                );
+                $createdCs = db_fetch_one(
+                    'SELECT id FROM class_subjects WHERE class_id = ? AND subject_id = ? AND semester_id = ? ORDER BY id DESC LIMIT 1',
+                    [$classId, $subjectId, $semesterId]
+                );
+                $classSubjectId = (int) ($createdCs['id'] ?? 0);
+            }
+
+            if ($classSubjectId <= 0) {
+                respondOrRedirect(false, 'cannot_create_class_subject', $returnPage);
+            }
         }
 
         $groupData = db_fetch_one('SELECT id, sub_teacher_id FROM class_subject_groups WHERE class_subject_id = ? AND group_code = ? LIMIT 1', [$classSubjectId, $groupCode]);

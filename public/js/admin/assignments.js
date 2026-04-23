@@ -296,10 +296,10 @@ function renderAssignmentOfferingsTable() {
             const hasClassSubject = Number.isFinite(classSubjectId) && classSubjectId > 0;
             const manageBtn = hasClassSubject
                 ? '<button class="btn btn-outline-primary" onclick="openSessionManager(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(mainTeacher || teacherDisplay) + '\', \'' + escapeHtml(groupCode) + '\')"><i class="bi bi-calendar-week me-1"></i>Quản lý lịch</button>'
-                : '<button class="btn btn-outline-secondary" disabled title="Môn này chưa có lớp học phần"><i class="bi bi-calendar-week me-1"></i>Chưa tạo lớp học phần</button>';
+                : '<button class="btn btn-outline-primary" onclick="addSubjectClass(\'' + escapeHtml(String(asg.subjectId || '')) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-calendar-plus me-1"></i>Khởi tạo lớp học phần</button>';
             const scheduleBtn = hasClassSubject
                 ? '<button class="btn btn-primary" onclick="openGroupScheduleModal(\'' + classSubjectId + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(g.teacherMain || '') + '\', \'' + escapeHtml(g.teacherSub || '') + '\', \'' + escapeHtml(g.day || '') + '\', \'' + escapeHtml(g.start || '') + '\', \'' + escapeHtml(g.end || '') + '\', \'' + escapeHtml(g.room || '') + '\', \'' + escapeHtml(asg.classCode || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>'
-                : '<button class="btn btn-secondary" disabled title="Môn này chưa có lớp học phần"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>';
+                : '<button class="btn btn-primary" onclick="addSubjectClass(\'' + escapeHtml(String(asg.subjectId || '')) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>';
             const primaryActionBtn = hasClassSubject ? ((!hasSchedule && subj.isOpen) ? scheduleBtn : manageBtn) : manageBtn;
             const uploadIconBtn = hasClassSubject
                 ? '<button class="btn btn-outline-dark btn-icon-only" title="Tải lên danh sách sinh viên" onclick="uploadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"><i class="bi bi-upload"></i></button>'
@@ -332,8 +332,11 @@ function renderAssignmentOfferingsTable() {
         const totalGroups = rows.length;
         const firstAsg = subj.assignments.find(function(item) { return resolveClassSubjectId(item) > 0; }) || subj.assignments[0] || {};
         const hasClassSubjectInCard = subj.assignments.some(function(item) { return resolveClassSubjectId(item) > 0; });
-        const actionDisabled = (subj.isOpen && hasClassSubjectInCard) ? '' : ' disabled';
-        const actionTitle = hasClassSubjectInCard ? '' : ' title="Môn này chưa có lớp học phần"';
+        const actionDisabled = subj.isOpen ? '' : ' disabled';
+        const actionTitle = '';
+        const addGroupAction = hasClassSubjectInCard
+            ? "addGroupToClass('" + escapeHtml(firstAsg.id || '') + "', '" + escapeHtml(subj.subjectName || '') + "')"
+            : "addSubjectClass('" + escapeHtml(String(subj.subjectId || '')) + "', '" + escapeHtml(subj.subjectName || '') + "')";
 
         const card = document.createElement('div');
         card.className = 'assignment-offering-card';
@@ -344,7 +347,7 @@ function renderAssignmentOfferingsTable() {
                     '<div class="assignment-offering-subtitle">' + (subj.credits || 0) + ' tín chỉ | Năm học: ' + (subj.year || '--') + '</div>' +
                 '</div>' +
                 '<div class="assignment-head-actions">' +
-                    '<button class="btn btn-outline-primary" onclick="addGroupToClass(\'' + escapeHtml(firstAsg.id || '') + '\', \'' + escapeHtml(subj.subjectName || '') + '\')"' + actionDisabled + actionTitle + '><i class="bi bi-plus-circle me-1"></i>Thêm nhóm</button>' +
+                    '<button class="btn btn-outline-primary" onclick="' + addGroupAction + '"' + actionDisabled + actionTitle + '><i class="bi bi-plus-circle me-1"></i>Thêm nhóm</button>' +
                 '</div>' +
             '</div>' +
             '<div class="assignment-grid-head">' +
@@ -665,8 +668,9 @@ function populatePeriodSelects() {
     });
 }
 
-function openInitialScheduleModal(mode, csId, classCode, subjectName, teacher = '', startDate = '', endDate = '', dayOfWeek = '', startPeriod = '', endPeriod = '', room = '', assistant = '', group = 'N1') {
+function openInitialScheduleModal(mode, csId, classCode, subjectName, teacher = '', startDate = '', endDate = '', dayOfWeek = '', startPeriod = '', endPeriod = '', room = '', assistant = '', group = 'N1', subjectId = '') {
     window._currentCsId = csId;
+    window._currentSubjectId = subjectId || '';
     const normalizedGroup = (group && group !== 'ALL') ? group : (currentSessionGroupCode || 'N1');
     window._currentGroupCode = normalizedGroup;
 
@@ -741,6 +745,10 @@ function handleInitialScheduleSubmit(event) {
 
     const payload = {
         class_subject_id: window._currentCsId,
+        subject_id: window._currentSubjectId || '',
+        class_code: document.getElementById('initClassCode') ? document.getElementById('initClassCode').value : '',
+        semester_name: document.getElementById('assignFilterSemester') ? document.getElementById('assignFilterSemester').value : 'all',
+        academic_year: document.getElementById('assignFilterYear') ? document.getElementById('assignFilterYear').value : 'all',
         group_code: window._currentGroupCode || 'N1',
         teacher_main_id: document.getElementById('initTeacher').value,
         teacher_sub_id: document.getElementById('initAssistantTeacher') ? document.getElementById('initAssistantTeacher').value : '',
@@ -1179,7 +1187,6 @@ function addSubjectClass(subjectId, subjectName) {
         alert('Môn học đã đóng, không thể thêm lớp HP mới.');
         return;
     }
-    // Open the initial schedule modal in "add" mode with empty values
-    // The modal needs a csId, so we pass empty to create a new one
-    openInitialScheduleModal('add', '', '', subjectName, '', '', '', '', '', '', '', '');
+    // Open modal to create class_subject + first schedule/group for this subject
+    openInitialScheduleModal('add', '', '', subjectName, '', '', '', '', '', '', '', '', 'N1', subjectId);
 }
