@@ -207,14 +207,12 @@ function renderAssignmentOfferings() {
         // ─── TABLE HEADER ROW ───
         const tableHeaderHtml =
             '<div class="row align-items-center py-2 mx-0" style="background:#f1f5f9;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;font-size:0.75rem;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:0.04em">' +
-                '<div class="col-md-1 text-center">STT</div>' +
-                '<div class="col-md-1">Lớp HP</div>' +
+                '<div class="col-md-2">Lớp-Nhóm</div>' +
                 '<div class="col-md-2">Học kỳ</div>' +
                 '<div class="col-md-2">Giảng viên</div>' +
                 '<div class="col-md-2">Lịch học</div>' +
-                '<div class="col-md-1 text-center">Phòng</div>' +
-                '<div class="col-md-1 text-center">Trạng thái</div>' +
-                '<div class="col-md-2 text-center">Thao tác</div>' +
+                '<div class="col-md-2 text-center">Trạng thái</div>' +
+                '<div class="col-md-2 text-center">Hành động</div>' +
             '</div>';
 
         // ─── ASSIGNMENT ROWS ───
@@ -241,10 +239,12 @@ function renderAssignmentOfferings() {
                 roomDisplay = scheduledGroup.room;
             }
 
-            // Status: scheduled count
+            // Status from computed_status (same logic as classes-subjects.php)
             let statusHtml = '';
             if (asg.groups.length === 0) {
                 statusHtml = '<span class="badge" style="background:#f3f4f6;color:#6b7280">Chưa có nhóm</span>';
+            } else if (asg.computedStatus === '0') {
+                statusHtml = '<span class="badge" style="background:#f3f4f6;color:#6b7280">Đã đóng</span>';
             } else if (scheduledInAsg === 0) {
                 statusHtml = '<span class="badge" style="background:#fee2e2;color:#b91c1c">Chưa xếp lịch</span>';
             } else if (scheduledInAsg === asg.groups.length) {
@@ -268,23 +268,29 @@ function renderAssignmentOfferings() {
             const rowClass = (idx % 2 === 0) ? '' : 'style="background:#fafafa"';
             rowsHtml +=
                 '<div class="row align-items-center py-3 border-bottom mx-0 group-row" ' + rowClass + '>' +
-                    '<div class="col-md-1 text-center fw-bold text-muted">' + (idx + 1) + '</div>' +
-                    '<div class="col-md-1 fw-bold text-primary">' + asg.classCode + '</div>' +
+                    '<div class="col-md-2 fw-bold text-primary">' + asg.classCode + '</div>' +
                     '<div class="col-md-2 small">' + (asg.semester ? 'HK' + asg.semester.replace('HK','') : '--') + ' ' + asg.year + '</div>' +
                     '<div class="col-md-2 small">' + teacherDisplay + '</div>' +
                     '<div class="col-md-2 small ' + scheduleClass + ' fw-bold">' + scheduleDisplay + '</div>' +
-                    '<div class="col-md-1 text-center small fw-bold text-dark">' + roomDisplay + '</div>' +
-                    '<div class="col-md-1 text-center">' + statusHtml + '</div>' +
+                    '<div class="col-md-2 text-center">' + statusHtml + '</div>' +
                     '<div class="col-md-2 text-center">' + actionBtn + '</div>' +
                 '</div>';
         });
 
         // ─── FOOTER ───
+        const openWindow = subj.assignments[0] ? subj.assignments[0].openWindow : '--';
+        const footClass = scheduledGroups === totalGroups && totalGroups > 0
+            ? 'style="background:#d1fae5;color:#0f766e;border-top:1px solid #10b981"'
+            : (totalGroups > 0 && scheduledGroups === 0
+                ? 'style="background:#fff8e1;color:#b45309;border-top:1px solid #f59e0b"'
+                : 'style="background:#f8fafc;color:#64748b;border-top:1px solid #eef2f7"');
+        const footStatus = totalGroups === 0
+            ? 'Chưa có nhóm'
+            : (scheduledGroups === totalGroups ? 'Đã xếp lịch' : 'Chưa xếp lịch');
+
         const footHtml =
-            '<div class="px-4 py-2 small text-muted" style="background:#f8fafc;border-top:1px solid #eef2f7">' +
-                'Số lớp HP: <strong>' + subj.assignments.length + '</strong> | Tổng nhóm: <strong>' + totalGroups + '</strong> | ' +
-                'Đã xếp: <strong>' + scheduledGroups + '</strong> | ' +
-                'Thời gian mở: <strong>' + (subj.assignments[0] ? subj.assignments[0].openWindow : '--') + '</strong>' +
+            '<div class="px-4 py-2 small fw-bold" ' + footClass + '>' +
+                'Số nhóm: ' + totalGroups + ' | Thời gian mở: ' + openWindow + ' | ' + footStatus +
             '</div>';
 
         card.innerHTML = headHtml + tableHeaderHtml + rowsHtml + footHtml;
