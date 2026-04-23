@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function () {
+﻿document.addEventListener('DOMContentLoaded', function () {
     const sidebarToggle = document.getElementById('sidebarToggle');
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', function () {
@@ -69,7 +69,8 @@ const days = [
     { value: '4', label: 'Thứ 4' },
     { value: '5', label: 'Thứ 5' },
     { value: '6', label: 'Thứ 6' },
-    { value: '7', label: 'Thứ 7' }
+    { value: '7', label: 'Thứ 7' },
+    { value: '8', label: 'Chủ Nhật' }
 ];
 
 let assignmentOfferingsFiltered = [];
@@ -79,7 +80,8 @@ let currentSessionCourse = null;
 let currentSessionGroupCode = null;
 
 function getTeacherName(teacherId) {
-    const teacher = teachers.find(function (t) { return t.id === teacherId; });
+    const list = window.teachers || teachers || [];
+    const teacher = list.find(function (t) { return t.id === teacherId; });
     return teacher ? teacher.name : '—';
 }
 
@@ -89,11 +91,10 @@ function getDayLabel(day) {
 }
 
 function getGroupLabel(groupCode) {
-    const match = groupCode.match(/N(\d+)/);
-    if (match) {
-        return 'Nhóm ' + match[1];
-    }
-    return groupCode;
+    if (!groupCode) return 'Nhóm 1';
+    const match = String(groupCode).match(/N(\d+)/);
+    if (match) return 'Nhóm ' + match[1];
+    return String(groupCode);
 }
 
 function initAssignmentEnhancements() {
@@ -129,149 +130,164 @@ function applyAssignmentFilters() {
     const semester = filterSemester.value;
     const status = filterStatus.value;
 
-    assignmentOfferingsFiltered = allAssignmentCourses.filter(function (course) {
-        const matchYear = year === 'all' || course.year === year;
-        const matchSemester = semester === 'all' || course.semester === semester;
-        const matchStatus = status === 'all' || (status === 'open' ? course.isOpen : !course.isOpen);
-        return matchYear && matchSemester && matchStatus;
+    // Filter the nested structure: each subject shows assignments matching filters
+    assignmentOfferingsFiltered = (window.allSubjects || []).map(function(subj) {
+        const filteredAssignments = subj.assignments.filter(function(asg) {
+            const matchYear = year === 'all' || asg.year === year;
+            const matchSemester = semester === 'all' || asg.semester === semester;
+            const matchStatus = status === 'all' || (status === 'open' ? subj.isOpen : !subj.isOpen);
+            return matchYear && matchSemester && matchStatus;
+        });
+        return Object.assign({}, subj, { assignments: filteredAssignments });
+    }).filter(function(subj) {
+        return subj.assignments.length > 0;
     });
 
     renderAssignmentOfferings();
-    updateAssignmentDownloadButtons();
 }
 
 function renderAssignmentOfferings() {
     const container = document.getElementById('assignmentOfferingContainer');
     if (!container) return;
-    
+
     container.innerHTML = '';
 
     if (assignmentOfferingsFiltered.length === 0) {
-        container.innerHTML = '<div class="alert alert-light border">Không có môn học nào trong bộ lọc đã chọn.</div>';
+        container.innerHTML = '<div class="text-center py-5 text-muted"><i class="bi bi-inbox fs-1"></i><br>Không có môn học nào trong bộ lọc đã chọn.</div>';
         return;
     }
 
-    assignmentOfferingsFiltered.forEach(function (course) {
+    // Inject custom hover style once
+    if (!document.getElementById('custom-group-hover-style')) {
+        const style = document.createElement('style');
+        style.id = 'custom-group-hover-style';
+        style.innerHTML = '.group-row:hover { background-color: #f8f9fa !important; }';
+        document.head.appendChild(style);
+    }
+
+    assignmentOfferingsFiltered.forEach(function(subj) {
         const card = document.createElement('div');
-        card.className = 'offering-card';
-        card.dataset.courseId = course.id;
+        card.className = 'card mb-4 bg-white shadow-sm';
+        card.style.border = '1px solid #dee2e6';
+        card.style.borderRadius = '8px';
+        card.style.overflow = 'hidden';
 
-        const head = document.createElement('div');
-        head.className = 'offering-head';
-        
-        const titleDiv = document.createElement('div');
-        const subjectCodeStr = course.subjectCode ? course.subjectCode : course.id.split('-')[0];
-        titleDiv.innerHTML = '<div class="offering-title">' + subjectCodeStr + ' - ' + course.name + '</div>' +
-            '<div class="offering-subtitle">' + course.credits + ' tín chỉ | Mã lớp: ' + course.classCode + '</div>';
-        head.appendChild(titleDiv);
-        
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'd-flex gap-2 flex-wrap';
-        
-        const btnUpload = document.createElement('button');
-        btnUpload.className = 'btn btn-sm btn-outline-dark';
-        btnUpload.innerHTML = '<i class="bi bi-upload me-1"></i>Tải lên SV';
-        btnUpload.onclick = function () { uploadAssignmentStudentList(course.csId || course.id); };
-        
-        const btnDownload = document.createElement('button');
-        // Cho phép download luôn
-        btnDownload.className = 'btn btn-sm btn-outline-success';
-        btnDownload.innerHTML = '<i class="bi bi-download me-1"></i>Tải xuống SV';
-        btnDownload.onclick = function () { downloadAssignmentStudentList(course.csId || course.id); };
-        
-        const btnAdd = document.createElement('button');
-        btnAdd.className = 'btn btn-sm btn-outline-primary';
-        btnAdd.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Thêm nhóm';
-        btnAdd.onclick = function () { addGroupToClass(course.csId || course.id, course.name); };
-        
-        actionsDiv.appendChild(btnUpload);
-        actionsDiv.appendChild(btnDownload);
-        actionsDiv.appendChild(btnAdd);
-        
-        head.appendChild(actionsDiv);
-        
-        card.appendChild(head);
+        // ─── CARD HEADER ───
+        const subjectCodeStr = subj.subjectCode || '';
+        const totalGroups = subj.assignments.reduce(function(s, a) { return s + a.groups.length; }, 0);
+        const scheduledGroups = subj.assignments.reduce(function(s, a) {
+            return s + a.groups.filter(function(g) { return g.day && g.start && g.end && g.room; }).length;
+        }, 0);
+        const statusBadge = subj.isOpen
+            ? '<span class="badge me-1" style="background:#d1fae5;color:#0f766e;border:1px solid #10b981">Đang mở</span>'
+            : '<span class="badge me-1" style="background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db">Đã đóng</span>';
 
-        course.groups.forEach(function (group) {
-            const row = document.createElement('div');
-            row.className = 'section-row';
-            const hasGroupSchedule = Boolean(group.day && group.start && group.end && group.room);
-            
-            const chipDiv = document.createElement('div');
-            chipDiv.innerHTML = '<span class="section-chip">' + getGroupLabel(group.code) + '</span>';
-            
-            const teacherDiv = document.createElement('div');
-            const teacherMainName = group.teacherMainName || getTeacherName(group.teacherMain);
-            const teacherSubName = group.teacherSubName || getTeacherName(group.teacherSub);
-            teacherDiv.innerHTML = '<div class="section-label">Giảng viên</div>' +
-                '<div class="section-value">' + teacherMainName +
-                (group.teacherSub ? ' + ' + teacherSubName : '') + '</div>';
-            
-            const scheduleDiv = document.createElement('div');
-            scheduleDiv.innerHTML = '<div class="section-label">Lịch học</div>' +
-                '<div class="section-value">' + (hasGroupSchedule ? (getDayLabel(group.day) + ' | Tiết ' + group.start + '-' + group.end) : 'Chưa xếp lịch') + '</div>';
-            
-            const roomDiv = document.createElement('div');
-            roomDiv.innerHTML = '<div class="section-label">Phòng</div>' +
-                '<div class="section-value">' + (hasGroupSchedule ? group.room : '--') + '</div>';
-            
-            const statusDiv = document.createElement('div');
-            statusDiv.className = 'section-status';
-            const statusText = course.isOpen ? 'Đang mở' : 'Đã đóng';
-            statusDiv.innerHTML = '<div class="section-label">Trạng thái</div>' +
-                '<div class="section-value">' + statusText + '</div>';
-            
-            const actionsRowDiv = document.createElement('div');
-            actionsRowDiv.className = 'section-actions';
-            
-            const btnEdit = document.createElement('button');
-            btnEdit.className = 'btn btn-sm ' + (hasGroupSchedule ? 'btn-outline-primary' : 'btn-primary') + (course.isOpen ? '' : ' disabled');
-            btnEdit.innerHTML = '<i class="bi ' + (hasGroupSchedule ? 'bi-calendar3' : 'bi-calendar-plus') + ' me-1"></i>' + (hasGroupSchedule ? 'Quản lý lịch' : 'Xếp lịch ngay');
-            if (course.isOpen) {
-                btnEdit.onclick = function () {
-                    if (hasGroupSchedule) {
-                        openSessionManager(course.csId || course.id, course.name, getTeacherName(group.teacherMain), group.code, course.classCode);
-                        return;
-                    }
-
-                    openGroupScheduleModal(course.csId || course.id, course.name, group.code, group.teacherMain, group.teacherSub, group.day, '', '', '', course.classCode);
-                };
-            } else {
-                btnEdit.setAttribute('aria-disabled', 'true');
-                btnEdit.setAttribute('title', 'Môn đã đóng');
-            }
-            
-            actionsRowDiv.appendChild(btnEdit);
-            
-            row.appendChild(chipDiv);
-            row.appendChild(teacherDiv);
-            row.appendChild(scheduleDiv);
-            row.appendChild(roomDiv);
-            row.appendChild(statusDiv);
-            row.appendChild(actionsRowDiv);
-            
-            card.appendChild(row);
-        });
-
-        const foot = document.createElement('div');
-        foot.className = 'offering-foot';
-        const scheduledGroups = course.groups.filter(function (group) {
-            return Boolean(group.day && group.start && group.end && group.room);
-        });
-        let scheduleStatus = '<span class="badge bg-secondary">Chưa xếp lịch</span>';
-        if (scheduledGroups.length === course.groups.length && course.groups.length > 0) {
-            scheduleStatus = '<span class="badge bg-success">Đã xếp lịch</span>';
-        } else if (scheduledGroups.length > 0) {
-            const unscheduledGroups = course.groups.filter(function (group) {
-                return !(group.day && group.start && group.end && group.room);
-            }).map(function (group) {
-                return getGroupLabel(group.code);
-            });
-            scheduleStatus = '<span class="badge bg-warning text-dark">Chưa xếp lịch nhóm ' + unscheduledGroups.join(', ') + '</span>';
+        let headerBadge = '';
+        if (scheduledGroups === 0 && totalGroups > 0) {
+            headerBadge = '<span class="badge ms-2" style="background:#ffc107;color:#000;border:1px solid #f59e0b">Chưa xếp lịch</span>';
+        } else if (scheduledGroups >= totalGroups && totalGroups > 0) {
+            headerBadge = '<span class="badge ms-2" style="background:#d1fae5;color:#0f766e;border:1px solid #10b981">Đã xếp lịch</span>';
+        } else {
+            headerBadge = '<span class="badge ms-2" style="background:#dbeafe;color:#1d4ed8;border:1px solid #93c5fd">' + scheduledGroups + '/' + totalGroups + ' nhóm</span>';
         }
-        foot.innerHTML = 'Số nhóm: ' + course.groups.length + ' | Thời gian mở: ' + course.openWindow + ' | ' + scheduleStatus;
-        card.appendChild(foot);
 
+        const headHtml =
+            '<div class="d-flex justify-content-between align-items-center p-4 pb-3">' +
+                '<div>' +
+                    '<h5 class="fw-bold mb-1 text-dark"><i class="bi bi-book me-2 text-primary"></i>' + subjectCodeStr + ' - ' + subj.name + '</h5>' +
+                    '<div class="small text-muted">' + subj.credits + ' tín chỉ' + headerBadge + '</div>' +
+                '</div>' +
+                '<div class="d-flex gap-2 flex-wrap">' +
+                    '<button class="btn btn-sm btn-outline-secondary" onclick="uploadAllSubjectsStudentList(\'' + subj.subjectId + '\')"><i class="bi bi-upload me-1"></i> Tải lên SV</button>' +
+                    '<button class="btn btn-sm btn-outline-success" onclick="downloadAllSubjectsStudentList(\'' + subj.subjectId + '\')"><i class="bi bi-download me-1"></i> Tải xuống SV</button>' +
+                    '<button class="btn btn-sm btn-primary" onclick="addSubjectClass(\'' + subj.subjectId + '\', \'' + subj.name + '\')"><i class="bi bi-plus-circle me-1"></i> Thêm lớp HP</button>' +
+                '</div>' +
+            '</div>';
+
+        // ─── TABLE HEADER ROW ───
+        const tableHeaderHtml =
+            '<div class="row align-items-center py-2 mx-0" style="background:#f1f5f9;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;font-size:0.75rem;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:0.04em">' +
+                '<div class="col-md-1 text-center">STT</div>' +
+                '<div class="col-md-1">Lớp HP</div>' +
+                '<div class="col-md-2">Học kỳ</div>' +
+                '<div class="col-md-2">Giảng viên</div>' +
+                '<div class="col-md-2">Lịch học</div>' +
+                '<div class="col-md-1 text-center">Phòng</div>' +
+                '<div class="col-md-1 text-center">Trạng thái</div>' +
+                '<div class="col-md-2 text-center">Thao tác</div>' +
+            '</div>';
+
+        // ─── ASSIGNMENT ROWS ───
+        let rowsHtml = '';
+        subj.assignments.forEach(function(asg, idx) {
+            const scheduledInAsg = asg.groups.filter(function(g) { return g.day && g.start && g.end && g.room; }).length;
+
+            // Primary teacher (use group-level if main not set)
+            const primaryGroup = asg.groups[0] || {};
+            const teacherDisplay = primaryGroup.teacherMainName || primaryGroup.teacherSubName || getTeacherName(primaryGroup.teacherMain) || '<span class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Chưa PC</span>';
+
+            // Schedule summary: show first scheduled group or "Chưa xếp"
+            const scheduledGroup = asg.groups.find(function(g) { return g.day && g.start && g.end && g.room; });
+            let scheduleDisplay = 'Chưa xếp';
+            let scheduleClass = 'text-danger';
+            if (scheduledGroup) {
+                scheduleDisplay = getDayLabel(scheduledGroup.day) + ' | T' + scheduledGroup.start + '-' + scheduledGroup.end;
+                scheduleClass = 'text-success';
+            }
+
+            // Room
+            let roomDisplay = scheduledGroup ? scheduledGroup.room : '--';
+            if (asg.groups.length > 1 && scheduledGroup) {
+                roomDisplay = scheduledGroup.room;
+            }
+
+            // Status: scheduled count
+            let statusHtml = '';
+            if (asg.groups.length === 0) {
+                statusHtml = '<span class="badge" style="background:#f3f4f6;color:#6b7280">Chưa có nhóm</span>';
+            } else if (scheduledInAsg === 0) {
+                statusHtml = '<span class="badge" style="background:#fee2e2;color:#b91c1c">Chưa xếp lịch</span>';
+            } else if (scheduledInAsg === asg.groups.length) {
+                statusHtml = '<span class="badge" style="background:#d1fae5;color:#0f766e">Đã xếp lịch</span>';
+            } else {
+                statusHtml = '<span class="badge" style="background:#fef3c7;color:#b45309">' + scheduledInAsg + '/' + asg.groups.length + ' nhóm</span>';
+            }
+
+            // Action buttons
+            const openBtnDisabled = !subj.isOpen ? ' disabled title="Môn đã đóng"' : '';
+            const hasAnySchedule = asg.groups.some(function(g) { return g.day && g.start && g.end && g.room; });
+            let actionBtn = '';
+            if (subj.isOpen) {
+                if (hasAnySchedule) {
+                    actionBtn = '<button class="btn btn-sm btn-outline-primary px-2"' + openBtnDisabled + ' onclick="openSessionManager(\'' + (asg.csId || asg.id) + '\', \'' + subj.name + '\', \'' + teacherDisplay.replace(/'/g, "\\'") + '\')"><i class="bi bi-calendar3 me-1"></i>QL lịch</button>';
+                } else {
+                    actionBtn = '<button class="btn btn-sm btn-primary px-2"' + openBtnDisabled + ' onclick="openGroupScheduleModal(\'' + (asg.csId || asg.id) + '\', \'' + subj.name + '\', \'' + (asg.groups[0] ? asg.groups[0].code : 'N1') + '\', \'' + (asg.groups[0] ? asg.groups[0].teacherMain : '') + '\', \'' + (asg.groups[0] ? asg.groups[0].teacherSub : '') + '\', \'' + (asg.groups[0] ? asg.groups[0].day : '') + '\', \'\', \'\', \'\', \'' + asg.classCode + '\')"><i class="bi bi-calendar-plus me-1"></i>Xếp lịch</button>';
+                }
+            }
+
+            const rowClass = (idx % 2 === 0) ? '' : 'style="background:#fafafa"';
+            rowsHtml +=
+                '<div class="row align-items-center py-3 border-bottom mx-0 group-row" ' + rowClass + '>' +
+                    '<div class="col-md-1 text-center fw-bold text-muted">' + (idx + 1) + '</div>' +
+                    '<div class="col-md-1 fw-bold text-primary">' + asg.classCode + '</div>' +
+                    '<div class="col-md-2 small">' + (asg.semester ? 'HK' + asg.semester.replace('HK','') : '--') + ' ' + asg.year + '</div>' +
+                    '<div class="col-md-2 small">' + teacherDisplay + '</div>' +
+                    '<div class="col-md-2 small ' + scheduleClass + ' fw-bold">' + scheduleDisplay + '</div>' +
+                    '<div class="col-md-1 text-center small fw-bold text-dark">' + roomDisplay + '</div>' +
+                    '<div class="col-md-1 text-center">' + statusHtml + '</div>' +
+                    '<div class="col-md-2 text-center">' + actionBtn + '</div>' +
+                '</div>';
+        });
+
+        // ─── FOOTER ───
+        const footHtml =
+            '<div class="px-4 py-2 small text-muted" style="background:#f8fafc;border-top:1px solid #eef2f7">' +
+                'Số lớp HP: <strong>' + subj.assignments.length + '</strong> | Tổng nhóm: <strong>' + totalGroups + '</strong> | ' +
+                'Đã xếp: <strong>' + scheduledGroups + '</strong> | ' +
+                'Thời gian mở: <strong>' + (subj.assignments[0] ? subj.assignments[0].openWindow : '--') + '</strong>' +
+            '</div>';
+
+        card.innerHTML = headHtml + tableHeaderHtml + rowsHtml + footHtml;
         container.appendChild(card);
     });
 }
@@ -580,8 +596,6 @@ function handleInitialScheduleSubmit(event) {
 
     return false;
 }
-    return false;
-}
 
 function openSessionManager(classCode, subjectName, teacherName, groupCode = null) {
     const groupText = groupCode ? ' | ' + getGroupLabel(groupCode) : '';
@@ -816,7 +830,19 @@ function deleteSingleSession() {
 }
 
 function addGroupToClass(courseId, subjectName) {
-    const course = allAssignmentCourses.find(function (c) { return c.id === courseId; });
+    let course = null;
+    // Try flat list first
+    course = allAssignmentCourses.find(function (c) { return c.id === courseId; });
+    // Try nested allSubjects
+    if (!course && window.allSubjects) {
+        window.allSubjects.forEach(function(subj) {
+            (subj.assignments || []).forEach(function(asg) {
+                if (asg.id === courseId || asg.csId == courseId) {
+                    course = asg;
+                }
+            });
+        });
+    }
     if (!course) {
         alert('Không tìm thấy môn học.');
         return;
@@ -830,7 +856,7 @@ function addGroupToClass(courseId, subjectName) {
     let nextNumber = 1;
     if (course.groups.length > 0) {
         const maxNumber = Math.max.apply(null, course.groups.map(function (group) {
-            return parseInt(group.code.substring(1), 10);
+            return parseInt(String(group.code).replace('N', ''), 10) || 1;
         }));
         nextNumber = maxNumber + 1;
     }
@@ -853,4 +879,44 @@ function addGroupToClass(courseId, subjectName) {
     });
 
     renderAssignmentOfferings();
+}
+
+// ─── NEW: Per-subject helpers for the new 1-subject-per-card layout ─────────────────
+
+// Upload SV cho tất cả lớp HP của 1 môn
+function uploadAllSubjectsStudentList(subjectId) {
+    const subj = (window.allSubjects || []).find(function(s) { return String(s.subjectId) === String(subjectId); });
+    if (!subj) {
+        alert('Không tìm thấy môn học.');
+        return;
+    }
+    // Use first assignment's csId for upload
+    if (subj.assignments && subj.assignments.length > 0) {
+        uploadAssignmentStudentList(subj.assignments[0].csId || subj.assignments[0].id);
+    } else {
+        alert('Môn học chưa có lớp HP nào. Hãy thêm lớp HP trước.');
+    }
+}
+
+// Download SV cho tất cả lớp HP của 1 môn (download first)
+function downloadAllSubjectsStudentList(subjectId) {
+    const subj = (window.allSubjects || []).find(function(s) { return String(s.subjectId) === String(subjectId); });
+    if (!subj || !subj.assignments || subj.assignments.length === 0) {
+        alert('Không có dữ liệu sinh viên để tải xuống.');
+        return;
+    }
+    downloadAssignmentStudentList(subj.assignments[0].csId || subj.assignments[0].id);
+}
+
+// Thêm lớp HP mới cho 1 môn (gọi modal phân công mới)
+function addSubjectClass(subjectId, subjectName) {
+    // Find the subject to check if it's open
+    const subj = (window.allSubjects || []).find(function(s) { return String(s.subjectId) === String(subjectId); });
+    if (subj && !subj.isOpen) {
+        alert('Môn học đã đóng, không thể thêm lớp HP mới.');
+        return;
+    }
+    // Open the initial schedule modal in "add" mode with empty values
+    // The modal needs a csId, so we pass empty to create a new one
+    openInitialScheduleModal('add', '', '', subjectName, '', '', '', '', '', '', '', '');
 }

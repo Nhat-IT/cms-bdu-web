@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/helpers.php';
@@ -14,7 +14,7 @@ $dbSemestersWithYear = db_fetch_all(
 // Xác định học kỳ đang diễn ra theo ngày hiện tại
 $currentSemester = null;
 $now = new DateTime();
-$nowMonth = (int)$now->format('n'); // 1-12
+$nowMonth = (int)$now->format('n');
 $nowYear  = (int)$now->format('Y');
 
 if ($nowMonth >= 9 || $nowMonth <= 1) {
@@ -62,7 +62,6 @@ foreach ($rawAssignments as $a) {
     $asgBySubj[$a['subject_id']][] = $a;
 }
 
-
 $rawGroups = db_fetch_all("
     SELECT
         csg.id,
@@ -86,8 +85,14 @@ foreach ($rawGroups as $g) {
     $groupsByCsId[$g['class_subject_id']][] = $g;
 }
 
-// Build courses array — mỗi subject 1 entry, assignments = danh sách lớp được phân công
+// Build courses array
 $dbCourses = [];
+// Map teacher_id -> name for quick lookup
+$teacherMap = [];
+foreach ($teachers as $t) {
+    $teacherMap[(string)$t['id']] = ($t['academic_title'] ? $t['academic_title'] . '. ' : '') . $t['name'];
+}
+
 foreach ($rawSubjects as $s) {
     $subjId   = $s['subject_id'];
     $assignments = [];
@@ -97,6 +102,7 @@ foreach ($rawSubjects as $s) {
         $openFmt = (!empty($a['start_date']) || !empty($a['end_date']))
             ? date('d/m/Y', strtotime($a['start_date']??'now')) . ' - ' . date('d/m/Y', strtotime($a['end_date']??'now'))
             : 'Chưa xác định';
+        $mainTeacherName = $a['main_teacher_id'] ? ($teacherMap[(string)$a['main_teacher_id']] ?? null) : null;
         $assignments[] = [
             'id'         => $s['subject_code'] . '-' . $csId,
             'csId'       => $csId,
@@ -105,10 +111,13 @@ foreach ($rawSubjects as $s) {
             'semester'   => $a['hk'] ?? '',
             'openWindow' => $openFmt,
             'teacherMain'=> $a['main_teacher_id'] ? (string)$a['main_teacher_id'] : null,
+            'teacherMainName' => $mainTeacherName,
             'groups'     => array_map(fn($g) => [
                 'code'        => $g['group_code'],
                 'teacherMain' => $a['main_teacher_id'] ? (string)$a['main_teacher_id'] : null,
+                'teacherMainName' => $mainTeacherName,
                 'teacherSub'  => $g['sub_teacher_id']  ? (string)$g['sub_teacher_id']  : null,
+                'teacherSubName' => ($g['sub_teacher_id'] && isset($teacherMap[(string)$g['sub_teacher_id']])) ? $teacherMap[(string)$g['sub_teacher_id']] : null,
                 'day'         => $g['day_of_week']  ? (string)$g['day_of_week']  : null,
                 'start'       => $g['start_period'] ? (string)$g['start_period'] : null,
                 'end'         => $g['end_period']   ? (string)$g['end_period']   : null,
@@ -169,17 +178,20 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
 
             <!-- Tab 1: Danh sách lớp học phần -->
             <div class="tab-pane fade show active" id="listView" role="tabpanel">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                        <h6 class="m-0 fw-bold text-dark">DANH SÁCH CÁC LỚP ĐỂ XẾP LỊCH</h6>
-                        <div class="input-group input-group-sm admin-assignments-search">
-                            <input type="text" class="form-control" placeholder="Tìm tên môn, mã lớp..." id="searchAssignment">
-                            <button class="btn btn-primary"><i class="bi bi-search"></i></button>
+                <div class="card border-0 shadow-sm rounded-0">
+                    <!-- Header -->
+                    <div class="card-header bg-white py-3 px-4 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                        <h5 class="m-0 fw-bold text-dark"><i class="bi bi-calendar-week me-2 text-primary"></i>DANH SÁCH CÁC NHÓM ĐỂ XẾP LỊCH</h5>
+                        <div class="input-group admin-assignments-search" style="max-width: 320px;">
+                            <input type="text" class="form-control" placeholder="Tìm kiếm..." id="searchAssignment">
+                            <button class="btn btn-primary" type="button"><i class="bi bi-search"></i></button>
                         </div>
                     </div>
-                    <div class="card-body border-bottom bg-light-subtle py-3">
+
+                    <!-- Filters -->
+                    <div class="card-body bg-light py-3 px-4 border-bottom">
                         <div class="row g-3 align-items-end">
-                            <div class="col-md-3">
+                            <div class="col-12 col-md-3">
                                 <label class="form-label small fw-bold text-muted mb-1">NĂM HỌC</label>
                                 <select class="form-select form-select-sm" id="assignFilterYear">
                                     <option value="all">Chọn tất cả</option>
@@ -188,7 +200,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-12 col-md-3">
                                 <label class="form-label small fw-bold text-muted mb-1">HỌC KỲ</label>
                                 <select class="form-select form-select-sm" id="assignFilterSemester">
                                     <option value="all">Chọn tất cả</option>
@@ -197,7 +209,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-12 col-md-3">
                                 <label class="form-label small fw-bold text-muted mb-1">TRẠNG THÁI MÔN</label>
                                 <select class="form-select form-select-sm" id="assignFilterOpenStatus">
                                     <option value="all">Tất cả</option>
@@ -205,11 +217,15 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                                     <option value="closed">Đã đóng</option>
                                 </select>
                             </div>
-                        </div>
-                        <div class="small text-muted mt-2">
-                            <i class="bi bi-info-circle me-1"></i>Thời gian mở môn được lấy từ cấu hình tại trang Quản lý Lớp &amp; Môn và chỉ hiển thị để tham chiếu.
+                            <div class="col-12 col-md-3 d-flex justify-content-end">
+                                <div class="small text-muted mt-2">
+                                    <i class="bi bi-info-circle me-1"></i>Thời gian mở môn được lấy từ cấu hình tại trang Quản lý Lớp &amp; Môn
+                                </div>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Table -->
                     <div class="card-body p-0">
                         <div id="assignmentOfferingContainer"></div>
                     </div>
@@ -802,6 +818,3 @@ function renderMasterSchedule() {
 <script src="../../public/js/admin/assignments.js?v=<?= filemtime(__DIR__ . '/../../public/js/admin/assignments.js') ?>"></script>
 </body>
 </html>
-< s c r i p t > w i n d o w . a d d E v e n t L i s t e n e r ( ' e r r o r ' ,   f u n c t i o n ( e )   {   f e t c h ( ' t e s t _ e r r o r . p h p ? e r r = ' + e n c o d e U R I C o m p o n e n t ( e . m e s s a g e ) ) ;   } ) ; < / s c r i p t > 
- 
- 
