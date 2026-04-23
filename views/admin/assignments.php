@@ -161,14 +161,16 @@ foreach ($classes as $c) {
     foreach ($asgByClass[$className] ?? [] as $a) {
         $csId   = $a['cs_id'];
         $groups = $groupsByCsId[$csId] ?? [['group_code'=>'N1','room'=>null,'day_of_week'=>null,'start_period'=>null,'end_period'=>null,'sub_teacher_id'=>null]];
-        $openFmt = (!empty($a['start_date']) || !empty($a['end_date']))
-            ? date('d/m/Y', strtotime($a['start_date']??'now')) . ' - ' . date('d/m/Y', strtotime($a['end_date']??'now'))
-            : 'Chưa xác định';
         $mainTeacherName = $a['main_teacher_id'] ? ($teacherMap[(string)$a['main_teacher_id']] ?? null) : null;
         
         $subjInfo = $subjectMap[$a['subject_id']] ?? null;
         if (!$subjInfo) continue;
         if ($subjInfo['subject_open']) $hasOpen = true;
+        $openDate = $subjInfo['open_date'] ?? null;
+        $closeDate = $subjInfo['close_date'] ?? null;
+        $openFmt = (!empty($openDate) || !empty($closeDate))
+            ? (!empty($openDate) ? date('d/m/Y', strtotime($openDate)) : '--') . ' - ' . (!empty($closeDate) ? date('d/m/Y', strtotime($closeDate)) : '--')
+            : 'Chưa xác định';
 
         $csStart = !empty($a['start_date']) ? strtotime($a['start_date']) : null;
         $csEnd   = !empty($a['end_date'])   ? strtotime($a['end_date'])   : null;
@@ -189,7 +191,7 @@ foreach ($classes as $c) {
             'credits'        => (int)$subjInfo['credits'],
             'isOpen'         => (bool)$subjInfo['subject_open'],
             'year'           => $a['academic_year'] ?? '',
-            'semester'       => $a['hk'] ?? '',
+            'semester'       => normalizeSemesterCode($a['hk'] ?? ''),
             'openWindow'     => $openFmt,
             'computedStatus' => $computedStatus,
             'hasStudents'    => (($studentCountByCsId[(int)$csId] ?? 0) > 0),
@@ -256,7 +258,7 @@ foreach ($rawSubjects as $s) {
         'credits'        => (int)($s['credits'] ?? 0),
         'isOpen'         => (bool)($s['subject_open'] ?? 0),
         'year'           => $s['academic_year'] ?? '',
-        'semester'       => $s['semester'] ?? '',
+        'semester'       => normalizeSemesterCode($s['semester'] ?? ''),
         'openWindow'     => $openWindow,
         'computedStatus' => $computedStatus,
         'hasStudents'    => false,

@@ -145,6 +145,21 @@ function getClassGroupLabel(classCode, groupCode) {
     return code + ' - ' + getGroupCode(groupCode);
 }
 
+function normalizeSemesterCode(value) {
+    const text = String(value || '').trim().toUpperCase();
+    if (!text) return '';
+    const match = text.match(/(?:HK)?\s*([123])$/);
+    return match ? ('HK' + match[1]) : text;
+}
+
+function getSemesterDisplay(value) {
+    const code = normalizeSemesterCode(value);
+    if (code === 'HK1') return 'Học kỳ 1';
+    if (code === 'HK2') return 'Học kỳ 2';
+    if (code === 'HK3') return 'Học kỳ 3 (Hè)';
+    return value || '--';
+}
+
 function getNearestDateByDay(dayValue) {
     const day = parseInt(dayValue, 10);
     if (!Number.isFinite(day) || day < 2 || day > 8) return '';
@@ -245,7 +260,7 @@ function applyAssignmentFilters() {
     }
 
     const year = filterYear.value;
-    const semester = filterSemester.value;
+    const semester = normalizeSemesterCode(filterSemester.value);
     const status = filterStatus.value;
     const search = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
@@ -260,7 +275,7 @@ function applyAssignmentFilters() {
     // Filter
     assignmentOfferingsFiltered = flatAssignments.filter(function(asg) {
         const matchYear = year === 'all' || asg.year === year;
-        const matchSemester = semester === 'all' || asg.semester === semester;
+        const matchSemester = semester === 'ALL' || normalizeSemesterCode(asg.semester) === semester;
         const matchStatus = status === 'all' || (status === 'open' ? asg.isOpen : !asg.isOpen);
         
         // Search filter
@@ -310,6 +325,7 @@ function renderAssignmentOfferingsTable() {
                 subjectName: asg.subjectName,
                 credits: asg.credits,
                 year: asg.year,
+                semester: asg.semester,
                 isOpen: asg.isOpen,
                 assignments: []
             };
@@ -415,7 +431,7 @@ function renderAssignmentOfferingsTable() {
             '<div class="assignment-offering-head">' +
                 '<div>' +
                     '<div class="assignment-offering-title">' + (subj.subjectCode || '--') + ' - ' + (subj.subjectName || '') + '</div>' +
-                    '<div class="assignment-offering-subtitle">' + (subj.credits || 0) + ' tín chỉ | Năm học: ' + (subj.year || '--') + '</div>' +
+                    '<div class="assignment-offering-subtitle">' + (subj.credits || 0) + ' tín chỉ | ' + getSemesterDisplay(subj.semester) + ' | Năm học: ' + (subj.year || '--') + '</div>' +
                 '</div>' +
                 '<div class="assignment-head-actions">' +
                     '<button class="btn btn-outline-primary" onclick="' + addGroupAction + '"' + actionDisabled + actionTitle + '><i class="bi bi-plus-circle me-1"></i>Thêm nhóm</button>' +
