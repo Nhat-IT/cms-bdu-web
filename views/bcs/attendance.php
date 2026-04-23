@@ -13,59 +13,53 @@ $userId = $_SESSION['user_id'];
 $pageTitle = 'Quản Lý Chuyên Cần';
 
 // Lấy class_id của BCS từ class_students
-$stmt = $pdo->prepare("
-    SELECT cs.class_id, c.class_name 
-    FROM class_students cs
-    JOIN classes c ON cs.class_id = c.id
-    WHERE cs.student_id = ?
-");
-$stmt->execute([$userId]);
-$classInfo = $stmt->fetch();
-$classId = $classInfo['class_id'] ?? null;
-$className = $classInfo['class_name'] ?? '';
+$classRow = db_fetch_one(
+    "SELECT cs.class_id, c.class_name
+     FROM class_students cs
+     JOIN classes c ON cs.class_id = c.id
+     WHERE cs.student_id = ?",
+    [$userId]
+);
+$classId = $classRow['class_id'] ?? null;
+$className = $classRow['class_name'] ?? '';
 
 // Lấy thông tin user
-$stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-$stmt->execute([$userId]);
-$currentUser = $stmt->fetch();
+$currentUser = db_fetch_one("SELECT * FROM users WHERE id = ?", [$userId]);
 $fullName = $currentUser['full_name'] ?? '';
 $position = $currentUser['position'] ?? 'Ban Cán Sự';
 $avatar = getAvatarUrl($currentUser['avatar'] ?? null, $fullName, 55);
 
 // Lấy danh sách học kỳ
-$stmt = $pdo->prepare("SELECT * FROM semesters ORDER BY id DESC");
-$stmt->execute();
-$semesters = $stmt->fetchAll();
+$semesters = db_fetch_all("SELECT * FROM semesters ORDER BY id DESC");
 
 // Lấy danh sách môn học của lớp
-$stmt = $pdo->prepare("
-    SELECT DISTINCT cs.id as class_subject_id, s.id as subject_id, s.subject_name, s.subject_code
-    FROM class_subjects cs
-    JOIN subjects s ON cs.subject_id = s.id
-    JOIN class_subject_groups csg ON csg.class_subject_id = cs.id
-    JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
-    JOIN class_students cs2 ON cs2.student_id = ssr.student_id AND cs2.class_id = ?
-    WHERE ssr.status = 'Đang học'
-    ORDER BY s.subject_name
-");
-$stmt->execute([$classId]);
-$subjects = $stmt->fetchAll();
+$subjects = db_fetch_all(
+    "SELECT DISTINCT cs.id as class_subject_id, s.id as subject_id, s.subject_name, s.subject_code
+     FROM class_subjects cs
+     JOIN subjects s ON cs.subject_id = s.id
+     JOIN class_subject_groups csg ON csg.class_subject_id = cs.id
+     JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
+     JOIN class_students cs2 ON cs2.student_id = ssr.student_id AND cs2.class_id = ?
+     WHERE ssr.status = 'Đang học'
+     ORDER BY s.subject_name",
+    [$classId]
+);
 
 // Lấy danh sách sinh viên trong lớp
-$stmt = $pdo->prepare("
-    SELECT u.id, u.full_name, u.email as student_code, u.birth_date
-    FROM users u
-    JOIN class_students cs ON u.id = cs.student_id
-    WHERE cs.class_id = ?
-    ORDER BY u.full_name
-");
-$stmt->execute([$classId]);
-$students = $stmt->fetchAll();
+$students = db_fetch_all(
+    "SELECT u.id, u.full_name, u.email as student_code, u.birth_date
+     FROM users u
+     JOIN class_students cs ON u.id = cs.student_id
+     WHERE cs.class_id = ?
+     ORDER BY u.full_name",
+    [$classId]
+);
 
 // Đếm notification
-$stmt = $pdo->prepare("SELECT COUNT(*) as total FROM notification_logs WHERE user_id = ? AND is_read = 0");
-$stmt->execute([$userId]);
-$unreadCount = $stmt->fetch()['total'] ?? 0;
+$unreadCount = db_fetch_one(
+    "SELECT COUNT(*) as total FROM notification_logs WHERE user_id = ? AND is_read = 0",
+    [$userId]
+)['total'] ?? 0;
 ?>
 <!DOCTYPE html>
 <html lang="vi">
