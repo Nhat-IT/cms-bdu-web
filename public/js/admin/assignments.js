@@ -296,19 +296,21 @@ function renderAssignmentOfferingsTable() {
             const hasClassSubject = Number.isFinite(classSubjectId) && classSubjectId > 0;
             const manageBtn = hasClassSubject
                 ? '<button class="btn btn-outline-primary" onclick="openSessionManager(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(mainTeacher || teacherDisplay) + '\', \'' + escapeHtml(groupCode) + '\')"><i class="bi bi-calendar-week me-1"></i>Quản lý lịch</button>'
-                : '<button class="btn btn-outline-primary" onclick="addSubjectClass(\'' + escapeHtml(String(asg.subjectId || '')) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-calendar-plus me-1"></i>Khởi tạo lớp học phần</button>';
+                : '<button class="btn btn-primary" onclick="addSubjectClass(\'' + escapeHtml(String(asg.subjectId || '')) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>';
             const scheduleBtn = hasClassSubject
                 ? '<button class="btn btn-primary" onclick="openGroupScheduleModal(\'' + classSubjectId + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(g.teacherMain || '') + '\', \'' + escapeHtml(g.teacherSub || '') + '\', \'' + escapeHtml(g.day || '') + '\', \'' + escapeHtml(g.start || '') + '\', \'' + escapeHtml(g.end || '') + '\', \'' + escapeHtml(g.room || '') + '\', \'' + escapeHtml(asg.classCode || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>'
                 : '<button class="btn btn-primary" onclick="addSubjectClass(\'' + escapeHtml(String(asg.subjectId || '')) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>';
             const primaryActionBtn = hasClassSubject ? ((!hasSchedule && subj.isOpen) ? scheduleBtn : manageBtn) : manageBtn;
             const uploadIconBtn = hasClassSubject
                 ? '<button class="btn btn-outline-dark btn-icon-only" title="Tải lên danh sách sinh viên" onclick="uploadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"><i class="bi bi-upload"></i></button>'
-                : '<button class="btn btn-outline-secondary btn-icon-only" title="Môn này chưa có lớp học phần" disabled><i class="bi bi-upload"></i></button>';
+                : '<button class="btn btn-outline-primary btn-icon-only" title="Xếp lịch ngay để tạo lớp học phần trước khi tải lên" onclick="addSubjectClass(\'' + escapeHtml(String(asg.subjectId || '')) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-upload"></i></button>';
             const downloadIconBtn = asg.hasStudents
                 ? (hasClassSubject
                     ? '<button class="btn btn-outline-success btn-icon-only" title="Tải xuống danh sách sinh viên" onclick="downloadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"><i class="bi bi-download"></i></button>'
-                    : '<button class="btn btn-outline-secondary btn-icon-only" title="Môn này chưa có lớp học phần" disabled><i class="bi bi-download"></i></button>')
-                : '<button class="btn btn-outline-secondary btn-icon-only" title="Chưa có danh sách sinh viên trong DB" disabled><i class="bi bi-download"></i></button>';
+                    : '<button class="btn btn-outline-primary btn-icon-only" title="Xếp lịch ngay để tạo lớp học phần trước khi tải xuống" onclick="addSubjectClass(\'' + escapeHtml(String(asg.subjectId || '')) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-download"></i></button>')
+                : (hasClassSubject
+                    ? '<button class="btn btn-outline-secondary btn-icon-only" title="Chưa có danh sách sinh viên trong DB" disabled><i class="bi bi-download"></i></button>'
+                    : '<button class="btn btn-outline-primary btn-icon-only" title="Xếp lịch ngay để tạo lớp học phần trước khi tải xuống" onclick="addSubjectClass(\'' + escapeHtml(String(asg.subjectId || '')) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-download"></i></button>');
             const deleteGroupBtn = (totalRows > 1 && hasClassSubject && !isFirstGroup)
                 ? '<button class="btn btn-outline-danger btn-icon-only assignment-delete-group" title="Xóa nhóm ' + groupCode + ' (total:' + totalRows + ')" onclick="deleteGroupFromClass(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(asg.subjectName || '') + '\', \'' + escapeHtml(String(asg.subjectId || '')) + '\')"><i class="bi bi-trash"></i></button>'
                 : '';
@@ -380,6 +382,13 @@ function uploadAssignmentStudentList(courseId) {
     const course = allAssignmentCourses.find(function (c) { return c.id === courseId; });
     if (!course) {
         alert('Không tìm thấy môn học.');
+        return;
+    }
+
+    const csId = resolveClassSubjectId(course);
+    if (!csId) {
+        if (window.showToast) window.showToast('Môn này chưa có lớp học phần. Vui lòng xếp lịch trước.', 'warning');
+        addSubjectClass(course.subjectId || '', course.name || '');
         return;
     }
 
@@ -594,7 +603,8 @@ function downloadAssignmentStudentList(courseId) {
 
     const csId = resolveClassSubjectId(course);
     if (!csId) {
-        alert('Không xác định được lớp học phần để tải danh sách.');
+        if (window.showToast) window.showToast('Môn này chưa có lớp học phần. Vui lòng xếp lịch trước.', 'warning');
+        addSubjectClass(course.subjectId || '', course.name || '');
         return;
     }
 
