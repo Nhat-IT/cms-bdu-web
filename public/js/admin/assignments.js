@@ -227,8 +227,13 @@ function renderAssignmentOfferingsTable() {
             const scheduleDisplay = hasSchedule
                 ? (getDayLabel(String(g.day)) + ' | Tiết ' + g.start + '-' + g.end)
                 : 'Chưa xếp lịch';
-            const roomDisplay = hasSchedule ? g.room : '--';
-            const statusDisplay = asg.computedStatus === '0' ? 'Đã đóng' : 'Đang mở';
+            const roomDisplay = hasSchedule ? String(g.room) : '--';
+            let statusDisplay = 'Chưa xếp lịch';
+            if (asg.computedStatus === '0') {
+                statusDisplay = 'Đã đóng';
+            } else if (hasSchedule) {
+                statusDisplay = 'Đang mở';
+            }
             const groupCode = g.code || 'N1';
             const manageBtn = '<button class="btn btn-outline-primary" onclick="openSessionManager(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(mainTeacher || teacherDisplay) + '\', \'' + escapeHtml(groupCode) + '\')"><i class="bi bi-calendar-week me-1"></i>Quản lý lịch</button>';
             const classSubjectId = resolveClassSubjectId(asg);
