@@ -1017,6 +1017,15 @@ function renderMasterSchedule() {
     const occupied = {};
     [2,3,4,5,6,7,8].forEach(d => occupied[d] = {});
     const dayOffsetMap = {2:0,3:1,4:2,5:3,6:4,7:5,8:6};
+    const primarySlots = {};
+    const escHtml = function(v) {
+        return String(v == null ? '' : v)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    };
 
     (window.masterScheduleCourses || []).forEach(function(course) {
         if (yearFilter !== 'all' && String(course.year || '') !== yearFilter) return;
@@ -1029,7 +1038,20 @@ function renderMasterSchedule() {
             const end   = parseInt(g.end,   10);
             if (teacherFilter !== 'all' && g.teacherMain !== teacherFilter) return;
             if (roomFilter    !== 'all' && g.room        !== roomFilter)    return;
-            if (occupied[day] && occupied[day][start]) return;
+            const teacherObj = (window.teachers || []).find(t => t.id === g.teacherMain);
+            const teacherDisplay = teacherObj ? ((teacherObj.title ? teacherObj.title + '. ' : '') + teacherObj.name) : '—';
+            const slotKey = String(day) + '-' + String(start);
+            const slotItem = {
+                subject: course.name || '',
+                classCode: course.classCode || '',
+                groupCode: (g.code === 'N1' ? 'Nhóm 1' : (g.code || 'N1')),
+                roomName: getRoomName(g.room),
+                teacher: teacherDisplay
+            };
+            if (occupied[day] && occupied[day][start]) {
+                if (primarySlots[slotKey]) primarySlots[slotKey].items.push(slotItem);
+                return;
+            }
 
             const span = end - start + 1;
             const cell = tbody.querySelector(
@@ -1052,9 +1074,6 @@ function renderMasterSchedule() {
 
             const tObj    = (window.teachers || []).find(t => t.id === g.teacherMain);
             const tName   = tObj ? ((tObj.title ? tObj.title + '. ' : '') + tObj.name) : '—';
-            const tStart  = window.startTimeLabels[start] || ('Tiết ' + start);
-            const tEnd    = window.startTimeLabels[end]   || ('' + end);
-
             const block = document.createElement('div');
             block.className   = 'subject-block';
             block.style.height    = '100%';
@@ -1062,12 +1081,10 @@ function renderMasterSchedule() {
             block.style.cursor    = 'pointer';
             block.title           = 'Click để chỉnh sửa lịch ngày này';
             block.innerHTML =
-                '<div class="subject-title" style="font-size:0.72rem">' + course.name + '</div>' +
-                '<div style="font-size:0.65rem">Lớp: <b class="text-primary">' + course.classCode + '</b> (' + (g.code === "N1" ? "Nhóm 1" : g.code) + ')</div>' +
-                '<div style="font-size:0.65rem">🏛 <b>' + getRoomName(g.room) + '</b></div>' +
-                '<div style="font-size:0.65rem">👤 ' + tName + '</div>' +
-                '<div style="font-size:0.62rem;color:#334155;margin-top:2px">⏰ ' + tStart + ' → ' + tEnd +
-                    ' <span style="color:#94a3b8">(T.' + start + '–' + end + ')</span></div>';
+                '<div class="subject-title" style="font-size:0.86rem;font-weight:700">' + course.name + '</div>' +
+                '<div style="font-size:0.78rem">Lớp: <b class="text-primary">' + course.classCode + '</b> (' + (g.code === "N1" ? "Nhóm 1" : g.code) + ')</div>' +
+                '<div style="font-size:0.78rem">🏛 <b>' + getRoomName(g.room) + '</b></div>' +
+                '<div style="font-size:0.78rem">👤 ' + tName + '</div>';
 
             (function(cc, cg, offset) {
                 block.addEventListener('click', function() {
@@ -1088,7 +1105,55 @@ function renderMasterSchedule() {
             })(course, g, dayOffsetMap[day] !== undefined ? dayOffsetMap[day] : 0);
 
             cell.appendChild(block);
+            primarySlots[slotKey] = { block: block, items: [slotItem] };
         });
+    });
+
+    Object.keys(primarySlots).forEach(function(key) {
+        const slot = primarySlots[key];
+        if (!slot || !slot.block || !Array.isArray(slot.items) || slot.items.length <= 1) return;
+
+        const extraCount = slot.items.length - 1;
+        slot.block.style.position = 'relative';
+
+        const badge = document.createElement('span');
+        badge.textContent = '+' + extraCount;
+        badge.style.position = 'absolute';
+        badge.style.top = '4px';
+        badge.style.right = '6px';
+        badge.style.background = '#dc2626';
+        badge.style.color = '#fff';
+        badge.style.borderRadius = '999px';
+        badge.style.padding = '1px 7px';
+        badge.style.fontSize = '0.72rem';
+        badge.style.fontWeight = '700';
+        badge.style.lineHeight = '1.1';
+        badge.style.boxShadow = '0 1px 3px rgba(0,0,0,0.25)';
+        slot.block.appendChild(badge);
+
+        const listHtml = slot.items.map(function(it, idx) {
+            return '<div style="padding:6px 0;border-top:' + (idx ? '1px solid #e2e8f0' : '0') + ';">'
+                + '<div style="font-weight:700;color:#0f172a;font-size:0.86rem;">' + escHtml(it.subject) + '</div>'
+                + '<div style="font-size:0.8rem;color:#334155;">Lớp: ' + escHtml(it.classCode) + ' (' + escHtml(it.groupCode) + ')</div>'
+                + '<div style="font-size:0.8rem;color:#334155;">Phòng: ' + escHtml(it.roomName) + '</div>'
+                + '<div style="font-size:0.8rem;color:#334155;">GV: ' + escHtml(it.teacher) + '</div>'
+                + '</div>';
+        }).join('');
+        const popoverContent = '<div style="min-width:260px;max-width:340px;">'
+            + '<div style="font-weight:700;color:#b91c1c;margin-bottom:4px;">Có ' + slot.items.length + ' môn cùng buổi học</div>'
+            + listHtml
+            + '</div>';
+
+        if (typeof bootstrap !== 'undefined' && bootstrap.Popover) {
+            new bootstrap.Popover(slot.block, {
+                trigger: 'hover focus',
+                html: true,
+                placement: 'auto',
+                container: 'body',
+                sanitize: false,
+                content: popoverContent
+            });
+        }
     });
 }
 </script>

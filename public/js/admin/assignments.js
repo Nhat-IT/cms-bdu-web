@@ -1340,13 +1340,14 @@ function createStatusCell(text, badgeClass) {
 
 function openEditSingleSession(mode, dateStr, dateVal, day, start, end, room, status, classCode, subjectName, teacherId, group = '01', csId = '') {
     const normalizedGroup = getGroupCode(group || 'N1');
-    const normalizedDate = dateVal || getNearestDateByDay(day);
+    const normalizedDate = dateVal || ((mode === 'add') ? getNearestDateByDay(day) : '');
     currentSingleSessionContext = {
         mode: mode || 'edit',
         classCode: classCode || '',
         subjectName: subjectName || '',
         groupCode: normalizedGroup,
-        csId: csId || ''
+        csId: csId || '',
+        originalDay: day ? String(day) : ''
     };
 
     document.getElementById('qsSubjectInfo').innerText = subjectName;
@@ -1415,16 +1416,13 @@ function saveSingleSession() {
     }
 
     const dateValue = (document.getElementById('singleDate').value || '').trim();
-    if (!dateValue) {
-        if (window.showToast) window.showToast('Vui lòng chọn ngày học.', 'warning');
-        else alert('Vui lòng chọn ngày học.');
-        return;
+    let dayOfWeek = getDayOfWeekFromDate(dateValue);
+    if (!dayOfWeek && context.originalDay) {
+        dayOfWeek = String(context.originalDay).trim();
     }
-
-    const dayOfWeek = getDayOfWeekFromDate(dateValue);
     if (!dayOfWeek) {
-        if (window.showToast) window.showToast('Ngày học không hợp lệ.', 'error');
-        else alert('Ngày học không hợp lệ.');
+        if (window.showToast) window.showToast('Ngày học không hợp lệ. Vui lòng chọn lại ngày học.', 'error');
+        else alert('Ngày học không hợp lệ. Vui lòng chọn lại ngày học.');
         return;
     }
 
@@ -1496,6 +1494,7 @@ function saveSingleSession() {
                 if (res && res.message === 'conflict_room') msg = res.detail || 'Phòng học bị trùng lịch.';
                 else if (res && res.message === 'conflict_teacher') msg = res.detail || 'Giảng viên bị trùng lịch.';
                 else if (res && res.message === 'subject_closed') msg = 'Môn học đã đóng, không thể cập nhật lịch.';
+                else if (res && res.message === 'invalid_schedule_data') msg = 'Dữ liệu lịch chưa hợp lệ. Vui lòng kiểm tra lại ngày, tiết và phòng.';
                 if (window.showToast) window.showToast(msg, 'error');
                 else alert(msg);
                 return;

@@ -25,6 +25,8 @@ $role = trim($_POST['role'] ?? '');
 $secondaryRole = trim($_POST['secondary_role'] ?? '');
 $academicTitle = trim($_POST['academic_title'] ?? '');
 $position = trim($_POST['position'] ?? '');
+$birthDateRaw = trim($_POST['birth_date'] ?? '');
+$birthDate = $birthDateRaw !== '' ? $birthDateRaw : null;
 $classIdRaw = $_POST['class_id'] ?? '';
 $classId = ($classIdRaw === '' || $classIdRaw === null) ? null : (int) $classIdRaw;
 
@@ -172,6 +174,14 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     redirect('../../views/admin/accounts.php?account_error=invalid_email');
 }
 
+if ($birthDate !== null) {
+    $dt = DateTime::createFromFormat('Y-m-d', $birthDate);
+    $isValidBirthDate = $dt && $dt->format('Y-m-d') === $birthDate;
+    if (!$isValidBirthDate) {
+        redirect('../../views/admin/accounts.php?account_error=missing_data');
+    }
+}
+
 $isProtectedById = $id > 0 && isProtectedAdminUserById($id);
 $isProtectedByEmail = isProtectedAdminEmail($email);
 $existingUser = $id > 0 ? db_fetch_one('SELECT role FROM users WHERE id = ? LIMIT 1', [$id]) : null;
@@ -194,13 +204,13 @@ if ($isProtectedById || $isProtectedByEmail) {
         $hasSecondaryRoleColumn = usersHasSecondaryRoleColumnAdmin();
         if ($hasSecondaryRoleColumn) {
             db_query(
-                'UPDATE users SET username = ?, full_name = ?, email = ?, role = ?, secondary_role = ?, academic_title = ?, position = ? WHERE id = ?',
-                [$username, $fullName, $email, $role, $secondaryRole !== '' ? $secondaryRole : null, $academicTitle !== '' ? $academicTitle : null, $position !== '' ? $position : null, $id]
+                'UPDATE users SET username = ?, full_name = ?, email = ?, role = ?, secondary_role = ?, academic_title = ?, position = ?, birth_date = ? WHERE id = ?',
+                [$username, $fullName, $email, $role, $secondaryRole !== '' ? $secondaryRole : null, $academicTitle !== '' ? $academicTitle : null, $position !== '' ? $position : null, $birthDate, $id]
             );
         } else {
             db_query(
-                'UPDATE users SET username = ?, full_name = ?, email = ?, role = ?, academic_title = ?, position = ? WHERE id = ?',
-                [$username, $fullName, $email, $role, $academicTitle !== '' ? $academicTitle : null, $position !== '' ? $position : null, $id]
+                'UPDATE users SET username = ?, full_name = ?, email = ?, role = ?, academic_title = ?, position = ?, birth_date = ? WHERE id = ?',
+                [$username, $fullName, $email, $role, $academicTitle !== '' ? $academicTitle : null, $position !== '' ? $position : null, $birthDate, $id]
             );
         }
         $userId = $id;
@@ -210,13 +220,13 @@ if ($isProtectedById || $isProtectedByEmail) {
         $hasSecondaryRoleColumn = usersHasSecondaryRoleColumnAdmin();
         if ($hasSecondaryRoleColumn) {
             db_query(
-                'INSERT INTO users (username, password, full_name, email, role, secondary_role, academic_title, position) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                [$username, $defaultPasswordHash, $fullName, $email, $role, $secondaryRole !== '' ? $secondaryRole : null, $academicTitle !== '' ? $academicTitle : null, $position !== '' ? $position : null]
+                'INSERT INTO users (username, password, full_name, email, role, secondary_role, academic_title, position, birth_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [$username, $defaultPasswordHash, $fullName, $email, $role, $secondaryRole !== '' ? $secondaryRole : null, $academicTitle !== '' ? $academicTitle : null, $position !== '' ? $position : null, $birthDate]
             );
         } else {
             db_query(
-                'INSERT INTO users (username, password, full_name, email, role, academic_title, position) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [$username, $defaultPasswordHash, $fullName, $email, $role, $academicTitle !== '' ? $academicTitle : null, $position !== '' ? $position : null]
+                'INSERT INTO users (username, password, full_name, email, role, academic_title, position, birth_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                [$username, $defaultPasswordHash, $fullName, $email, $role, $academicTitle !== '' ? $academicTitle : null, $position !== '' ? $position : null, $birthDate]
             );
         }
 

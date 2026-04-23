@@ -115,6 +115,7 @@ $fields = [
     'academic_title',
     $hasSecondaryRoleColumn ? 'secondary_role' : 'NULL AS secondary_role',
     'position',
+    'birth_date',
     'avatar',
     'created_at',
     '(SELECT cs.class_id FROM class_students cs WHERE cs.student_id = users.id ORDER BY cs.id DESC LIMIT 1) AS class_id',
@@ -346,7 +347,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                                                 </button>
                                             </form>
                                             <button class="btn btn-light action-btn text-primary border me-1" title="Sửa thông tin" data-bs-toggle="modal" data-bs-target="#accountModal" 
-                                                onclick="openAccountModal('edit', '<?php echo e($user['id']); ?>', '<?php echo e($user['username']); ?>', '<?php echo e($user['full_name']); ?>', '<?php echo e($user['email']); ?>', '<?php echo e($user['role']); ?>', '<?php echo e($user['secondary_role'] ?? ''); ?>', '<?php echo e($user['class_id'] ?? ''); ?>', '<?php echo e($user['academic_title'] ?? ''); ?>')">
+                                                onclick="openAccountModal('edit', '<?php echo e($user['id']); ?>', '<?php echo e($user['username']); ?>', '<?php echo e($user['full_name']); ?>', '<?php echo e($user['email']); ?>', '<?php echo e($user['role']); ?>', '<?php echo e($user['secondary_role'] ?? ''); ?>', '<?php echo e($user['class_id'] ?? ''); ?>', '<?php echo e($user['academic_title'] ?? ''); ?>', '<?php echo e(!empty($user['birth_date']) ? date('Y-m-d', strtotime($user['birth_date'])) : ''); ?>')">
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
                                             <?php if (!$isProtectedAdmin): ?>
@@ -443,11 +444,15 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
           </div>
 
           <div class="row">
-            <div class="col-md-5 mb-3">
+            <div class="col-md-4 mb-3">
                 <label class="form-label fw-bold">Họ và tên <span class="text-danger">*</span></label>
                 <input type="text" class="form-control border-secondary" name="full_name" id="modalFullName" placeholder="Nhập đầy đủ họ tên..." required>
             </div>
-            <div class="col-md-4 mb-3" id="academicTitleGroup">
+            <div class="col-md-3 mb-3">
+                <label class="form-label fw-bold">Ngày sinh</label>
+                <input type="date" class="form-control border-secondary" name="birth_date" id="modalBirthDate">
+            </div>
+            <div class="col-md-3 mb-3" id="academicTitleGroup">
                 <label class="form-label fw-bold">Học hàm / Học vị</label>
                 <select class="form-select border-secondary" name="academic_title" id="modalAcademicTitle">
                     <option value="">Không có</option>
@@ -458,7 +463,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                     <option value="CN">Cử nhân (CN.)</option>
                 </select>
             </div>
-            <div class="col-md-3 mb-3" id="classInputGroup" style="display: none;">
+            <div class="col-md-2 mb-3" id="classInputGroup" style="display: none;">
                 <label class="form-label fw-bold">Lớp học <span class="text-danger">*</span></label>
                 <select class="form-select border-warning fw-bold text-dark" name="class_id" id="modalClass">
                     <option value="">-- Chọn lớp --</option>
@@ -725,10 +730,11 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
         });
     });
 
-    function openAccountModal(mode, id = '', code = '', fullName = '', email = '', primaryRole = '', secondaryRole = '', classId = '', academicTitle = '') {
+    function openAccountModal(mode, id = '', code = '', fullName = '', email = '', primaryRole = '', secondaryRole = '', classId = '', academicTitle = '', birthDate = '') {
         const title = document.getElementById('accountModalTitle');
         const inputCode = document.getElementById('modalCode');
         const inputAcademicTitle = document.getElementById('modalAcademicTitle');
+        const inputBirthDate = document.getElementById('modalBirthDate');
         const inputId = document.getElementById('accountIdInput');
         const isProtectedAdmin = (String(email || '').toLowerCase() === 'admin@bdu.edu.vn');
         const isAdminAccount = (mode === 'edit' && primaryRole === 'admin');
@@ -757,6 +763,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
             title.innerHTML = '<i class="bi bi-person-plus-fill me-2"></i>Thêm Tài Khoản Mới';
             inputCode.removeAttribute('readonly');
             inputAcademicTitle.value = '';
+            if (inputBirthDate) inputBirthDate.value = '';
             inputId.value = '';
             // Tạo mới: hiển thị NGƯỜI HỌC
             if (adminSection) adminSection.classList.add('d-none');
@@ -770,6 +777,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
             document.getElementById('modalEmail').value = email;
             modalClassInput.value = classId;
             inputAcademicTitle.value = academicTitle;
+            if (inputBirthDate) inputBirthDate.value = birthDate || '';
 
             if (primaryRole) {
                 const primaryCheckbox = document.querySelector('.role-checkbox-group .form-check-input[value="' + primaryRole + '"]');
