@@ -167,15 +167,14 @@
 }
 
 .assignment-group-pill {
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    padding: 8px 14px;
-    background: #dbeafe;
-    color: #0369a1;
-    border-radius: 999px;
-    font-size: 0.9rem;
+    display: inline-block;
+    padding: 0;
+    background: transparent;
+    color: #0f172a;
+    border-radius: 0;
+    font-size: 1rem;
     font-weight: 700;
+    line-height: 1.35;
 }
 
 .assignment-col-label {

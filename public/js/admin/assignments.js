@@ -238,7 +238,7 @@ function renderAssignmentOfferingsTable() {
         const groups = (asg.groups && asg.groups.length) ? asg.groups : [{ code: 'N1' }];
         const firstUnscheduled = groups.find(function(g) { return !(g.day && g.start && g.end && g.room); });
 
-        const rowsHtml = groups.map(function(g) {
+        const rowsHtml = groups.map(function(g, groupIndex) {
             const mainTeacher = g.teacherMainName || getTeacherName(g.teacherMain) || '';
             const subTeacher = g.teacherSubName || getTeacherName(g.teacherSub) || '';
             const teacherDisplay = (mainTeacher && subTeacher) ? (mainTeacher + ' + ' + subTeacher) : (mainTeacher || subTeacher || '--');
@@ -265,7 +265,10 @@ function renderAssignmentOfferingsTable() {
             const downloadIconBtn = asg.hasStudents
                 ? '<button class="btn btn-outline-success btn-icon-only" title="Tải xuống danh sách sinh viên" onclick="downloadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"><i class="bi bi-download"></i></button>'
                 : '';
-            const actionButtons = primaryActionBtn + '<span class="assignment-action-icons">' + uploadIconBtn + downloadIconBtn + '</span>';
+            const deleteGroupBtn = groupIndex > 0
+                ? '<button class="btn btn-outline-danger btn-icon-only" title="Xóa nhóm" onclick="deleteGroupFromClass(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-trash"></i></button>'
+                : '';
+            const actionButtons = primaryActionBtn + '<span class="assignment-action-icons">' + uploadIconBtn + downloadIconBtn + deleteGroupBtn + '</span>';
 
             return '' +
                 '<div class="assignment-group-row">' +
@@ -992,6 +995,52 @@ function addGroupToClass(courseId, subjectName) {
         })
         .catch(function() {
             alert('Lỗi kết nối server khi thêm nhóm.');
+        });
+}
+
+function deleteGroupFromClass(courseId, groupCode, subjectName) {
+    let course = allAssignmentCourses.find(function(c) { return c.id === courseId; }) || null;
+    if (!course) {
+        alert('Không tìm thấy môn học.');
+        return;
+    }
+
+    const groupList = Array.isArray(course.groups) ? course.groups : [];
+    if (groupList.length <= 1) {
+        alert('Mỗi môn học phải có ít nhất 1 nhóm, không thể xóa nhóm cuối cùng.');
+        return;
+    }
+
+    const csId = resolveClassSubjectId(course);
+    if (!csId) {
+        alert('Không xác định được lớp học phần để xóa nhóm.');
+        return;
+    }
+
+    const confirmMsg = 'Xóa nhóm ' + getGroupCode(groupCode) + ' của môn ' + (subjectName || '') + '?';
+    if (!confirm(confirmMsg)) {
+        return;
+    }
+
+    if (!window.callApi) {
+        alert('Không thể kết nối API xóa nhóm.');
+        return;
+    }
+
+    window.callApi('delete_group', {
+        class_subject_id: csId,
+        group_code: getGroupCode(groupCode)
+    })
+        .then(function(res) {
+            if (res && res.ok) {
+                if (window.showToast) window.showToast('Đã xóa nhóm thành công.', 'success');
+                window.location.reload();
+                return;
+            }
+            alert('Không thể xóa nhóm. Vui lòng thử lại.');
+        })
+        .catch(function() {
+            alert('Lỗi kết nối server khi xóa nhóm.');
         });
 }
 
