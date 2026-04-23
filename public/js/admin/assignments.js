@@ -468,9 +468,10 @@ function populatePeriodSelects() {
     });
 }
 
-function openInitialScheduleModal(mode, csId, classCode, subjectName, teacher = '', startDate = '', endDate = '', dayOfWeek = '', startPeriod = '', endPeriod = '', room = '', assistant = '', group = 'ALL') {
+function openInitialScheduleModal(mode, csId, classCode, subjectName, teacher = '', startDate = '', endDate = '', dayOfWeek = '', startPeriod = '', endPeriod = '', room = '', assistant = '', group = 'N1') {
     window._currentCsId = csId;
-    window._currentGroupCode = group === 'ALL' ? 'N1' : group;
+    const normalizedGroup = (group && group !== 'ALL') ? group : (currentSessionGroupCode || 'N1');
+    window._currentGroupCode = normalizedGroup;
 
     const classCodeSelect = document.getElementById('initClassCode');
     if (classCodeSelect) {
@@ -480,7 +481,7 @@ function openInitialScheduleModal(mode, csId, classCode, subjectName, teacher = 
     document.getElementById('initSubjectName').innerText = subjectName;
     const groupLabel = document.getElementById('initGroupLabel');
     if (groupLabel) {
-        groupLabel.innerText = group === 'ALL' ? 'Toàn bộ nhóm' : getGroupLabel(group);
+        groupLabel.innerText = getGroupLabel(normalizedGroup);
     }
 
     document.getElementById('initTeacher').value = teacher;
@@ -603,26 +604,28 @@ function openSessionManager(courseId, subjectName, teacherName, groupCode = null
     if (editWholeScheduleBtn) {
         editWholeScheduleBtn.onclick = function () {
             if (course && course.groups.length > 0) {
-                const firstGroup = course.groups[0];
+                const targetGroup = currentSessionGroupCode
+                    ? (course.groups.find(function(g){ return g.code === currentSessionGroupCode; }) || course.groups[0])
+                    : course.groups[0];
                 openInitialScheduleModal(
                     'edit',
                     course.csId || course.id,
                     course.classCode || course.id,
                     course.name,
-                    firstGroup.teacherMain || teacherName || '',
+                    targetGroup.teacherMain || teacherName || '',
                     '',
                     '',
-                    firstGroup.day || '',
-                    firstGroup.start ? String(firstGroup.start) : '',
-                    firstGroup.end ? String(firstGroup.end) : '',
-                    firstGroup.room || '',
-                    firstGroup.teacherSub || '',
-                    'ALL'
+                    targetGroup.day || '',
+                    targetGroup.start ? String(targetGroup.start) : '',
+                    targetGroup.end ? String(targetGroup.end) : '',
+                    targetGroup.room || '',
+                    targetGroup.teacherSub || '',
+                    targetGroup.code || 'N1'
                 );
                 return;
             }
 
-            openInitialScheduleModal('add', course.csId || course.id, displayClassCode, subjectName, teacherName || '', '', '', '', '', '', '', 'ALL');
+            openInitialScheduleModal('add', course.csId || course.id, displayClassCode, subjectName, teacherName || '', '', '', '', '', '', '', currentSessionGroupCode || 'N1');
         };
     }
 
