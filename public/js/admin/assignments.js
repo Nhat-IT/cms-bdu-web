@@ -572,11 +572,12 @@ function handleInitialScheduleSubmit(event) {
     return false;
 }
 
-function openSessionManager(classCode, subjectName, teacherName, groupCode = null) {
+function openSessionManager(courseId, subjectName, teacherName, groupCode = null) {
+    const course = allAssignmentCourses.find(function (item) { return item.id === courseId; });
+    const displayClassCode = course && course.classCode ? course.classCode : courseId;
     const groupText = groupCode ? ' | ' + getGroupLabel(groupCode) : '';
-    document.getElementById('lblClassInfo').innerText = classCode + ' | ' + subjectName + groupText + ' | GV: ' + teacherName;
+    document.getElementById('lblClassInfo').innerText = displayClassCode + ' | ' + subjectName + groupText + ' | GV: ' + teacherName;
 
-    const course = allAssignmentCourses.find(function (item) { return item.id === classCode; });
     currentSessionCourse = course || null;
     currentSessionGroupCode = groupCode || null;
     renderSessionManagerRows(course, currentSessionGroupCode);
@@ -604,7 +605,7 @@ function openSessionManager(classCode, subjectName, teacherName, groupCode = nul
                 return;
             }
 
-            openInitialScheduleModal('add', course.csId || course.id, classCode, subjectName, teacherName || '', '', '', '', '', '', '', 'ALL');
+            openInitialScheduleModal('add', course.csId || course.id, displayClassCode, subjectName, teacherName || '', '', '', '', '', '', '', 'ALL');
         };
     }
 
@@ -643,7 +644,7 @@ function openAddSingleSessionFromManager() {
         targetGroup && targetGroup.end ? String(targetGroup.end) : '',
         targetGroup && targetGroup.room ? targetGroup.room : '',
         'normal',
-        course.id,
+        course.classCode || course.id,
         course.name,
         targetGroup && targetGroup.teacherMain ? targetGroup.teacherMain : '',
         targetGroup && targetGroup.code ? targetGroup.code : '01'
@@ -695,7 +696,7 @@ function renderSessionManagerRows(course, groupCode = null) {
                 hasGroupSchedule ? String(group.end) : '',
                 hasGroupSchedule ? group.room : '',
                 'normal',
-                course.id,
+                course.classCode || course.id,
                 course.name,
                 teacherId,
                 group.code
