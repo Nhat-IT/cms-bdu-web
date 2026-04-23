@@ -243,6 +243,59 @@ if (!empty($unassignedAssignments)) {
         'assignments' => $unassignedAssignments,
     ];
 }
+
+// Dataset riêng cho tab Master Schedule (lấy trực tiếp từ DB)
+$rawMasterScheduleRows = db_fetch_all("
+    SELECT
+        cs.id               AS cs_id,
+        c.class_name        AS class_name,
+        s.subject_name      AS subject_name,
+        sm.semester_name    AS semester_name,
+        sm.academic_year    AS academic_year,
+        cs.teacher_id       AS teacher_main_id,
+        csg.group_code      AS group_code,
+        csg.day_of_week     AS day_of_week,
+        csg.start_period    AS start_period,
+        csg.end_period      AS end_period,
+        csg.room            AS room
+    FROM class_subject_groups csg
+    JOIN class_subjects cs ON cs.id = csg.class_subject_id
+    JOIN classes c ON c.id = cs.class_id
+    JOIN subjects s ON s.id = cs.subject_id
+    LEFT JOIN semesters sm ON sm.id = cs.semester_id
+    WHERE csg.day_of_week IS NOT NULL
+      AND csg.start_period IS NOT NULL
+      AND csg.end_period IS NOT NULL
+    ORDER BY sm.academic_year DESC, sm.semester_name ASC, c.class_name ASC, cs.id ASC, csg.group_code ASC
+");
+
+$masterCoursesByCsId = [];
+foreach ($rawMasterScheduleRows as $row) {
+    $csId = (int)($row['cs_id'] ?? 0);
+    if ($csId <= 0) continue;
+
+    if (!isset($masterCoursesByCsId[$csId])) {
+        $masterCoursesByCsId[$csId] = [
+            'id'        => $csId,
+            'csId'      => $csId,
+            'name'      => $row['subject_name'] ?? '',
+            'classCode' => $row['class_name'] ?? '',
+            'year'      => $row['academic_year'] ?? '',
+            'semester'  => $row['semester_name'] ?? '',
+            'groups'    => []
+        ];
+    }
+
+    $masterCoursesByCsId[$csId]['groups'][] = [
+        'code'        => $row['group_code'] ?: 'N1',
+        'teacherMain' => !empty($row['teacher_main_id']) ? (string)$row['teacher_main_id'] : null,
+        'day'         => !empty($row['day_of_week']) ? (string)$row['day_of_week'] : null,
+        'start'       => !empty($row['start_period']) ? (string)$row['start_period'] : null,
+        'end'         => !empty($row['end_period']) ? (string)$row['end_period'] : null,
+        'room'        => $row['room'] ?? null
+    ];
+}
+$dbMasterCourses = array_values($masterCoursesByCsId);
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -717,6 +770,9 @@ window.allClasses.forEach(function(cls) {
     });
 });
 
+// Dataset Master Schedule lấy trực tiếp từ DB
+window.masterScheduleCourses = <?= json_encode($dbMasterCourses, JSON_UNESCAPED_UNICODE) ?>;
+
 // Map tiết → giờ (phải khai báo trước khi renderMasterSchedule được gọi)
 window.startTimeLabels = {1:'07:00',2:'07:45',3:'08:30',4:'09:15',5:'10:00',6:'13:00',7:'13:45',8:'14:30',9:'15:15',10:'16:00',11:'17:45',12:'18:30',13:'19:15',14:'20:00'};
 
@@ -757,7 +813,7 @@ function getRoomName(roomCode) {
         return (d.getDate()).toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0');
     }
 
-    const mondays = getMondays(window.allAssignmentCourses || []);
+    const mondays = getMondays(window.masterScheduleCourses || []);
 
     mondays.forEach(function(monday) {
         const sun = new Date(monday + 'T00:00:00');
@@ -844,7 +900,7 @@ function renderMasterSchedule() {
     [2,3,4,5,6,7,8].forEach(d => occupied[d] = {});
     const dayOffsetMap = {2:0,3:1,4:2,5:3,6:4,7:5,8:6};
 
-    (window.allAssignmentCourses || []).forEach(function(course) {
+    (window.masterScheduleCourses || []).forEach(function(course) {
         if (yearFilter !== 'all' && course.year !== yearFilter) return;
         if (semFilter  !== 'all' && course.semester !== semFilter) return;
 
