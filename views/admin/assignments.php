@@ -68,6 +68,7 @@ $rawGroups = db_fetch_all("
         csg.class_subject_id,
         csg.group_code,
         csg.room,
+        r.room_name AS room_name,
         csg.day_of_week,
         csg.start_period,
         csg.end_period,
@@ -76,6 +77,7 @@ $rawGroups = db_fetch_all("
         u.academic_title AS sub_title
     FROM class_subject_groups csg
     LEFT JOIN users u ON csg.sub_teacher_id = u.id
+    LEFT JOIN rooms r ON (r.room_code = csg.room OR r.room_name = csg.room)
     ORDER BY csg.class_subject_id, csg.group_code ASC
 ");
 
@@ -170,6 +172,7 @@ foreach ($classes as $c) {
                 'start'       => $g['start_period'] ? (string)$g['start_period'] : null,
                 'end'         => $g['end_period']   ? (string)$g['end_period']   : null,
                 'room'        => $g['room'] ?? null,
+                'roomName'    => $g['room_name'] ?? null,
             ], $groups)
         ];
     }
