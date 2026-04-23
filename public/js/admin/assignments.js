@@ -496,7 +496,6 @@ function openInitialScheduleModal(mode, csId, classCode, subjectName, teacher = 
     const modalHeader = document.getElementById('initModalHeader');
     const modalTitle = document.getElementById('initModalTitle');
     const submitBtn = document.getElementById('initSubmitBtn');
-    const warningAlert = document.getElementById('editBulkWarning');
     const infoAlert = document.getElementById('initClassInfoAlert');
 
     if (mode === 'add') {
@@ -504,14 +503,12 @@ function openInitialScheduleModal(mode, csId, classCode, subjectName, teacher = 
         modalTitle.innerHTML = '<i class="bi bi-calendar-plus me-2"></i>Thiết Lập Lịch Giảng Dạy Mới';
         submitBtn.className = 'btn btn-primary fw-bold px-4';
         submitBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>Lưu Lịch & Phát Sinh';
-        warningAlert.classList.add('d-none');
         infoAlert.className = 'alert alert-primary bg-primary bg-opacity-10 border-0 mb-4';
     } else {
         modalHeader.className = 'modal-header bg-warning text-dark border-bottom-0 pb-3';
-        modalTitle.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Chỉnh Sửa Lịch Giảng Dạy (Hàng Loạt)';
+        modalTitle.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Xếp lịch môn ' + (subjectName || '');
         submitBtn.className = 'btn btn-warning fw-bold px-4 text-dark shadow-sm';
         submitBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>Cập nhật toàn bộ các tuần';
-        warningAlert.classList.remove('d-none');
         infoAlert.className = 'alert alert-warning bg-warning bg-opacity-10 border-0 mb-4';
 
         const sessionModal = bootstrap.Modal.getInstance(document.getElementById('sessionManagerModal'));

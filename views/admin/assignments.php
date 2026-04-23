@@ -344,19 +344,16 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
 <div class="modal fade" id="initialScheduleModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-success text-white border-bottom-0 pb-3">
+            <div class="modal-header bg-success text-white border-bottom-0 pb-3" id="initModalHeader">
                 <h5 class="modal-title fw-bold" id="initModalTitle"><i class="bi bi-calendar-plus me-2"></i>Thiết Lập Lịch Giảng Dạy</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form onsubmit="return handleInitialScheduleSubmit(event)">
                 <div class="modal-body p-4 bg-light">
-                    <div class="alert alert-warning fw-bold small d-none" id="editBulkWarning">
-                        <i class="bi bi-exclamation-triangle-fill me-1"></i>Cảnh báo: Thao tác này áp dụng cho TẤT CẢ các buổi học trong khoảng thời gian đã chọn.
-                    </div>
                     <div class="alert alert-primary bg-primary bg-opacity-10 border-0 mb-4" id="initClassInfoAlert">
                         <div class="row g-2">
                             <div class="col-md-5">
-                                <label class="text-muted fw-bold d-block mb-1" style="font-size:0.75rem">LỚP <span class="text-danger">*</span></label>
+                                <label class="text-muted fw-bold d-block mb-1" style="font-size:0.75rem">MÃ LỚP <span class="text-danger">*</span></label>
                                 <select class="form-select form-select-sm fw-bold text-primary border-primary" id="initClassCode" required>
                                     <option value="">-- Chọn lớp --</option>
                                     <?php foreach ($classes as $c): ?>
