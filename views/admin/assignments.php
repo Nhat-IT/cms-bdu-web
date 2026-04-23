@@ -7,11 +7,37 @@ $currentUser = getCurrentUser();
 $teachers = db_fetch_all("SELECT id, full_name as name, academic_title FROM users WHERE role = 'teacher' ORDER BY full_name");
 $dbYears   = db_fetch_all("SELECT DISTINCT academic_year FROM semesters ORDER BY academic_year DESC");
 $dbSemesters = ['HK1' => 'Học kỳ 1', 'HK2' => 'Học kỳ 2', 'HK3' => 'Học kỳ 3 (Hè)'];
+
+function formatSemesterNameLabel($semesterName, $dbSemesters) {
+    $raw = trim((string)($semesterName ?? ''));
+    if ($raw === '') return 'Học kỳ';
+    if (isset($dbSemesters[$raw])) return $dbSemesters[$raw];
+
+    if (preg_match('/^HK\s*([123])$/i', $raw, $m)) {
+        return $m[1] === '3' ? 'Học kỳ 3 (Hè)' : ('Học kỳ ' . $m[1]);
+    }
+    if (in_array($raw, ['1', '2', '3'], true)) {
+        return $raw === '3' ? 'Học kỳ 3 (Hè)' : ('Học kỳ ' . $raw);
+    }
+
+    return $raw;
+}
+
+function normalizeSemesterCode($semesterName) {
+    $raw = strtoupper(trim((string)($semesterName ?? '')));
+    if ($raw === '') return '';
+    if (preg_match('/^(?:HK)?\s*([123])$/', $raw, $m)) {
+        return 'HK' . $m[1];
+    }
+    return $raw;
+}
+
 $dbSemestersWithYear = db_fetch_all(
-    "SELECT semester_name, academic_year, start_date, end_date,
-            CASE WHEN CURDATE() BETWEEN start_date AND end_date THEN 0 ELSE 1 END AS sort_open
+    "SELECT semester_name, academic_year, start_date, end_date
      FROM semesters
-     ORDER BY sort_open ASC, academic_year DESC, start_date ASC"
+     ORDER BY academic_year DESC,
+              FIELD(UPPER(semester_name), 'HK1', '1', 'HK2', '2', 'HK3', '3'),
+              start_date ASC"
 );
 
 // Xác định học kỳ đang diễn ra theo ngày hiện tại
@@ -32,7 +58,7 @@ foreach ($dbSemestersWithYear as $s) {
     $semesterRanges[$key] = [
         'start' => $s['start_date'] ?? null,
         'end'   => $s['end_date'] ?? null,
-        'label' => ($dbSemesters[$s['semester_name']] ?? ($s['semester_name'] ?? '')) . ' - ' . ($s['academic_year'] ?? '')
+        'label' => formatSemesterNameLabel($s['semester_name'] ?? '', $dbSemesters) . ' - ' . ($s['academic_year'] ?? '')
     ];
 }
 $startTimes = [1=>'07:00',2=>'07:45',3=>'08:30',4=>'09:15',5=>'10:00',6=>'13:00',7=>'13:45',8=>'14:30',9=>'15:15',10=>'16:00',11=>'17:45',12=>'18:30',13=>'19:15',14=>'20:00'];
@@ -256,6 +282,7 @@ $rawMasterScheduleRows = db_fetch_all("
     SELECT
         cs.id               AS cs_id,
         c.class_name        AS class_name,
+        s.subject_code      AS subject_code,
         s.subject_name      AS subject_name,
         sm.semester_name    AS semester_name,
         sm.academic_year    AS academic_year,
@@ -285,7 +312,9 @@ foreach ($rawMasterScheduleRows as $row) {
         $masterCoursesByCsId[$csId] = [
             'id'        => $csId,
             'csId'      => $csId,
-            'name'      => $row['subject_name'] ?? '',
+            'name'      => !empty($row['subject_code'])
+                ? (($row['subject_code'] ?? '') . ' - ' . ($row['subject_name'] ?? ''))
+                : ($row['subject_name'] ?? ''),
             'classCode' => $row['class_name'] ?? '',
             'year'      => $row['academic_year'] ?? '',
             'semester'  => $row['semester_name'] ?? '',
@@ -405,7 +434,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                         <select class="form-select border-secondary shadow-sm" id="masterFilterSemester" onchange="handleMasterSemesterChange()">
                             <?php foreach ($dbSemestersWithYear as $s):
                                 $val = e($s['semester_name']) . '|||' . e($s['academic_year']);
-                                $label = ($dbSemesters[$s['semester_name']] ?? $s['semester_name']) . ' - ' . e($s['academic_year']);
+                                $label = formatSemesterNameLabel($s['semester_name'] ?? '', $dbSemesters) . ' - ' . e($s['academic_year']);
                                 $selected = ($val === $currentSemesterValue) ? 'selected' : '';
                             ?>
                                 <option value="<?= $val ?>" <?= $selected ?>><?= $label ?></option>
@@ -825,6 +854,14 @@ function formatShortDate(dateStr) {
     return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
 }
 
+function normalizeSemesterToken(value) {
+    const text = String(value || '').trim().toUpperCase();
+    if (!text) return '';
+    const match = text.match(/(?:HK)?\s*([123])$/);
+    if (match) return match[1];
+    return text;
+}
+
 function getMondaysBySemester(semesterValue) {
     const ranges = window.semesterRanges || {};
     const selected = ranges[semesterValue] || null;
@@ -973,14 +1010,15 @@ function renderMasterSchedule() {
     const teacherFilter = filterTeacher ? filterTeacher.value : 'all';
     const roomFilter    = filterRoom    ? filterRoom.value    : 'all';
     const semVal        = (document.getElementById('masterFilterSemester') || {}).value || 'all';
-    const [semFilter, yearFilter] = semVal === 'all' ? ['all', 'all'] : semVal.split('|||');
+    const [semFilterRaw, yearFilter] = semVal === 'all' ? ['all', 'all'] : semVal.split('|||');
+    const semFilter = semFilterRaw === 'all' ? 'all' : normalizeSemesterToken(semFilterRaw);
     const occupied = {};
     [2,3,4,5,6,7,8].forEach(d => occupied[d] = {});
     const dayOffsetMap = {2:0,3:1,4:2,5:3,6:4,7:5,8:6};
 
     (window.masterScheduleCourses || []).forEach(function(course) {
-        if (yearFilter !== 'all' && course.year !== yearFilter) return;
-        if (semFilter  !== 'all' && course.semester !== semFilter) return;
+        if (yearFilter !== 'all' && String(course.year || '') !== yearFilter) return;
+        if (semFilter !== 'all' && normalizeSemesterToken(course.semester) !== semFilter) return;
 
         course.groups.forEach(function(g) {
             if (!g.day || !g.start || !g.end) return;
@@ -1038,11 +1076,11 @@ function renderMasterSchedule() {
                                       (sd.getMonth()+1).toString().padStart(2,'0') + '/' +
                                       sd.getFullYear();
                     openEditSingleSession(
-                        'edit', sdDisplay, sdStr,
+                        'edit_master', sdDisplay, sdStr,
                         String(cg.day), String(cg.start), String(cg.end),
                         cg.room || '', 'normal',
                         cc.classCode, cc.name,
-                        cg.teacherMain || '', cg.code
+                        cg.teacherMain || '', cg.code, cc.csId || ''
                     );
                 });
             })(course, g, dayOffsetMap[day] !== undefined ? dayOffsetMap[day] : 0);

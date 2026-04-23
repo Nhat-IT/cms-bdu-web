@@ -78,6 +78,7 @@ let assignmentOfferingsFiltered = [];
 let pendingAssignmentUploadClass = '';
 let currentSessionCourse = null;
 let currentSessionGroupCode = null;
+let currentSingleSessionContext = null;
 
 function findAssignmentCourse(ref) {
     const refText = String(ref || '');
@@ -142,6 +143,42 @@ function getGroupCode(groupCode) {
 function getClassGroupLabel(classCode, groupCode) {
     const code = (classCode && String(classCode).trim()) ? String(classCode).trim() : '--';
     return code + ' - ' + getGroupCode(groupCode);
+}
+
+function getNearestDateByDay(dayValue) {
+    const day = parseInt(dayValue, 10);
+    if (!Number.isFinite(day) || day < 2 || day > 8) return '';
+    const today = new Date();
+    const targetJsDay = day === 8 ? 0 : (day - 1);
+    const diff = (targetJsDay - today.getDay() + 7) % 7;
+    const target = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    target.setDate(target.getDate() + diff);
+    return target.toISOString().slice(0, 10);
+}
+
+function getDayOfWeekFromDate(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr + 'T00:00:00');
+    if (Number.isNaN(d.getTime())) return '';
+    const jsDay = d.getDay(); // 0..6
+    return jsDay === 0 ? '8' : String(jsDay + 1); // 2..8
+}
+
+function resolveSingleSessionCourse(context) {
+    if (!context) return null;
+
+    const directCsId = parseInt(context.csId, 10);
+    if (Number.isFinite(directCsId) && directCsId > 0) {
+        const direct = findAssignmentCourse(directCsId);
+        if (direct) return direct;
+    }
+
+    const classCode = String(context.classCode || '').trim();
+    const subjectName = String(context.subjectName || '').trim();
+    return allAssignmentCourses.find(function (course) {
+        return String(course.classCode || '').trim() === classCode
+            && String(course.name || '').trim() === subjectName;
+    }) || null;
 }
 
 function initAssignmentEnhancements() {
@@ -930,7 +967,8 @@ function openAddSingleSessionFromManager() {
         course.classCode || course.id,
         course.name,
         targetGroup && targetGroup.teacherMain ? targetGroup.teacherMain : '',
-        targetGroup && targetGroup.code ? targetGroup.code : '01'
+        targetGroup && targetGroup.code ? targetGroup.code : '01',
+        course.csId || ''
     );
 }
 
@@ -982,7 +1020,8 @@ function renderSessionManagerRows(course, groupCode = null) {
                 course.classCode || course.id,
                 course.name,
                 teacherId,
-                group.code
+                group.code,
+                course.csId || ''
             );
         };
         actionCell.appendChild(editButton);
@@ -1015,11 +1054,21 @@ function createStatusCell(text, badgeClass) {
     return cell;
 }
 
-function openEditSingleSession(mode, dateStr, dateVal, day, start, end, room, status, classCode, subjectName, teacherId, group = '01') {
+function openEditSingleSession(mode, dateStr, dateVal, day, start, end, room, status, classCode, subjectName, teacherId, group = '01', csId = '') {
+    const normalizedGroup = getGroupCode(group || 'N1');
+    const normalizedDate = dateVal || getNearestDateByDay(day);
+    currentSingleSessionContext = {
+        mode: mode || 'edit',
+        classCode: classCode || '',
+        subjectName: subjectName || '',
+        groupCode: normalizedGroup,
+        csId: csId || ''
+    };
+
     document.getElementById('qsSubjectInfo').innerText = subjectName;
     document.getElementById('qsClassCode').innerHTML = '<i class="bi bi-tags-fill me-1 text-muted"></i>Lớp: ' + classCode;
-    document.getElementById('qsGroup').innerText = 'Lớp - Nhóm: ' + getClassGroupLabel(classCode, group);
-    document.getElementById('singleDate').value = dateVal;
+    document.getElementById('qsGroup').innerText = 'Lớp - Nhóm: ' + getClassGroupLabel(classCode, normalizedGroup);
+    document.getElementById('singleDate').value = normalizedDate;
     document.getElementById('singleStart').value = start;
     document.getElementById('singleEnd').value = end;
 
@@ -1043,10 +1092,13 @@ function openEditSingleSession(mode, dateStr, dateVal, day, start, end, room, st
     const btnDelete = document.getElementById('btnDeleteSingle');
     if (mode === 'add') {
         document.getElementById('singleSessionTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>Thêm buổi học bù / đột xuất';
-        btnDelete.classList.add('d-none');
+        if (btnDelete) btnDelete.classList.add('d-none');
+    } else if (mode === 'edit_master') {
+        document.getElementById('singleSessionTitle').innerHTML = '<i class="bi bi-pencil-square me-2"></i>Sửa lịch ngày ' + dateStr;
+        if (btnDelete) btnDelete.classList.add('d-none');
     } else {
         document.getElementById('singleSessionTitle').innerHTML = '<i class="bi bi-pencil-square me-2"></i>Sửa lịch ngày ' + dateStr;
-        btnDelete.classList.remove('d-none');
+        if (btnDelete) btnDelete.classList.remove('d-none');
     }
 
     new bootstrap.Modal(document.getElementById('singleSessionModal')).show();
@@ -1063,25 +1115,161 @@ function toggleCancelReason() {
 }
 
 function saveSingleSession() {
+    const context = currentSingleSessionContext || {};
+    const course = resolveSingleSessionCourse(context);
+    const classSubjectId = parseInt((course && course.csId) || context.csId, 10);
+    if (!Number.isFinite(classSubjectId) || classSubjectId <= 0) {
+        if (window.showToast) window.showToast('Không xác định được lớp học phần để lưu lịch.', 'error');
+        else alert('Không xác định được lớp học phần để lưu lịch.');
+        return;
+    }
+
+    if (course && course.isOpen === false) {
+        if (window.showToast) window.showToast('Môn học đã đóng, không thể cập nhật lịch.', 'warning');
+        else alert('Môn học đã đóng, không thể cập nhật lịch.');
+        return;
+    }
+
+    const dateValue = (document.getElementById('singleDate').value || '').trim();
+    if (!dateValue) {
+        if (window.showToast) window.showToast('Vui lòng chọn ngày học.', 'warning');
+        else alert('Vui lòng chọn ngày học.');
+        return;
+    }
+
+    const dayOfWeek = getDayOfWeekFromDate(dateValue);
+    if (!dayOfWeek) {
+        if (window.showToast) window.showToast('Ngày học không hợp lệ.', 'error');
+        else alert('Ngày học không hợp lệ.');
+        return;
+    }
+
     const start = parseInt(document.getElementById('singleStart').value, 10);
     const end = parseInt(document.getElementById('singleEnd').value, 10);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || start <= 0 || end <= 0) {
+        if (window.showToast) window.showToast('Vui lòng chọn đầy đủ tiết bắt đầu và tiết kết thúc.', 'warning');
+        else alert('Vui lòng chọn đầy đủ tiết bắt đầu và tiết kết thúc.');
+        return;
+    }
     if (start >= end) {
-        alert('⚠️ Lỗi: Tiết bắt đầu phải nhỏ hơn Tiết kết thúc!');
+        if (window.showToast) window.showToast('Tiết bắt đầu phải nhỏ hơn tiết kết thúc.', 'warning');
+        else alert('Tiết bắt đầu phải nhỏ hơn tiết kết thúc.');
+        return;
+    }
+
+    const teacherMainId = (document.getElementById('singleTeacher').value || '').trim();
+    if (!teacherMainId) {
+        if (window.showToast) window.showToast('Vui lòng chọn giảng viên phụ trách.', 'warning');
+        else alert('Vui lòng chọn giảng viên phụ trách.');
+        return;
+    }
+
+    const room = (document.getElementById('singleRoom').value || '').trim();
+    if (!room) {
+        if (window.showToast) window.showToast('Vui lòng chọn phòng học.', 'warning');
+        else alert('Vui lòng chọn phòng học.');
         return;
     }
 
     const status = document.getElementById('singleStatus').value;
     if (status === 'canceled' && document.getElementById('cancelReason').value.trim() === '') {
-        alert('⚠️ Vui lòng nhập lý do báo hủy để hệ thống gửi thông báo cho sinh viên!');
+        if (window.showToast) window.showToast('Vui lòng nhập lý do báo hủy.', 'warning');
+        else alert('Vui lòng nhập lý do báo hủy.');
         document.getElementById('cancelReason').focus();
         return;
     }
 
-    alert('✅ Đã cập nhật thông tin buổi học thành công!');
-    bootstrap.Modal.getInstance(document.getElementById('singleSessionModal')).hide();
+    const groupCode = context.groupCode || currentSessionGroupCode || 'N1';
+    let teacherSubId = '';
+    if (course && Array.isArray(course.groups)) {
+        const group = course.groups.find(function (g) { return getGroupCode(g.code) === getGroupCode(groupCode); });
+        if (group && group.teacherSub) {
+            teacherSubId = String(group.teacherSub);
+        }
+    }
+
+    const payload = {
+        class_subject_id: classSubjectId,
+        group_code: groupCode,
+        teacher_main_id: teacherMainId,
+        teacher_sub_id: teacherSubId,
+        day_of_week: dayOfWeek,
+        start_period: String(start),
+        end_period: String(end),
+        room: room
+    };
+
+    if (!window.callApi) {
+        if (window.showToast) window.showToast('Không thể kết nối API lưu lịch.', 'error');
+        else alert('Không thể kết nối API lưu lịch.');
+        return;
+    }
+
+    window.callApi('save_group_schedule', payload)
+        .then(function (res) {
+            if (!res || !res.ok) {
+                let msg = 'Không thể lưu thay đổi lịch học.';
+                if (res && res.message === 'conflict_room') msg = res.detail || 'Phòng học bị trùng lịch.';
+                else if (res && res.message === 'conflict_teacher') msg = res.detail || 'Giảng viên bị trùng lịch.';
+                else if (res && res.message === 'subject_closed') msg = 'Môn học đã đóng, không thể cập nhật lịch.';
+                if (window.showToast) window.showToast(msg, 'error');
+                else alert(msg);
+                return;
+            }
+
+            if (course && Array.isArray(course.groups)) {
+                const target = course.groups.find(function (g) { return getGroupCode(g.code) === getGroupCode(groupCode); });
+                if (target) {
+                    target.day = String(dayOfWeek);
+                    target.start = String(start);
+                    target.end = String(end);
+                    target.room = room;
+                    target.teacherMain = String(teacherMainId);
+                }
+            }
+            if (Array.isArray(window.masterScheduleCourses)) {
+                const masterCourse = window.masterScheduleCourses.find(function (c) { return parseInt(c.csId, 10) === classSubjectId; });
+                if (masterCourse && Array.isArray(masterCourse.groups)) {
+                    const masterGroup = masterCourse.groups.find(function (g) { return getGroupCode(g.code) === getGroupCode(groupCode); });
+                    if (masterGroup) {
+                        masterGroup.day = String(dayOfWeek);
+                        masterGroup.start = String(start);
+                        masterGroup.end = String(end);
+                        masterGroup.room = room;
+                        masterGroup.teacherMain = String(teacherMainId);
+                    }
+                }
+            }
+
+            if (window.showToast) window.showToast('Đã lưu thay đổi lịch học vào hệ thống.', 'success');
+
+            const singleModal = bootstrap.Modal.getInstance(document.getElementById('singleSessionModal'));
+            if (singleModal) singleModal.hide();
+
+            if (currentSessionCourse) {
+                renderSessionManagerRows(currentSessionCourse, currentSessionGroupCode);
+            }
+            if (typeof renderMasterSchedule === 'function') {
+                renderMasterSchedule();
+            }
+            if (typeof applyAssignmentFilters === 'function') {
+                applyAssignmentFilters();
+            }
+        })
+        .catch(function () {
+            if (window.showToast) window.showToast('Lỗi kết nối đến server khi lưu lịch.', 'error');
+            else alert('Lỗi kết nối đến server khi lưu lịch.');
+        });
 }
 
 function deleteSingleSession() {
+    const context = currentSingleSessionContext || {};
+    if (context.mode === 'edit_master') {
+        if (window.showToast) window.showToast('Ở Thời khóa biểu tổng chỉ được sửa lịch ngày, không được xóa.', 'warning');
+        else alert('Ở Thời khóa biểu tổng chỉ được sửa lịch ngày, không được xóa.');
+        return;
+    }
+
     if (confirm('⚠️ NGUY HIỂM: Bạn có chắc chắn muốn xóa hẳn buổi học này ra khỏi cơ sở dữ liệu không?\nHành động này không thể hoàn tác!')) {
         alert('✅ Đã xóa buổi học thành công!');
         bootstrap.Modal.getInstance(document.getElementById('singleSessionModal')).hide();
