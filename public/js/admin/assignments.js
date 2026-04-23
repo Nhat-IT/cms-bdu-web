@@ -79,6 +79,13 @@ let pendingAssignmentUploadClass = '';
 let currentSessionCourse = null;
 let currentSessionGroupCode = null;
 
+function triggerAssignmentFilePicker() {
+    const uploadInput = document.getElementById('assignmentStudentUploadInput');
+    if (!uploadInput) return;
+    uploadInput.value = '';
+    uploadInput.click();
+}
+
 function resolveClassSubjectId(asg) {
     const direct = parseInt(asg && asg.csId, 10);
     if (Number.isFinite(direct) && direct > 0) return direct;
@@ -123,6 +130,8 @@ function initAssignmentEnhancements() {
     const filterStatus = document.getElementById('assignFilterOpenStatus');
     const searchInput = document.getElementById('searchAssignment');
     const uploadInput = document.getElementById('assignmentStudentUploadInput');
+    const confirmUploadBtn = document.getElementById('confirmUploadBtn');
+    const studentUploadGuideModal = document.getElementById('studentUploadGuideModal');
 
     if (!filterYear || !filterSemester || !filterStatus) {
         return;
@@ -136,6 +145,19 @@ function initAssignmentEnhancements() {
     }
     if (uploadInput) {
         uploadInput.addEventListener('change', handleAssignmentUploadChange);
+    }
+    if (confirmUploadBtn) {
+        confirmUploadBtn.addEventListener('click', function() {
+            if (!pendingAssignmentUploadClass) {
+                if (window.showToast) window.showToast('Vui lòng chọn lớp/môn trước khi tải file.', 'warning');
+                return;
+            }
+            if (studentUploadGuideModal && typeof bootstrap !== 'undefined') {
+                const modal = bootstrap.Modal.getOrCreateInstance(studentUploadGuideModal);
+                modal.hide();
+            }
+            triggerAssignmentFilePicker();
+        });
     }
 
     applyAssignmentFilters();
@@ -310,9 +332,12 @@ function uploadAssignmentStudentList(courseId) {
     }
 
     pendingAssignmentUploadClass = courseId;
-    const uploadInput = document.getElementById('assignmentStudentUploadInput');
-    uploadInput.value = '';
-    uploadInput.click();
+    const guideModalEl = document.getElementById('studentUploadGuideModal');
+    if (guideModalEl && typeof bootstrap !== 'undefined') {
+        bootstrap.Modal.getOrCreateInstance(guideModalEl).show();
+        return;
+    }
+    triggerAssignmentFilePicker();
 }
 
 function parseAssignmentCsv(content) {
