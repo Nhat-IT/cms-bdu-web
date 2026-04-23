@@ -221,6 +221,15 @@ function applyAssignmentFilters() {
         return matchYear && matchSemester && matchStatus && matchSearch;
     });
 
+    // Deduplicate by class_subject identity to avoid duplicated cards.
+    const seen = new Set();
+    assignmentOfferingsFiltered = assignmentOfferingsFiltered.filter(function(asg) {
+        const key = String(asg.csId || asg.id || '');
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+
     renderAssignmentOfferingsTable();
 }
 
@@ -250,12 +259,7 @@ function renderAssignmentOfferingsTable() {
                 ? (getDayLabel(String(g.day)) + ' | Tiết ' + g.start + '-' + g.end)
                 : 'Chưa xếp lịch';
             const roomDisplay = hasSchedule ? String(g.room) : '--';
-            let statusDisplay = 'Chưa xếp lịch';
-            if (asg.computedStatus === '0') {
-                statusDisplay = 'Đã đóng';
-            } else if (hasSchedule) {
-                statusDisplay = 'Đang mở';
-            }
+            const statusDisplay = asg.isOpen ? 'Đang mở' : 'Đã đóng';
             const groupCode = g.code || 'N1';
             const manageBtn = '<button class="btn btn-outline-primary" onclick="openSessionManager(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(mainTeacher || teacherDisplay) + '\', \'' + escapeHtml(groupCode) + '\')"><i class="bi bi-calendar-week me-1"></i>Quản lý lịch</button>';
             const classSubjectId = resolveClassSubjectId(asg);
@@ -266,7 +270,7 @@ function renderAssignmentOfferingsTable() {
                 ? '<button class="btn btn-outline-success btn-icon-only" title="Tải xuống danh sách sinh viên" onclick="downloadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"><i class="bi bi-download"></i></button>'
                 : '<button class="btn btn-outline-secondary btn-icon-only" title="Chưa có danh sách sinh viên trong DB" disabled><i class="bi bi-download"></i></button>';
             const deleteGroupBtn = groupIndex > 0
-                ? '<button class="btn btn-outline-danger btn-icon-only" title="Xóa nhóm" onclick="deleteGroupFromClass(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-trash"></i></button>'
+                ? '<button class="btn btn-outline-danger btn-icon-only assignment-delete-group" title="Xóa nhóm" onclick="deleteGroupFromClass(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-trash"></i></button>'
                 : '';
             const actionButtons = primaryActionBtn + '<span class="assignment-action-icons">' + uploadIconBtn + downloadIconBtn + deleteGroupBtn + '</span>';
 

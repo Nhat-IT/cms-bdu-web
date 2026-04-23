@@ -241,6 +241,19 @@
     justify-content: center;
 }
 
+.assignment-delete-group {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+}
+
+.assignment-group-row:hover .assignment-delete-group {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
 .assignment-offering-foot {
     display: flex;
     align-items: center;
