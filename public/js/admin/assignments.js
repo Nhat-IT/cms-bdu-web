@@ -833,32 +833,38 @@ function addGroupToClass(courseId, subjectName) {
         return;
     }
 
-    let nextNumber = 1;
-    if (course.groups.length > 0) {
-        const maxNumber = Math.max.apply(null, course.groups.map(function (group) {
-            return parseInt(String(group.code).replace('N', ''), 10) || 1;
-        }));
-        nextNumber = maxNumber + 1;
+    const csIdFromCourse = parseInt(course.csId, 10);
+    const csId = Number.isFinite(csIdFromCourse) && csIdFromCourse > 0
+        ? csIdFromCourse
+        : parseInt(String(course.id || '').split('-').pop(), 10);
+
+    if (!csId || csId <= 0) {
+        alert('Không xác định được lớp học phần để thêm nhóm.');
+        return;
     }
 
-    const newGroupCode = 'N' + nextNumber;
-
-    const confirmMsg = 'Tạo nhóm mới: ' + getGroupLabel(newGroupCode) + ' cho ' + subjectName + '?';
+    const confirmMsg = 'Tạo nhóm mới cho ' + subjectName + '?';
     if (!confirm(confirmMsg)) {
         return;
     }
 
-    course.groups.push({
-        code: newGroupCode,
-        teacherMain: '',
-        teacherSub: '',
-        day: '',
-        start: '',
-        end: '',
-        room: ''
-    });
+    if (!window.callApi) {
+        alert('Không thể kết nối API thêm nhóm.');
+        return;
+    }
 
-    renderAssignmentOfferings();
+    window.callApi('add_group', { class_subject_id: csId })
+        .then(function(res) {
+            if (res && res.ok) {
+                if (window.showToast) window.showToast('Đã thêm nhóm mới thành công.', 'success');
+                window.location.reload();
+                return;
+            }
+            alert('Không thể thêm nhóm. Vui lòng thử lại.');
+        })
+        .catch(function() {
+            alert('Lỗi kết nối server khi thêm nhóm.');
+        });
 }
 
 // ─── NEW: Per-subject helpers for the new 1-subject-per-card layout ─────────────────
