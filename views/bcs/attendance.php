@@ -191,42 +191,6 @@ $unreadCount = db_fetch_one(
             </div>
         </div>
 
-        <div class="card mb-4 shadow-sm border-0 border-start border-success border-4">
-            <div class="card-body">
-                <h6 class="fw-bold mb-3"><i class="bi bi-cloud-arrow-down-fill text-success me-2"></i>Nhập danh sách sinh viên hàng loạt</h6>
-                <ul class="nav nav-tabs mb-3" id="importTabs">
-                    <li class="nav-item">
-                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#link-pane" type="button">Từ Google Sheet</button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#file-pane" type="button">Tải file (Excel/CSV)</button>
-                    </li>
-                </ul>
-                <div class="tab-content">
-                    <div class="tab-pane fade show active" id="link-pane">
-                        <div class="row g-3 align-items-center">
-                            <div class="col-md-9">
-                                <input type="url" class="form-control" id="googleSheetLink" placeholder="Nhập đường dẫn Google Sheet...">
-                            </div>
-                            <div class="col-md-3">
-                                <button class="btn btn-outline-success w-100"><i class="bi bi-link-45deg me-1"></i>Đồng bộ ngay</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="tab-pane fade" id="file-pane">
-                        <div class="row g-3 align-items-center">
-                            <div class="col-md-9">
-                                <input class="form-control" type="file" id="excelFileInput" accept=".xlsx, .xls, .csv">
-                            </div>
-                            <div class="col-md-3">
-                                <button class="btn btn-outline-success w-100"><i class="bi bi-file-earmark-arrow-up-fill me-1"></i>Tải lên</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white pt-3 pb-2 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div class="d-flex align-items-center gap-3">
