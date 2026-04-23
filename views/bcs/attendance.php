@@ -47,7 +47,7 @@ $subjects = db_fetch_all(
 
 // Lấy danh sách sinh viên trong lớp
 $students = db_fetch_all(
-    "SELECT u.id, u.full_name, u.email as student_code, u.birth_date
+    "SELECT u.id, u.full_name, u.username as student_code, u.birth_date
      FROM users u
      JOIN class_students cs ON u.id = cs.student_id
      WHERE cs.class_id = ?
@@ -179,8 +179,9 @@ $unreadCount = db_fetch_one(
                     <div class="col-md-8">
                         <div class="p-2 bg-light rounded text-dark small border-start border-3 border-primary fixed-info-box" id="subjectInfoBox">
                             <div class="row g-2 w-100 m-0">
-                                <div class="col-md-6 p-0"><i class="bi bi-person-badge text-primary me-1"></i>Giảng viên: <strong id="lblTeacher">...</strong></div>
-                                <div class="col-md-6 p-0"><i class="bi bi-calendar2-range text-primary me-1"></i>Thời gian: <strong id="lblTime">...</strong></div>
+                                <div class="col-md-4 p-0"><i class="bi bi-person-badge text-primary me-1"></i>Giảng viên: <strong id="lblTeacher">...</strong></div>
+                                <div class="col-md-4 p-0"><i class="bi bi-calendar2-range text-primary me-1"></i>Thời gian: <strong id="lblTime">...</strong></div>
+                                <div class="col-md-4 p-0"><i class="bi bi-geo-alt text-primary me-1"></i>Phòng: <strong id="lblRoom">...</strong></div>
                             </div>
                         </div>
                     </div>
@@ -217,11 +218,11 @@ $unreadCount = db_fetch_one(
                         <thead class="table-light text-muted small fw-bold">
                             <tr>
                                 <th class="text-center" style="width: 60px;">STT</th>
-                                <th style="width: 110px;">MSSV</th>
-                                <th style="width: 220px;">HỌ VÀ TÊN</th>
+                                <th style="width: 150px;">MSSV</th>
+                                <th style="width: 200px;">HỌ VÀ TÊN</th>
                                 <th style="width: 110px;">NGÀY SINH</th>
-                                <th style="width: 100px;">LỚP</th>
-                                <th style="width: 180px;">TRẠNG THÁI</th>
+                                <th style="width: 90px;">LỚP</th>
+                                <th style="width: 150px;">TRẠNG THÁI</th>
                                 <th>GHI CHÚ / MINH CHỨNG</th>
                             </tr>
                         </thead>
@@ -234,11 +235,11 @@ $unreadCount = db_fetch_one(
                                 <td><?= $student['birth_date'] ? formatDate($student['birth_date']) : '-' ?></td>
                                 <td><?= e($className) ?></td>
                                 <td>
-                                    <div class="d-flex gap-1">
-                                        <button class="btn btn-sm btn-success px-3 status-btn active" onclick="setAttendance(<?= $student['id'] ?>, 1, this)">Có mặt</button>
-                                        <button class="btn btn-sm btn-warning px-2 status-btn" onclick="setAttendance(<?= $student['id'] ?>, 2, this)">Có phép</button>
-                                        <button class="btn btn-sm btn-danger px-2 status-btn" onclick="setAttendance(<?= $student['id'] ?>, 3, this)">Vắng</button>
-                                    </div>
+                                    <select class="form-select form-select-sm attendance-status-dropdown" id="status_<?= $student['id'] ?>" onchange="setAttendanceDropdown(<?= $student['id'] ?>, this.value)">
+                                        <option value="1" selected>Có mặt</option>
+                                        <option value="2">Có phép</option>
+                                        <option value="3">Vắng</option>
+                                    </select>
                                 </td>
                                 <td>
                                     <input type="text" class="form-control form-control-sm" placeholder="Ghi chú..." id="note_<?= $student['id'] ?>">
@@ -302,6 +303,33 @@ $unreadCount = db_fetch_one(
 <script src="../../public/js/script.js"></script>
 <script src="../../public/js/bcs/bcs-layout.js"></script>
 <script src="../../public/js/bcs/attendance.js"></script>
+<script>
+// Đồng bộ thông tin môn học khi chọn môn học/nhóm
+window.onGroupChange = function () {
+    const groupId = Number(document.getElementById('groupSelect')?.value || 0);
+    bcsAttendanceState.selectedGroupId = groupId;
+
+    const group = bcsAttendanceState.groups.find((g) => Number(g.group_id) === groupId);
+    if (group) {
+        const lblTeacher = document.getElementById('lblTeacher');
+        const lblTime = document.getElementById('lblTime');
+        const lblRoom = document.getElementById('lblRoom');
+        const sessionSelect = document.getElementById('attendanceSession');
+
+        if (lblTeacher) lblTeacher.textContent = group.teacher_name || 'Chưa cập nhật';
+        if (lblTime) {
+            lblTime.textContent = `${bcsFormatDate(group.start_date)} - ${bcsFormatDate(group.end_date)} | Tiết ${group.start_period || '?'}-${group.end_period || '?'}`;
+        }
+        if (lblRoom) lblRoom.textContent = group.room || 'N/A';
+        if (sessionSelect && group.study_session) {
+            sessionSelect.value = group.study_session;
+        }
+    }
+
+    bcsLoadRoster();
+};
+</script>
+<script src="../../public/js/bcs/attendance-dropdown.js"></script>
 <script>
 // Pass data to JavaScript
 const CLASS_ID = <?= json_encode($classId) ?>;

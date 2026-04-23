@@ -479,7 +479,7 @@ try {
     if ($action === 'import_accounts') {
         $hasBirthDate = usersHasBirthDateColumn();
         $defaultPasswordHash = password_hash('Bdu@123456', PASSWORD_DEFAULT);
-        $validRoles = ['admin', 'teacher', 'bcs', 'student'];
+        $validRoles = ['admin', 'support_admin', 'teacher', 'bcs', 'student'];
 
 
         foreach ($rows as $row) {
@@ -494,6 +494,9 @@ try {
             $className = trim($row[4] ?? '');
             $email = trim($row[5] ?? '');
             $role = strtolower(trim($row[6] ?? ''));
+            if ($role === 'staff') {
+                $role = 'support_admin';
+            }
             $academicTitle = trim($row[7] ?? '');
 
             if ($username === '' || $fullName === '' || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || !in_array($role, $validRoles, true)) {

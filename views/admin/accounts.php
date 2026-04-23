@@ -17,6 +17,7 @@ $currentUser = getCurrentUser();
 // Xử lý filter và tìm kiếm
 $search = $_GET['search'] ?? '';
 $roleFilter = $_GET['role'] ?? 'all';
+$roleFilter = ($roleFilter === 'staff') ? 'support_admin' : $roleFilter;
 $statusFilter = $_GET['status'] ?? 'all';
 $exportType = $_GET['export'] ?? '';
 
@@ -41,13 +42,15 @@ if ($search) {
 }
 
 if ($roleFilter !== 'all') {
+    $roleFilterValues = ($roleFilter === 'support_admin') ? ['support_admin', 'staff'] : [$roleFilter];
     if ($hasSecondaryRoleColumn) {
-        $whereConditions[] = "(role = ? OR secondary_role = ?)";
-        $params[] = $roleFilter;
-        $params[] = $roleFilter;
+        $placeholders = implode(',', array_fill(0, count($roleFilterValues), '?'));
+        $whereConditions[] = "(role IN ($placeholders) OR secondary_role IN ($placeholders))";
+        $params = array_merge($params, $roleFilterValues, $roleFilterValues);
     } else {
-        $whereConditions[] = "role = ?";
-        $params[] = $roleFilter;
+        $placeholders = implode(',', array_fill(0, count($roleFilterValues), '?'));
+        $whereConditions[] = "role IN ($placeholders)";
+        $params = array_merge($params, $roleFilterValues);
     }
 }
 
@@ -230,7 +233,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                         <select class="form-select fw-bold text-dark" id="roleFilterSelect" name="role">
                             <option value="all" <?php echo $roleFilter === 'all' ? 'selected' : ''; ?>>Tất cả</option>
                             <option value="admin" <?php echo $roleFilter === 'admin' ? 'selected' : ''; ?>>Admin</option>
-                            <option value="staff" <?php echo $roleFilter === 'staff' ? 'selected' : ''; ?>>Giáo vụ khoa</option>
+                            <option value="support_admin" <?php echo $roleFilter === 'support_admin' ? 'selected' : ''; ?>>Giáo vụ khoa</option>
                             <option value="teacher" <?php echo $roleFilter === 'teacher' ? 'selected' : ''; ?>>Giảng viên</option>
                             <option value="bcs" <?php echo $roleFilter === 'bcs' ? 'selected' : ''; ?>>Ban Cán Sự</option>
                             <option value="student" <?php echo $roleFilter === 'student' ? 'selected' : ''; ?>>Sinh viên</option>
@@ -287,11 +290,17 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                                     $roles = array_values(array_filter([$user['role'] ?? null, $user['secondary_role'] ?? null]));
                                     $rolePriority = [
                                         'admin' => 4,
+                                        'support_admin' => 3,
                                         'staff' => 3,
                                         'teacher' => 2,
                                         'bcs' => 1,
                                         'student' => 0,
                                     ];
+
+                                    $positionRaw = trim((string)($user['position'] ?? ''));
+                                    $positionParts = array_values(array_filter(array_map('trim', preg_split('/\s*(?:\||,|;|\/)\s*/', $positionRaw))));
+                                    $positionPrimary = $positionParts[0] ?? '';
+                                    $positionSecondary = $positionParts[1] ?? '';
 
                                     usort($roles, function ($a, $b) use ($rolePriority) {
                                         $priorityA = $rolePriority[$a] ?? 0;
@@ -308,6 +317,12 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                                                 <div>
                                                     <div class="fw-bold text-dark"><?php echo e($user['full_name'] ?: 'Chưa cập nhật'); ?></div>
                                                     <div class="small text-muted"><?php echo e($user['email']); ?></div>
+                                                    <?php if ($positionPrimary !== ''): ?>
+                                                        <div class="small text-primary">Chức vụ 1: <?php echo e($positionPrimary); ?></div>
+                                                    <?php endif; ?>
+                                                    <?php if ($positionSecondary !== ''): ?>
+                                                        <div class="small text-primary">Chức vụ 2: <?php echo e($positionSecondary); ?></div>
+                                                    <?php endif; ?>
                                                 </div>
                                             </div>
                                         </td>
@@ -315,6 +330,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                                             <?php
                                             $roleLabels = [
                                                 'admin' => ['icon' => 'bi-shield-lock-fill', 'text' => 'Admin', 'class' => 'bg-danger'],
+                                                'support_admin' => ['icon' => 'bi-person-badge-fill', 'text' => 'Giáo vụ khoa', 'class' => 'bg-secondary'],
                                                 'staff' => ['icon' => 'bi-person-badge-fill', 'text' => 'Giáo vụ khoa', 'class' => 'bg-secondary'],
                                                 'teacher' => ['icon' => 'bi-person-video3', 'text' => 'Giảng viên', 'class' => 'bg-primary'],
                                                 'bcs' => ['icon' => 'bi-star-fill', 'text' => 'Ban Cán Sự', 'class' => 'bg-warning text-dark'],
@@ -351,7 +367,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                                                 </button>
                                             </form>
                                             <button class="btn btn-light action-btn text-primary border me-1" title="Sửa thông tin" data-bs-toggle="modal" data-bs-target="#accountModal" 
-                                                onclick="openAccountModal('edit', '<?php echo e($user['id']); ?>', '<?php echo e($user['username']); ?>', '<?php echo e($user['full_name']); ?>', '<?php echo e($user['email']); ?>', '<?php echo e($user['role']); ?>', '<?php echo e($user['secondary_role'] ?? ''); ?>', '<?php echo e($user['class_id'] ?? ''); ?>', '<?php echo e($user['academic_title'] ?? ''); ?>', '<?php echo e(!empty($user['birth_date']) ? date('Y-m-d', strtotime($user['birth_date'])) : ''); ?>')">
+                                                onclick="openAccountModal('edit', '<?php echo e($user['id']); ?>', '<?php echo e($user['username']); ?>', '<?php echo e($user['full_name']); ?>', '<?php echo e($user['email']); ?>', '<?php echo e($user['role']); ?>', '<?php echo e($user['secondary_role'] ?? ''); ?>', '<?php echo e($user['class_id'] ?? ''); ?>', '<?php echo e($user['academic_title'] ?? ''); ?>', '<?php echo e($user['position'] ?? ''); ?>', '<?php echo e(!empty($user['birth_date']) ? date('Y-m-d', strtotime($user['birth_date'])) : ''); ?>')">
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
                                             <?php if (!$isProtectedAdmin): ?>
@@ -477,6 +493,17 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                 </select>
             </div>
           </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Chức vụ 1</label>
+                <input type="text" class="form-control border-secondary" id="modalPositionPrimary" name="position_primary" placeholder="Ví dụ: Trưởng bộ môn">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Chức vụ 2</label>
+                <input type="text" class="form-control border-secondary" id="modalPositionSecondary" name="position_secondary" placeholder="Ví dụ: Cố vấn học tập">
+            </div>
+          </div>
           
           <div class="mb-4 bg-light p-3 rounded border">
             <label class="form-label fw-bold d-block mb-3">Vai trò trong hệ thống <span class="text-danger">*</span></label>
@@ -484,7 +511,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                 <div class="col-md-6 border-end border-secondary border-opacity-25">
                     <p class="small fw-bold text-muted mb-2">GIÁO VỤ KHOA & GIẢNG DẠY</p>
                     <div class="form-check mb-2" id="roleStaffOption">
-                        <input class="form-check-input" type="checkbox" value="staff" id="roleStaff">
+                        <input class="form-check-input" type="checkbox" value="support_admin" id="roleStaff">
                         <label class="form-check-label fw-bold" for="roleStaff" style="color:#9333ea;">Giáo vụ khoa</label>
                     </div>
                     <div class="form-check mb-2" id="roleTeacherOption">
@@ -548,7 +575,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
             <hr class="my-2">
             <span class="text-danger fw-bold">*Ghi chú:</span> 
             <br>- Cột Lớp học: Bỏ trống nếu là vai trò Admin/Giáo vụ khoa/Giảng viên.
-            <br>- Cột Vai trò: admin, staff, teacher, bcs, student.
+            <br>- Cột Vai trò: admin, support_admin, teacher, bcs, student.
         </div>
         <div class="mb-3">
             <label class="form-label fw-bold">Chọn file (.csv, .xlsx, .xls) <span class="text-danger">*</span></label>
@@ -623,7 +650,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
         if (role === 'admin') {
             return 'admin';
         }
-        if (['staff', 'teacher'].includes(role)) {
+        if (['support_admin', 'staff', 'teacher'].includes(role)) {
             return 'staff';
         }
         if (['student', 'bcs'].includes(role)) {
@@ -734,12 +761,29 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
         });
     });
 
-    function openAccountModal(mode, id = '', code = '', fullName = '', email = '', primaryRole = '', secondaryRole = '', classId = '', academicTitle = '', birthDate = '') {
+    function splitPositions(positionValue) {
+        const raw = String(positionValue || '').trim();
+        if (!raw) return ['', ''];
+        const parts = raw
+            .split(/\s*(?:\||,|;|\/)\s*/)
+            .map(p => p.trim())
+            .filter(Boolean);
+        return [parts[0] || '', parts[1] || ''];
+    }
+
+    function openAccountModal(mode, id = '', code = '', fullName = '', email = '', primaryRole = '', secondaryRole = '', classId = '', academicTitle = '', position = '', birthDate = '') {
         const title = document.getElementById('accountModalTitle');
         const inputCode = document.getElementById('modalCode');
         const inputAcademicTitle = document.getElementById('modalAcademicTitle');
         const inputBirthDate = document.getElementById('modalBirthDate');
+        const inputPositionPrimary = document.getElementById('modalPositionPrimary');
+        const inputPositionSecondary = document.getElementById('modalPositionSecondary');
         const inputId = document.getElementById('accountIdInput');
+        const normalizeRoleAlias = function(role) {
+            return role === 'staff' ? 'support_admin' : role;
+        };
+        primaryRole = normalizeRoleAlias(String(primaryRole || '').trim());
+        secondaryRole = normalizeRoleAlias(String(secondaryRole || '').trim());
         const isProtectedAdmin = (String(email || '').toLowerCase() === 'admin@bdu.edu.vn');
         const isAdminAccount = (mode === 'edit' && primaryRole === 'admin');
         document.getElementById('accountForm').reset();
@@ -768,6 +812,8 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
             inputCode.removeAttribute('readonly');
             inputAcademicTitle.value = '';
             if (inputBirthDate) inputBirthDate.value = '';
+            if (inputPositionPrimary) inputPositionPrimary.value = '';
+            if (inputPositionSecondary) inputPositionSecondary.value = '';
             inputId.value = '';
             // Tạo mới: hiển thị NGƯỜI HỌC
             if (adminSection) adminSection.classList.add('d-none');
@@ -782,6 +828,9 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
             modalClassInput.value = classId;
             inputAcademicTitle.value = academicTitle;
             if (inputBirthDate) inputBirthDate.value = birthDate || '';
+            const [positionPrimary, positionSecondary] = splitPositions(position);
+            if (inputPositionPrimary) inputPositionPrimary.value = positionPrimary;
+            if (inputPositionSecondary) inputPositionSecondary.value = positionSecondary;
 
             if (primaryRole) {
                 const primaryCheckbox = document.querySelector('.role-checkbox-group .form-check-input[value="' + primaryRole + '"]');

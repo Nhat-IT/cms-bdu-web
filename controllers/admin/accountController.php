@@ -25,6 +25,8 @@ $role = trim($_POST['role'] ?? '');
 $secondaryRole = trim($_POST['secondary_role'] ?? '');
 $academicTitle = trim($_POST['academic_title'] ?? '');
 $position = trim($_POST['position'] ?? '');
+$positionPrimary = trim($_POST['position_primary'] ?? '');
+$positionSecondary = trim($_POST['position_secondary'] ?? '');
 $birthDateRaw = trim($_POST['birth_date'] ?? '');
 $birthDate = $birthDateRaw !== '' ? $birthDateRaw : null;
 $classIdRaw = $_POST['class_id'] ?? '';
@@ -51,6 +53,28 @@ function isProtectedAdminUserById(int $userId): bool {
 
 function isProtectedAdminEmail(string $email): bool {
     return normalizeEmail($email) === PROTECTED_ADMIN_EMAIL;
+}
+
+function normalizePositionValue(string $primary, string $secondary, string $fallback = ''): ?string {
+    $parts = [];
+    if ($primary !== '') {
+        $parts[] = $primary;
+    }
+    if ($secondary !== '') {
+        $parts[] = $secondary;
+    }
+
+    if (!empty($parts)) {
+        return implode(' | ', $parts);
+    }
+
+    $fb = trim($fallback);
+    return $fb !== '' ? $fb : null;
+}
+
+function normalizeRoleAlias(string $role): string {
+    $normalized = strtolower(trim($role));
+    return $normalized === 'staff' ? 'support_admin' : $normalized;
 }
 
 if (!in_array($action, ['save', 'reset_password', 'toggle_lock', 'delete_user'], true)) {
@@ -139,7 +163,10 @@ if ($action === 'delete_user') {
     }
 }
 
-$validRoles = ['admin', 'staff', 'teacher', 'bcs', 'student'];
+$role = normalizeRoleAlias($role);
+$secondaryRole = normalizeRoleAlias($secondaryRole);
+
+$validRoles = ['admin', 'support_admin', 'teacher', 'bcs', 'student'];
 if ($username === '' || $fullName === '' || $email === '' || !in_array($role, $validRoles, true)) {
     redirect('../../views/admin/accounts.php?account_error=missing_data');
 }
@@ -153,7 +180,7 @@ if ($secondaryRole !== '') {
     if ($role === 'admin' || $secondaryRole === 'admin') {
         redirect('../../views/admin/accounts.php?account_error=invalid_role');
     }
-    $staffRoles = ['staff', 'teacher'];
+    $staffRoles = ['support_admin', 'teacher'];
     $studentRoles = ['bcs', 'student'];
     $isPrimaryStaff = in_array($role, $staffRoles, true);
     $isSecondaryStaff = in_array($secondaryRole, $staffRoles, true);
@@ -169,6 +196,8 @@ if ($secondaryRole !== '') {
 if (($role === 'student' || $role === 'bcs' || $secondaryRole === 'student' || $secondaryRole === 'bcs') && !$classId) {
     redirect('../../views/admin/accounts.php?account_error=missing_class');
 }
+
+$position = normalizePositionValue($positionPrimary, $positionSecondary, $position);
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     redirect('../../views/admin/accounts.php?account_error=invalid_email');
@@ -205,12 +234,12 @@ if ($isProtectedById || $isProtectedByEmail) {
         if ($hasSecondaryRoleColumn) {
             db_query(
                 'UPDATE users SET username = ?, full_name = ?, email = ?, role = ?, secondary_role = ?, academic_title = ?, position = ?, birth_date = ? WHERE id = ?',
-                [$username, $fullName, $email, $role, $secondaryRole !== '' ? $secondaryRole : null, $academicTitle !== '' ? $academicTitle : null, $position !== '' ? $position : null, $birthDate, $id]
+                [$username, $fullName, $email, $role, $secondaryRole !== '' ? $secondaryRole : null, $academicTitle !== '' ? $academicTitle : null, $position, $birthDate, $id]
             );
         } else {
             db_query(
                 'UPDATE users SET username = ?, full_name = ?, email = ?, role = ?, academic_title = ?, position = ?, birth_date = ? WHERE id = ?',
-                [$username, $fullName, $email, $role, $academicTitle !== '' ? $academicTitle : null, $position !== '' ? $position : null, $birthDate, $id]
+                [$username, $fullName, $email, $role, $academicTitle !== '' ? $academicTitle : null, $position, $birthDate, $id]
             );
         }
         $userId = $id;
@@ -221,12 +250,12 @@ if ($isProtectedById || $isProtectedByEmail) {
         if ($hasSecondaryRoleColumn) {
             db_query(
                 'INSERT INTO users (username, password, full_name, email, role, secondary_role, academic_title, position, birth_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [$username, $defaultPasswordHash, $fullName, $email, $role, $secondaryRole !== '' ? $secondaryRole : null, $academicTitle !== '' ? $academicTitle : null, $position !== '' ? $position : null, $birthDate]
+                [$username, $defaultPasswordHash, $fullName, $email, $role, $secondaryRole !== '' ? $secondaryRole : null, $academicTitle !== '' ? $academicTitle : null, $position, $birthDate]
             );
         } else {
             db_query(
                 'INSERT INTO users (username, password, full_name, email, role, academic_title, position, birth_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                [$username, $defaultPasswordHash, $fullName, $email, $role, $academicTitle !== '' ? $academicTitle : null, $position !== '' ? $position : null, $birthDate]
+                [$username, $defaultPasswordHash, $fullName, $email, $role, $academicTitle !== '' ? $academicTitle : null, $position, $birthDate]
             );
         }
 

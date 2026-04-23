@@ -779,9 +779,11 @@
 
 /* Đảm bảo TUẦN dropdown vừa với nội dung */
 #masterWeekSelect {
-    width: auto !important;
-    min-width: 160px;
-    max-width: 220px;
+    width: 100% !important;
+    min-width: 320px;
+    max-width: 100%;
+    overflow: visible;
+    text-overflow: clip;
 }
 
 .master-week-select-col {
@@ -791,8 +793,9 @@
 
 .master-week-select-wrap {
     position: relative;
-    min-width: 160px;
-    max-width: 220px;
+    width: min(420px, 42vw);
+    min-width: 320px;
+    max-width: 420px;
     min-height: 38px;
 }
 
@@ -801,8 +804,15 @@
     top: 0;
     left: 0;
     width: 100% !important;
+    min-width: 320px;
     z-index: 1060;
     overflow-y: auto;
+    overflow-x: auto;
+    text-overflow: clip;
     background: #fff;
     box-shadow: 0 10px 20px rgba(15, 23, 42, 0.18);
+}
+
+#masterWeekSelect.week-select-expanded option {
+    white-space: nowrap;
 }

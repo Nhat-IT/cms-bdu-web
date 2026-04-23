@@ -58,7 +58,8 @@ function getRoleLabel($role) {
         'student' => 'Sinh viên',
         'bcs' => 'Ban Cán Sự',
         'teacher' => 'Giảng viên',
-        'admin' => 'Giáo vụ khoa',
+        'support_admin' => 'Giáo vụ khoa',
+        'admin' => 'Quản trị viên',
     ];
     return $labels[$role] ?? $role;
 }
@@ -69,6 +70,7 @@ function getHomeUrl($role) {
         'student' => BASE_URL . '/views/student/home.php',
         'bcs'     => BASE_URL . '/views/bcs/home.php',
         'teacher' => BASE_URL . '/views/admin/home.php', // TODO: tạo views/teacher khi có
+        'support_admin' => BASE_URL . '/views/admin/home.php',
         'admin'   => BASE_URL . '/views/admin/home.php',
     ];
     return $urls[$role] ?? BASE_URL . '/views/student/home.php';
@@ -80,6 +82,7 @@ function getProfileUrl($role) {
         'student' => BASE_URL . '/student/student-profile.php',
         'bcs' => BASE_URL . '/bcs/profile.php',
         'teacher' => BASE_URL . '/teacher/teacher-profile.php',
+        'support_admin' => BASE_URL . '/views/admin/admin-profile.php',
         'admin' => BASE_URL . '/views/admin/admin-profile.php',
     ];
     return $urls[$role] ?? BASE_URL . '/profile.php';

@@ -3,7 +3,9 @@ let editAccountId = null;
 
 function getRoleLabel(role) {
     const map = {
-        admin: 'Giáo vụ khoa',
+        admin: 'Quản trị viên',
+        support_admin: 'Giáo vụ khoa',
+        staff: 'Giáo vụ khoa',
         teacher: 'Giảng viên',
         bcs: 'Ban Cán Sự',
         student: 'Sinh viên'
@@ -12,7 +14,8 @@ function getRoleLabel(role) {
 }
 
 function getRoleBadge(role) {
-    if (role === 'admin') return '<span class="badge bg-danger text-white px-2 py-1">Giáo vụ khoa</span>';
+    if (role === 'admin') return '<span class="badge bg-danger text-white px-2 py-1">Quản trị viên</span>';
+    if (role === 'support_admin' || role === 'staff') return '<span class="badge bg-secondary text-white px-2 py-1">Giáo vụ khoa</span>';
     if (role === 'teacher') return '<span class="badge bg-primary text-white px-2 py-1">Giảng viên</span>';
     if (role === 'bcs') return '<span class="badge bg-warning text-dark px-2 py-1">Ban Cán Sự</span>';
     return '<span class="badge bg-info bg-opacity-10 text-info border border-info px-2 py-1">Sinh viên</span>';

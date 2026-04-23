@@ -51,6 +51,22 @@ function respondOrRedirect(bool $ok, string $message, string $returnPage): void 
     redirect('../../views/admin/' . $returnPage . '?class_subject_' . $code . '=' . urlencode($message));
 }
 
+function dbTableExists(string $tableName): bool {
+    static $cache = [];
+    if (isset($cache[$tableName])) {
+        return $cache[$tableName];
+    }
+    $row = db_fetch_one(
+        'SELECT COUNT(*) AS total
+         FROM information_schema.tables
+         WHERE table_schema = DATABASE()
+           AND table_name = ?',
+        [$tableName]
+    );
+    $cache[$tableName] = ((int) ($row['total'] ?? 0)) > 0;
+    return $cache[$tableName];
+}
+
 if ($classSubjectId <= 0 && $action !== 'add_group' && $action !== 'get_group_student_counts' && $action !== 'save_group_schedule') {
     respondOrRedirect(false, 'missing_id', $returnPage);
 }
@@ -400,19 +416,119 @@ try {
             respondOrRedirect(false, 'invalid_group', $returnPage);
         }
 
-        // Không cho phép xóa nhóm đầu tiên mặc định N1
-        if (strtoupper($groupCode) === 'N1') {
-            jsonResponse(['ok' => false, 'message' => 'cannot_delete_default_group'], 400);
-            return;
+        $targetGroup = null;
+        if ($groupId > 0) {
+            $targetGroup = db_fetch_one(
+                'SELECT id, group_code
+                 FROM class_subject_groups
+                 WHERE id = ? AND class_subject_id = ?
+                 LIMIT 1',
+                [$groupId, $classSubjectId]
+            );
+        } else {
+            $targetGroup = db_fetch_one(
+                'SELECT id, group_code
+                 FROM class_subject_groups
+                 WHERE class_subject_id = ? AND group_code = ?
+                 LIMIT 1',
+                [$classSubjectId, $groupCode]
+            );
         }
 
-        if ($groupId > 0) {
-            db_query('DELETE FROM class_subject_groups WHERE id = ?', [$groupId]);
-            logSystem("Xóa nhóm ID #$groupId khỏi lớp học phần ID #$classSubjectId", 'class_subject_groups', $groupId);
-        } else {
-            db_query('DELETE FROM class_subject_groups WHERE class_subject_id = ? AND group_code = ?', [$classSubjectId, $groupCode]);
-            logSystem("Xóa nhóm $groupCode khỏi lớp học phần ID #$classSubjectId", 'class_subject_groups', null);
+        if (!$targetGroup) {
+            jsonResponse(['ok' => false, 'message' => 'group_not_found'], 404);
         }
+
+        $targetGroupId = (int) ($targetGroup['id'] ?? 0);
+        $targetGroupCode = (string) ($targetGroup['group_code'] ?? $groupCode);
+
+        // Không cho phép xóa nhóm đầu tiên mặc định N1
+        if (strtoupper($targetGroupCode) === 'N1') {
+            jsonResponse(['ok' => false, 'message' => 'cannot_delete_default_group'], 400);
+        }
+
+        $deletedStudentCount = 0;
+        if (dbTableExists('group_students')) {
+            $cnt = db_fetch_one('SELECT COUNT(*) AS total FROM group_students WHERE class_subject_group_id = ?', [$targetGroupId]);
+            $deletedStudentCount = (int) ($cnt['total'] ?? 0);
+        }
+
+        $dbConn = getDBConnection();
+        if (!$dbConn) {
+            throw new Exception('database_connection_unavailable');
+        }
+        mysqli_begin_transaction($dbConn);
+        try {
+            // Xóa thủ công dữ liệu phụ thuộc để đảm bảo hoạt động cả khi DB thiếu FK CASCADE.
+            if (dbTableExists('attendance_evidences') && dbTableExists('attendance_records') && dbTableExists('attendance_sessions')) {
+                db_query(
+                    'DELETE ae
+                     FROM attendance_evidences ae
+                     JOIN attendance_records ar ON ar.id = ae.attendance_record_id
+                     JOIN attendance_sessions aps ON aps.id = ar.session_id
+                     WHERE aps.class_subject_group_id = ?',
+                    [$targetGroupId]
+                );
+            }
+            if (dbTableExists('attendance_records') && dbTableExists('attendance_sessions')) {
+                db_query(
+                    'DELETE ar
+                     FROM attendance_records ar
+                     JOIN attendance_sessions aps ON aps.id = ar.session_id
+                     WHERE aps.class_subject_group_id = ?',
+                    [$targetGroupId]
+                );
+            }
+            if (dbTableExists('attendance_sessions')) {
+                db_query('DELETE FROM attendance_sessions WHERE class_subject_group_id = ?', [$targetGroupId]);
+            }
+            if (dbTableExists('extra_classes')) {
+                db_query('DELETE FROM extra_classes WHERE class_subject_group_id = ?', [$targetGroupId]);
+            }
+            if (dbTableExists('student_subject_registration')) {
+                db_query('DELETE FROM student_subject_registration WHERE class_subject_group_id = ?', [$targetGroupId]);
+            }
+            if (dbTableExists('grades')) {
+                db_query('DELETE FROM grades WHERE class_subject_group_id = ?', [$targetGroupId]);
+            }
+            if (dbTableExists('group_students')) {
+                db_query('DELETE FROM group_students WHERE class_subject_group_id = ?', [$targetGroupId]);
+                $remainingGroupStudents = db_fetch_one(
+                    'SELECT COUNT(*) AS total FROM group_students WHERE class_subject_group_id = ?',
+                    [$targetGroupId]
+                );
+                if ((int) ($remainingGroupStudents['total'] ?? 0) > 0) {
+                    throw new Exception("cannot_delete_group_students_for_group_$targetGroupId");
+                }
+            }
+
+            db_query('DELETE FROM class_subject_groups WHERE id = ?', [$targetGroupId]);
+            $stillExists = db_fetch_one(
+                'SELECT id FROM class_subject_groups WHERE id = ? LIMIT 1',
+                [$targetGroupId]
+            );
+            if ($stillExists) {
+                throw new Exception("cannot_delete_group_record_$targetGroupId");
+            }
+
+            mysqli_commit($dbConn);
+        } catch (Exception $inner) {
+            mysqli_rollback($dbConn);
+            throw $inner;
+        }
+
+        logSystem("Xóa nhóm $targetGroupCode (ID #$targetGroupId) khỏi lớp học phần ID #$classSubjectId; xóa {$deletedStudentCount} sinh viên thuộc nhóm", 'class_subject_groups', $targetGroupId);
+
+        if (isset($_POST['format']) && $_POST['format'] === 'json') {
+            jsonResponse([
+                'ok' => true,
+                'message' => 'group_deleted',
+                'group_id' => $targetGroupId,
+                'group_code' => $targetGroupCode,
+                'deleted_student_count' => $deletedStudentCount
+            ]);
+        }
+
         respondOrRedirect(true, 'group_deleted', $returnPage);
     }
 

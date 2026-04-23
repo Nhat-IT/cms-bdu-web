@@ -287,7 +287,7 @@ async function loadBcsAttendanceData() {
         return;
     }
     if (!res.ok) {
-        alert('Khong the tai danh sach nhom hoc phan.');
+        // Xử lý im lặng khi lỗi tải danh sách nhóm học phần
         return;
     }
 

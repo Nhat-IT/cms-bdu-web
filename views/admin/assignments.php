@@ -4,7 +4,12 @@ require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/helpers.php';
 requireRole('admin');
 $currentUser = getCurrentUser();
-$teachers = db_fetch_all("SELECT id, full_name as name, academic_title FROM users WHERE role = 'teacher' ORDER BY full_name");
+$teachers = db_fetch_all("
+    SELECT id, full_name as name, academic_title
+    FROM users
+    WHERE LOWER(role) IN ('teacher', 'support_admin', 'staff')
+    ORDER BY full_name
+");
 $dbYears   = db_fetch_all("SELECT DISTINCT academic_year FROM semesters ORDER BY academic_year DESC");
 $dbSemesters = ['HK1' => 'Học kỳ 1', 'HK2' => 'Học kỳ 2', 'HK3' => 'Học kỳ 3 (Hè)'];
 
@@ -446,7 +451,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                     <div class="col-auto align-self-start master-week-select-col">
                         <label class="form-label small fw-bold text-muted mb-1">TUẦN</label>
                         <div class="master-week-select-wrap">
-                            <select class="form-select border-primary fw-bold text-primary shadow-sm" id="masterWeekSelect" style="width: auto; min-width: 160px;"></select>
+                            <select class="form-select border-primary fw-bold text-primary shadow-sm" id="masterWeekSelect"></select>
                         </div>
                     </div>
                     <div class="col-6 col-sm-4 col-md-5 col-lg-3">
@@ -640,7 +645,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                     <table class="table table-bordered table-hover table-sessions bg-white shadow-sm mb-0">
                         <thead>
                             <tr class="text-center">
-                                <th>#</th><th>Nhóm</th><th>Ngày học</th><th>Thứ</th><th>Tiết</th><th>Phòng</th><th>Trạng thái</th><th>Sửa</th>
+                                <th>STT</th><th>Nhóm</th><th>Ngày học</th><th>Thứ</th><th>Tiết</th><th>Phòng</th><th>Trạng thái</th><th>Sửa</th>
                             </tr>
                         </thead>
                         <tbody class="text-center" id="sessionManagerTbody">

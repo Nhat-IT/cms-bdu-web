@@ -450,6 +450,28 @@ function removeGroupFromClassSubject(csId, groupCode) {
             asg.groups = asg.groups.filter(function (g) { return getGroupCode(g.code) !== code; });
         });
     });
+
+    if (Array.isArray(window.masterScheduleCourses)) {
+        window.masterScheduleCourses.forEach(function (mc) {
+            if (parseInt(mc.csId, 10) !== parseInt(csId, 10) || !Array.isArray(mc.groups)) return;
+            mc.groups = mc.groups.filter(function (g) { return getGroupCode(g.code) !== code; });
+        });
+    }
+}
+
+function decrementStudentsByCsId(csId, removedCount) {
+    const removed = Math.max(0, parseInt(removedCount, 10) || 0);
+    if (removed <= 0) return;
+
+    (window.allClasses || []).forEach(function (cls) {
+        (cls.assignments || []).forEach(function (asg) {
+            if (parseInt(asg.csId, 10) !== parseInt(csId, 10)) return;
+            const current = Math.max(0, parseInt(asg.studentCount, 10) || 0);
+            const next = Math.max(0, current - removed);
+            asg.studentCount = next;
+            asg.hasStudents = next > 0;
+        });
+    });
 }
 
 function initAssignmentEnhancements() {
@@ -1106,6 +1128,21 @@ function handleInitialScheduleSubmit(event) {
 
     const start = parseInt(document.getElementById('initStartPeriod').value, 10);
     const end = parseInt(document.getElementById('initEndPeriod').value, 10);
+
+    const initTeacherEl = document.getElementById('initTeacher');
+    const teacherMainId = String((initTeacherEl && initTeacherEl.value) || '').trim();
+    const teacherExists = (window.teachers || teachers || []).some(function (t) {
+        return String(t.id) === teacherMainId;
+    });
+    if (!teacherMainId || !teacherExists) {
+        if (initTeacherEl) {
+            initTeacherEl.focus();
+        }
+        if (window.showToast) window.showToast('Vui lòng chọn Giảng viên chính.', 'warning');
+        else alert('Vui lòng chọn Giảng viên chính.');
+        return false;
+    }
+
     if (start >= end) {
         if (window.showToast) window.showToast('Lỗi: Tiết bắt đầu phải diễn ra TRƯỚC tiết kết thúc!', 'error');
         else alert('Lỗi: Tiết bắt đầu phải diễn ra TRƯỚC tiết kết thúc!');
@@ -1119,7 +1156,7 @@ function handleInitialScheduleSubmit(event) {
         semester_name: document.getElementById('assignFilterSemester') ? document.getElementById('assignFilterSemester').value : 'all',
         academic_year: document.getElementById('assignFilterYear') ? document.getElementById('assignFilterYear').value : 'all',
         group_code: window._currentGroupCode || 'N1',
-        teacher_main_id: document.getElementById('initTeacher').value,
+        teacher_main_id: teacherMainId,
         teacher_sub_id: document.getElementById('initAssistantTeacher') ? document.getElementById('initAssistantTeacher').value : '',
         day_of_week: document.getElementById('initDayOfWeek').value,
         start_period: document.getElementById('initStartPeriod').value,
@@ -1661,10 +1698,20 @@ function deleteGroupFromClass(courseId, groupCode, subjectName, subjectId) {
     })
         .then(function(res) {
             if (res && res.ok) {
-                if (window.showToast) window.showToast('Đã xóa nhóm thành công.', 'success');
-                removeGroupFromClassSubject(csId, groupCode);
+                const removedStudentCount = Math.max(0, parseInt((res && res.deleted_student_count) || 0, 10) || 0);
+                if (window.showToast) {
+                    const msg = removedStudentCount > 0
+                        ? ('Đã xóa nhóm thành công. Đã xóa ' + removedStudentCount + ' sinh viên thuộc nhóm trong DB.')
+                        : 'Đã xóa nhóm thành công.';
+                    window.showToast(msg, 'success');
+                }
+                removeGroupFromClassSubject(csId, (res && res.group_code) || groupCode);
+                decrementStudentsByCsId(csId, removedStudentCount);
                 if (typeof applyAssignmentFilters === 'function') {
                     applyAssignmentFilters();
+                }
+                if (typeof renderMasterSchedule === 'function') {
+                    renderMasterSchedule();
                 }
                 return;
             }
