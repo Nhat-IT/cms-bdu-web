@@ -105,6 +105,18 @@ function getGroupLabel(groupCode) {
     return String(groupCode);
 }
 
+function getGroupCode(groupCode) {
+    if (!groupCode) return 'N1';
+    const match = String(groupCode).match(/N(\d+)/i);
+    if (match) return 'N' + match[1];
+    return String(groupCode);
+}
+
+function getClassGroupLabel(classCode, groupCode) {
+    const code = (classCode && String(classCode).trim()) ? String(classCode).trim() : '--';
+    return code + ' - ' + getGroupCode(groupCode);
+}
+
 function initAssignmentEnhancements() {
     const filterYear = document.getElementById('assignFilterYear');
     const filterSemester = document.getElementById('assignFilterSemester');
@@ -225,7 +237,7 @@ function renderAssignmentOfferingsTable() {
 
             return '' +
                 '<div class="assignment-group-row">' +
-                    '<div><span class="assignment-group-pill">Lớp - ' + groupCode + '</span></div>' +
+                    '<div><span class="assignment-group-pill">' + getClassGroupLabel(asg.classCode, groupCode) + '</span></div>' +
                     '<div>' + teacherHtml + '</div>' +
                     '<div><span class="assignment-col-value ' + (hasSchedule ? '' : 'text-muted-soft') + '">' + scheduleDisplay + '</span></div>' +
                     '<div><span class="assignment-col-value">' + roomDisplay + '</span></div>' +
@@ -234,7 +246,7 @@ function renderAssignmentOfferingsTable() {
                 '</div>';
         }).join('');
 
-        const warningText = firstUnscheduled ? ('Chưa xếp lịch nhóm ' + getGroupLabel(firstUnscheduled.code || 'N1')) : '';
+        const warningText = firstUnscheduled ? ('Chưa xếp lịch ' + getClassGroupLabel(asg.classCode, firstUnscheduled.code || 'N1')) : '';
         const actionDisabled = asg.isOpen ? '' : ' disabled';
         const card = document.createElement('div');
         card.className = 'assignment-offering-card';
@@ -481,7 +493,7 @@ function openInitialScheduleModal(mode, csId, classCode, subjectName, teacher = 
     document.getElementById('initSubjectName').innerText = subjectName;
     const groupLabel = document.getElementById('initGroupLabel');
     if (groupLabel) {
-        groupLabel.innerText = getGroupLabel(normalizedGroup);
+        groupLabel.innerText = getClassGroupLabel(classCode, normalizedGroup);
     }
 
     document.getElementById('initTeacher').value = teacher;
@@ -593,7 +605,7 @@ function openSessionManager(courseId, subjectName, teacherName, groupCode = null
         return;
     }
     const displayClassCode = course && course.classCode ? course.classCode : courseId;
-    const groupText = groupCode ? ' | ' + getGroupLabel(groupCode) : '';
+    const groupText = groupCode ? ' | ' + getClassGroupLabel(displayClassCode, groupCode) : '';
     document.getElementById('lblClassInfo').innerText = displayClassCode + ' | ' + subjectName + groupText + ' | GV: ' + teacherName;
 
     currentSessionCourse = course || null;
@@ -726,7 +738,7 @@ function renderSessionManagerRows(course, groupCode = null) {
 
         row.innerHTML = '';
         row.appendChild(createTextCell(String(index + 1), 'fw-bold'));
-        row.appendChild(createTextCell(getGroupLabel(group.code), 'fw-bold text-primary'));
+        row.appendChild(createTextCell(getClassGroupLabel(course.classCode || '', group.code), 'fw-bold text-primary'));
         row.appendChild(createTextCell(dateLabel, 'fw-bold text-dark'));
         row.appendChild(dayCell);
         row.appendChild(createTextCell(hasGroupSchedule ? ('Tiết ' + group.start + ' - ' + group.end) : '--', ''));
@@ -755,7 +767,7 @@ function createStatusCell(text, badgeClass) {
 function openEditSingleSession(mode, dateStr, dateVal, day, start, end, room, status, classCode, subjectName, teacherId, group = '01') {
     document.getElementById('qsSubjectInfo').innerText = subjectName;
     document.getElementById('qsClassCode').innerHTML = '<i class="bi bi-tags-fill me-1 text-muted"></i>Lớp: ' + classCode;
-    document.getElementById('qsGroup').innerText = 'Nhóm: ' + getGroupLabel(group);
+    document.getElementById('qsGroup').innerText = 'Lớp - Nhóm: ' + getClassGroupLabel(classCode, group);
     document.getElementById('singleDate').value = dateVal;
     document.getElementById('singleStart').value = start;
     document.getElementById('singleEnd').value = end;

@@ -367,7 +367,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                             </div>
                         </div>
                         <div class="small text-muted mt-2">
-                            <i class="bi bi-collection me-1"></i>Nhóm đang chỉnh: <span class="fw-bold text-dark" id="initGroupLabel">Nhóm 1</span>
+                            <i class="bi bi-collection me-1"></i>Nhóm đang chỉnh: <span class="fw-bold text-dark" id="initGroupLabel">-- - N1</span>
                         </div>
                     </div>
 
