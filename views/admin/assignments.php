@@ -8,26 +8,33 @@ $teachers = db_fetch_all("SELECT id, full_name as name, academic_title FROM user
 $dbYears   = db_fetch_all("SELECT DISTINCT academic_year FROM semesters ORDER BY academic_year DESC");
 $dbSemesters = ['HK1' => 'Học kỳ 1', 'HK2' => 'Học kỳ 2', 'HK3' => 'Học kỳ 3 (Hè)'];
 $dbSemestersWithYear = db_fetch_all(
-    "SELECT semester_name, academic_year FROM semesters ORDER BY academic_year DESC, semester_name ASC"
+    "SELECT semester_name, academic_year, start_date, end_date,
+            CASE WHEN CURDATE() BETWEEN start_date AND end_date THEN 0 ELSE 1 END AS sort_open
+     FROM semesters
+     ORDER BY sort_open ASC, academic_year DESC, start_date ASC"
 );
 
 // Xác định học kỳ đang diễn ra theo ngày hiện tại
-$currentSemester = null;
-$now = new DateTime();
-$nowMonth = (int)$now->format('n');
-$nowYear  = (int)$now->format('Y');
-
-if ($nowMonth >= 9 || $nowMonth <= 1) {
-    $curYear = $nowMonth >= 9 ? "{$nowYear}-" . ($nowYear + 1) : ($nowYear - 1) . '-' . $nowYear;
-    $curSem  = 'HK1';
-} elseif ($nowMonth >= 2 && $nowMonth <= 6) {
-    $curYear = ($nowYear - 1) . '-' . $nowYear;
-    $curSem  = 'HK2';
-} else {
-    $curYear = ($nowYear - 1) . '-' . $nowYear;
-    $curSem  = 'HK3';
+$currentSemesterValue = '';
+foreach ($dbSemestersWithYear as $s) {
+    if (!empty($s['start_date']) && !empty($s['end_date']) && date('Y-m-d') >= $s['start_date'] && date('Y-m-d') <= $s['end_date']) {
+        $currentSemesterValue = ($s['semester_name'] ?? '') . '|||' . ($s['academic_year'] ?? '');
+        break;
+    }
 }
-$currentSemesterValue = $curSem . '|||' . $curYear;
+if ($currentSemesterValue === '' && !empty($dbSemestersWithYear)) {
+    $currentSemesterValue = ($dbSemestersWithYear[0]['semester_name'] ?? '') . '|||' . ($dbSemestersWithYear[0]['academic_year'] ?? '');
+}
+
+$semesterRanges = [];
+foreach ($dbSemestersWithYear as $s) {
+    $key = ($s['semester_name'] ?? '') . '|||' . ($s['academic_year'] ?? '');
+    $semesterRanges[$key] = [
+        'start' => $s['start_date'] ?? null,
+        'end'   => $s['end_date'] ?? null,
+        'label' => ($dbSemesters[$s['semester_name']] ?? ($s['semester_name'] ?? '')) . ' - ' . ($s['academic_year'] ?? '')
+    ];
+}
 $startTimes = [1=>'07:00',2=>'07:45',3=>'08:30',4=>'09:15',5=>'10:00',6=>'13:00',7=>'13:45',8=>'14:30',9=>'15:15',10=>'16:00',11=>'17:45',12=>'18:30',13=>'19:15',14=>'20:00'];
 $classes = db_fetch_all("SELECT id, class_name FROM classes ORDER BY class_name");
 $rooms   = db_fetch_all("SELECT room_code, room_name, room_type FROM rooms WHERE is_active = 1 ORDER BY room_code");
@@ -395,7 +402,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                 <div class="row g-2 g-md-3 mb-3 align-items-end">
                     <div class="col-6 col-sm-4 col-md-3 col-lg-3">
                         <label class="form-label small fw-bold text-muted mb-1">HỌC KỲ</label>
-                        <select class="form-select border-secondary shadow-sm" id="masterFilterSemester" onchange="renderMasterSchedule()">
+                        <select class="form-select border-secondary shadow-sm" id="masterFilterSemester" onchange="handleMasterSemesterChange()">
                             <?php foreach ($dbSemestersWithYear as $s):
                                 $val = e($s['semester_name']) . '|||' . e($s['academic_year']);
                                 $label = ($dbSemesters[$s['semester_name']] ?? $s['semester_name']) . ' - ' . e($s['academic_year']);
@@ -772,6 +779,7 @@ window.allClasses.forEach(function(cls) {
 
 // Dataset Master Schedule lấy trực tiếp từ DB
 window.masterScheduleCourses = <?= json_encode($dbMasterCourses, JSON_UNESCAPED_UNICODE) ?>;
+window.semesterRanges = <?= json_encode($semesterRanges, JSON_UNESCAPED_UNICODE) ?>;
 
 // Map tiết → giờ (phải khai báo trước khi renderMasterSchedule được gọi)
 window.startTimeLabels = {1:'07:00',2:'07:45',3:'08:30',4:'09:15',5:'10:00',6:'13:00',7:'13:45',8:'14:30',9:'15:15',10:'16:00',11:'17:45',12:'18:30',13:'19:15',14:'20:00'};
@@ -784,64 +792,134 @@ function getRoomName(roomCode) {
 }
 
 // ─── MASTER SCHEDULE ────────────────────────────────────────────────────────
+window.masterMondays = [];
+
+function parseYmd(ymd) {
+    if (!ymd || typeof ymd !== 'string') return null;
+    const parts = ymd.split('-');
+    if (parts.length !== 3) return null;
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    const date = new Date(y, m, d);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function toYmd(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + d;
+}
+
+function toMonday(date) {
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const day = d.getDay();
+    d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+    return d;
+}
+
+function formatShortDate(dateStr) {
+    const d = parseYmd(dateStr);
+    if (!d) return '--/--';
+    return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+}
+
+function getMondaysBySemester(semesterValue) {
+    const ranges = window.semesterRanges || {};
+    const selected = ranges[semesterValue] || null;
+    const start = selected ? parseYmd(selected.start) : null;
+    const end = selected ? parseYmd(selected.end) : null;
+    const mondays = [];
+
+    if (start && end && start <= end) {
+        let cursor = toMonday(start);
+        const endMonday = toMonday(end);
+        while (cursor <= endMonday) {
+            mondays.push(toYmd(cursor));
+            cursor.setDate(cursor.getDate() + 7);
+        }
+    }
+
+    if (!mondays.length) {
+        const nowMonday = toMonday(new Date());
+        for (let w = -2; w <= 10; w++) {
+            const d = new Date(nowMonday.getFullYear(), nowMonday.getMonth(), nowMonday.getDate());
+            d.setDate(d.getDate() + (w * 7));
+            mondays.push(toYmd(d));
+        }
+    }
+
+    return mondays;
+}
+
+function rebuildMasterWeekOptions(keepCurrentValue) {
+    const semesterSelect = document.getElementById('masterFilterSemester');
+    const weekSelect = document.getElementById('masterWeekSelect');
+    if (!semesterSelect || !weekSelect) return;
+
+    const oldWeekValue = keepCurrentValue ? weekSelect.value : '';
+    const semesterValue = semesterSelect.value || '';
+    const mondays = getMondaysBySemester(semesterValue);
+    window.masterMondays = mondays;
+
+    weekSelect.innerHTML = '';
+    mondays.forEach(function(monday) {
+        const sun = parseYmd(monday);
+        if (!sun) return;
+        sun.setDate(sun.getDate() + 6);
+        const opt = document.createElement('option');
+        opt.value = monday;
+        opt.textContent = 'Tuần ' + formatShortDate(monday) + ' - ' + formatShortDate(toYmd(sun)) + '/' + sun.getFullYear();
+        weekSelect.appendChild(opt);
+    });
+
+    if (!weekSelect.options.length) return;
+
+    if (oldWeekValue && mondays.indexOf(oldWeekValue) !== -1) {
+        weekSelect.value = oldWeekValue;
+        return;
+    }
+
+    const todayMondayStr = toYmd(toMonday(new Date()));
+    if (mondays.indexOf(todayMondayStr) !== -1) {
+        weekSelect.value = todayMondayStr;
+    } else {
+        weekSelect.value = mondays[0];
+    }
+}
+
+function handleMasterSemesterChange() {
+    rebuildMasterWeekOptions(false);
+    renderMasterSchedule();
+}
+
 (function initMasterSchedule() {
     const weekSelect  = document.getElementById('masterWeekSelect');
     const prevBtn     = document.getElementById('btnPrevWeek');
     const nextBtn     = document.getElementById('btnNextWeek');
+    const semesterSelect = document.getElementById('masterFilterSemester');
 
-    function getMondays(courses) {
-        const mondays = new Set();
-        courses.forEach(function(c) {
-            c.groups.forEach(function(g) {
-                if (!g.day || !g.start || !g.end) return;
-            });
-        });
-        const today = new Date();
-        const dayOfWeek = today.getDay();
-        const monday = new Date(today);
-        monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-        for (let w = -2; w <= 10; w++) {
-            const d = new Date(monday);
-            d.setDate(monday.getDate() + w * 7);
-            mondays.add(d.toISOString().slice(0, 10));
+    rebuildMasterWeekOptions(false);
+
+    if (weekSelect) {
+        weekSelect.addEventListener('change', renderMasterSchedule);
+    }
+    if (prevBtn && weekSelect) prevBtn.addEventListener('click', function() {
+        const mondays = window.masterMondays || [];
+        const idx = mondays.indexOf(weekSelect.value);
+        if (idx > 0) {
+            weekSelect.value = mondays[idx - 1];
+            renderMasterSchedule();
         }
-        return Array.from(mondays).sort();
-    }
-
-    function fmt(dateStr) {
-        const d = new Date(dateStr + 'T00:00:00');
-        return (d.getDate()).toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0');
-    }
-
-    const mondays = getMondays(window.masterScheduleCourses || []);
-
-    mondays.forEach(function(monday) {
-        const sun = new Date(monday + 'T00:00:00');
-        sun.setDate(sun.getDate() + 6);
-        const opt = document.createElement('option');
-        opt.value = monday;
-        opt.textContent = 'Tuần ' + fmt(monday) + ' - ' + fmt(sun.toISOString().slice(0,10)) + '/' + (sun.getFullYear());
-        weekSelect.appendChild(opt);
     });
-
-    const today = new Date();
-    const dow = today.getDay();
-    const thisMonday = new Date(today);
-    thisMonday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
-    const thisMondayStr = thisMonday.toISOString().slice(0, 10);
-    const closest = mondays.reduce(function(a, b) {
-        return Math.abs(new Date(b) - new Date(thisMondayStr)) < Math.abs(new Date(a) - new Date(thisMondayStr)) ? b : a;
-    }, mondays[0]);
-    if (closest) weekSelect.value = closest;
-
-    weekSelect.addEventListener('change', renderMasterSchedule);
-    if (prevBtn) prevBtn.addEventListener('click', function() {
+    if (nextBtn && weekSelect) nextBtn.addEventListener('click', function() {
+        const mondays = window.masterMondays || [];
         const idx = mondays.indexOf(weekSelect.value);
-        if (idx > 0) { weekSelect.value = mondays[idx - 1]; renderMasterSchedule(); }
-    });
-    if (nextBtn) nextBtn.addEventListener('click', function() {
-        const idx = mondays.indexOf(weekSelect.value);
-        if (idx < mondays.length - 1) { weekSelect.value = mondays[idx + 1]; renderMasterSchedule(); }
+        if (idx < mondays.length - 1) {
+            weekSelect.value = mondays[idx + 1];
+            renderMasterSchedule();
+        }
     });
 
     renderMasterSchedule();
