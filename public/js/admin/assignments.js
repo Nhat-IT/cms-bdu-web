@@ -213,8 +213,6 @@ function renderAssignmentOfferingsTable() {
                 scheduleBtn = hasSchedule
                     ? ''
                     : '<button class="btn btn-primary" onclick="openGroupScheduleModal(\'' + (asg.csId || '') + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(g.teacherMain || '') + '\', \'' + escapeHtml(g.teacherSub || '') + '\', \'' + escapeHtml(g.day || '') + '\', \'' + escapeHtml(g.start || '') + '\', \'' + escapeHtml(g.end || '') + '\', \'' + escapeHtml(g.room || '') + '\', \'' + escapeHtml(asg.classCode || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>';
-            } else {
-                scheduleBtn = '<button class="btn btn-outline-secondary" disabled><i class="bi bi-lock me-1"></i>Môn đã đóng</button>';
             }
             const actionButtons = manageBtn + (scheduleBtn ? (' ' + scheduleBtn) : '');
 
