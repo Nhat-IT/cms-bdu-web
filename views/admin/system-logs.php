@@ -75,8 +75,13 @@ if ($exportType === 'csv') {
     $out = fopen('php://output', 'w');
     fputcsv($out, ['created_at', 'username', 'full_name', 'role', 'email', 'action', 'target_table', 'target_id']);
     foreach ($exportRows as $row) {
+        $createdAt = '';
+        if (!empty($row['created_at'])) {
+            $ts = strtotime($row['created_at']);
+            $createdAt = $ts ? date('d/m/Y H:i:s', $ts) : $row['created_at'];
+        }
         fputcsv($out, [
-            $row['created_at'] ?? '',
+            $createdAt,
             $row['username'] ?? '',
             $row['full_name'] ?? '',
             $row['role'] ?? '',

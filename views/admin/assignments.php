@@ -443,9 +443,11 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-auto">
+                    <div class="col-auto align-self-start master-week-select-col">
                         <label class="form-label small fw-bold text-muted mb-1">TUẦN</label>
-                        <select class="form-select border-primary fw-bold text-primary shadow-sm" id="masterWeekSelect" style="width: auto; min-width: 160px;"></select>
+                        <div class="master-week-select-wrap">
+                            <select class="form-select border-primary fw-bold text-primary shadow-sm" id="masterWeekSelect" style="width: auto; min-width: 160px;"></select>
+                        </div>
                     </div>
                     <div class="col-6 col-sm-4 col-md-5 col-lg-3">
                         <label class="form-label small fw-bold text-muted mb-1">GIẢNG VIÊN</label>
@@ -942,7 +944,57 @@ function handleMasterSemesterChange() {
     rebuildMasterWeekOptions(false);
 
     if (weekSelect) {
-        weekSelect.addEventListener('change', renderMasterSchedule);
+        const closeWeekDropdown = function() {
+            if (weekSelect.size !== 1) {
+                weekSelect.size = 1;
+            }
+            weekSelect.classList.remove('week-select-expanded');
+        };
+
+        const openWeekDropdown = function() {
+            const optionCount = weekSelect.options ? weekSelect.options.length : 0;
+            weekSelect.size = Math.min(10, Math.max(2, optionCount || 2));
+            weekSelect.classList.add('week-select-expanded');
+            weekSelect.focus();
+        };
+
+        weekSelect.size = 1;
+
+        weekSelect.addEventListener('mousedown', function(e) {
+            if (weekSelect.size === 1) {
+                e.preventDefault();
+                openWeekDropdown();
+            }
+        });
+
+        weekSelect.addEventListener('keydown', function(e) {
+            if ((e.key === 'Enter' || e.key === ' ') && weekSelect.size === 1) {
+                e.preventDefault();
+                openWeekDropdown();
+                return;
+            }
+            if (e.key === 'Escape') {
+                closeWeekDropdown();
+                weekSelect.blur();
+            }
+        });
+
+        weekSelect.addEventListener('change', function() {
+            closeWeekDropdown();
+            renderMasterSchedule();
+        });
+
+        weekSelect.addEventListener('blur', function() {
+            setTimeout(closeWeekDropdown, 80);
+        });
+
+        document.addEventListener('mousedown', function(e) {
+            const wrap = weekSelect.closest('.master-week-select-wrap');
+            if (!wrap) return;
+            if (!wrap.contains(e.target)) {
+                closeWeekDropdown();
+            }
+        });
     }
     if (prevBtn && weekSelect) prevBtn.addEventListener('click', function() {
         const mondays = window.masterMondays || [];

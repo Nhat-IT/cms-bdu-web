@@ -1,6 +1,20 @@
+function formatDisplayDate(value) {
+    if (!value) return '';
+    const d = new Date(value);
+    if (!Number.isNaN(d.getTime())) {
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        return `${dd}/${mm}/${yyyy}`;
+    }
+    const raw = String(value).slice(0, 10);
+    const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : raw;
+}
+
 function formatDateRange(startDate, endDate) {
-    const start = startDate ? String(startDate).slice(0, 10) : '';
-    const end = endDate ? String(endDate).slice(0, 10) : '';
+    const start = formatDisplayDate(startDate);
+    const end = formatDisplayDate(endDate);
     if (!start && !end) {
         return 'Không có mốc thời gian';
     }

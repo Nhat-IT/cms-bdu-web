@@ -4,7 +4,11 @@ let adminSemesters = [];
 function adminFormatDate(value) {
     if (!value) return '--';
     const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return String(value).slice(0, 10);
+    if (Number.isNaN(d.getTime())) {
+        const raw = String(value).slice(0, 10);
+        const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        return m ? `${m[3]}/${m[2]}/${m[1]}` : raw;
+    }
     const dd = String(d.getDate()).padStart(2, '0');
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const yyyy = d.getFullYear();
