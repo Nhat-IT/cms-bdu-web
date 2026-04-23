@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function () {
+﻿document.addEventListener('DOMContentLoaded', function () {
     const sidebarToggle = document.getElementById('sidebarToggle');
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', function () {
@@ -298,7 +298,7 @@ function renderAssignmentOfferingsTable() {
             const downloadIconBtn = asg.hasStudents
                 ? '<button class="btn btn-outline-success btn-icon-only" title="Tải xuống danh sách sinh viên" onclick="downloadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"><i class="bi bi-download"></i></button>'
                 : '<button class="btn btn-outline-secondary btn-icon-only" title="Chưa có danh sách sinh viên trong DB" disabled><i class="bi bi-download"></i></button>';
-            const deleteGroupBtn = totalRows > 1
+            const deleteGroupBtn = (totalRows > 1)
                 ? '<button class="btn btn-outline-danger btn-icon-only assignment-delete-group" title="Xóa nhóm" onclick="deleteGroupFromClass(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(asg.subjectName || '') + '\', \'' + escapeHtml(String(asg.subjectId || '')) + '\')"><i class="bi bi-trash"></i></button>'
                 : '';
             const actionButtons = primaryActionBtn + '<span class="assignment-action-icons">' + uploadIconBtn + downloadIconBtn + deleteGroupBtn + '</span>';
@@ -1085,6 +1085,13 @@ function deleteGroupFromClass(courseId, groupCode, subjectName, subjectId) {
         return;
     }
 
+    // Không cho phép xóa nhóm mặc định N1
+    const normalizedCode = getGroupCode(groupCode);
+    if (normalizedCode === 'N1') {
+        alert('Không thể xóa nhóm mặc định đầu tiên (N1). Vui lòng thêm nhóm mới trước khi xóa nhóm này.');
+        return;
+    }
+
     const csId = resolveClassSubjectId(course);
     if (!csId) {
         alert('Không xác định được lớp học phần để xóa nhóm.');
@@ -1111,10 +1118,16 @@ function deleteGroupFromClass(courseId, groupCode, subjectName, subjectId) {
                 window.location.reload();
                 return;
             }
-            alert('Không thể xóa nhóm. Vui lòng thử lại.');
+            let msg = 'Không thể xóa nhóm. Vui lòng thử lại.';
+            if (res && res.message === 'cannot_delete_default_group') {
+                msg = 'Không thể xóa nhóm mặc định đầu tiên (N1). Vui lòng thêm nhóm mới trước khi xóa.';
+            }
+            if (window.showToast) window.showToast(msg, 'error');
+            else alert(msg);
         })
         .catch(function() {
-            alert('Lỗi kết nối server khi xóa nhóm.');
+            if (window.showToast) window.showToast('Lỗi kết nối server khi xóa nhóm.', 'error');
+            else alert('Lỗi kết nối server khi xóa nhóm.');
         });
 }
 

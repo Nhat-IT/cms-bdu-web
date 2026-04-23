@@ -290,6 +290,12 @@ try {
             respondOrRedirect(false, 'invalid_group', $returnPage);
         }
 
+        // Không cho phép xóa nhóm đầu tiên mặc định N1
+        if (strtoupper($groupCode) === 'N1') {
+            jsonResponse(['ok' => false, 'message' => 'cannot_delete_default_group'], 400);
+            return;
+        }
+
         if ($groupId > 0) {
             db_query('DELETE FROM class_subject_groups WHERE id = ?', [$groupId]);
             logSystem("Xóa nhóm ID #$groupId khỏi lớp học phần ID #$classSubjectId", 'class_subject_groups', $groupId);
