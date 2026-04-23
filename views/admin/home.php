@@ -33,9 +33,11 @@ $classSubjects = db_fetch_all(
     "SELECT
         cs.id,
         cs.semester,
+        c.class_name,
         s.subject_code,
         s.subject_name,
         u.full_name as teacher_name,
+        u.academic_title as teacher_title,
         cs.start_date,
         cs.end_date,
         CASE
@@ -43,6 +45,7 @@ $classSubjects = db_fetch_all(
             ELSE 'closed'
         END as status
     FROM class_subjects cs
+    LEFT JOIN classes c ON cs.class_id = c.id
     LEFT JOIN subjects s ON cs.subject_id = s.id
     LEFT JOIN users u ON cs.teacher_id = u.id
     ORDER BY cs.id DESC
@@ -152,11 +155,13 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                                     <?php if (count($classSubjects) > 0): ?>
                                         <?php foreach ($classSubjects as $index => $cs): ?>
                                             <tr>
-                                                <td class="fw-bold ps-4"><?php echo e($cs['subject_code'] . '-' . $cs['semester']); ?></td>
+                                                <td class="fw-bold ps-4"><?php echo e($cs['class_name'] ?? '--'); ?></td>
                                                 <td><?php echo e($cs['subject_name']); ?></td>
                                                 <td>
                                                     <?php if ($cs['teacher_name']): ?>
-                                                        <span class="badge bg-light text-dark border"><?php echo e($cs['teacher_name']); ?></span>
+                                                        <span class="badge bg-light text-dark border">
+                                                            <?php echo e(($cs['teacher_title'] ? $cs['teacher_title'] . '. ' : '') . $cs['teacher_name']); ?>
+                                                        </span>
                                                     <?php else: ?>
                                                         <span class="badge bg-secondary">Chưa phân công</span>
                                                     <?php endif; ?>
@@ -170,15 +175,9 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                                                 </td>
                                                 <td class="text-end pe-4">
                                                     <?php if ($cs['status'] === 'open'): ?>
-                                                        <form method="POST" action="../../controllers/admin/classSubjectController.php" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn đóng lớp <?php echo e($cs['subject_code'] . ' - ' . $cs['subject_name']); ?>?');">
-                                                            <input type="hidden" name="action" value="toggle_status">
-                                                            <input type="hidden" name="status" value="closed">
-                                                            <input type="hidden" name="class_subject_id" value="<?php echo e($cs['id']); ?>">
-                                                            <input type="hidden" name="return" value="home">
-                                                            <button class="btn btn-light action-btn text-danger border" title="Đóng lớp này">
-                                                                <i class="bi bi-lock-fill"></i> Đóng lớp
-                                                            </button>
-                                                        </form>
+                                                        <a href="../../views/admin/assignments.php" class="btn btn-light action-btn text-primary border" title="Xếp lịch">
+                                                            <i class="bi bi-calendar-week"></i> Xếp lịch
+                                                        </a>
                                                     <?php else: ?>
                                                         <form method="POST" action="../../controllers/admin/classSubjectController.php" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn mở lại lớp <?php echo e($cs['subject_code'] . ' - ' . $cs['subject_name']); ?>?');">
                                                             <input type="hidden" name="action" value="toggle_status">
@@ -211,15 +210,15 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                         <h5 class="fw-bold text-dark m-0"><i class="bi bi-tools text-secondary me-2"></i>Tác vụ nhanh</h5>
                     </div>
                     <div class="card-body">
-                        <button class="btn btn-outline-dark w-100 mb-3 text-start fw-bold p-3" onclick="confirmQuickAction('cấp tài khoản Giảng viên mới')">
+                        <a class="btn btn-outline-dark w-100 mb-3 text-start fw-bold p-3" href="../../views/admin/accounts.php">
                             <i class="bi bi-person-plus-fill fs-5 text-success me-2"></i> Cấp TK Giảng viên
-                        </button>
-                        <button class="btn btn-outline-dark w-100 mb-3 text-start fw-bold p-3" onclick="confirmQuickAction('chỉ định Ban Cán Sự cho lớp')">
-                            <i class="bi bi-star-fill fs-5 text-warning me-2"></i> Chỉ định Ban Cán Sự
-                        </button>
-                        <button class="btn btn-outline-dark w-100 text-start fw-bold p-3" onclick="confirmQuickAction('khôi phục mật khẩu người dùng')">
+                        </a>
+                        <a class="btn btn-outline-dark w-100 mb-3 text-start fw-bold p-3" href="../../views/admin/classes-subjects.php">
+                            <i class="bi bi-journal-bookmark-fill fs-5 text-warning me-2"></i> Quản lý môn học
+                        </a>
+                        <a class="btn btn-outline-dark w-100 text-start fw-bold p-3" href="../../views/admin/accounts.php">
                             <i class="bi bi-key-fill fs-5 text-danger me-2"></i> Reset mật khẩu
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>
