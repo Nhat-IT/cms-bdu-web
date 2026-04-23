@@ -6,6 +6,7 @@
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../config/helpers.php';
+require_once __DIR__ . '/../controllers/authController.php';
 
 // Nếu đã đăng nhập thì chuyển về trang chủ
 if (isLoggedIn()) {
@@ -48,7 +49,7 @@ if (isset($_GET['reset']) && $_GET['reset'] === 'success') {
     <title>Đăng Nhập - CMS BDU</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="../public/css/style.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/public/css/style.css">
 </head>
 <body class="login-body">
 
@@ -111,7 +112,7 @@ if (isset($_GET['reset']) && $_GET['reset'] === 'success') {
                                     Ghi nhớ tài khoản
                                 </label>
                             </div>
-                            <a href="forgot-password.php" class="text-decoration-none text-primary" style="font-size: 0.9rem;">Quên mật khẩu?</a>
+                            <a href="<?php echo BASE_URL; ?>/forgot-password.php" class="text-decoration-none text-primary" style="font-size: 0.9rem;">Quên mật khẩu?</a>
                         </div>
 
                         <button type="submit" class="btn btn-primary btn-login w-100 text-uppercase rounded-pill mt-2">Đăng Nhập</button>
@@ -140,6 +141,6 @@ if (isset($_GET['reset']) && $_GET['reset'] === 'success') {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../public/js/script.js"></script>
+<script src="<?php echo BASE_URL; ?>/public/js/script.js"></script>
 </body>
 </html>

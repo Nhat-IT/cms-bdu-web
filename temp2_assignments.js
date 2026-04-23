@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function () {
+﻿document.addEventListener('DOMContentLoaded', function () {
     const sidebarToggle = document.getElementById('sidebarToggle');
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', function () {
@@ -16,43 +16,9 @@ document.addEventListener('DOMContentLoaded', function () {
         singleStatus.addEventListener('change', toggleCancelReason);
     }
 
-    if (window.allAssignmentCourses) {
-        allAssignmentCourses.push(...window.allAssignmentCourses);
-    }
-    if (window.teachers) {
-        teachers.push(...window.teachers);
-    }
-    
-    window.showToast = function(message, type) {
-        type = type || 'info';
-        let container = document.getElementById('toastContainer');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toastContainer';
-            container.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;';
-            document.body.appendChild(container);
-        }
-        let colors = { success: '#198754', error: '#dc3545', warning: '#ffc107', info: '#0dcaf0' };
-        let icons  = { success: 'bi-check-circle-fill', error: 'bi-x-circle-fill', warning: 'bi-exclamation-triangle-fill', info: 'bi-info-circle-fill' };
-        let toast  = document.createElement('div');
-        toast.style.cssText = 'background:#fff;border-left:4px solid ' + (colors[type]||colors.info) + ';box-shadow:0 4px 12px rgba(0,0,0,0.15);border-radius:8px;padding:12px 16px;display:flex;align-items:flex-start;gap:10px;max-width:360px;font-size:0.9rem;';
-        toast.innerHTML = '<i class="bi ' + (icons[type]||icons.info) + '" style="color:' + (colors[type]||colors.info) + ';font-size:1.1rem;margin-top:1px;flex-shrink:0"></i><span style="flex:1;white-space:pre-wrap">' + message + '</span>';
-        container.appendChild(toast);
-        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 4000);
-    };
-
-    window.callApi = function(action, params) {
-        let fd = new FormData();
-        fd.append('action', action);
-        fd.append('format', 'json');
-        Object.keys(params).forEach(function(k) { fd.append(k, params[k]); });
-        return fetch('/cms/controllers/admin/classSubjectController.php', {
-            method: 'POST',
-            body: fd
-        }).then(function(res) { return res.json(); });
-    };
-
-    initAssignmentEnhancements();
+    loadAssignmentCoursesFromApi().finally(function () {
+        initAssignmentEnhancements();
+    });
 
     toggleCancelReason();
 });
@@ -64,12 +30,12 @@ const allAssignmentCourses = [];
 const teachers = [];
 
 const days = [
-    { value: '2', label: 'Thứ 2' },
-    { value: '3', label: 'Thứ 3' },
-    { value: '4', label: 'Thứ 4' },
-    { value: '5', label: 'Thứ 5' },
-    { value: '6', label: 'Thứ 6' },
-    { value: '7', label: 'Thứ 7' }
+    { value: '2', label: 'Thß╗⌐ 2' },
+    { value: '3', label: 'Thß╗⌐ 3' },
+    { value: '4', label: 'Thß╗⌐ 4' },
+    { value: '5', label: 'Thß╗⌐ 5' },
+    { value: '6', label: 'Thß╗⌐ 6' },
+    { value: '7', label: 'Thß╗⌐ 7' }
 ];
 
 let assignmentOfferingsFiltered = [];
@@ -80,18 +46,18 @@ let currentSessionGroupCode = null;
 
 function getTeacherName(teacherId) {
     const teacher = teachers.find(function (t) { return t.id === teacherId; });
-    return teacher ? teacher.name : '—';
+    return teacher ? teacher.name : 'ΓÇö';
 }
 
 function getDayLabel(day) {
     const dayObj = days.find(function (d) { return d.value === day; });
-    return dayObj ? dayObj.label : '—';
+    return dayObj ? dayObj.label : 'ΓÇö';
 }
 
 function getGroupLabel(groupCode) {
     const match = groupCode.match(/N(\d+)/);
     if (match) {
-        return 'Nhóm ' + match[1];
+        return 'Nh├│m ' + match[1];
     }
     return groupCode;
 }
@@ -114,7 +80,59 @@ function initAssignmentEnhancements() {
     applyAssignmentFilters();
 }
 
+async function loadAssignmentCoursesFromApi() {
+    try {
+        const res = await fetch('/api/admin/teaching-assignments', { headers: { Accept: 'application/json' } });
+        if (!res.ok) {
+            allAssignmentCourses.splice(0, allAssignmentCourses.length);
+            teachers.splice(0, teachers.length);
+            return;
+        }
 
+        const rows = await res.json();
+        if (!Array.isArray(rows)) {
+            allAssignmentCourses.splice(0, allAssignmentCourses.length);
+            teachers.splice(0, teachers.length);
+            return;
+        }
+
+        allAssignmentCourses.splice(0, allAssignmentCourses.length, ...rows.map(function (item) {
+            return {
+                id: item.id,
+                classCode: item.classCode,
+                name: item.name,
+                year: item.year || '2025',
+                semester: item.semester || '1',
+                isOpen: Boolean(item.isOpen),
+                credits: Number(item.credits || 0),
+                openWindow: item.openWindow || '--',
+                hasSchedule: Boolean(item.hasSchedule),
+                groups: Array.isArray(item.groups) ? item.groups : []
+            };
+        }));
+
+        teachers.splice(0, teachers.length);
+        const teacherMap = new Map();
+        allAssignmentCourses.forEach(function (course) {
+            course.groups.forEach(function (group) {
+                if (group.teacherMain && group.teacherMainName && !teacherMap.has(group.teacherMain)) {
+                    teacherMap.set(group.teacherMain, group.teacherMainName);
+                }
+                if (group.teacherSub && group.teacherSubName && !teacherMap.has(group.teacherSub)) {
+                    teacherMap.set(group.teacherSub, group.teacherSubName);
+                }
+            });
+        });
+
+        Array.from(teacherMap.entries()).forEach(function (entry) {
+            teachers.push({ id: entry[0], name: entry[1] });
+        });
+    } catch (error) {
+        allAssignmentCourses.splice(0, allAssignmentCourses.length);
+        teachers.splice(0, teachers.length);
+        console.error('Kh├┤ng tß║úi ─æ╞░ß╗úc dß╗» liß╗çu ph├ón c├┤ng tß╗½ API:', error);
+    }
+}
 
 function applyAssignmentFilters() {
     const filterYear = document.getElementById('assignFilterYear');
@@ -147,7 +165,7 @@ function renderAssignmentOfferings() {
     container.innerHTML = '';
 
     if (assignmentOfferingsFiltered.length === 0) {
-        container.innerHTML = '<div class="alert alert-light border">Không có môn học nào trong bộ lọc đã chọn.</div>';
+        container.innerHTML = '<div class="alert alert-light border">Kh├┤ng c├│ m├┤n hß╗ìc n├áo trong bß╗Ö lß╗ìc ─æ├ú chß╗ìn.</div>';
         return;
     }
 
@@ -160,9 +178,8 @@ function renderAssignmentOfferings() {
         head.className = 'offering-head';
         
         const titleDiv = document.createElement('div');
-        const subjectCodeStr = course.subjectCode ? course.subjectCode : course.id.split('-')[0];
-        titleDiv.innerHTML = '<div class="offering-title">' + subjectCodeStr + ' - ' + course.name + '</div>' +
-            '<div class="offering-subtitle">' + course.credits + ' tín chỉ | Mã lớp: ' + course.classCode + '</div>';
+        titleDiv.innerHTML = '<div class="offering-title">' + course.id + ' - ' + course.name + '</div>' +
+            '<div class="offering-subtitle">' + course.credits + ' t├¡n chß╗ë | M├ú lß╗¢p: ' + course.classCode + '</div>';
         head.appendChild(titleDiv);
         
         const actionsDiv = document.createElement('div');
@@ -170,19 +187,24 @@ function renderAssignmentOfferings() {
         
         const btnUpload = document.createElement('button');
         btnUpload.className = 'btn btn-sm btn-outline-dark';
-        btnUpload.innerHTML = '<i class="bi bi-upload me-1"></i>Tải lên SV';
-        btnUpload.onclick = function () { uploadAssignmentStudentList(course.csId || course.id); };
+        btnUpload.innerHTML = '<i class="bi bi-upload me-1"></i>Tß║úi l├¬n SV';
+        btnUpload.onclick = function () { uploadAssignmentStudentList(course.id); };
         
         const btnDownload = document.createElement('button');
-        // Cho phép download luôn
-        btnDownload.className = 'btn btn-sm btn-outline-success';
-        btnDownload.innerHTML = '<i class="bi bi-download me-1"></i>Tải xuống SV';
-        btnDownload.onclick = function () { downloadAssignmentStudentList(course.csId || course.id); };
+        const hasStudents = assignmentStudentsByClass[course.id] && assignmentStudentsByClass[course.id].length > 0;
+        btnDownload.className = 'btn btn-sm btn-outline-success' + (hasStudents ? '' : ' disabled');
+        btnDownload.innerHTML = '<i class="bi bi-download me-1"></i>Tß║úi xuß╗æng SV';
+        if (hasStudents) {
+            btnDownload.onclick = function () { downloadAssignmentStudentList(course.id); };
+        } else {
+            btnDownload.setAttribute('aria-disabled', 'true');
+            btnDownload.setAttribute('title', 'Ch╞░a c├│ danh s├ích sinh vi├¬n');
+        }
         
         const btnAdd = document.createElement('button');
         btnAdd.className = 'btn btn-sm btn-outline-primary';
-        btnAdd.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Thêm nhóm';
-        btnAdd.onclick = function () { addGroupToClass(course.csId || course.id, course.name); };
+        btnAdd.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Th├¬m nh├│m';
+        btnAdd.onclick = function () { addGroupToClass(course.id, course.name); };
         
         actionsDiv.appendChild(btnUpload);
         actionsDiv.appendChild(btnDownload);
@@ -203,22 +225,22 @@ function renderAssignmentOfferings() {
             const teacherDiv = document.createElement('div');
             const teacherMainName = group.teacherMainName || getTeacherName(group.teacherMain);
             const teacherSubName = group.teacherSubName || getTeacherName(group.teacherSub);
-            teacherDiv.innerHTML = '<div class="section-label">Giảng viên</div>' +
+            teacherDiv.innerHTML = '<div class="section-label">Giß║úng vi├¬n</div>' +
                 '<div class="section-value">' + teacherMainName +
                 (group.teacherSub ? ' + ' + teacherSubName : '') + '</div>';
             
             const scheduleDiv = document.createElement('div');
-            scheduleDiv.innerHTML = '<div class="section-label">Lịch học</div>' +
-                '<div class="section-value">' + (hasGroupSchedule ? (getDayLabel(group.day) + ' | Tiết ' + group.start + '-' + group.end) : 'Chưa xếp lịch') + '</div>';
+            scheduleDiv.innerHTML = '<div class="section-label">Lß╗ïch hß╗ìc</div>' +
+                '<div class="section-value">' + (hasGroupSchedule ? (getDayLabel(group.day) + ' | Tiß║┐t ' + group.start + '-' + group.end) : 'Ch╞░a xß║┐p lß╗ïch') + '</div>';
             
             const roomDiv = document.createElement('div');
-            roomDiv.innerHTML = '<div class="section-label">Phòng</div>' +
+            roomDiv.innerHTML = '<div class="section-label">Ph├▓ng</div>' +
                 '<div class="section-value">' + (hasGroupSchedule ? group.room : '--') + '</div>';
             
             const statusDiv = document.createElement('div');
             statusDiv.className = 'section-status';
-            const statusText = course.isOpen ? 'Đang mở' : 'Đã đóng';
-            statusDiv.innerHTML = '<div class="section-label">Trạng thái</div>' +
+            const statusText = course.isOpen ? '─Éang mß╗ƒ' : '─É├ú ─æ├│ng';
+            statusDiv.innerHTML = '<div class="section-label">Trß║íng th├íi</div>' +
                 '<div class="section-value">' + statusText + '</div>';
             
             const actionsRowDiv = document.createElement('div');
@@ -226,19 +248,19 @@ function renderAssignmentOfferings() {
             
             const btnEdit = document.createElement('button');
             btnEdit.className = 'btn btn-sm ' + (hasGroupSchedule ? 'btn-outline-primary' : 'btn-primary') + (course.isOpen ? '' : ' disabled');
-            btnEdit.innerHTML = '<i class="bi ' + (hasGroupSchedule ? 'bi-calendar3' : 'bi-calendar-plus') + ' me-1"></i>' + (hasGroupSchedule ? 'Quản lý lịch' : 'Xếp lịch ngay');
+            btnEdit.innerHTML = '<i class="bi ' + (hasGroupSchedule ? 'bi-calendar3' : 'bi-calendar-plus') + ' me-1"></i>' + (hasGroupSchedule ? 'Quß║ún l├╜ lß╗ïch' : 'Xß║┐p lß╗ïch ngay');
             if (course.isOpen) {
                 btnEdit.onclick = function () {
                     if (hasGroupSchedule) {
-                        openSessionManager(course.csId || course.id, course.name, getTeacherName(group.teacherMain), group.code, course.classCode);
+                        openSessionManager(course.id, course.name, getTeacherName(group.teacherMain), group.code);
                         return;
                     }
 
-                    openGroupScheduleModal(course.csId || course.id, course.name, group.code, group.teacherMain, group.teacherSub, group.day, '', '', '', course.classCode);
+                    openGroupScheduleModal(course.id, course.name, group.code, group.teacherMain, group.teacherSub, group.day, '', '', '');
                 };
             } else {
                 btnEdit.setAttribute('aria-disabled', 'true');
-                btnEdit.setAttribute('title', 'Môn đã đóng');
+                btnEdit.setAttribute('title', 'M├┤n ─æ├ú ─æ├│ng');
             }
             
             actionsRowDiv.appendChild(btnEdit);
@@ -258,18 +280,18 @@ function renderAssignmentOfferings() {
         const scheduledGroups = course.groups.filter(function (group) {
             return Boolean(group.day && group.start && group.end && group.room);
         });
-        let scheduleStatus = '<span class="badge bg-secondary">Chưa xếp lịch</span>';
+        let scheduleStatus = '<span class="badge bg-secondary">Ch╞░a xß║┐p lß╗ïch</span>';
         if (scheduledGroups.length === course.groups.length && course.groups.length > 0) {
-            scheduleStatus = '<span class="badge bg-success">Đã xếp lịch</span>';
+            scheduleStatus = '<span class="badge bg-success">─É├ú xß║┐p lß╗ïch</span>';
         } else if (scheduledGroups.length > 0) {
             const unscheduledGroups = course.groups.filter(function (group) {
                 return !(group.day && group.start && group.end && group.room);
             }).map(function (group) {
                 return getGroupLabel(group.code);
             });
-            scheduleStatus = '<span class="badge bg-warning text-dark">Chưa xếp lịch nhóm ' + unscheduledGroups.join(', ') + '</span>';
+            scheduleStatus = '<span class="badge bg-warning text-dark">Ch╞░a xß║┐p lß╗ïch nh├│m ' + unscheduledGroups.join(', ') + '</span>';
         }
-        foot.innerHTML = 'Số nhóm: ' + course.groups.length + ' | Thời gian mở: ' + course.openWindow + ' | ' + scheduleStatus;
+        foot.innerHTML = 'Sß╗æ nh├│m: ' + course.groups.length + ' | Thß╗¥i gian mß╗ƒ: ' + course.openWindow + ' | ' + scheduleStatus;
         card.appendChild(foot);
 
         container.appendChild(card);
@@ -280,12 +302,12 @@ function renderAssignmentOfferings() {
 function uploadAssignmentStudentList(courseId) {
     const course = allAssignmentCourses.find(function (c) { return c.id === courseId; });
     if (!course) {
-        alert('Không tìm thấy môn học.');
+        alert('Kh├┤ng t├¼m thß║Ñy m├┤n hß╗ìc.');
         return;
     }
 
     if (!course.isOpen) {
-        alert('Môn học đã đóng, không thể tải lên danh sách sinh viên.');
+        alert('M├┤n hß╗ìc ─æ├ú ─æ├│ng, kh├┤ng thß╗â tß║úi l├¬n danh s├ích sinh vi├¬n.');
         return;
     }
 
@@ -369,7 +391,7 @@ function handleAssignmentUploadChange(event) {
     const isCsv = fileName.endsWith('.csv');
     const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
     if (!isCsv && !isExcel) {
-        alert('Chỉ hỗ trợ file CSV, XLSX hoặc XLS.');
+        alert('Chß╗ë hß╗ù trß╗ú file CSV, XLSX hoß║╖c XLS.');
         return;
     }
 
@@ -384,18 +406,18 @@ function handleAssignmentUploadChange(event) {
         }
 
         if (parsed.length === 0) {
-            alert('Không đọc được dữ liệu sinh viên. Vui lòng kiểm tra lại file.');
+            alert('Kh├┤ng ─æß╗ìc ─æ╞░ß╗úc dß╗» liß╗çu sinh vi├¬n. Vui l├▓ng kiß╗âm tra lß║íi file.');
             return;
         }
 
         assignmentStudentsByClass[pendingAssignmentUploadClass] = parsed;
-        alert('Đã tải lên ' + parsed.length + ' sinh viên cho ' + pendingAssignmentUploadClass + '.');
+        alert('─É├ú tß║úi l├¬n ' + parsed.length + ' sinh vi├¬n cho ' + pendingAssignmentUploadClass + '.');
         pendingAssignmentUploadClass = '';
         updateAssignmentDownloadButtons();
     };
 
     reader.onerror = function () {
-        alert('Không thể đọc file. Vui lòng thử lại.');
+        alert('Kh├┤ng thß╗â ─æß╗ìc file. Vui l├▓ng thß╗¡ lß║íi.');
     };
 
     if (isCsv) {
@@ -420,7 +442,7 @@ function downloadAssignmentStudentList(courseId) {
     const classCode = course ? course.classCode : courseId;
 
     const csv = [];
-    csv.push(['STT', 'MSSV', 'Họ và tên', 'Ngày sinh', 'Email', 'Mã lớp HP', 'Nhóm học'].join(','));
+    csv.push(['STT', 'MSSV', 'Hß╗ì v├á t├¬n', 'Ng├áy sinh', 'Email', 'M├ú lß╗¢p HP', 'Nh├│m hß╗ìc'].join(','));
     rows.forEach(function (student, index) {
         csv.push([
             String(index + 1),
@@ -462,25 +484,18 @@ function populatePeriodSelects() {
 
             const option = document.createElement('option');
             option.value = value;
-            option.textContent = 'Tiết ' + period;
+            option.textContent = 'Tiß║┐t ' + period;
             select.appendChild(option);
         }
     });
 }
 
-function openInitialScheduleModal(mode, csId, classCode, subjectName, teacher = '', startDate = '', endDate = '', dayOfWeek = '', startPeriod = '', endPeriod = '', room = '', assistant = '', group = 'ALL') {
-    window._currentCsId = csId;
-    window._currentGroupCode = group === 'ALL' ? 'N1' : group;
-
-    const classCodeSelect = document.getElementById('initClassCode');
-    if (classCodeSelect) {
-        classCodeSelect.value = classCode;
-    }
-    
+function openInitialScheduleModal(mode, classCode, subjectName, teacher = '', startDate = '', endDate = '', dayOfWeek = '', startPeriod = '', endPeriod = '', room = '', assistant = '', group = 'ALL') {
+    document.getElementById('initClassCode').innerText = classCode;
     document.getElementById('initSubjectName').innerText = subjectName;
     const groupLabel = document.getElementById('initGroupLabel');
     if (groupLabel) {
-        groupLabel.innerText = group === 'ALL' ? 'Toàn bộ nhóm' : getGroupLabel(group);
+        groupLabel.innerText = group === 'ALL' ? 'To├án bß╗Ö nh├│m' : getGroupLabel(group);
     }
 
     document.getElementById('initTeacher').value = teacher;
@@ -501,16 +516,16 @@ function openInitialScheduleModal(mode, csId, classCode, subjectName, teacher = 
 
     if (mode === 'add') {
         modalHeader.className = 'modal-header bg-primary text-white border-bottom-0 pb-3';
-        modalTitle.innerHTML = '<i class="bi bi-calendar-plus me-2"></i>Thiết Lập Lịch Giảng Dạy Mới';
+        modalTitle.innerHTML = '<i class="bi bi-calendar-plus me-2"></i>Thiß║┐t Lß║¡p Lß╗ïch Giß║úng Dß║íy Mß╗¢i';
         submitBtn.className = 'btn btn-primary fw-bold px-4';
-        submitBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>Lưu Lịch & Phát Sinh';
+        submitBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>L╞░u Lß╗ïch & Ph├ít Sinh';
         warningAlert.classList.add('d-none');
         infoAlert.className = 'alert alert-primary bg-primary bg-opacity-10 border-0 mb-4';
     } else {
         modalHeader.className = 'modal-header bg-warning text-dark border-bottom-0 pb-3';
-        modalTitle.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Chỉnh Sửa Lịch Giảng Dạy (Hàng Loạt)';
+        modalTitle.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Chß╗ënh Sß╗¡a Lß╗ïch Giß║úng Dß║íy (H├áng Loß║ít)';
         submitBtn.className = 'btn btn-warning fw-bold px-4 text-dark shadow-sm';
-        submitBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>Cập nhật toàn bộ các tuần';
+        submitBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>Cß║¡p nhß║¡t to├án bß╗Ö c├íc tuß║ºn';
         warningAlert.classList.remove('d-none');
         infoAlert.className = 'alert alert-warning bg-warning bg-opacity-10 border-0 mb-4';
 
@@ -523,8 +538,8 @@ function openInitialScheduleModal(mode, csId, classCode, subjectName, teacher = 
     new bootstrap.Modal(document.getElementById('initialScheduleModal')).show();
 }
 
-function openGroupScheduleModal(csId, subjectName, groupCode, teacherId, assistantId, dayOfWeek, startPeriod, endPeriod, room, classCode) {
-    openInitialScheduleModal('edit', csId, classCode || csId, subjectName, teacherId, '', '', dayOfWeek, startPeriod, endPeriod, room, assistantId, groupCode);
+function openGroupScheduleModal(courseId, subjectName, groupCode, teacherId, assistantId, dayOfWeek, startPeriod, endPeriod, room) {
+    openInitialScheduleModal('edit', courseId, subjectName, teacherId, '', '', dayOfWeek, startPeriod, endPeriod, room, assistantId, groupCode);
 }
 
 function handleInitialScheduleSubmit(event) {
@@ -533,53 +548,18 @@ function handleInitialScheduleSubmit(event) {
     const start = parseInt(document.getElementById('initStartPeriod').value, 10);
     const end = parseInt(document.getElementById('initEndPeriod').value, 10);
     if (start >= end) {
-        if (window.showToast) window.showToast('Lỗi: Tiết bắt đầu phải diễn ra TRƯỚC tiết kết thúc!', 'error');
-        else alert('Lỗi: Tiết bắt đầu phải diễn ra TRƯỚC tiết kết thúc!');
+        alert('ΓÜá∩╕Å Lß╗ùi: Tiß║┐t bß║»t ─æß║ºu phß║úi diß╗àn ra TR╞»ß╗ÜC tiß║┐t kß║┐t th├║c!');
         return false;
     }
 
-    const payload = {
-        class_subject_id: window._currentCsId,
-        group_code: window._currentGroupCode || 'N1',
-        teacher_main_id: document.getElementById('initTeacher').value,
-        teacher_sub_id: document.getElementById('initAssistantTeacher') ? document.getElementById('initAssistantTeacher').value : '',
-        day_of_week: document.getElementById('initDayOfWeek').value,
-        start_period: document.getElementById('initStartPeriod').value,
-        end_period: document.getElementById('initEndPeriod').value,
-        room: document.getElementById('initRoom').value
-    };
-
-    const submitBtn = document.getElementById('initSubmitBtn');
-    const originalText = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang lưu...';
-
-    if (window.callApi) {
-        window.callApi('save_group_schedule', payload)
-            .then(function(res) {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-                
-                if (res && res.ok) {
-                    window.showToast('Đã lưu lịch giảng dạy thành công!', 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('initialScheduleModal')).hide();
-                    window.location.reload(); 
-                } else {
-                    let msg = 'Có lỗi xảy ra khi lưu lịch.';
-                    if (res.message === 'conflict_room') msg = res.detail || 'Phòng học đã bị trùng trong thời gian này.';
-                    else if (res.message === 'conflict_teacher') msg = res.detail || 'Giảng viên đã bị trùng lịch trong thời gian này.';
-                    window.showToast(msg, 'error');
-                }
-            })
-            .catch(function(err) {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-                window.showToast('Lỗi kết nối đến server.', 'error');
-            });
+    const btnText = document.getElementById('initSubmitBtn').innerText;
+    if (btnText.includes('Cß║¡p nhß║¡t')) {
+        alert('Γ£à ─É├ú cß║¡p nhß║¡t th├ánh c├┤ng cho tß║Ñt cß║ú c├íc buß╗òi hß╗ìc ch╞░a diß╗àn ra cß╗ºa lß╗¢p n├áy!');
+    } else {
+        alert('Γ£à ─É├ú thiß║┐t lß║¡p lß╗ïch th├ánh c├┤ng v├á tß╗▒ ─æß╗Öng ph├ít sinh c├íc buß╗òi hß╗ìc v├áo Database!');
     }
 
-    return false;
-}
+    bootstrap.Modal.getInstance(document.getElementById('initialScheduleModal')).hide();
     return false;
 }
 
@@ -599,8 +579,7 @@ function openSessionManager(classCode, subjectName, teacherName, groupCode = nul
                 const firstGroup = course.groups[0];
                 openInitialScheduleModal(
                     'edit',
-                    course.csId || course.id,
-                    course.classCode || course.id,
+                    course.id,
                     course.name,
                     firstGroup.teacherMain || teacherName || '',
                     '',
@@ -615,13 +594,13 @@ function openSessionManager(classCode, subjectName, teacherName, groupCode = nul
                 return;
             }
 
-            openInitialScheduleModal('add', course.csId || course.id, classCode, subjectName, teacherName || '', '', '', '', '', '', '', 'ALL');
+            openInitialScheduleModal('add', classCode, subjectName, teacherName || '', '', '', '', '', '', '', '', 'ALL');
         };
     }
 
     const addSingleSessionBtn = document.getElementById('btnAddSingleSession');
     if (addSingleSessionBtn) {
-        addSingleSessionBtn.innerHTML = '<i class="bi bi-plus-circle me-1"></i> Thêm buổi học bù cho lớp này';
+        addSingleSessionBtn.innerHTML = '<i class="bi bi-plus-circle me-1"></i> Th├¬m buß╗òi hß╗ìc b├╣ cho lß╗¢p n├áy';
         addSingleSessionBtn.onclick = function () {
             openAddSingleSessionFromManager();
         };
@@ -633,7 +612,7 @@ function openSessionManager(classCode, subjectName, teacherName, groupCode = nul
 function openAddSingleSessionFromManager() {
     const course = currentSessionCourse;
     if (!course) {
-        alert('Không xác định được lớp đang mở trong Quản lý lịch.');
+        alert('Kh├┤ng x├íc ─æß╗ïnh ─æ╞░ß╗úc lß╗¢p ─æang mß╗ƒ trong Quß║ún l├╜ lß╗ïch.');
         return;
     }
 
@@ -668,7 +647,7 @@ function renderSessionManagerRows(course, groupCode = null) {
     }
 
     if (!course || !course.groups || course.groups.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-muted py-4">Chưa có buổi học nào để hiển thị.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="text-muted py-4">Ch╞░a c├│ buß╗òi hß╗ìc n├áo ─æß╗â hiß╗ân thß╗ï.</td></tr>';
         return;
     }
 
@@ -677,7 +656,7 @@ function renderSessionManagerRows(course, groupCode = null) {
         : course.groups;
 
     if (displayedGroups.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-muted py-4">Không tìm thấy nhóm cần quản lý.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="text-muted py-4">Kh├┤ng t├¼m thß║Ñy nh├│m cß║ºn quß║ún l├╜.</td></tr>';
         return;
     }
 
@@ -689,12 +668,12 @@ function renderSessionManagerRows(course, groupCode = null) {
         const teacherId = group.teacherMain || '';
 
         const dayCell = document.createElement('td');
-        dayCell.textContent = hasGroupSchedule ? getDayLabel(group.day) : 'Chưa xếp';
+        dayCell.textContent = hasGroupSchedule ? getDayLabel(group.day) : 'Ch╞░a xß║┐p';
 
         const actionCell = document.createElement('td');
         const editButton = document.createElement('button');
         editButton.className = 'btn btn-sm btn-light text-primary border';
-        editButton.title = 'Sửa từng ngày';
+        editButton.title = 'Sß╗¡a tß╗½ng ng├áy';
         editButton.innerHTML = '<i class="bi bi-pencil-square"></i>';
         editButton.onclick = function () {
             openEditSingleSession(
@@ -719,9 +698,9 @@ function renderSessionManagerRows(course, groupCode = null) {
         row.appendChild(createTextCell(getGroupLabel(group.code), 'fw-bold text-primary'));
         row.appendChild(createTextCell(dateLabel, 'fw-bold text-dark'));
         row.appendChild(dayCell);
-        row.appendChild(createTextCell(hasGroupSchedule ? ('Tiết ' + group.start + ' - ' + group.end) : '--', ''));
+        row.appendChild(createTextCell(hasGroupSchedule ? ('Tiß║┐t ' + group.start + ' - ' + group.end) : '--', ''));
         row.appendChild(createTextCell(hasGroupSchedule ? group.room : '--', 'fw-bold text-danger'));
-        row.appendChild(createStatusCell(course.isOpen ? 'Đang mở' : 'Đã đóng', course.isOpen ? 'status-normal' : 'bg-secondary'));
+        row.appendChild(createStatusCell(course.isOpen ? '─Éang mß╗ƒ' : '─É├ú ─æ├│ng', course.isOpen ? 'status-normal' : 'bg-secondary'));
         row.appendChild(actionCell);
         tbody.appendChild(row);
     });
@@ -744,8 +723,8 @@ function createStatusCell(text, badgeClass) {
 
 function openEditSingleSession(mode, dateStr, dateVal, day, start, end, room, status, classCode, subjectName, teacherId, group = '01') {
     document.getElementById('qsSubjectInfo').innerText = subjectName;
-    document.getElementById('qsClassCode').innerHTML = '<i class="bi bi-tags-fill me-1 text-muted"></i>Lớp: ' + classCode;
-    document.getElementById('qsGroup').innerText = 'Nhóm: ' + getGroupLabel(group);
+    document.getElementById('qsClassCode').innerHTML = '<i class="bi bi-tags-fill me-1 text-muted"></i>Lß╗¢p: ' + classCode;
+    document.getElementById('qsGroup').innerText = 'Nh├│m: ' + getGroupLabel(group);
     document.getElementById('singleDate').value = dateVal;
     document.getElementById('singleStart').value = start;
     document.getElementById('singleEnd').value = end;
@@ -769,10 +748,10 @@ function openEditSingleSession(mode, dateStr, dateVal, day, start, end, room, st
 
     const btnDelete = document.getElementById('btnDeleteSingle');
     if (mode === 'add') {
-        document.getElementById('singleSessionTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>Thêm buổi học bù / đột xuất';
+        document.getElementById('singleSessionTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>Th├¬m buß╗òi hß╗ìc b├╣ / ─æß╗Öt xuß║Ñt';
         btnDelete.classList.add('d-none');
     } else {
-        document.getElementById('singleSessionTitle').innerHTML = '<i class="bi bi-pencil-square me-2"></i>Sửa lịch ngày ' + dateStr;
+        document.getElementById('singleSessionTitle').innerHTML = '<i class="bi bi-pencil-square me-2"></i>Sß╗¡a lß╗ïch ng├áy ' + dateStr;
         btnDelete.classList.remove('d-none');
     }
 
@@ -793,24 +772,24 @@ function saveSingleSession() {
     const start = parseInt(document.getElementById('singleStart').value, 10);
     const end = parseInt(document.getElementById('singleEnd').value, 10);
     if (start >= end) {
-        alert('⚠️ Lỗi: Tiết bắt đầu phải nhỏ hơn Tiết kết thúc!');
+        alert('ΓÜá∩╕Å Lß╗ùi: Tiß║┐t bß║»t ─æß║ºu phß║úi nhß╗Å h╞ín Tiß║┐t kß║┐t th├║c!');
         return;
     }
 
     const status = document.getElementById('singleStatus').value;
     if (status === 'canceled' && document.getElementById('cancelReason').value.trim() === '') {
-        alert('⚠️ Vui lòng nhập lý do báo hủy để hệ thống gửi thông báo cho sinh viên!');
+        alert('ΓÜá∩╕Å Vui l├▓ng nhß║¡p l├╜ do b├ío hß╗ºy ─æß╗â hß╗ç thß╗æng gß╗¡i th├┤ng b├ío cho sinh vi├¬n!');
         document.getElementById('cancelReason').focus();
         return;
     }
 
-    alert('✅ Đã cập nhật thông tin buổi học thành công!');
+    alert('Γ£à ─É├ú cß║¡p nhß║¡t th├┤ng tin buß╗òi hß╗ìc th├ánh c├┤ng!');
     bootstrap.Modal.getInstance(document.getElementById('singleSessionModal')).hide();
 }
 
 function deleteSingleSession() {
-    if (confirm('⚠️ NGUY HIỂM: Bạn có chắc chắn muốn xóa hẳn buổi học này ra khỏi cơ sở dữ liệu không?\nHành động này không thể hoàn tác!')) {
-        alert('✅ Đã xóa buổi học thành công!');
+    if (confirm('ΓÜá∩╕Å NGUY HIß╗éM: Bß║ín c├│ chß║»c chß║»n muß╗æn x├│a hß║│n buß╗òi hß╗ìc n├áy ra khß╗Åi c╞í sß╗ƒ dß╗» liß╗çu kh├┤ng?\nH├ánh ─æß╗Öng n├áy kh├┤ng thß╗â ho├án t├íc!')) {
+        alert('Γ£à ─É├ú x├│a buß╗òi hß╗ìc th├ánh c├┤ng!');
         bootstrap.Modal.getInstance(document.getElementById('singleSessionModal')).hide();
     }
 }
@@ -818,12 +797,12 @@ function deleteSingleSession() {
 function addGroupToClass(courseId, subjectName) {
     const course = allAssignmentCourses.find(function (c) { return c.id === courseId; });
     if (!course) {
-        alert('Không tìm thấy môn học.');
+        alert('Kh├┤ng t├¼m thß║Ñy m├┤n hß╗ìc.');
         return;
     }
 
     if (!course.isOpen) {
-        alert('Môn học đã đóng, không thể thêm nhóm mới.');
+        alert('M├┤n hß╗ìc ─æ├ú ─æ├│ng, kh├┤ng thß╗â th├¬m nh├│m mß╗¢i.');
         return;
     }
 
@@ -837,7 +816,7 @@ function addGroupToClass(courseId, subjectName) {
 
     const newGroupCode = 'N' + nextNumber;
 
-    const confirmMsg = 'Tạo nhóm mới: ' + getGroupLabel(newGroupCode) + ' cho ' + subjectName + '?';
+    const confirmMsg = 'Tß║ío nh├│m mß╗¢i: ' + getGroupLabel(newGroupCode) + ' cho ' + subjectName + '?';
     if (!confirm(confirmMsg)) {
         return;
     }

@@ -18,6 +18,16 @@ $currentUser = getCurrentUser();
 $search = $_GET['search'] ?? '';
 $roleFilter = $_GET['role'] ?? 'all';
 $statusFilter = $_GET['status'] ?? 'all';
+$exportType = $_GET['export'] ?? '';
+
+function usersHasSecondaryRoleColumn() {
+    $row = db_fetch_one("SELECT COUNT(*) as total FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'secondary_role'");
+    return ((int) ($row['total'] ?? 0)) > 0;
+}
+
+// is_active luôn tồn tại trong bảng users (1 = hoạt động, 0 = bị khóa)
+$hasLockColumn = true;
+$hasSecondaryRoleColumn = usersHasSecondaryRoleColumn();
 
 // Build query
 $whereConditions = [];
@@ -31,8 +41,20 @@ if ($search) {
 }
 
 if ($roleFilter !== 'all') {
-    $whereConditions[] = "role = ?";
-    $params[] = $roleFilter;
+    if ($hasSecondaryRoleColumn) {
+        $whereConditions[] = "(role = ? OR secondary_role = ?)";
+        $params[] = $roleFilter;
+        $params[] = $roleFilter;
+    } else {
+        $whereConditions[] = "role = ?";
+        $params[] = $roleFilter;
+    }
+}
+
+if ($statusFilter !== 'all') {
+    // is_active: 1 = hoạt động, 0 = bị khóa
+    $whereConditions[] = "is_active = ?";
+    $params[] = $statusFilter === 'locked' ? 0 : 1;
 }
 
 $whereClause = '';
@@ -40,11 +62,41 @@ if (count($whereConditions) > 0) {
     $whereClause = 'WHERE ' . implode(' AND ', $whereConditions);
 }
 
+if ($exportType === 'excel') {
+    $exportSql = $hasSecondaryRoleColumn
+        ? "SELECT username, full_name, academic_title, email, role, secondary_role, position, created_at FROM users $whereClause ORDER BY created_at DESC"
+        : "SELECT username, full_name, academic_title, email, role, position, created_at FROM users $whereClause ORDER BY created_at DESC";
+    $exportRows = db_fetch_all($exportSql, $params);
+
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="accounts-export-' . date('Ymd_His') . '.csv"');
+
+    echo "\xEF\xBB\xBF";
+    $out = fopen('php://output', 'w');
+    fputcsv($out, $hasSecondaryRoleColumn ? ['username', 'full_name', 'academic_title', 'email', 'role', 'secondary_role', 'position', 'status', 'created_at'] : ['username', 'full_name', 'academic_title', 'email', 'role', 'position', 'status', 'created_at']);
+    foreach ($exportRows as $row) {
+        $csvRow = [
+            $row['username'] ?? '',
+            $row['full_name'] ?? '',
+            $row['academic_title'] ?? '',
+            $row['email'] ?? '',
+            $row['role'] ?? '',
+        ];
+        if ($hasSecondaryRoleColumn) {
+            $csvRow[] = $row['secondary_role'] ?? '';
+        }
+        $csvRow[] = $row['position'] ?? '';
+        $csvRow[] = 'active';
+        $csvRow[] = $row['created_at'] ?? '';
+        fputcsv($out, $csvRow);
+    }
+    fclose($out);
+    exit;
+}
+
 // Đếm tổng số bản ghi
 $countSql = "SELECT COUNT(*) as total FROM users $whereClause";
-$stmtCount = $pdo->prepare($countSql);
-$stmtCount->execute($params);
-$totalRecords = $stmtCount->fetch()['total'];
+$totalRecords = (int) db_count($countSql, $params);
 
 // Pagination
 $perPage = 15;
@@ -53,18 +105,27 @@ $offset = ($currentPage - 1) * $perPage;
 $totalPages = ceil($totalRecords / $perPage);
 
 // Lấy danh sách users
-$sql = "SELECT id, username, full_name, email, role, position, avatar, created_at 
-        FROM users 
-        $whereClause 
-        ORDER BY created_at DESC 
-        LIMIT $perPage OFFSET $offset";
-$stmt = $pdo->prepare($sql);
-$stmt->execute($params);
-$users = $stmt->fetchAll();
+
+$fields = [
+    'id',
+    'username',
+    'full_name',
+    'email',
+    'role',
+    'academic_title',
+    $hasSecondaryRoleColumn ? 'secondary_role' : 'NULL AS secondary_role',
+    'position',
+    'avatar',
+    'created_at',
+    '(SELECT cs.class_id FROM class_students cs WHERE cs.student_id = users.id ORDER BY cs.id DESC LIMIT 1) AS class_id',
+    'is_active',
+];
+$fieldsSql = implode(",\n    ", $fields);
+$sql = "SELECT\n    $fieldsSql\nFROM users\n$whereClause\nORDER BY created_at DESC\nLIMIT $perPage OFFSET $offset";
+$users = db_fetch_all($sql, $params);
 
 // Lấy danh sách lớp học cho dropdown
-$stmtClasses = $pdo->query("SELECT id, class_name FROM classes ORDER BY class_name");
-$classes = $stmtClasses->fetchAll();
+$classes = db_fetch_all("SELECT id, class_name FROM classes ORDER BY class_name");
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -81,79 +142,90 @@ $classes = $stmtClasses->fetchAll();
 </head>
 <body class="dashboard-body">
 
-<div class="sidebar sidebar-admin" id="sidebar">
-    <div>
-        <div class="brand-container flex-shrink-0">
-            <a href="home.php" class="text-decoration-none text-primary d-flex align-items-center">
-                <i class="bi bi-mortarboard-fill fs-2 me-2"></i>
-                <span class="fs-4 fw-bold hide-on-collapse">CMS ADMIN</span>
-            </a>
-        </div>
-        <div class="text-center mb-3 text-white-50 small fw-bold hide-on-collapse">QUẢN TRỊ HỆ THỐNG</div>
-        <div class="sidebar-scrollable w-100">
-        <nav class="d-flex flex-column mt-3">
-            <a href="home.php"><i class="bi bi-speedometer2"></i> Tổng quan hệ thống</a>
-            <a href="org-settings.php"><i class="bi bi-gear-wide-connected"></i> Cấu hình Học vụ</a>
-            <a href="accounts.php" class="active"><i class="bi bi-people"></i> Quản lý Tài khoản</a>
-            <a href="classes-subjects.php"><i class="bi bi-building"></i> Quản lý Lớp & Môn</a>
-            <a href="assignments.php"><i class="bi bi-diagram-3-fill"></i> Phân công Giảng dạy</a>
-            <a href="system-logs.php"><i class="bi bi-shield-lock"></i> Nhật ký hệ thống</a>
-        </nav>
-        </div>
-    </div>
-    
-    <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-        <a href="../logout.php" class="nav-link logout-btn" title="Đăng xuất">
-            <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
-        </a>
-    </div>
-</div>
+<?php
+$activePage = 'accounts';
+require_once __DIR__ . '/../../layouts/admin-sidebar.php';
+?>
 
 <div class="main-content admin-main-content" id="mainContent">
-    
-    <div class="top-navbar-admin d-flex justify-content-between align-items-center px-4 py-3">
-        <div class="d-flex align-items-center">
-            <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
-            <h4 class="m-0 text-white fw-bold d-flex align-items-center">
-                <i class="bi bi-people-fill me-2 fs-3 text-warning"></i> QUẢN LÝ TÀI KHOẢN NGƯỜI DÙNG
-            </h4>
-        </div>
-        
-        <div class="d-flex align-items-center text-white">
-            <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
-                <div class="fs-6">Quản trị viên: <span class="fw-bold admin-operator-name"><?php echo e($currentUser['full_name'] ?? 'Admin'); ?></span></div>
-            </div>
-            
-            <div class="dropdown">
-                <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
-                    <i class="bi bi-person-circle fs-2"></i>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
-                    <li><a class="dropdown-item fw-bold" href="admin-profile.php"><i class="bi bi-person-vcard text-primary me-2"></i>Hồ sơ cá nhân</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item fw-bold text-danger" href="../logout.php"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
-                </ul>
-            </div>
-        </div>
-    </div>
+<?php
+$pageTitle  = 'QUẢN LÝ TÀI KHOẢN NGƯỜI DÙNG';
+$pageIcon   = 'bi-people-fill';
+require_once __DIR__ . '/../../layouts/admin-topbar.php';
+?>
 
     <div class="p-4">
+        <?php if (isset($_GET['import_done'])): ?>
+            <div class="alert alert-info d-flex justify-content-between align-items-center" role="alert">
+                <div>
+                    <i class="bi bi-cloud-check-fill me-2"></i>
+                    Import hoàn tất. Thành công: <strong><?php echo (int) ($_GET['import_ok'] ?? 0); ?></strong>,
+                    Bỏ qua: <strong><?php echo (int) ($_GET['import_skip'] ?? 0); ?></strong>,
+                    Lỗi: <strong><?php echo (int) ($_GET['import_err'] ?? 0); ?></strong>.
+                </div>
+                <?php if (!empty($_GET['import_code'])): ?>
+                    <span class="badge bg-warning text-dark">Mã lỗi: <?php echo e($_GET['import_code']); ?></span>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($_GET['account_success'])): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> Lưu tài khoản thành công.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php elseif (isset($_GET['account_reset'])): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-key-fill me-2"></i> Đã khôi phục mật khẩu mặc định.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php elseif (isset($_GET['account_lock_changed'])): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-lock-fill me-2"></i> Đã cập nhật trạng thái khóa tài khoản.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php elseif (isset($_GET['account_error'])): ?>
+            <?php
+                $accountErrorMessages = [
+                    'missing_data' => 'Vui lòng nhập đầy đủ thông tin và chọn vai trò.',
+                    'missing_class' => 'Vai trò sinh viên/BCS cần chọn lớp học.',
+                    'invalid_email' => 'Email không hợp lệ.',
+                    'invalid_role' => 'Vai trò phụ không hợp lệ.',
+                    'missing_id' => 'Thiếu mã tài khoản để thực hiện thao tác.',
+                    'reset_failed' => 'Không thể khôi phục mật khẩu lúc này.',
+                    'lock_column_missing' => 'Cơ sở dữ liệu chưa có cột khóa tài khoản.',
+                    'user_not_found' => 'Không tìm thấy tài khoản cần thao tác.',
+                    'toggle_lock_failed' => 'Không thể cập nhật trạng thái khóa tài khoản.',
+                    'protected_account' => 'Tài khoản admin@bdu.edu.vn là tài khoản hệ thống, không thể khóa hoặc xóa.',
+                    'invalid_password' => 'Mật khẩu xác nhận không đúng.',
+                    'cannot_delete_self' => 'Không thể tự xóa tài khoản đang đăng nhập.',
+                    'delete_failed' => 'Không thể xóa tài khoản lúc này.',
+                ];
+                $accountErrorCode = $_GET['account_error'];
+                $accountErrorMessage = $accountErrorMessages[$accountErrorCode] ?? 'Đã xảy ra lỗi. Vui lòng thử lại.';
+            ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> <?php echo e($accountErrorMessage); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
         
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-body">
-                <form method="GET" action="" class="row g-3 align-items-end">
+                <form method="GET" action="" class="row g-3 align-items-end" id="accountFilterForm">
                     <div class="col-xl-3 col-lg-4">
                         <label class="fw-bold small text-muted mb-1">TÌM KIẾM</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
-                            <input type="text" class="form-control" name="search" placeholder="Nhập Mã GV/SV, Họ Tên..." value="<?php echo e($search); ?>">
+                            <input type="text" class="form-control" id="searchFilterInput" name="search" placeholder="Nhập Mã GV/SV, Họ Tên..." value="<?php echo e($search); ?>">
                         </div>
                     </div>
                     <div class="col-xl-2 col-lg-3">
                         <label class="fw-bold small text-muted mb-1">LỌC VAI TRÒ</label>
-                        <select class="form-select fw-bold text-dark" name="role">
+                        <select class="form-select fw-bold text-dark" id="roleFilterSelect" name="role">
                             <option value="all" <?php echo $roleFilter === 'all' ? 'selected' : ''; ?>>Tất cả</option>
-                            <option value="admin" <?php echo $roleFilter === 'admin' ? 'selected' : ''; ?>>Admin (Toàn quyền)</option>
+                            <option value="admin" <?php echo $roleFilter === 'admin' ? 'selected' : ''; ?>>Admin</option>
+                            <option value="staff" <?php echo $roleFilter === 'staff' ? 'selected' : ''; ?>>Giáo vụ khoa</option>
                             <option value="teacher" <?php echo $roleFilter === 'teacher' ? 'selected' : ''; ?>>Giảng viên</option>
                             <option value="bcs" <?php echo $roleFilter === 'bcs' ? 'selected' : ''; ?>>Ban Cán Sự</option>
                             <option value="student" <?php echo $roleFilter === 'student' ? 'selected' : ''; ?>>Sinh viên</option>
@@ -161,13 +233,16 @@ $classes = $stmtClasses->fetchAll();
                     </div>
                     <div class="col-xl-2 col-lg-2">
                         <label class="fw-bold small text-muted mb-1">TRẠNG THÁI</label>
-                        <select class="form-select fw-bold text-dark" name="status">
+                        <select class="form-select fw-bold text-dark" id="statusFilterSelect" name="status">
                             <option value="all" <?php echo $statusFilter === 'all' ? 'selected' : ''; ?>>Tất cả</option>
-                            <option value="active">Hoạt động</option>
-                            <option value="locked">Bị khóa</option>
+                            <option value="active" <?php echo $statusFilter === 'active' ? 'selected' : ''; ?>>Hoạt động</option>
+                            <option value="locked" <?php echo $statusFilter === 'locked' ? 'selected' : ''; ?>>Bị khóa</option>
                         </select>
                     </div>
                     <div class="col-xl-5 col-lg-12 text-xl-end mt-3 mt-xl-0 d-flex gap-2 justify-content-xl-end flex-wrap">
+                        <a href="accounts.php" class="btn btn-outline-secondary fw-bold shadow-sm">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> XÓA LỌC
+                        </a>
                         <button type="button" class="btn btn-success fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#importAccountModal">
                             <i class="bi bi-file-earmark-excel-fill me-1"></i> IMPORT TÀI KHOẢN
                         </button>
@@ -182,7 +257,7 @@ $classes = $stmtClasses->fetchAll();
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white pt-3 pb-2 border-0 d-flex justify-content-between align-items-center">
                 <h5 class="fw-bold text-dark m-0"><i class="bi bi-list-ul me-2 text-primary"></i>Danh sách Người dùng (<?php echo number_format($totalRecords); ?> bản ghi)</h5>
-                <button class="btn btn-sm btn-outline-success fw-bold"><i class="bi bi-file-earmark-excel me-1"></i>Xuất Excel</button>
+                <a class="btn btn-sm btn-outline-success fw-bold" href="?export=excel&search=<?php echo urlencode($search); ?>&role=<?php echo e($roleFilter); ?>&status=<?php echo e($statusFilter); ?>"><i class="bi bi-file-earmark-excel me-1"></i>Xuất Excel</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -203,7 +278,21 @@ $classes = $stmtClasses->fetchAll();
                                     <?php
                                     $stt = $offset + $index + 1;
                                     $avatarUrl = getAvatarUrl($user['avatar'], $user['full_name']);
-                                    $roles = [$user['role']];
+                                    $isProtectedAdmin = strtolower((string) ($user['email'] ?? '')) === 'admin@bdu.edu.vn';
+                                    $roles = array_values(array_filter([$user['role'] ?? null, $user['secondary_role'] ?? null]));
+                                    $rolePriority = [
+                                        'admin' => 4,
+                                        'staff' => 3,
+                                        'teacher' => 2,
+                                        'bcs' => 1,
+                                        'student' => 0,
+                                    ];
+
+                                    usort($roles, function ($a, $b) use ($rolePriority) {
+                                        $priorityA = $rolePriority[$a] ?? 0;
+                                        $priorityB = $rolePriority[$b] ?? 0;
+                                        return $priorityB <=> $priorityA;
+                                    });
                                     ?>
                                     <tr>
                                         <td class="ps-4 text-center text-muted"><?php echo $stt; ?></td>
@@ -220,27 +309,63 @@ $classes = $stmtClasses->fetchAll();
                                         <td class="text-center">
                                             <?php
                                             $roleLabels = [
-                                                'admin' => ['icon' => 'bi-shield-lock-fill', 'text' => 'Quản trị', 'class' => 'bg-danger'],
+                                                'admin' => ['icon' => 'bi-shield-lock-fill', 'text' => 'Admin', 'class' => 'bg-danger'],
+                                                'staff' => ['icon' => 'bi-person-badge-fill', 'text' => 'Giáo vụ khoa', 'class' => 'bg-secondary'],
                                                 'teacher' => ['icon' => 'bi-person-video3', 'text' => 'Giảng viên', 'class' => 'bg-primary'],
                                                 'bcs' => ['icon' => 'bi-star-fill', 'text' => 'Ban Cán Sự', 'class' => 'bg-warning text-dark'],
                                                 'student' => ['icon' => 'bi-person', 'text' => 'Sinh viên', 'class' => 'bg-info'],
                                             ];
-                                            $roleInfo = $roleLabels[$user['role']] ?? ['icon' => 'bi-person', 'text' => $user['role'], 'class' => 'bg-secondary'];
                                             ?>
-                                            <span class="badge <?php echo $roleInfo['class']; ?> text-white px-2 py-1">
-                                                <i class="bi <?php echo $roleInfo['icon']; ?> me-1"></i><?php echo $roleInfo['text']; ?>
-                                            </span>
+                                            <div class="d-inline-flex flex-column align-items-center gap-1">
+                                                <?php foreach ($roles as $roleName): ?>
+                                                    <?php
+                                                    $roleInfo = $roleLabels[$roleName] ?? ['icon' => 'bi-person', 'text' => $roleName, 'class' => 'bg-secondary'];
+                                                    $badgeClass = $roleInfo['class'];
+                                                    $textColor = strpos($badgeClass, 'text-dark') !== false ? 'text-dark' : 'text-white';
+                                                    ?>
+                                                    <span class="badge <?php echo $badgeClass; ?> <?php echo $textColor; ?> px-2 py-1">
+                                                        <i class="bi <?php echo $roleInfo['icon']; ?> me-1"></i><?php echo e($roleInfo['text']); ?>
+                                                    </span>
+                                                <?php endforeach; ?>
+                                            </div>
                                         </td>
                                         <td class="text-center">
-                                            <span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1">Đang hoạt động</span>
+                                            <?php if (empty($user['is_active'])): ?>
+                                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-2 py-1">Bị khóa</span>
+                                            <?php else: ?>
+                                                <span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1">Đang hoạt động</span>
+                                            <?php endif; ?>
                                         </td>
                                         <td class="pe-4 text-end">
-                                            <button class="btn btn-light action-btn text-warning border me-1" title="Khôi phục mật khẩu" onclick="confirmResetPassword('<?php echo e($user['username']); ?>', '<?php echo e($user['full_name']); ?>')"><i class="bi bi-key-fill"></i></button>
+                                            <form method="POST" action="../../controllers/admin/accountController.php" class="d-inline">
+                                                <input type="hidden" name="action" value="reset_password">
+                                                <input type="hidden" name="id" value="<?php echo e($user['id']); ?>">
+                                                <button type="button" class="btn btn-light action-btn text-warning border me-1" title="Khôi phục mật khẩu về 123456@"
+                                                    onclick="this.closest('form').submit();">
+                                                    <i class="bi bi-key-fill"></i>
+                                                </button>
+                                            </form>
                                             <button class="btn btn-light action-btn text-primary border me-1" title="Sửa thông tin" data-bs-toggle="modal" data-bs-target="#accountModal" 
-                                                onclick="openAccountModal('edit', '<?php echo e($user['username']); ?>', '<?php echo e($user['full_name']); ?>', '<?php echo e($user['email']); ?>', ['<?php echo $user['role']; ?>'], '', '')">
+                                                onclick="openAccountModal('edit', '<?php echo e($user['id']); ?>', '<?php echo e($user['username']); ?>', '<?php echo e($user['full_name']); ?>', '<?php echo e($user['email']); ?>', '<?php echo e($user['role']); ?>', '<?php echo e($user['secondary_role'] ?? ''); ?>', '<?php echo e($user['class_id'] ?? ''); ?>', '<?php echo e($user['academic_title'] ?? ''); ?>')">
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
-                                            <button class="btn btn-light action-btn text-danger border" title="Khóa tài khoản" onclick="confirmLockAccount('<?php echo e($user['username']); ?>', '<?php echo e($user['full_name']); ?>')"><i class="bi bi-lock-fill"></i></button>
+                                            <?php if (!$isProtectedAdmin): ?>
+                                                <!-- Toggle lock button -->
+                                                <form method="POST" action="../../controllers/admin/accountController.php" class="d-inline">
+                                                    <input type="hidden" name="action" value="toggle_lock">
+                                                    <input type="hidden" name="id" value="<?php echo e($user['id']); ?>">
+                                                    <button type="button" class="btn btn-light action-btn <?php echo empty($user['is_active']) ? 'text-success' : 'text-danger'; ?> border"
+                                                        title="<?php echo empty($user['is_active']) ? 'Mở khóa tài khoản' : 'Khóa tài khoản'; ?>"
+                                                        onclick="this.closest('form').submit();">
+                                                        <i class="bi <?php echo empty($user['is_active']) ? 'bi-unlock-fill' : 'bi-lock-fill'; ?>"></i>
+                                                    </button>
+                                                </form>
+
+                                            <?php else: ?>
+                                                <button class="btn btn-light action-btn text-muted border" title="Tài khoản admin gốc không thể khóa" disabled>
+                                                    <i class="bi bi-shield-lock-fill"></i>
+                                                </button>
+                                            <?php endif; ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -259,7 +384,7 @@ $classes = $stmtClasses->fetchAll();
                 <nav>
                     <ul class="pagination pagination-sm justify-content-center mb-0">
                         <?php if ($currentPage > 1): ?>
-                            <li class="page-item"><a class="page-link" href="?page=<?php echo $currentPage - 1; ?>&search=<?php echo urlencode($search); ?>&role=<?php echo e($roleFilter); ?>">Trước</a></li>
+                            <li class="page-item"><a class="page-link" href="?page=<?php echo $currentPage - 1; ?>&search=<?php echo urlencode($search); ?>&role=<?php echo e($roleFilter); ?>&status=<?php echo e($statusFilter); ?>">Trước</a></li>
                         <?php else: ?>
                             <li class="page-item disabled"><a class="page-link" href="#">Trước</a></li>
                         <?php endif; ?>
@@ -268,12 +393,12 @@ $classes = $stmtClasses->fetchAll();
                             <?php if ($i == $currentPage): ?>
                                 <li class="page-item active"><a class="page-link" href="#"><?php echo $i; ?></a></li>
                             <?php else: ?>
-                                <li class="page-item"><a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&role=<?php echo e($roleFilter); ?>"><?php echo $i; ?></a></li>
+                                <li class="page-item"><a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&role=<?php echo e($roleFilter); ?>&status=<?php echo e($statusFilter); ?>"><?php echo $i; ?></a></li>
                             <?php endif; ?>
                         <?php endfor; ?>
                         
                         <?php if ($currentPage < $totalPages): ?>
-                            <li class="page-item"><a class="page-link" href="?page=<?php echo $currentPage + 1; ?>&search=<?php echo urlencode($search); ?>&role=<?php echo e($roleFilter); ?>">Tiếp</a></li>
+                            <li class="page-item"><a class="page-link" href="?page=<?php echo $currentPage + 1; ?>&search=<?php echo urlencode($search); ?>&role=<?php echo e($roleFilter); ?>&status=<?php echo e($statusFilter); ?>">Tiếp</a></li>
                         <?php else: ?>
                             <li class="page-item disabled"><a class="page-link" href="#">Tiếp</a></li>
                         <?php endif; ?>
@@ -296,43 +421,49 @@ $classes = $stmtClasses->fetchAll();
       </div>
       <div class="modal-body p-4">
         <div class="alert alert-info small border-0 py-2 mb-3">
-            <i class="bi bi-info-circle-fill me-1"></i> Mật khẩu mặc định: <strong>Bdu@123456</strong>
+            <i class="bi bi-info-circle-fill me-1"></i> Mật khẩu mặc định: <strong>123456@</strong>
         </div>
 
-        <form id="accountForm" onsubmit="return handleAccountSubmit(event)">
+                <form id="accountForm" method="POST" action="../../controllers/admin/accountController.php" onsubmit="return handleAccountSubmit(event)" novalidate>
+                    <input type="hidden" name="action" value="save">
+                    <input type="hidden" name="id" id="accountIdInput" value="">
+                    <input type="hidden" name="role" id="modalRoleValue" value="">
+                    <input type="hidden" name="secondary_role" id="modalSecondaryRoleValue" value="">
+                    <input type="hidden" name="delete_confirm_password" id="deleteConfirmPasswordHidden" value="">
           <div class="row">
               <div class="col-md-6 mb-3">
                 <label class="form-label fw-bold">Mã GV/MSSV <span class="text-danger">*</span></label>
-                <input type="text" class="form-control border-primary fw-bold" id="modalCode" placeholder="22050111 hoặc GV..." required>
+                                <input type="text" class="form-control border-primary fw-bold" name="username" id="modalCode" placeholder="22050111 hoặc GV..." required>
                 <small class="text-muted">Dùng làm tên đăng nhập.</small>
               </div>
               <div class="col-md-6 mb-3">
                 <label class="form-label fw-bold">Địa chỉ Email <span class="text-danger">*</span></label>
-                <input type="email" class="form-control border-secondary" id="modalEmail" placeholder="user@bdu.edu.vn" required>
+                                <input type="email" class="form-control border-secondary" name="email" id="modalEmail" placeholder="user@bdu.edu.vn" required>
               </div>
           </div>
 
           <div class="row">
             <div class="col-md-5 mb-3">
                 <label class="form-label fw-bold">Họ và tên <span class="text-danger">*</span></label>
-                <input type="text" class="form-control border-secondary" id="modalFullName" placeholder="Nhập đầy đủ họ tên..." required>
+                <input type="text" class="form-control border-secondary" name="full_name" id="modalFullName" placeholder="Nhập đầy đủ họ tên..." required>
             </div>
-            <div class="col-md-4 mb-3" id="academicRankGroup">
+            <div class="col-md-4 mb-3" id="academicTitleGroup">
                 <label class="form-label fw-bold">Học hàm / Học vị</label>
-                <select class="form-select border-secondary" id="modalAcademicRank">
-                    <option value="">Không áp dụng</option>
-                    <option value="Cử nhân">Cử nhân (CN.)</option>
-                    <option value="Thạc sĩ">Thạc sĩ (ThS.)</option>
-                    <option value="Tiến sĩ">Tiến sĩ (TS.)</option>
+                <select class="form-select border-secondary" name="academic_title" id="modalAcademicTitle">
+                    <option value="">Không có</option>
+                    <option value="GS.TS">Giáo sư (GS.TS)</option>
                     <option value="PGS.TS">Phó Giáo sư (PGS.TS)</option>
+                    <option value="TS">Tiến sĩ (TS.)</option>
+                    <option value="ThS">Thạc sĩ (ThS.)</option>
+                    <option value="CN">Cử nhân (CN.)</option>
                 </select>
             </div>
             <div class="col-md-3 mb-3" id="classInputGroup" style="display: none;">
                 <label class="form-label fw-bold">Lớp học <span class="text-danger">*</span></label>
-                <select class="form-select border-warning fw-bold text-dark" id="modalClass">
+                <select class="form-select border-warning fw-bold text-dark" name="class_id" id="modalClass">
                     <option value="">-- Chọn lớp --</option>
                     <?php foreach ($classes as $class): ?>
-                        <option value="<?php echo e($class['class_name']); ?>"><?php echo e($class['class_name']); ?></option>
+                        <option value="<?php echo e($class['id']); ?>"><?php echo e($class['class_name']); ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -342,35 +473,47 @@ $classes = $stmtClasses->fetchAll();
             <label class="form-label fw-bold d-block mb-3">Vai trò trong hệ thống <span class="text-danger">*</span></label>
             <div class="row role-checkbox-group">
                 <div class="col-md-6 border-end border-secondary border-opacity-25">
-                    <p class="small fw-bold text-muted mb-2">QUẢN TRỊ & GIẢNG DẠY</p>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input group-staff" type="checkbox" value="admin" id="roleSuperAdmin">
-                        <label class="form-check-label fw-bold text-danger" for="roleSuperAdmin">Quản trị viên</label>
+                    <p class="small fw-bold text-muted mb-2">GIÁO VỤ KHOA & GIẢNG DẠY</p>
+                    <div class="form-check mb-2" id="roleStaffOption">
+                        <input class="form-check-input" type="checkbox" value="staff" id="roleStaff">
+                        <label class="form-check-label fw-bold" for="roleStaff" style="color:#9333ea;">Giáo vụ khoa</label>
                     </div>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input group-staff" type="checkbox" value="teacher" id="roleTeacher">
-                        <label class="form-check-label fw-bold text-success" for="roleTeacher">Giảng viên</label>
+                    <div class="form-check mb-2" id="roleTeacherOption">
+                        <input class="form-check-input" type="checkbox" value="teacher" id="roleTeacher">
+                        <label class="form-check-label fw-bold" for="roleTeacher" style="color:#0d6efd;">Giảng viên</label>
                     </div>
                 </div>
-                <div class="col-md-6 ps-md-4">
-                    <p class="small fw-bold text-muted mb-2">KHỐI NGƯỜI HỌC</p>
+                <div class="col-md-6 ps-md-4" id="adminSection">
+                    <p class="small fw-bold text-muted mb-2" id="adminSectionTitle">QUẢN TRỊ HỆ THỐNG</p>
                     <div class="form-check mb-2">
-                        <input class="form-check-input group-student" type="checkbox" value="bcs" id="roleBcs">
-                        <label class="form-check-label fw-bold text-warning text-dark" for="roleBcs">Ban Cán Sự</label>
+                        <input class="form-check-input" type="checkbox" value="admin" id="roleSuperAdmin">
+                        <label class="form-check-label fw-bold text-danger" for="roleSuperAdmin">Admin</label>
+                    </div>
+                </div>
+                <div class="col-md-6 ps-md-4 d-none" id="studentSection">
+                    <p class="small fw-bold text-muted mb-2">NGƯỜI HỌC</p>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" value="bcs" id="roleBcs">
+                        <label class="form-check-label fw-bold" for="roleBcs" style="color:#d97706;">Ban Cán Sự</label>
                     </div>
                     <div class="form-check mb-2">
-                        <input class="form-check-input group-student" type="checkbox" value="student" id="roleStudent">
-                        <label class="form-check-label fw-bold text-info text-dark" for="roleStudent">Sinh viên</label>
+                        <input class="form-check-input" type="checkbox" value="student" id="roleStudent">
+                        <label class="form-check-label fw-bold" for="roleStudent" style="color:#6c757d;">Sinh viên</label>
                     </div>
                 </div>
             </div>
             <div class="small text-danger mt-3" id="roleValidationMsg" style="display: none;">
-                <i class="bi bi-x-circle-fill me-1"></i>Vui lòng chọn ít nhất 1 vai trò!
+                <i class="bi bi-x-circle-fill me-1"></i>Chỉ được chọn 1-2 vai trò trong cùng một khối!
             </div>
           </div>
 
           <div class="text-end">
+                        <div class="text-start mb-3" id="deleteAccountSection" style="display: none;">
+                                <label for="deleteConfirmPasswordInput" class="form-label fw-bold text-danger">Nhập mật khẩu đăng nhập để xác nhận xóa tài khoản</label>
+                                <input type="password" class="form-control border-danger" id="deleteConfirmPasswordInput" placeholder="Nhập mật khẩu đăng nhập của bạn để xác nhận xóa">
+                        </div>
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+                        <button type="button" class="btn btn-outline-danger fw-bold px-4" id="deleteAccountBtn" style="display: none;" onclick="handleDeleteAccount(event)">XÓA TÀI KHOẢN</button>
             <button type="submit" class="btn btn-primary fw-bold px-4" id="accountModalBtn">LƯU TÀI KHOẢN</button>
           </div>
         </form>
@@ -383,6 +526,8 @@ $classes = $stmtClasses->fetchAll();
 <div class="modal fade" id="importAccountModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow">
+            <form method="POST" action="../../controllers/admin/importController.php" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="import_accounts">
       <div class="modal-header bg-success text-white">
         <h5 class="modal-title fw-bold"><i class="bi bi-file-earmark-excel-fill me-2"></i>Import Tài Khoản</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -393,18 +538,19 @@ $classes = $stmtClasses->fetchAll();
             <br><strong>[STT] | [Mã GV/MSSV] | [Họ và tên] | [Ngày sinh] | [Lớp học] | [Email] | [Vai trò]</strong>
             <hr class="my-2">
             <span class="text-danger fw-bold">*Ghi chú:</span> 
-            <br>- Cột Lớp học: Bỏ trống nếu là vai trò Admin/Giảng viên.
-            <br>- Cột Vai trò: admin, teacher, bcs, student.
+            <br>- Cột Lớp học: Bỏ trống nếu là vai trò Admin/Giáo vụ khoa/Giảng viên.
+            <br>- Cột Vai trò: admin, staff, teacher, bcs, student.
         </div>
         <div class="mb-3">
-            <label class="form-label fw-bold">Chọn file Excel (.xlsx, .xls) <span class="text-danger">*</span></label>
-            <input type="file" class="form-control border-success" accept=".xlsx, .xls" required>
+            <label class="form-label fw-bold">Chọn file (.csv, .xlsx, .xls) <span class="text-danger">*</span></label>
+            <input type="file" class="form-control border-success" name="import_file" accept=".csv,.xlsx,.xls" required>
         </div>
       </div>
       <div class="modal-footer bg-light border-0">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
-        <button type="button" class="btn btn-success fw-bold px-4" onclick="handleImportSubmit()">TIẾN HÀNH IMPORT</button>
+                <button type="submit" class="btn btn-success fw-bold px-4">TIẾN HÀNH IMPORT</button>
       </div>
+            </form>
     </div>
   </div>
 </div>
@@ -414,95 +560,335 @@ $classes = $stmtClasses->fetchAll();
 <script src="../../public/js/admin/admin-layout.js"></script>
 
 <script>
-    const staffCheckboxes = document.querySelectorAll('.group-staff');
-    const studentCheckboxes = document.querySelectorAll('.group-student');
+    const roleCheckboxes = document.querySelectorAll('.role-checkbox-group .form-check-input');
+    const staffCheckboxes = document.querySelectorAll('#roleStaff, #roleTeacher');
+    const studentCheckboxes = document.querySelectorAll('#roleBcs, #roleStudent');
+    const adminCheckboxes = document.querySelectorAll('#roleSuperAdmin');
     const classInputGroup = document.getElementById('classInputGroup');
     const modalClassInput = document.getElementById('modalClass');
-    const academicRankGroup = document.getElementById('academicRankGroup');
-    const modalAcademicRank = document.getElementById('modalAcademicRank');
+    const academicTitleGroup = document.getElementById('academicTitleGroup');
+    const modalAcademicTitle = document.getElementById('modalAcademicTitle');
+    const roleValidationMsg = document.getElementById('roleValidationMsg');
+    const filterForm = document.getElementById('accountFilterForm');
+    const searchFilterInput = document.getElementById('searchFilterInput');
+    const roleFilterSelect = document.getElementById('roleFilterSelect');
+    const statusFilterSelect = document.getElementById('statusFilterSelect');
+    const deleteAccountSection = document.getElementById('deleteAccountSection');
+    const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+    const roleTeacherOption = document.getElementById('roleTeacherOption');
+    const roleStaffOption = document.getElementById('roleStaffOption');
+    const deleteConfirmPasswordInput = document.getElementById('deleteConfirmPasswordInput');
+    const deleteConfirmPasswordHidden = document.getElementById('deleteConfirmPasswordHidden');
+    const modalRoleValue = document.getElementById('modalRoleValue');
+    const modalSecondaryRoleValue = document.getElementById('modalSecondaryRoleValue');
+    const adminSection = document.getElementById('adminSection');
+    const studentSection = document.getElementById('studentSection');
+    const adminSectionTitle = document.getElementById('adminSectionTitle');
+
+    let searchDebounceTimer = null;
+    let isRoleLockedForAdminAccount = false;
+
+    function submitFilterForm() {
+        if (!filterForm) return;
+        filterForm.submit();
+    }
+
+    if (searchFilterInput) {
+        searchFilterInput.addEventListener('input', function () {
+            if (searchDebounceTimer) {
+                clearTimeout(searchDebounceTimer);
+            }
+            searchDebounceTimer = setTimeout(submitFilterForm, 350);
+        });
+    }
+
+    if (roleFilterSelect) {
+        roleFilterSelect.addEventListener('change', submitFilterForm);
+    }
+
+    if (statusFilterSelect) {
+        statusFilterSelect.addEventListener('change', submitFilterForm);
+    }
+
+    function getRoleGroup(role) {
+        if (role === 'admin') {
+            return 'admin';
+        }
+        if (['staff', 'teacher'].includes(role)) {
+            return 'staff';
+        }
+        if (['student', 'bcs'].includes(role)) {
+            return 'student';
+        }
+        return '';
+    }
 
     function updateRoleConstraints() {
-        const isStaffChecked = Array.from(staffCheckboxes).some(cb => cb.checked);
-        const isStudentChecked = Array.from(studentCheckboxes).some(cb => cb.checked);
-        const isBcsChecked = document.getElementById('roleBcs').checked;
-        const isStdChecked = document.getElementById('roleStudent').checked;
+        if (isRoleLockedForAdminAccount) {
+            roleCheckboxes.forEach(cb => {
+                cb.checked = cb.value === 'admin';
+                cb.disabled = true;
+            });
+            if (roleTeacherOption) {
+                roleTeacherOption.style.display = 'none';
+            }
+            if (roleStaffOption) {
+                roleStaffOption.style.display = 'none';
+            }
+            classInputGroup.style.display = 'none';
+            modalClassInput.removeAttribute('required');
+            modalClassInput.value = '';
+            academicTitleGroup.style.display = 'block';
+            roleValidationMsg.style.display = 'none';
+            return;
+        }
 
-        studentCheckboxes.forEach(cb => { cb.disabled = isStaffChecked; if (isStaffChecked) cb.checked = false; });
-        staffCheckboxes.forEach(cb => { cb.disabled = isStudentChecked; if (isStudentChecked) cb.checked = false; });
+        const selectedRoles = Array.from(roleCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+        const selectedGroup = selectedRoles.length > 0 ? getRoleGroup(selectedRoles[0]) : '';
+        const hasStudentRole = selectedGroup === 'student';
+        const hasStaffRole = selectedGroup === 'staff';
+        const hasAdminRole = selectedGroup === 'admin';
 
-        if (isStdChecked || isBcsChecked) {
+        if (selectedRoles.length > 2) {
+            roleValidationMsg.style.display = 'block';
+            return;
+        }
+
+        if (selectedRoles.length > 1) {
+            const mixedGroups = selectedRoles.some(role => getRoleGroup(role) !== selectedGroup);
+            if (mixedGroups) {
+                roleValidationMsg.style.display = 'block';
+                return;
+            }
+        }
+
+        adminCheckboxes.forEach(cb => {
+            cb.disabled = hasStaffRole || hasStudentRole;
+            if ((hasStaffRole || hasStudentRole) && cb.checked) {
+                cb.checked = false;
+            }
+        });
+
+        staffCheckboxes.forEach(cb => {
+            cb.disabled = hasStudentRole || hasAdminRole;
+            if ((hasStudentRole || hasAdminRole) && cb.checked) {
+                cb.checked = false;
+            }
+        });
+
+        studentCheckboxes.forEach(cb => {
+            cb.disabled = hasStaffRole || hasAdminRole;
+            if ((hasStaffRole || hasAdminRole) && cb.checked) {
+                cb.checked = false;
+            }
+        });
+
+        if (hasStudentRole) {
             classInputGroup.style.display = 'block';
             modalClassInput.setAttribute('required', 'true');
-            academicRankGroup.style.display = 'none';
-            modalAcademicRank.value = '';
         } else {
             classInputGroup.style.display = 'none';
             modalClassInput.removeAttribute('required');
             modalClassInput.value = '';
-            academicRankGroup.style.display = 'block';
         }
 
-        if (isStaffChecked || isStudentChecked) document.getElementById('roleValidationMsg').style.display = 'none';
+        if (hasStaffRole) {
+            academicTitleGroup.style.display = 'block';
+        } else {
+            academicTitleGroup.style.display = 'none';
+            modalAcademicTitle.value = '';
+        }
+
+        roleValidationMsg.style.display = selectedRoles.length > 0 ? 'none' : 'none';
     }
 
-    document.querySelectorAll('.role-checkbox-group .form-check-input').forEach(cb => {
-        cb.addEventListener('change', updateRoleConstraints);
+    roleCheckboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            const checkedRoles = Array.from(roleCheckboxes).filter(item => item.checked).map(item => item.value);
+            if (checkedRoles.length > 2) {
+                this.checked = false;
+                roleValidationMsg.style.display = 'block';
+                return;
+            }
+
+            if (checkedRoles.length > 1) {
+                const firstGroup = getRoleGroup(checkedRoles[0]);
+                const mixedGroups = checkedRoles.some(role => getRoleGroup(role) !== firstGroup);
+                if (mixedGroups) {
+                    this.checked = false;
+                    roleValidationMsg.style.display = 'block';
+                    return;
+                }
+            }
+
+            updateRoleConstraints();
+        });
     });
 
-    function openAccountModal(mode, code = '', fullName = '', email = '', roles = [], className = '', academicRank = '') {
+    function openAccountModal(mode, id = '', code = '', fullName = '', email = '', primaryRole = '', secondaryRole = '', classId = '', academicTitle = '') {
         const title = document.getElementById('accountModalTitle');
         const inputCode = document.getElementById('modalCode');
-        const inputAcademicRank = document.getElementById('modalAcademicRank');
+        const inputAcademicTitle = document.getElementById('modalAcademicTitle');
+        const inputId = document.getElementById('accountIdInput');
+        const isProtectedAdmin = (String(email || '').toLowerCase() === 'admin@bdu.edu.vn');
+        const isAdminAccount = (mode === 'edit' && primaryRole === 'admin');
         document.getElementById('accountForm').reset();
         
-        document.querySelectorAll('.form-check-input').forEach(cb => { cb.checked = false; cb.disabled = false; });
+        roleCheckboxes.forEach(cb => { cb.checked = false; cb.disabled = false; });
         classInputGroup.style.display = 'none';
-        academicRankGroup.style.display = 'block';
+        academicTitleGroup.style.display = 'block';
+        modalRoleValue.value = '';
+        modalSecondaryRoleValue.value = '';
+        deleteConfirmPasswordHidden.value = '';
+        if (deleteConfirmPasswordInput) {
+            deleteConfirmPasswordInput.value = '';
+        }
+        deleteAccountSection.style.display = 'none';
+        deleteAccountBtn.style.display = 'none';
+        isRoleLockedForAdminAccount = false;
+        if (roleTeacherOption) {
+            roleTeacherOption.style.display = '';
+        }
+        if (roleStaffOption) {
+            roleStaffOption.style.display = '';
+        }
 
         if (mode === 'add') {
             title.innerHTML = '<i class="bi bi-person-plus-fill me-2"></i>Thêm Tài Khoản Mới';
-            inputCode.removeAttribute('readonly'); 
-            inputAcademicRank.value = '';
+            inputCode.removeAttribute('readonly');
+            inputAcademicTitle.value = '';
+            inputId.value = '';
+            // Tạo mới: hiển thị NGƯỜI HỌC
+            if (adminSection) adminSection.classList.add('d-none');
+            if (studentSection) studentSection.classList.remove('d-none');
         } else {
             title.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Cập Nhật Thông Tin';
+            inputId.value = id;
             inputCode.value = code;
             inputCode.setAttribute('readonly', 'true'); 
             document.getElementById('modalFullName').value = fullName;
             document.getElementById('modalEmail').value = email;
-            modalClassInput.value = className;
-            inputAcademicRank.value = academicRank;
-            
-            roles.forEach(role => {
-                if (role === 'admin') document.getElementById('roleSuperAdmin').checked = true;
-                if (role === 'teacher') document.getElementById('roleTeacher').checked = true;
-                if (role === 'bcs') document.getElementById('roleBcs').checked = true;
-                if (role === 'student') document.getElementById('roleStudent').checked = true;
-            });
+            modalClassInput.value = classId;
+            inputAcademicTitle.value = academicTitle;
+
+            if (primaryRole) {
+                const primaryCheckbox = document.querySelector('.role-checkbox-group .form-check-input[value="' + primaryRole + '"]');
+                if (primaryCheckbox) primaryCheckbox.checked = true;
+            }
+            if (secondaryRole) {
+                const secondaryCheckbox = document.querySelector('.role-checkbox-group .form-check-input[value="' + secondaryRole + '"]');
+                if (secondaryCheckbox) secondaryCheckbox.checked = true;
+            }
+
+            if (isAdminAccount) {
+                isRoleLockedForAdminAccount = true;
+                if (roleTeacherOption) {
+                    roleTeacherOption.style.display = 'none';
+                }
+                if (roleStaffOption) {
+                    roleStaffOption.style.display = 'none';
+                }
+                // Admin: hiển thị QUẢN TRỊ HỆ THỐNG
+                if (adminSection) adminSection.classList.remove('d-none');
+                if (studentSection) studentSection.classList.add('d-none');
+                roleCheckboxes.forEach(cb => {
+                    cb.checked = cb.value === 'admin';
+                    cb.disabled = true;
+                });
+                roleValidationMsg.style.display = 'none';
+            } else {
+                // Tài khoản không phải Admin: hiển thị NGƯỜI HỌC
+                if (adminSection) adminSection.classList.add('d-none');
+                if (studentSection) studentSection.classList.remove('d-none');
+            }
+
+            if (isProtectedAdmin) {
+                roleCheckboxes.forEach(cb => {
+                    cb.checked = cb.value === 'admin';
+                    cb.disabled = true;
+                });
+            }
+
+            if (!isProtectedAdmin) {
+                deleteAccountSection.style.display = 'block';
+                deleteAccountBtn.style.display = 'inline-block';
+            }
             updateRoleConstraints();
         }
     }
 
     function handleAccountSubmit(event) {
+        try {
+            // Manual validation thay cho HTML5
+            const username = (document.getElementById('modalCode')?.value || '').trim();
+            const email = (document.getElementById('modalEmail')?.value || '').trim();
+            const fullName = (document.getElementById('modalFullName')?.value || '').trim();
+
+            if (!username || !email || !fullName) {
+                alert('Vui lòng nhập đầy đủ: Mã GV/MSSV, Email và Họ tên.');
+                return false;
+            }
+
+            const checkedRoles = Array.from(roleCheckboxes).filter(cb => cb.checked && !cb.disabled).map(cb => cb.value);
+            if (checkedRoles.length < 1 || checkedRoles.length > 2) {
+                document.getElementById('roleValidationMsg').style.display = 'block';
+                alert('Vui lòng chọn ít nhất 1 vai trò hợp lệ.');
+                return false;
+            }
+
+            if (checkedRoles.length === 2 && getRoleGroup(checkedRoles[0]) !== getRoleGroup(checkedRoles[1])) {
+                document.getElementById('roleValidationMsg').style.display = 'block';
+                return false;
+            }
+
+            // Kiểm tra class cho sinh viên/BCS
+            const needsClass = checkedRoles.some(r => r === 'student' || r === 'bcs');
+            if (needsClass) {
+                const classVal = document.getElementById('modalClass')?.value || '';
+                if (!classVal) {
+                    alert('Vai trò Sinh viên / Ban Cán Sự cần chọn lớp học.');
+                    return false;
+                }
+            }
+
+            document.querySelector('#accountForm input[name="action"]').value = 'save';
+            modalRoleValue.value = checkedRoles[0] || '';
+            modalSecondaryRoleValue.value = checkedRoles[1] || '';
+            deleteConfirmPasswordHidden.value = '';
+            // Dùng event.preventDefault() + submit thủ công để tránh Chrome block confirm() trong modal context
+            event.preventDefault();
+            document.getElementById('accountForm').submit();
+            return false;
+        } catch (err) {
+            console.error('handleAccountSubmit error:', err);
+            alert('Lỗi JavaScript: ' + err.message);
+            return false;
+        }
+    }
+
+    function handleDeleteAccount(event) {
         event.preventDefault();
-        const isRoleChecked = Array.from(document.querySelectorAll('.form-check-input')).some(cb => cb.checked);
-        if (!isRoleChecked) { document.getElementById('roleValidationMsg').style.display = 'block'; return false; }
-        alert("Đã lưu dữ liệu người dùng thành công!");
-        bootstrap.Modal.getInstance(document.getElementById('accountModal')).hide();
-        return false;
+        const accountId = document.getElementById('accountIdInput').value;
+        if (!accountId) {
+            alert('Không tìm thấy tài khoản cần xóa.');
+            return;
+        }
+
+        const confirmPassword = (deleteConfirmPasswordInput?.value || '').trim();
+        if (!confirmPassword) {
+            alert('Vui lòng nhập mật khẩu đăng nhập để xác nhận xóa tài khoản.');
+            return;
+        }
+
+        if (!confirm('Bạn có chắc chắn muốn xóa tài khoản này? Hành động này không thể hoàn tác.')) {
+            return;
+        }
+
+        document.querySelector('#accountForm input[name="action"]').value = 'delete_user';
+        deleteConfirmPasswordHidden.value = confirmPassword;
+        document.getElementById('accountForm').submit();
     }
 
-    function handleImportSubmit() {
-        alert("Đã xử lý file Excel và import thành công danh sách tài khoản kèm thông tin Lớp học!");
-        bootstrap.Modal.getInstance(document.getElementById('importAccountModal')).hide();
-    }
-
-    function confirmResetPassword(code, fullName) {
-        if(confirm(`Khôi phục mật khẩu cho [${fullName}] về Bdu@123456?`)) alert("Đã reset thành công!");
-    }
-
-    function confirmLockAccount(code, fullName) {
-        if(confirm(`Khóa tài khoản của [${fullName}]?`)) alert("Đã khóa tài khoản thành công!");
-    }
 </script>
 </body>
 </html>

@@ -1,46 +1,16 @@
-# CMS BDU - Apache Configuration
-# File: .htaccess
+# CMS BDU - minimal .htaccess for shared hosting compatibility
 
-# Bật RewriteEngine
-RewriteEngine On
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /cms/
 
-# Đặt base URL
-RewriteBase /
-
-# Chuyển hướng .html sang .php (tùy chọn)
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME}.php -f
-RewriteRule ^(.*)$ $1.php [L]
-
-# Bảo mật: Không cho truy cập file config trực tiếp
-<FilesMatch "\.(config\.php|helpers\.php|session\.php)$">
-    Order Allow,Deny
-    Deny from all
-</FilesMatch>
-
-# Không cho truy cập thư mục không có index
-Options -Indexes
-
-# Bật GZIP Compression
-<IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/html
-    AddOutputFilterByType DEFLATE text/css
-    AddOutputFilterByType DEFLATE text/javascript
-    AddOutputFilterByType DEFLATE application/javascript
-    AddOutputFilterByType DEFLATE application/json
+    # Map extensionless route -> existing .php file
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME}.php -f
+    RewriteRule ^(.+)$ $1.php [L]
 </IfModule>
 
-# Cache static files
-<IfModule mod_expires.c>
-    ExpiresActive On
-    ExpiresByType image/jpg "access plus 1 month"
-    ExpiresByType image/jpeg "access plus 1 month"
-    ExpiresByType image/png "access plus 1 month"
-    ExpiresByType image/gif "access plus 1 month"
-    ExpiresByType text/css "access plus 1 week"
-    ExpiresByType application/javascript "access plus 1 week"
-</IfModule>
-
-# Error pages
-ErrorDocument 404 /views/404.php
-ErrorDocument 500 /views/500.php
+# Custom error pages
+ErrorDocument 404 /cms/404.php
+ErrorDocument 500 /cms/500.php

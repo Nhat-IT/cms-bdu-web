@@ -32,12 +32,8 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function resetAdminLayoutPlaceholders() {
-    document.querySelectorAll('.admin-operator-name, .admin-display-name').forEach(function (node) {
-        node.textContent = 'Đang tải...';
-    });
-
     const headerAvatar = document.getElementById('headerAvatar');
-    if (headerAvatar) {
+    if (headerAvatar && !headerAvatar.getAttribute('src')) {
         headerAvatar.src = 'https://ui-avatars.com/api/?name=Admin&background=6c757d&color=fff';
     }
 }

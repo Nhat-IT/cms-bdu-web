@@ -1,6 +1,6 @@
-// student-layout.js - CHỈ khởi tạo dữ liệu, KHÔNG bind sự kiện toggle sidebar
+// student-layout.js - CHỈ khởi tạo dữ liệu bổ sung, KHÔNG bind sự kiện toggle sidebar
 // (script.js đã handle toggle sidebar rồi, tránh trùng lặp)
-resetStudentLayoutPlaceholders();
+// resetStudentLayoutPlaceholders() không gọi ngay vì sidebar đã được PHP render sẵn
 
 document.addEventListener('DOMContentLoaded', function () {
     initSharedStudentData().catch(function (error) {

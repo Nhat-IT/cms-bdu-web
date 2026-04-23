@@ -9,7 +9,7 @@ function getAvatarUrl($avatar = null, $name = '', $size = 55) {
     if ($avatar && file_exists($avatar)) {
         return $avatar;
     }
-    $encodedName = urlencode($name);
+    $encodedName = urlencode((string) ($name ?? ''));
     return "https://ui-avatars.com/api/?name={$encodedName}&background=0d6efd&color=fff&size={$size}";
 }
 
@@ -58,7 +58,7 @@ function getRoleLabel($role) {
         'student' => 'Sinh viên',
         'bcs' => 'Ban Cán Sự',
         'teacher' => 'Giảng viên',
-        'admin' => 'Quản trị',
+        'admin' => 'Giáo vụ khoa',
     ];
     return $labels[$role] ?? $role;
 }
@@ -66,21 +66,41 @@ function getRoleLabel($role) {
 // Lấy URL trang chủ theo role
 function getHomeUrl($role) {
     $urls = [
-        'student' => 'student/home.php',
-        'bcs' => 'bcs/home.php',
-        'teacher' => 'teacher/home.php',
-        'admin' => 'admin/home.php',
+        'student' => BASE_URL . '/views/student/home.php',
+        'bcs'     => BASE_URL . '/views/bcs/home.php',
+        'teacher' => BASE_URL . '/views/admin/home.php', // TODO: tạo views/teacher khi có
+        'admin'   => BASE_URL . '/views/admin/home.php',
     ];
-    return $urls[$role] ?? 'student/home.php';
+    return $urls[$role] ?? BASE_URL . '/views/student/home.php';
 }
 
 // Lấy URL profile theo role
 function getProfileUrl($role) {
     $urls = [
-        'student' => 'student/student-profile.php',
-        'bcs' => 'bcs/profile.php',
-        'teacher' => 'teacher/teacher-profile.php',
-        'admin' => 'admin/admin-profile.php',
+        'student' => BASE_URL . '/student/student-profile.php',
+        'bcs' => BASE_URL . '/bcs/profile.php',
+        'teacher' => BASE_URL . '/teacher/teacher-profile.php',
+        'admin' => BASE_URL . '/views/admin/admin-profile.php',
     ];
-    return $urls[$role] ?? 'profile.php';
+    return $urls[$role] ?? BASE_URL . '/profile.php';
+}
+
+// Lấy URL login
+function getLoginUrl() {
+    return BASE_URL . '/login.php';
+}
+
+// Lấy URL logout
+function getLogoutUrl() {
+    return BASE_URL . '/logout.php';
+}
+
+// Ghi nhật ký hệ thống
+function logSystem(string $action, ?string $targetTable = null, ?int $targetId = null): void {
+    $userId = (int) ($_SESSION['user_id'] ?? 0);
+    if ($userId <= 0) return;
+    db_query(
+        'INSERT INTO system_logs (user_id, action, target_table, target_id) VALUES (?, ?, ?, ?)',
+        [$userId, $action, $targetTable, $targetId]
+    );
 }

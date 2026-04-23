@@ -13,34 +13,28 @@ $userId = $_SESSION['user_id'];
 $pageTitle = 'Bảng Điều Khiển BCS';
 
 // Lấy class_id của BCS từ class_students
-$stmt = $pdo->prepare("
+$classInfo = db_fetch_one("
     SELECT cs.class_id, c.class_name 
     FROM class_students cs
     JOIN classes c ON cs.class_id = c.id
     WHERE cs.student_id = ?
-");
-$stmt->execute([$userId]);
-$classInfo = $stmt->fetch();
-$classId = $classInfo['class_id'] ?? null;
+", [$userId]);
+$classId   = $classInfo['class_id']   ?? null;
 $className = $classInfo['class_name'] ?? '';
 
 // Lấy thông tin user
-$stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-$stmt->execute([$userId]);
-$currentUser = $stmt->fetch();
+$currentUser = db_fetch_one("SELECT * FROM users WHERE id = ?", [$userId]);
 $fullName = $currentUser['full_name'] ?? '';
 $position = $currentUser['position'] ?? 'Ban Cán Sự';
-$avatar = getAvatarUrl($currentUser['avatar'] ?? null, $fullName, 55);
+$avatar   = getAvatarUrl($currentUser['avatar'] ?? null, $fullName, 55);
 
 // Lấy sĩ số lớp
-$stmt = $pdo->prepare("SELECT COUNT(*) as total FROM class_students WHERE class_id = ?");
-$stmt->execute([$classId]);
-$classSize = $stmt->fetch()['total'] ?? 0;
+$classSize = (int) db_count("SELECT COUNT(*) FROM class_students WHERE class_id = ?", [$classId]);
 
 // Lấy số vắng hôm nay
-$today = date('Y-m-d');
+$today     = date('Y-m-d');
 $dayOfWeek = date('N');
-$stmt = $pdo->prepare("
+$absentRow = db_fetch_one("
     SELECT COUNT(*) as total
     FROM attendance_records ar
     JOIN attendance_sessions a_s ON ar.session_id = a_s.id
@@ -49,12 +43,11 @@ $stmt = $pdo->prepare("
     JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
     JOIN class_students cs2 ON cs2.student_id = ssr.student_id AND cs2.class_id = ?
     WHERE ar.status = 3 AND a_s.attendance_date = ?
-");
-$stmt->execute([$classId, $today]);
-$absentToday = $stmt->fetch()['total'] ?? 0;
+", [$classId, $today]);
+$absentToday = $absentRow['total'] ?? 0;
 
 // Lấy số minh chứng chờ duyệt
-$stmt = $pdo->prepare("
+$pendingRow = db_fetch_one("
     SELECT COUNT(DISTINCT ae.id) as total
     FROM attendance_evidences ae
     JOIN attendance_records ar ON ae.attendance_record_id = ar.id
@@ -64,24 +57,22 @@ $stmt = $pdo->prepare("
     JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
     JOIN class_students cs2 ON cs2.student_id = ssr.student_id AND cs2.class_id = ?
     WHERE ae.status = 'Pending'
-");
-$stmt->execute([$classId]);
-$pendingEvidence = $stmt->fetch()['total'] ?? 0;
+", [$classId]);
+$pendingEvidence = $pendingRow['total'] ?? 0;
 
 // Lấy số phản hồi mới
-$stmt = $pdo->prepare("
+$feedbackRow = db_fetch_one("
     SELECT COUNT(DISTINCT f.id) as total
     FROM feedbacks f
     JOIN class_students cs ON f.student_id = cs.student_id
     WHERE cs.class_id = ? AND f.status = 'Pending'
-");
-$stmt->execute([$classId]);
-$newFeedback = $stmt->fetch()['total'] ?? 0;
+", [$classId]);
+$newFeedback = $feedbackRow['total'] ?? 0;
 
 // Lấy lịch học hôm nay
-$stmt = $pdo->prepare("
+$todaySchedule = db_fetch_all("
     SELECT s.subject_name, csg.start_period, csg.end_period, csg.room,
-           t.full_name as teacher_name, csg.study_session
+           t.full_name as teacher_name
     FROM class_subject_groups csg
     JOIN class_subjects cs ON csg.class_subject_id = cs.id
     JOIN subjects s ON cs.subject_id = s.id
@@ -91,12 +82,10 @@ $stmt = $pdo->prepare("
     WHERE csg.day_of_week = ? AND ssr.status = 'Đang học'
     GROUP BY csg.id
     ORDER BY csg.start_period
-");
-$stmt->execute([$classId, $dayOfWeek]);
-$todaySchedule = $stmt->fetchAll();
+", [$classId, $dayOfWeek]);
 
 // Lấy thông báo gần đây
-$stmt = $pdo->prepare("
+$recentAnnouncements = db_fetch_all("
     SELECT n.*, u.full_name as creator_name
     FROM notification_logs n
     LEFT JOIN users u ON n.user_id = u.id
@@ -104,17 +93,10 @@ $stmt = $pdo->prepare("
     ORDER BY n.created_at DESC
     LIMIT 5
 ");
-$stmt->execute();
-$recentAnnouncements = $stmt->fetchAll();
 
-// Đếm notification
-$stmt = $pdo->prepare("
-    SELECT COUNT(*) as total 
-    FROM notification_logs 
-    WHERE user_id = ? AND is_read = 0
-");
-$stmt->execute([$userId]);
-$unreadCount = $stmt->fetch()['total'] ?? 0;
+// Đếm notification chưa đọc
+$unreadRow   = db_fetch_one("SELECT COUNT(*) as total FROM notification_logs WHERE user_id = ? AND is_read = 0", [$userId]);
+$unreadCount = $unreadRow['total'] ?? 0;
 ?>
 <!DOCTYPE html>
 <html lang="vi">

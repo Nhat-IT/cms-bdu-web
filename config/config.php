@@ -52,7 +52,9 @@ function loadEnvFile($filePath) {
         if ($name !== '' && !$hasCurrent) {
             $_ENV[$name] = $value;
             $_SERVER[$name] = $value;
-            putenv("$name=$value");
+            if (function_exists('putenv')) {
+                @putenv("$name=$value");
+            }
         }
     }
 }
@@ -120,8 +122,50 @@ define('DB_USER', envOrDefault('DB_USER', $ifAccountPrefix !== '' ? $ifAccountPr
 define('DB_PASS', envOrDefault('DB_PASS', envOrDefault('DB_PASSWORD', '')));
 define('DB_PORT', (int) envOrDefault('DB_PORT', '3306'));
 
+// Base URL for the application (without trailing slash)
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+$host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
+$basePath = '/cms';
+define('BASE_URL', $protocol . $host . $basePath);
+define('BASE_PATH', __DIR__ . '/..');
+
+function createPDOConnection() {
+    if (!class_exists('PDO')) {
+        throw new Exception('PHP PDO extension is not available on host.');
+    }
+
+    $drivers = PDO::getAvailableDrivers();
+    if (!in_array('mysql', $drivers, true)) {
+        throw new Exception('PHP PDO MySQL driver is not available on host.');
+    }
+
+    $dsn = 'mysql:host=' . DB_HOST . ';port=' . DB_PORT . ';dbname=' . DB_NAME . ';charset=utf8mb4';
+    return new PDO($dsn, DB_USER, DB_PASS, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
+        PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8mb4'
+    ]);
+}
+
+class LazyPDOProxy {
+    private $connection = null;
+
+    private function getConnection() {
+        if ($this->connection === null) {
+            $this->connection = createPDOConnection();
+        }
+        return $this->connection;
+    }
+
+    public function __call($name, $arguments) {
+        $connection = $this->getConnection();
+        return $connection->$name(...$arguments);
+    }
+}
+
 // Chế độ hiển thị lỗi (Tắt khi deploy)
-$appDebug = strtolower((string) (getenv('APP_DEBUG') ?: 'false'));
+$appDebug = strtolower((string) envOrDefault('APP_DEBUG', 'false'));
 $isDebug = in_array($appDebug, ['1', 'true', 'yes', 'on'], true);
 ini_set('display_errors', $isDebug ? '1' : '0');
 error_reporting(E_ALL);
@@ -133,16 +177,22 @@ function getDBConnection() {
     if (!isset($conn) || $conn === false) {
         try {
             // Avoid uncaught mysqli_sql_exception on shared hosting.
-            mysqli_report(MYSQLI_REPORT_OFF);
+            if (function_exists('mysqli_report')) {
+                mysqli_report(MYSQLI_REPORT_OFF);
+            }
+
+            if (!function_exists('mysqli_connect')) {
+                throw new Exception('PHP extension mysqli is not available on host.');
+            }
             $conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
         } catch (Throwable $e) {
             $safeHost = DB_HOST ?: '(empty-host)';
-            die("Lỗi kết nối database tới '{$safeHost}'. Vui lòng kiểm tra DB_HOST/DB_NAME/DB_USER/DB_PASS trong .env.local hoặc biến môi trường host. Chi tiết: " . $e->getMessage());
+            throw new Exception("Lỗi kết nối database tới '{$safeHost}'. Vui lòng kiểm tra DB_HOST/DB_NAME/DB_USER/DB_PASS trong .env.local hoặc biến môi trường host. Chi tiết: " . $e->getMessage());
         }
 
         if (!$conn) {
             $safeHost = DB_HOST ?: '(empty-host)';
-            die("Lỗi kết nối database tới '{$safeHost}'. Vui lòng kiểm tra DB_HOST/DB_NAME/DB_USER/DB_PASS trong .env.local hoặc biến môi trường host. Chi tiết: " . mysqli_connect_error());
+            throw new Exception("Lỗi kết nối database tới '{$safeHost}'. Vui lòng kiểm tra DB_HOST/DB_NAME/DB_USER/DB_PASS trong .env.local hoặc biến môi trường host. Chi tiết: " . mysqli_connect_error());
         }
         
         // Set charset
@@ -152,8 +202,11 @@ function getDBConnection() {
     return $conn;
 }
 
-// Lấy kết nối
-$conn = getDBConnection();
+// Kết nối được khởi tạo lazy khi thực sự cần query.
+$conn = null;
+
+// Backward compatibility cho các trang cũ còn dùng $pdo.
+$pdo = new LazyPDOProxy();
 
 // Hàm escape
 function e($string) {
@@ -163,7 +216,11 @@ function e($string) {
 
 // Hàm chạy query an toàn
 function db_query($sql, $params = []) {
-    global $conn;
+    $conn = getDBConnection();
+    if (!$conn) {
+        throw new Exception('Không thể kết nối database.');
+    }
+
     $stmt = mysqli_prepare($conn, $sql);
     
     if ($stmt === false) {

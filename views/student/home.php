@@ -12,7 +12,7 @@ requireRole('student');
 $userId = $_SESSION['user_id'];
 $pageTitle = 'Tổng quan cá nhân';
 $extraCss = ['layout.css', 'student/student-layout.css', 'student/home.css'];
-$extraJs = ['student/student-layout.js', 'student/home.js'];
+$extraJs = ['student/student-layout.js'];
 
 // Lấy số môn đang học
 $subjectCount = db_count("

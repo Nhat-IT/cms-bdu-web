@@ -6,6 +6,7 @@
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/session.php';
+require_once __DIR__ . '/../config/helpers.php';
 
 // Lấy danh sách tài liệu theo lớp học phần
 function getDocumentsByClassSubject($classSubjectId) {
@@ -38,7 +39,9 @@ function addDocument($data) {
             $data['semester'] ?? null
         ]);
         
-        return ['success' => true, 'id' => mysqli_insert_id($GLOBALS['conn'])];
+        $docId = mysqli_insert_id($GLOBALS['conn']);
+        logSystem("Tải lên tài liệu - " . $data['title'], 'documents', $docId);
+        return ['success' => true, 'id' => $docId];
     } catch (Exception $e) {
         return ['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()];
     }
@@ -53,12 +56,13 @@ function deleteDocument($documentId, $userId) {
             return ['success' => false, 'message' => 'Tài liệu không tồn tại.'];
         }
         
-        if ($doc['uploader_id'] != $userId && $_SESSION['role'] != 'admin') {
+        if ($doc['uploader_id'] != $userId && !hasRole('admin')) {
             return ['success' => false, 'message' => 'Bạn không có quyền xóa tài liệu này.'];
         }
         
         db_query("DELETE FROM documents WHERE id = ?", [$documentId]);
-        
+        logSystem("Xóa tài liệu ID #$documentId", 'documents', $documentId);
+
         return ['success' => true];
     } catch (Exception $e) {
         return ['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()];

@@ -18,7 +18,8 @@ $currentUser = getCurrentUser();
 $search = $_GET['search'] ?? '';
 $roleFilter = $_GET['role'] ?? 'all';
 $actionFilter = $_GET['action'] ?? 'all';
-$dateFilter = $_GET['date'] ?? date('Y-m-d');
+$dateFilter = $_GET['date'] ?? '';
+$exportType = $_GET['export'] ?? '';
 
 // Build query cho logs
 $whereConditions = [];
@@ -37,8 +38,17 @@ if ($roleFilter !== 'all') {
 }
 
 if ($actionFilter !== 'all') {
-    $whereConditions[] = "sl.action LIKE ?";
-    $params[] = "%$actionFilter%";
+    if ($actionFilter === 'login') {
+        $whereConditions[] = "(sl.action LIKE '%login%' OR sl.action LIKE '%đăng nhập%' OR sl.action LIKE '%logout%' OR sl.action LIKE '%đăng xuất%')";
+    } elseif ($actionFilter === 'create') {
+        $whereConditions[] = "(sl.action LIKE '%create%' OR sl.action LIKE '%thêm%' OR sl.action LIKE '%import%')";
+    } elseif ($actionFilter === 'update') {
+        $whereConditions[] = "(sl.action LIKE '%update%' OR sl.action LIKE '%sửa%' OR sl.action LIKE '%edit%')";
+    } elseif ($actionFilter === 'delete') {
+        $whereConditions[] = "(sl.action LIKE '%delete%' OR sl.action LIKE '%xóa%')";
+    } elseif ($actionFilter === 'warning') {
+        $whereConditions[] = "(sl.action LIKE '%warning%' OR sl.action LIKE '%cảnh báo%' OR sl.action LIKE '%failed%')";
+    }
 }
 
 if ($dateFilter) {
@@ -51,13 +61,40 @@ if (count($whereConditions) > 0) {
     $whereClause = 'WHERE ' . implode(' AND ', $whereConditions);
 }
 
+if ($exportType === 'csv') {
+    $exportSql = "SELECT sl.created_at, sl.action, sl.target_table, sl.target_id, u.username, u.full_name, u.role, u.email
+                  FROM system_logs sl
+                  LEFT JOIN users u ON sl.user_id = u.id
+                  $whereClause
+                  ORDER BY sl.created_at DESC";
+    $exportRows = db_fetch_all($exportSql, $params);
+
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="system-logs-' . date('Ymd_His') . '.csv"');
+    echo "\xEF\xBB\xBF";
+    $out = fopen('php://output', 'w');
+    fputcsv($out, ['created_at', 'username', 'full_name', 'role', 'email', 'action', 'target_table', 'target_id']);
+    foreach ($exportRows as $row) {
+        fputcsv($out, [
+            $row['created_at'] ?? '',
+            $row['username'] ?? '',
+            $row['full_name'] ?? '',
+            $row['role'] ?? '',
+            $row['email'] ?? '',
+            $row['action'] ?? '',
+            $row['target_table'] ?? '',
+            $row['target_id'] ?? ''
+        ]);
+    }
+    fclose($out);
+    exit;
+}
+
 // Đếm tổng số bản ghi
 $countSql = "SELECT COUNT(*) as total FROM system_logs sl 
              LEFT JOIN users u ON sl.user_id = u.id 
              $whereClause";
-$stmtCount = $pdo->prepare($countSql);
-$stmtCount->execute($params);
-$totalRecords = $stmtCount->fetch()['total'];
+$totalRecords = (int) db_count($countSql, $params);
 
 // Pagination
 $perPage = 15;
@@ -72,9 +109,7 @@ $sql = "SELECT sl.*, u.full_name, u.username, u.role, u.email
         $whereClause
         ORDER BY sl.created_at DESC
         LIMIT $perPage OFFSET $offset";
-$stmt = $pdo->prepare($sql);
-$stmt->execute($params);
-$logs = $stmt->fetchAll();
+$logs = db_fetch_all($sql, $params);
 
 // Hàm phân loại action type
 function getActionType($action) {
@@ -133,61 +168,17 @@ function getRoleDisplay($role, $fullName) {
 </head>
 <body class="dashboard-body">
 
-<div class="sidebar sidebar-admin" id="sidebar">
-    <div>
-        <div class="brand-container flex-shrink-0">
-            <a href="home.php" class="text-decoration-none text-primary d-flex align-items-center">
-                <i class="bi bi-mortarboard-fill fs-2 me-2"></i>
-                <span class="fs-4 fw-bold hide-on-collapse">CMS ADMIN</span>
-            </a>
-        </div>
-        <div class="text-center mb-3 text-white-50 small fw-bold hide-on-collapse">QUẢN TRỊ HỆ THỐNG</div>
-        <div class="sidebar-scrollable w-100">
-        <nav class="d-flex flex-column mt-3">
-            <a href="home.php"><i class="bi bi-speedometer2"></i> Tổng quan hệ thống</a>
-            <a href="org-settings.php"><i class="bi bi-gear-wide-connected"></i> Cấu hình Học vụ</a>
-            <a href="accounts.php"><i class="bi bi-people"></i> Quản lý Tài khoản</a>
-            <a href="classes-subjects.php"><i class="bi bi-building"></i> Quản lý Lớp & Môn</a>
-            <a href="assignments.php"><i class="bi bi-diagram-3-fill"></i> Phân công Giảng dạy</a>
-            <a href="system-logs.php" class="active"><i class="bi bi-shield-lock"></i> Nhật ký hệ thống</a>
-        </nav>
-        </div>
-    </div>
-    
-    <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-        <a href="../logout.php" class="nav-link logout-btn" title="Đăng xuất">
-            <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
-        </a>
-    </div>
-</div>
+<?php
+$activePage = 'system-logs';
+require_once __DIR__ . '/../../layouts/admin-sidebar.php';
+?>
 
 <div class="main-content admin-main-content" id="mainContent">
-    
-    <div class="top-navbar-admin d-flex justify-content-between align-items-center px-4 py-3">
-        <div class="d-flex align-items-center">
-            <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
-            <h4 class="m-0 text-white fw-bold d-flex align-items-center">
-                <i class="bi bi-shield-lock-fill me-2 fs-3 text-danger"></i> NHẬT KÝ HỆ THỐNG (SYSTEM LOGS)
-            </h4>
-        </div>
-        
-        <div class="d-flex align-items-center text-white">
-            <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
-                <div class="fs-6">Quản trị viên: <span class="fw-bold admin-operator-name"><?php echo e($currentUser['full_name'] ?? 'Admin'); ?></span></div>
-            </div>
-            
-            <div class="dropdown">
-                <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
-                    <i class="bi bi-person-circle fs-2"></i>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
-                    <li><a class="dropdown-item fw-bold" href="admin-profile.php"><i class="bi bi-person-vcard text-primary me-2"></i>Hồ sơ cá nhân</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item fw-bold text-danger" href="../logout.php"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
-                </ul>
-            </div>
-        </div>
-    </div>
+<?php
+$pageTitle  = 'NHẬT KÝ HỆ THỐNG (SYSTEM LOGS)';
+$pageIcon   = 'bi-shield-lock-fill';
+require_once __DIR__ . '/../../layouts/admin-topbar.php';
+?>
 
     <div class="p-4">
         
@@ -241,9 +232,9 @@ function getRoleDisplay($role, $fullName) {
                     <i class="bi bi-list-columns-reverse me-2 text-primary"></i>Chi tiết Nhật ký hệ thống
                     <span class="badge bg-secondary ms-2"><?php echo number_format($totalRecords); ?> bản ghi</span>
                 </h5>
-                <button class="btn btn-outline-danger fw-bold shadow-sm" onclick="exportLogs()">
+                <a class="btn btn-outline-danger fw-bold shadow-sm" href="?export=csv&search=<?php echo urlencode($search); ?>&role=<?php echo e($roleFilter); ?>&action=<?php echo e($actionFilter); ?>&date=<?php echo e($dateFilter); ?>">
                     <i class="bi bi-download me-1"></i> XUẤT LOG
-                </button>
+                </a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -371,10 +362,6 @@ function getRoleDisplay($role, $fullName) {
     document.getElementById('sidebarToggle').addEventListener('click', function() {
         document.getElementById('sidebar').classList.toggle('active');
     });
-
-    function exportLogs() {
-        alert("Hệ thống đang trích xuất dữ liệu Nhật ký ra file Excel (.xlsx). Quá trình này có thể mất vài phút tùy thuộc vào lượng dữ liệu.");
-    }
 </script>
 </body>
 </html>

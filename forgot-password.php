@@ -3,20 +3,13 @@
  * CMS BDU - Quên mật khẩu
  */
 
-require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../config/session.php';
-require_once __DIR__ . '/../config/helpers.php';
+require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/config/session.php';
+require_once __DIR__ . '/config/helpers.php';
 
 // Nếu đã đăng nhập thì chuyển về trang chủ
 if (isLoggedIn()) {
-    $role = $_SESSION['role'];
-    $homePages = [
-        'student' => 'student/home.php',
-        'bcs' => 'bcs/home.php',
-        'teacher' => 'teacher/home.php',
-        'admin' => 'views/admin/home.php',
-    ];
-    header('Location: ' . ($homePages[$role] ?? 'student/home.php'));
+    header('Location: ' . getHomeUrl($_SESSION['role']));
     exit;
 }
 
@@ -36,9 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     } else {
         try {
             // Kiểm tra tài khoản tồn tại
-            $stmt = $pdo->prepare("SELECT id, full_name FROM users WHERE username = ? AND email = ?");
-            $stmt->execute([$username, $email]);
-            $user = $stmt->fetch();
+            $user = db_fetch_one("SELECT id, full_name FROM users WHERE username = ? AND email = ?", [$username, $email]);
             
             if ($user) {
                 // Tạo OTP
@@ -46,11 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $expires = date('Y-m-d H:i:s', strtotime('+10 minutes'));
                 
                 // Lưu OTP vào database (sử dụng bảng password_resets)
-                $stmt = $pdo->prepare("DELETE FROM password_resets WHERE email = ?");
-                $stmt->execute([$email]);
-                
-                $stmt = $pdo->prepare("INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)");
-                $stmt->execute([$email, password_hash($otp, PASSWORD_DEFAULT), $expires]);
+                db_query("DELETE FROM password_resets WHERE email = ?", [$email]);
+                db_query("INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)", [$email, password_hash($otp, PASSWORD_DEFAULT), $expires]);
                 
                 // TODO: Gửi email thực tế với OTP
                 // Hiện tại hiển thị OTP để test
@@ -61,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             } else {
                 $error = 'Không tìm thấy tài khoản với thông tin này.';
             }
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
             $error = 'Đã xảy ra lỗi. Vui lòng thử lại.';
         }
     }
@@ -86,19 +74,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     } else {
         try {
             // Kiểm tra OTP (sử dụng bcrypt để verify)
-            $stmt = $pdo->prepare("SELECT * FROM password_resets WHERE email = ? AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1");
-            $stmt->execute([$email]);
-            $reset = $stmt->fetch();
+            $reset = db_fetch_one("SELECT * FROM password_resets WHERE email = ? AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1", [$email]);
             
             if ($reset && password_verify($otp, $reset['token'])) {
                 // Cập nhật mật khẩu
                 $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-                $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE email = ?");
-                $stmt->execute([$hashedPassword, $email]);
+                db_query("UPDATE users SET password = ? WHERE email = ?", [$hashedPassword, $email]);
                 
                 // Xóa token đã sử dụng
-                $stmt = $pdo->prepare("DELETE FROM password_resets WHERE email = ?");
-                $stmt->execute([$email]);
+                db_query("DELETE FROM password_resets WHERE email = ?", [$email]);
                 
                 // Xóa session
                 unset($_SESSION['reset_email']);
@@ -110,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $error = 'Mã OTP không hợp lệ hoặc đã hết hạn.';
                 $step = 2;
             }
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
             $error = 'Đã xảy ra lỗi. Vui lòng thử lại.';
             $step = 2;
         }
@@ -125,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     <title>Khôi Phục Mật Khẩu - CMS BDU</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="../public/css/style.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/public/css/style.css">
     <style>
         body.login-body { 
             background-color: #f1f5f9; 
@@ -199,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         <!-- Bước 2: Nhập OTP và mật khẩu mới -->
                         <div id="step2-reset-password">
                             <div class="d-flex align-items-center mb-2">
-                                <a href="forgot-password.php" class="btn btn-link text-decoration-none p-0 me-2 text-muted" title="Quay lại">
+                                <a href="<?php echo BASE_URL; ?>/forgot-password.php" class="btn btn-link text-decoration-none p-0 me-2 text-muted" title="Quay lại">
                                     <i class="bi bi-arrow-left fs-4"></i>
                                 </a>
                                 <h3 class="fw-bold text-dark mb-0">Đặt lại mật khẩu</h3>
@@ -232,7 +216,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     <?php endif; ?>
 
                     <div class="text-center mt-4 pt-3 border-top border-secondary border-opacity-10">
-                        <a href="login.php" class="text-decoration-none text-muted fw-bold">
+                        <a href="<?php echo BASE_URL; ?>/login.php" class="text-decoration-none text-muted fw-bold">
                             <i class="bi bi-box-arrow-in-left me-1"></i> Quay lại trang Đăng nhập
                         </a>
                     </div>

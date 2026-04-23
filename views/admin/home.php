@@ -14,33 +14,23 @@ requireRole('admin');
 // Lấy thông tin admin hiện tại
 $currentUser = getCurrentUser();
 
-// Đếm tổng số sinh viên
-$stmtStudents = $pdo->prepare("SELECT COUNT(*) as count FROM users WHERE role = 'student'");
-$stmtStudents->execute();
-$totalStudents = $stmtStudents->fetch()['count'];
+// Đếm tổng số sinh viên (từ class_students — danh sách SV đã import vào lớp)
+$totalStudents = (int) db_count("SELECT COUNT(*) FROM class_students");
 
 // Đếm tổng số giảng viên
-$stmtTeachers = $pdo->prepare("SELECT COUNT(*) as count FROM users WHERE role = 'teacher'");
-$stmtTeachers->execute();
-$totalTeachers = $stmtTeachers->fetch()['count'];
+$totalTeachers = (int) db_count("SELECT COUNT(*) FROM users WHERE role = 'teacher'");
 
 // Đếm tổng số lớp học
-$stmtClasses = $pdo->prepare("SELECT COUNT(*) as count FROM classes");
-$stmtClasses->execute();
-$totalClasses = $stmtClasses->fetch()['count'];
+$totalClasses = (int) db_count("SELECT COUNT(*) FROM classes");
 
 // Đếm số lớp học phần đang mở
-$stmtOpenClasses = $pdo->prepare("
-    SELECT COUNT(DISTINCT cs.id) as count 
-    FROM class_subjects cs
-    WHERE cs.start_date <= CURDATE() AND cs.end_date >= CURDATE()
-");
-$stmtOpenClasses->execute();
-$openClassSubjects = $stmtOpenClasses->fetch()['count'];
+$openClassSubjects = (int) db_count(
+    "SELECT COUNT(DISTINCT cs.id) FROM class_subjects cs WHERE cs.start_date <= CURDATE() AND cs.end_date >= CURDATE()"
+);
 
 // Lấy danh sách lớp học phần gần đây
-$stmtClassSubjects = $pdo->prepare("
-    SELECT 
+$classSubjects = db_fetch_all(
+    "SELECT
         cs.id,
         cs.semester,
         s.subject_code,
@@ -48,18 +38,16 @@ $stmtClassSubjects = $pdo->prepare("
         u.full_name as teacher_name,
         cs.start_date,
         cs.end_date,
-        CASE 
+        CASE
             WHEN cs.start_date <= CURDATE() AND cs.end_date >= CURDATE() THEN 'open'
             ELSE 'closed'
         END as status
     FROM class_subjects cs
     LEFT JOIN subjects s ON cs.subject_id = s.id
     LEFT JOIN users u ON cs.teacher_id = u.id
-    ORDER BY cs.created_at DESC
-    LIMIT 10
-");
-$stmtClassSubjects->execute();
-$classSubjects = $stmtClassSubjects->fetchAll();
+    ORDER BY cs.id DESC
+    LIMIT 10"
+);
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -75,61 +63,17 @@ $classSubjects = $stmtClassSubjects->fetchAll();
 </head>
 <body class="dashboard-body">
 
-<div class="sidebar sidebar-admin" id="sidebar">
-    <div>
-        <div class="brand-container flex-shrink-0">
-            <a href="home.php" class="text-decoration-none text-primary d-flex align-items-center">
-                <i class="bi bi-mortarboard-fill fs-2 me-2"></i>
-                <span class="fs-4 fw-bold hide-on-collapse">CMS ADMIN</span>
-            </a>
-        </div>
-        <div class="text-center mb-3 text-white-50 small fw-bold hide-on-collapse">QUẢN TRỊ HỆ THỐNG</div>
-        <div class="sidebar-scrollable w-100">
-        <nav class="d-flex flex-column mt-3">
-            <a href="home.php" class="active"><i class="bi bi-speedometer2"></i> Tổng quan hệ thống</a>
-            <a href="org-settings.php"><i class="bi bi-gear-wide-connected"></i> Cấu hình Học vụ</a>
-            <a href="accounts.php"><i class="bi bi-people"></i> Quản lý Tài khoản</a>
-            <a href="classes-subjects.php"><i class="bi bi-building"></i> Quản lý Lớp & Môn</a>
-            <a href="assignments.php"><i class="bi bi-diagram-3-fill"></i> Phân công Giảng dạy</a>
-            <a href="system-logs.php"><i class="bi bi-shield-lock"></i> Nhật ký hệ thống</a>
-        </nav>
-        </div>
-    </div>
-    
-    <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-        <a href="../logout.php" class="nav-link logout-btn" title="Đăng xuất">
-            <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
-        </a>
-    </div>
-</div>
+<?php
+$activePage = 'home';
+require_once __DIR__ . '/../../layouts/admin-sidebar.php';
+?>
 
 <div class="main-content admin-main-content" id="mainContent">
-    
-    <div class="top-navbar-admin d-flex justify-content-between align-items-center px-4 py-3">
-        <div class="d-flex align-items-center">
-            <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
-            <h4 class="m-0 text-white fw-bold d-flex align-items-center">
-                <i class="bi bi-shield-lock-fill me-2 fs-3 text-warning"></i> TRUNG TÂM ĐIỀU HÀNH
-            </h4>
-        </div>
-        
-        <div class="d-flex align-items-center text-white">
-            <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
-                <div class="fs-6">Quản trị viên: <span class="fw-bold admin-operator-name"><?php echo e($currentUser['full_name'] ?? 'Admin'); ?></span></div>
-            </div>
-            
-            <div class="dropdown">
-                <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
-                    <i class="bi bi-person-circle fs-2"></i>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
-                    <li><a class="dropdown-item fw-bold" href="admin-profile.php"><i class="bi bi-person-vcard text-primary me-2"></i>Hồ sơ cá nhân</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item fw-bold text-danger" href="../logout.php"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
-                </ul>
-            </div>
-        </div>
-    </div>
+<?php
+$pageTitle  = 'TRUNG TÂM ĐIỀU HÀNH';
+$pageIcon   = 'bi-shield-lock-fill';
+require_once __DIR__ . '/../../layouts/admin-topbar.php';
+?>
 
     <div class="p-4">
         
@@ -226,13 +170,25 @@ $classSubjects = $stmtClassSubjects->fetchAll();
                                                 </td>
                                                 <td class="text-end pe-4">
                                                     <?php if ($cs['status'] === 'open'): ?>
-                                                        <button class="btn btn-light action-btn text-danger border" title="Đóng lớp này" onclick="confirmStatusToggle('<?php echo e($cs['subject_code'] . ' - ' . $cs['subject_name']); ?>', 'đóng')">
-                                                            <i class="bi bi-lock-fill"></i> Đóng lớp
-                                                        </button>
+                                                        <form method="POST" action="../../controllers/admin/classSubjectController.php" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn đóng lớp <?php echo e($cs['subject_code'] . ' - ' . $cs['subject_name']); ?>?');">
+                                                            <input type="hidden" name="action" value="toggle_status">
+                                                            <input type="hidden" name="status" value="closed">
+                                                            <input type="hidden" name="class_subject_id" value="<?php echo e($cs['id']); ?>">
+                                                            <input type="hidden" name="return" value="home">
+                                                            <button class="btn btn-light action-btn text-danger border" title="Đóng lớp này">
+                                                                <i class="bi bi-lock-fill"></i> Đóng lớp
+                                                            </button>
+                                                        </form>
                                                     <?php else: ?>
-                                                        <button class="btn btn-light action-btn text-success border" title="Mở lại lớp này" onclick="confirmStatusToggle('<?php echo e($cs['subject_code'] . ' - ' . $cs['subject_name']); ?>', 'mở lại')">
-                                                            <i class="bi bi-unlock-fill"></i> Mở lớp
-                                                        </button>
+                                                        <form method="POST" action="../../controllers/admin/classSubjectController.php" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn mở lại lớp <?php echo e($cs['subject_code'] . ' - ' . $cs['subject_name']); ?>?');">
+                                                            <input type="hidden" name="action" value="toggle_status">
+                                                            <input type="hidden" name="status" value="open">
+                                                            <input type="hidden" name="class_subject_id" value="<?php echo e($cs['id']); ?>">
+                                                            <input type="hidden" name="return" value="home">
+                                                            <button class="btn btn-light action-btn text-success border" title="Mở lại lớp này">
+                                                                <i class="bi bi-unlock-fill"></i> Mở lớp
+                                                            </button>
+                                                        </form>
                                                     <?php endif; ?>
                                                 </td>
                                             </tr>
@@ -276,13 +232,6 @@ $classSubjects = $stmtClassSubjects->fetchAll();
 <script src="../../public/js/admin/admin-layout.js"></script>
 
 <script>
-    // Xác nhận khi bấm Khóa/Mở Lớp
-    function confirmStatusToggle(className, action) {
-        if(confirm(`Cảnh báo: Bạn có chắc chắn muốn ${action} lớp học phần [${className}]?`)) {
-            alert(`Đã ${action} lớp ${className} thành công!`);
-        }
-    }
-
     // Xác nhận cho các Tác vụ nhanh bên phải
     function confirmQuickAction(actionName) {
         if(confirm(`Chuyển đến trang ${actionName}?`)) {

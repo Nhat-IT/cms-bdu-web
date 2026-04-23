@@ -15,9 +15,7 @@ requireRole('admin');
 $currentUser = getCurrentUser();
 
 // Lấy thông tin đầy đủ từ database
-$stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-$stmt->execute([$_SESSION['user_id']]);
-$user = $stmt->fetch();
+$user = db_fetch_one("SELECT * FROM users WHERE id = ?", [$_SESSION['user_id']]);
 
 // Lấy thông tin đăng nhập cuối (giả lập - trong thực tế cần bảng login_history)
 $lastLogin = 'Hôm nay, lúc ' . date('H:i:s');
@@ -39,20 +37,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $flashType = 'danger';
         } else {
             // Cập nhật vào database
-            $stmt = $pdo->prepare("UPDATE users SET full_name = ?, email = ? WHERE id = ?");
-            $stmt->execute([$fullName, $email, $_SESSION['user_id']]);
-            
+            db_query("UPDATE users SET full_name = ?, email = ? WHERE id = ?", [$fullName, $email, $_SESSION['user_id']]);
+
             // Cập nhật session
             $_SESSION['full_name'] = $fullName;
             $_SESSION['email'] = $email;
-            
+
+            logSystem("Cập nhật hồ sơ cá nhân", 'users', $_SESSION['user_id']);
+
             $flashMessage = 'Cập nhật thông tin thành công!';
             $flashType = 'success';
             
             // Refresh user data
-            $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-            $stmt->execute([$_SESSION['user_id']]);
-            $user = $stmt->fetch();
+            $user = db_fetch_one("SELECT * FROM users WHERE id = ?", [$_SESSION['user_id']]);
         }
     } elseif ($_POST['action'] === 'change_password') {
         $oldPassword = $_POST['old_password'] ?? '';
@@ -69,19 +66,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $flashMessage = 'Mật khẩu mới phải có ít nhất 6 ký tự.';
             $flashType = 'danger';
         } else {
-            // Kiểm tra mật khẩu cũ
-            $stmt = $pdo->prepare("SELECT password FROM users WHERE id = ?");
-            $stmt->execute([$_SESSION['user_id']]);
-            $storedPassword = $stmt->fetch()['password'];
-            
-            if ($oldPassword !== $storedPassword) {
+            // Kiểm tra mật khẩu cũ (hỗ trợ cả hash và dữ liệu cũ plaintext)
+            $passwordRow = db_fetch_one("SELECT password FROM users WHERE id = ?", [$_SESSION['user_id']]);
+            $storedPassword = (string) ($passwordRow['password'] ?? '');
+            $passwordInfo = password_get_info($storedPassword);
+            $isHashedPassword = isset($passwordInfo['algo']) && $passwordInfo['algo'] !== 0;
+            $isValidOldPassword = $isHashedPassword ? password_verify($oldPassword, $storedPassword) : hash_equals($storedPassword, (string) $oldPassword);
+
+            if (!$isValidOldPassword) {
                 $flashMessage = 'Mật khẩu cũ không đúng.';
                 $flashType = 'danger';
             } else {
                 // Cập nhật mật khẩu mới
-                $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
-                $stmt->execute([$newPassword, $_SESSION['user_id']]);
-                
+                $newHashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+                db_query("UPDATE users SET password = ? WHERE id = ?", [$newHashedPassword, $_SESSION['user_id']]);
+                logSystem("Đổi mật khẩu", 'users', $_SESSION['user_id']);
+
                 $flashMessage = 'Đổi mật khẩu thành công! Bạn sẽ được đăng xuất.';
                 $flashType = 'success';
                 
@@ -110,61 +110,17 @@ $headerAvatarUrl = getAvatarUrl($user['avatar'] ?? null, $user['full_name'] ?? '
 </head>
 <body class="dashboard-body">
 
-<div class="sidebar sidebar-admin" id="sidebar">
-    <div>
-        <div class="brand-container flex-shrink-0">
-            <a href="home.php" class="text-decoration-none text-primary d-flex align-items-center">
-                <i class="bi bi-mortarboard-fill fs-2 me-2"></i>
-                <span class="fs-4 fw-bold hide-on-collapse">CMS ADMIN</span>
-            </a>
-        </div>
-        <div class="text-center mb-3 text-white-50 small fw-bold hide-on-collapse">QUẢN TRỊ HỆ THỐNG</div>
-        <div class="sidebar-scrollable w-100">
-        <nav class="d-flex flex-column mt-3">
-            <a href="home.php"><i class="bi bi-speedometer2"></i> Tổng quan hệ thống</a>
-            <a href="org-settings.php"><i class="bi bi-gear-wide-connected"></i> Cấu hình Học vụ</a>
-            <a href="accounts.php"><i class="bi bi-people"></i> Quản lý Tài khoản</a>
-            <a href="classes-subjects.php"><i class="bi bi-building"></i> Quản lý Lớp & Môn</a>
-            <a href="assignments.php"><i class="bi bi-diagram-3-fill"></i> Phân công Giảng dạy</a>
-            <a href="system-logs.php"><i class="bi bi-shield-lock"></i> Nhật ký hệ thống</a>
-        </nav>
-        </div>
-    </div>
-    
-    <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-        <a href="../logout.php" class="nav-link logout-btn" title="Đăng xuất">
-            <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
-        </a>
-    </div>
-</div>
+<?php
+$activePage = '';
+require_once __DIR__ . '/../../layouts/admin-sidebar.php';
+?>
 
 <div class="main-content admin-main-content" id="mainContent">
-    
-    <div class="top-navbar-admin d-flex justify-content-between align-items-center px-4 py-3">
-        <div class="d-flex align-items-center">
-            <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
-            <h4 class="m-0 text-white fw-bold d-flex align-items-center">
-                <i class="bi bi-person-badge-fill me-2 fs-3 text-warning"></i> HỒ SƠ QUẢN TRỊ VIÊN
-            </h4>
-        </div>
-        
-        <div class="d-flex align-items-center text-white">
-            <div class="text-end me-3 d-none d-sm-block border-end pe-3 border-light border-opacity-50">
-                <div class="fs-6">Quản trị viên: <span class="fw-bold admin-operator-name"><?php echo e($user['full_name'] ?? 'Admin'); ?></span></div>
-            </div>
-            
-            <div class="dropdown">
-                <a href="#" class="d-flex align-items-center text-white text-decoration-none" data-bs-toggle="dropdown">
-                    <img src="<?php echo e($headerAvatarUrl); ?>" id="headerAvatar" class="rounded-circle border" width="32" height="32" alt="Avatar">
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end shadow mt-2">
-                    <li><a class="dropdown-item fw-bold" href="admin-profile.php"><i class="bi bi-person-vcard text-primary me-2"></i>Hồ sơ cá nhân</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item fw-bold text-danger" href="../logout.php"><i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất</a></li>
-                </ul>
-            </div>
-        </div>
-    </div>
+<?php
+$pageTitle  = 'Hồ SƠ QUẢN TRỊ VIÊN';
+$pageIcon   = 'bi-person-badge-fill';
+require_once __DIR__ . '/../../layouts/admin-topbar.php';
+?>
 
     <div class="p-4">
         

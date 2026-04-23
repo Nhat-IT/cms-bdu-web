@@ -1,3 +1,17 @@
+/* assignments.css - CSS hỗ trợ giao diện Điều phối Lịch Dạy */
+.nav-tabs .nav-link.active { color: #0d6efd !important; border-bottom: 3px solid #0d6efd !important; font-weight: bold; }
+.assignment-card { border: 1px solid #e0e0e0 !important; border-radius: 8px; overflow: hidden; }
+.group-row { transition: background-color 0.2s; }
+.group-row:hover { background-color: #f8f9fa; }
+.badge-nhom { background-color: #e6f0ff !important; color: #0056b3 !important; font-size: 0.85rem; padding: 6px 16px; border: 1px solid #b3d4ff; }
+.filter-label { font-size: 0.75rem; font-weight: 700; color: #6c757d; margin-bottom: 4px; text-transform: uppercase; }
+/* Làm nổi bật nút Phân công */
+.btn-phan-cong {
+    background-color: #0d6efd;
+    color: white;
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);
+}
+.btn-phan-cong:hover { background-color: #0b5ed7; color: white; }
 /* CSS đặc thù cho trang phân công giảng dạy của Admin. */
 .action-btn { font-weight: 600; }
 
@@ -34,17 +48,67 @@
     color: #64748b;
 }
 
+/* Grid layout đều hơn */
+.section-header-row,
 .section-row {
     display: grid;
-    grid-template-columns: 120px minmax(170px, 1.2fr) minmax(170px, 1.2fr) minmax(100px, 1fr) 130px 160px;
+    /* Nhóm | Giảng viên | Lịch học | Phòng | Trạng thái | Actions */
+    grid-template-columns: minmax(90px, 0.9fr) 1.6fr 1.1fr 0.8fr 0.8fr minmax(130px, 1.3fr);
     gap: 10px;
-    padding: 10px 16px;
+    padding: 10px 12px;
     align-items: center;
+    min-width: 0;
+}
+
+.section-header-row > span:last-child {
+    text-align: center;
+    width: 100%;
+}
+
+.section-header-row {
+    background: #f1f5f9;
+    border-top: 1px solid #e2e8f0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+    letter-spacing: 0.04em;
+}
+
+.section-row {
     border-top: 1px dashed #e2e8f0;
+    font-size: 0.9rem;
+}
+
+.section-row > div {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Cột Giảng viên (2): cho phép hiển thị đầy đủ, không cắt */
+.section-row > div:nth-child(2),
+.section-header-row > span:nth-child(2) {
+    overflow: visible;
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* Cho cột Actions không bị cắt */
+.section-row > div.section-actions {
+    overflow: visible;
+    white-space: normal;
 }
 
 .section-row:first-child {
     border-top: none;
+}
+
+/* Nút xóa nhóm: luôn hiển thị (không ẩn opacity) */
+.section-row .btn-del-group {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .section-chip {
@@ -76,19 +140,12 @@
     color: #0f172a;
 }
 
-.section-status {
-    text-align: center;
-    margin-left: -50px;
-}
-
-.section-status .section-value {
-    white-space: nowrap;
-}
-
 .section-actions {
     display: flex;
     gap: 6px;
     justify-content: flex-end;
+    min-width: 130px;
+    flex-shrink: 0;
 }
 
 .offering-foot {
@@ -189,17 +246,6 @@
     color: #475569;
 }
 
-.table-sessions th,
-.table-sessions td {
-    vertical-align: middle;
-}
-
-.table-sessions th:nth-child(7),
-.table-sessions td:nth-child(7) {
-    white-space: nowrap;
-    text-align: center;
-}
-
 .status-normal {
     background-color: #d1fae5;
     color: #0f766e;
@@ -241,7 +287,7 @@
 .master-schedule-table thead th {
     background-color: #ffffff;
     text-align: center;
-    padding: 12px;
+    padding: 8px 6px;
     font-weight: bold;
     color: #000;
     vertical-align: middle;
@@ -249,7 +295,7 @@
 
 .master-schedule-table td {
     width: 12%;
-    height: 40px;
+    height: 35px;
     padding: 0;
     vertical-align: top;
 }
@@ -260,9 +306,10 @@
     text-align: center !important;
     vertical-align: middle !important;
     font-weight: bold;
-    width: 80px !important;
-    min-width: 80px !important;
-    font-size: 0.9rem;
+    width: 60px !important;
+    min-width: 60px !important;
+    font-size: 0.8rem;
+    padding: 4px !important;
 }
 
 .subject-block {
@@ -310,4 +357,148 @@
     background-color: #f3f4f6;
     border: 1px solid #94a3b8;
     opacity: 0.7;
+}
+
+/* Master Schedule Table */
+.master-cell {
+    height: 35px;
+    padding: 2px !important;
+    vertical-align: top !important;
+}
+
+/* Responsive filters for Master Schedule tab */
+#gridView .row > div {
+    min-width: 0;
+    overflow: visible;
+}
+
+#gridView .form-select,
+#gridView .btn {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#gridView .form-select:focus {
+    text-overflow: clip;
+}
+
+.master-cell .subject-block {
+    height: 100%;
+    min-height: 31px;
+}
+
+.master-schedule-table .subject-block {
+    background-color: #dbeafe;
+    border: 1px solid #b71c1c;
+    padding: 4px;
+    height: 100%;
+    width: 100%;
+    font-size: 0.7rem;
+    line-height: 1.25;
+    color: #000;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.master-schedule-table .subject-block:hover {
+    background-color: #bfdbfe;
+    transform: scale(0.98);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.master-schedule-table .subject-block .subject-title {
+    font-weight: bold;
+    margin-bottom: 1px;
+    font-size: 0.72rem;
+}
+
+.master-schedule-table .subject-block .subject-meta {
+    font-size: 0.7rem;
+    color: #475569;
+}
+
+.master-schedule-table .subject-block .subject-room {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #b91c1c;
+}
+
+.master-schedule-table .subject-block.conflict {
+    border: 2px solid #ef4444;
+}
+
+.master-schedule-table .subject-block.makeup {
+    background-color: #fef3c7;
+    border: 2px dashed #f59e0b;
+}
+
+.master-schedule-table .subject-block.canceled {
+    background-color: #f3f4f6;
+    border: 1px solid #94a3b8;
+    opacity: 0.6;
+}
+
+.master-schedule-table .subject-block.empty-cell {
+    background-color: transparent;
+    border: 1px dashed #e2e8f0;
+    cursor: default;
+}
+
+.master-schedule-table .subject-block.empty-cell:hover {
+    background-color: #f8fafc;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Responsive filter layout for Master Schedule */
+@media (max-width: 1199px) {
+    #gridView .row.g-3 {
+        gap: 0.75rem;
+    }
+}
+
+@media (max-width: 991px) {
+    #gridView .row.g-3 {
+        gap: 0.5rem;
+    }
+    
+    #gridView label.form-label {
+        font-size: 0.7rem;
+        margin-bottom: 0;
+    }
+    
+    #gridView .form-select {
+        font-size: 0.85rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    #gridView .btn {
+        font-size: 0.85rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+/* Giới hạn chiều cao dropdown select, cho scroll khi có nhiều options */
+#gridView .form-select[size],
+#gridView select.form-select {
+    max-height: 200px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+#gridView .form-select:focus {
+    text-overflow: clip;
+}
+
+/* Đảm bảo TUẦN dropdown vừa với nội dung */
+#masterWeekSelect {
+    width: auto !important;
+    min-width: 160px;
+    max-width: 220px;
 }

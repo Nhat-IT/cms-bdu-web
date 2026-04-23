@@ -4,13 +4,15 @@
  * Cấu hình phiên làm việc
  */
 
+require_once __DIR__ . '/config.php';
+
 session_start();
 
 // Kiểm tra thời gian timeout (30 phút)
 if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 1800)) {
     session_unset();
     session_destroy();
-    header('Location: ../views/login.php');
+    header('Location: ' . BASE_URL . '/login.php');
     exit;
 }
 $_SESSION['last_activity'] = time();
@@ -26,13 +28,21 @@ function hasRole($roles) {
     if (is_string($roles)) {
         $roles = [$roles];
     }
-    return in_array($_SESSION['role'], $roles);
+
+    $userRoles = [];
+    if (!empty($_SESSION['roles']) && is_array($_SESSION['roles'])) {
+        $userRoles = $_SESSION['roles'];
+    } elseif (!empty($_SESSION['role'])) {
+        $userRoles = [$_SESSION['role']];
+    }
+
+    return count(array_intersect($userRoles, $roles)) > 0;
 }
 
 // Hàm chuyển hướng nếu chưa đăng nhập
 function requireLogin() {
     if (!isLoggedIn()) {
-        header('Location: ../views/login.php');
+        header('Location: ' . BASE_URL . '/login.php');
         exit;
     }
 }
@@ -41,7 +51,7 @@ function requireLogin() {
 function requireRole($roles) {
     requireLogin();
     if (!hasRole($roles)) {
-        header('Location: ../views/unauthorized.php');
+        header('Location: ' . BASE_URL . '/unauthorized.php');
         exit;
     }
 }
@@ -55,6 +65,7 @@ function getCurrentUser() {
         'full_name' => $_SESSION['full_name'] ?? null,
         'email' => $_SESSION['email'] ?? null,
         'role' => $_SESSION['role'] ?? null,
+        'roles' => $_SESSION['roles'] ?? [$_SESSION['role'] ?? null],
         'avatar' => $_SESSION['avatar'] ?? null,
     ];
 }
@@ -63,6 +74,6 @@ function getCurrentUser() {
 function logout() {
     session_unset();
     session_destroy();
-    header('Location: ../views/login.php');
+    header('Location: ' . BASE_URL . '/login.php');
     exit;
 }
