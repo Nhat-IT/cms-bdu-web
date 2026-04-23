@@ -196,6 +196,262 @@ function resolveSingleSessionCourse(context) {
     }) || null;
 }
 
+function getTeacherDisplayNameById(teacherId) {
+    const idText = String(teacherId || '').trim();
+    if (!idText) return null;
+    const list = window.teachers || teachers || [];
+    const teacher = list.find(function (t) { return String(t.id) === idText; });
+    if (!teacher) return null;
+    return (teacher.title ? (teacher.title + '. ') : '') + teacher.name;
+}
+
+function upsertScheduleIntoClientData(payload, res) {
+    const csId = parseInt((res && res.class_subject_id) || payload.class_subject_id, 10);
+    if (!Number.isFinite(csId) || csId <= 0) return false;
+
+    const classCode = String(payload.class_code || '').trim() || '--';
+    const subjectIdText = String(payload.subject_id || '').trim();
+    const groupCode = getGroupCode((res && res.group_code) || payload.group_code || 'N1');
+    const teacherMain = String((res && res.teacher_main_id) || payload.teacher_main_id || '').trim();
+    const teacherSubRaw = (res && Object.prototype.hasOwnProperty.call(res, 'teacher_sub_id')) ? res.teacher_sub_id : payload.teacher_sub_id;
+    const teacherSub = teacherSubRaw === null || teacherSubRaw === undefined || teacherSubRaw === '' ? '' : String(teacherSubRaw);
+    const day = String((res && res.day_of_week) || payload.day_of_week || '');
+    const start = String((res && res.start_period) || payload.start_period || '');
+    const end = String((res && res.end_period) || payload.end_period || '');
+    const room = String((res && res.room) || payload.room || '');
+
+    const teacherMainName = getTeacherDisplayNameById(teacherMain);
+    const teacherSubName = getTeacherDisplayNameById(teacherSub);
+
+    let course = allAssignmentCourses.find(function (c) { return parseInt(c.csId, 10) === csId; }) || null;
+    let template = null;
+    if (!course && subjectIdText) {
+        (window.allClasses || []).some(function (cls) {
+            template = (cls.assignments || []).find(function (asg) {
+                return String(asg.subjectId || '') === subjectIdText;
+            }) || null;
+            return !!template;
+        });
+    }
+
+    if (!course) {
+        const subjectName = template ? (template.subjectName || '') : '';
+        const subjectCode = template ? (template.subjectCode || '') : '';
+        course = {
+            id: (subjectCode || 'SUB') + '-' + csId,
+            csId: csId,
+            name: subjectName,
+            credits: template ? (template.credits || 0) : 0,
+            classCode: classCode,
+            year: (payload.academic_year && payload.academic_year !== 'all') ? payload.academic_year : (template ? (template.year || '') : ''),
+            semester: normalizeSemesterCode((payload.semester_name && payload.semester_name !== 'all') ? payload.semester_name : (template ? (template.semester || '') : '')),
+            isOpen: template ? !!template.isOpen : true,
+            openWindow: template ? (template.openWindow || 'Chưa xác định') : 'Chưa xác định',
+            groups: [],
+            subjectCode: subjectCode,
+            subjectId: subjectIdText || (template ? (template.subjectId || null) : null)
+        };
+        allAssignmentCourses.push(course);
+    }
+
+    course.csId = csId;
+    course.classCode = classCode;
+    if (subjectIdText) course.subjectId = subjectIdText;
+    course.semester = normalizeSemesterCode(course.semester || payload.semester_name || '');
+    if (!Array.isArray(course.groups)) course.groups = [];
+
+    let courseGroup = course.groups.find(function (g) { return getGroupCode(g.code) === groupCode; }) || null;
+    if (!courseGroup) {
+        courseGroup = { code: groupCode };
+        course.groups.push(courseGroup);
+    }
+    courseGroup.code = groupCode;
+    courseGroup.teacherMain = teacherMain || null;
+    courseGroup.teacherMainName = teacherMainName;
+    courseGroup.teacherSub = teacherSub || null;
+    courseGroup.teacherSubName = teacherSubName;
+    courseGroup.day = day || null;
+    courseGroup.start = start || null;
+    courseGroup.end = end || null;
+    courseGroup.room = room || null;
+
+    if (!Array.isArray(window.allClasses)) window.allClasses = [];
+    let classEntry = window.allClasses.find(function (cls) { return String(cls.classCode || '') === classCode; }) || null;
+    if (!classEntry) {
+        classEntry = {
+            id: 'class-' + classCode,
+            classCode: classCode,
+            name: 'Lớp ' + classCode,
+            hasOpen: true,
+            assignments: []
+        };
+        window.allClasses.push(classEntry);
+    }
+    if (!Array.isArray(classEntry.assignments)) classEntry.assignments = [];
+
+    let asg = classEntry.assignments.find(function (a) { return parseInt(a.csId, 10) === csId; }) || null;
+    if (!asg && subjectIdText) {
+        asg = classEntry.assignments.find(function (a) { return String(a.subjectId || '') === subjectIdText; }) || null;
+    }
+    if (!asg) {
+        asg = {
+            id: course.id || ((course.subjectCode || 'SUB') + '-' + csId),
+            csId: csId,
+            subjectId: course.subjectId || null,
+            subjectCode: course.subjectCode || '',
+            subjectName: course.name || '',
+            classCode: classCode,
+            credits: course.credits || 0,
+            isOpen: !!course.isOpen,
+            year: course.year || '',
+            semester: course.semester || '',
+            openWindow: course.openWindow || 'Chưa xác định',
+            computedStatus: '1',
+            hasStudents: false,
+            studentCount: 0,
+            teacherMain: teacherMain || null,
+            teacherMainName: teacherMainName,
+            groups: []
+        };
+        classEntry.assignments.push(asg);
+    }
+
+    asg.id = (asg.subjectCode || course.subjectCode || 'SUB') + '-' + csId;
+    asg.csId = csId;
+    asg.classCode = classCode;
+    asg.semester = normalizeSemesterCode(asg.semester || payload.semester_name || course.semester || '');
+    asg.teacherMain = teacherMain || null;
+    asg.teacherMainName = teacherMainName;
+    if (!Array.isArray(asg.groups)) asg.groups = [];
+    let asgGroup = asg.groups.find(function (g) { return getGroupCode(g.code) === groupCode; }) || null;
+    if (!asgGroup) {
+        asgGroup = { code: groupCode };
+        asg.groups.push(asgGroup);
+    }
+    asgGroup.code = groupCode;
+    asgGroup.teacherMain = teacherMain || null;
+    asgGroup.teacherMainName = teacherMainName;
+    asgGroup.teacherSub = teacherSub || null;
+    asgGroup.teacherSubName = teacherSubName;
+    asgGroup.day = day || null;
+    asgGroup.start = start || null;
+    asgGroup.end = end || null;
+    asgGroup.room = room || null;
+
+    if (subjectIdText) {
+        const unassignedClass = window.allClasses.find(function (cls) { return String(cls.id || '') === 'class-unassigned'; });
+        if (unassignedClass && Array.isArray(unassignedClass.assignments)) {
+            unassignedClass.assignments = unassignedClass.assignments.filter(function (a) {
+                return String(a.subjectId || '') !== subjectIdText;
+            });
+        }
+    }
+
+    if (Array.isArray(window.masterScheduleCourses)) {
+        let masterCourse = window.masterScheduleCourses.find(function (c) { return parseInt(c.csId, 10) === csId; }) || null;
+        if (!masterCourse) {
+            masterCourse = {
+                id: csId,
+                csId: csId,
+                name: ((course.subjectCode || '') ? (course.subjectCode + ' - ') : '') + (course.name || ''),
+                classCode: classCode,
+                year: course.year || '',
+                semester: course.semester || '',
+                groups: []
+            };
+            window.masterScheduleCourses.push(masterCourse);
+        }
+        masterCourse.classCode = classCode;
+        masterCourse.semester = course.semester || masterCourse.semester;
+        if (!Array.isArray(masterCourse.groups)) masterCourse.groups = [];
+        let mg = masterCourse.groups.find(function (g) { return getGroupCode(g.code) === groupCode; }) || null;
+        if (!mg) {
+            mg = { code: groupCode };
+            masterCourse.groups.push(mg);
+        }
+        mg.code = groupCode;
+        mg.teacherMain = teacherMain || null;
+        mg.day = day || null;
+        mg.start = start || null;
+        mg.end = end || null;
+        mg.room = room || null;
+    }
+
+    return true;
+}
+
+function appendGroupToClassSubject(csId, groupCode) {
+    const code = getGroupCode(groupCode || 'N1');
+    const course = allAssignmentCourses.find(function (c) { return parseInt(c.csId, 10) === parseInt(csId, 10); }) || null;
+    if (course) {
+        if (!Array.isArray(course.groups)) course.groups = [];
+        const exists = course.groups.some(function (g) { return getGroupCode(g.code) === code; });
+        if (!exists) {
+            course.groups.push({
+                code: code,
+                teacherMain: course.teacherMain || null,
+                teacherMainName: course.teacherMainName || null,
+                teacherSub: null,
+                teacherSubName: null,
+                day: null,
+                start: null,
+                end: null,
+                room: null,
+                roomName: null
+            });
+        }
+    }
+
+    (window.allClasses || []).forEach(function (cls) {
+        (cls.assignments || []).forEach(function (asg) {
+            if (parseInt(asg.csId, 10) !== parseInt(csId, 10)) return;
+            if (!Array.isArray(asg.groups)) asg.groups = [];
+            const exists = asg.groups.some(function (g) { return getGroupCode(g.code) === code; });
+            if (!exists) {
+                asg.groups.push({
+                    code: code,
+                    teacherMain: asg.teacherMain || null,
+                    teacherMainName: asg.teacherMainName || null,
+                    teacherSub: null,
+                    teacherSubName: null,
+                    day: null,
+                    start: null,
+                    end: null,
+                    room: null,
+                    roomName: null
+                });
+            }
+        });
+    });
+}
+
+function markStudentsImportedByCsId(csId, importedCount) {
+    const imported = Math.max(0, parseInt(importedCount, 10) || 0);
+    (window.allClasses || []).forEach(function (cls) {
+        (cls.assignments || []).forEach(function (asg) {
+            if (parseInt(asg.csId, 10) !== parseInt(csId, 10)) return;
+            asg.hasStudents = true;
+            const base = parseInt(asg.studentCount, 10) || 0;
+            asg.studentCount = imported > 0 ? (base + imported) : Math.max(base, 1);
+        });
+    });
+}
+
+function removeGroupFromClassSubject(csId, groupCode) {
+    const code = getGroupCode(groupCode || '');
+    const course = allAssignmentCourses.find(function (c) { return parseInt(c.csId, 10) === parseInt(csId, 10); }) || null;
+    if (course && Array.isArray(course.groups)) {
+        course.groups = course.groups.filter(function (g) { return getGroupCode(g.code) !== code; });
+    }
+
+    (window.allClasses || []).forEach(function (cls) {
+        (cls.assignments || []).forEach(function (asg) {
+            if (parseInt(asg.csId, 10) !== parseInt(csId, 10) || !Array.isArray(asg.groups)) return;
+            asg.groups = asg.groups.filter(function (g) { return getGroupCode(g.code) !== code; });
+        });
+    });
+}
+
 function initAssignmentEnhancements() {
     const filterYear = document.getElementById('assignFilterYear');
     const filterSemester = document.getElementById('assignFilterSemester');
@@ -653,7 +909,10 @@ function handleAssignmentUploadChange(event) {
                         alert('Đã import danh sách sinh viên thành công.');
                     }
                     pendingAssignmentUploadClass = '';
-                    window.location.reload();
+                    markStudentsImportedByCsId(csId, res ? res.imported : parsed.length);
+                    if (typeof applyAssignmentFilters === 'function') {
+                        applyAssignmentFilters();
+                    }
                     return;
                 }
                 alert('Import thất bại. Vui lòng thử lại.');
@@ -880,9 +1139,18 @@ function handleInitialScheduleSubmit(event) {
                 submitBtn.innerHTML = originalText;
                 
                 if (res && res.ok) {
+                    upsertScheduleIntoClientData(payload, res || {});
+                    if (res.class_subject_id) {
+                        window._currentCsId = String(res.class_subject_id);
+                    }
                     window.showToast('Đã lưu lịch giảng dạy thành công!', 'success');
                     bootstrap.Modal.getInstance(document.getElementById('initialScheduleModal')).hide();
-                    window.location.reload(); 
+                    if (typeof applyAssignmentFilters === 'function') {
+                        applyAssignmentFilters();
+                    }
+                    if (typeof renderMasterSchedule === 'function') {
+                        renderMasterSchedule();
+                    }
                 } else {
                     let msg = 'Có lỗi xảy ra khi lưu lịch.';
                     if (res.message === 'conflict_room') msg = res.detail || 'Phòng học đã bị trùng trong thời gian này.';
@@ -1328,7 +1596,16 @@ function addGroupToClass(courseId, subjectName) {
         .then(function(res) {
             if (res && res.ok) {
                 if (window.showToast) window.showToast('Đã thêm nhóm mới thành công.', 'success');
-                window.location.reload();
+                const maxNum = (course.groups || []).reduce(function(mx, g) {
+                    const m = String(g.code || '').match(/^N(\d+)$/i);
+                    const n = m ? parseInt(m[1], 10) : 0;
+                    return n > mx ? n : mx;
+                }, 0);
+                const newGroupCode = (res && res.group_code) ? getGroupCode(res.group_code) : ('N' + (maxNum + 1));
+                appendGroupToClassSubject(csId, newGroupCode);
+                if (typeof applyAssignmentFilters === 'function') {
+                    applyAssignmentFilters();
+                }
                 return;
             }
             alert('Không thể thêm nhóm. Vui lòng thử lại.');
@@ -1386,7 +1663,10 @@ function deleteGroupFromClass(courseId, groupCode, subjectName, subjectId) {
         .then(function(res) {
             if (res && res.ok) {
                 if (window.showToast) window.showToast('Đã xóa nhóm thành công.', 'success');
-                window.location.reload();
+                removeGroupFromClassSubject(csId, groupCode);
+                if (typeof applyAssignmentFilters === 'function') {
+                    applyAssignmentFilters();
+                }
                 return;
             }
             let msg = 'Không thể xóa nhóm. Vui lòng thử lại.';

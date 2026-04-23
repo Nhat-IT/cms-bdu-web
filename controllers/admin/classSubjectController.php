@@ -305,6 +305,20 @@ try {
         db_query('UPDATE class_subjects SET teacher_id = ? WHERE id = ?', [$teacherMain, $classSubjectId]);
         $logMsg = $isUpdate ? "Cập nhật" : "Tạo";
         logSystem("$logMsg lịch nhóm $groupCode - lớp học phần ID #$classSubjectId", 'class_subject_groups', $isUpdate ? (int) $groupData['id'] : null);
+        if (isset($_POST['format']) && $_POST['format'] === 'json') {
+            jsonResponse([
+                'ok' => true,
+                'message' => 'schedule_saved',
+                'class_subject_id' => $classSubjectId,
+                'group_code' => $groupCode,
+                'day_of_week' => (string)$dayOfWeek,
+                'start_period' => (string)$startPeriod,
+                'end_period' => (string)$endPeriod,
+                'room' => $room,
+                'teacher_main_id' => (string)$teacherMain,
+                'teacher_sub_id' => $teacherSub !== null ? (string)$teacherSub : null
+            ]);
+        }
         respondOrRedirect(true, 'schedule_saved', $returnPage);
     }
 
