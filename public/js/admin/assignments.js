@@ -221,10 +221,10 @@ function applyAssignmentFilters() {
         return matchYear && matchSemester && matchStatus && matchSearch;
     });
 
-    // Deduplicate by class_subject identity to avoid duplicated cards.
+    // Deduplicate by class + subject to avoid duplicated cards on UI.
     const seen = new Set();
     assignmentOfferingsFiltered = assignmentOfferingsFiltered.filter(function(asg) {
-        const key = String(asg.csId || asg.id || '');
+        const key = String(asg.classCode || '') + '|' + String(asg.subjectId || asg.subjectCode || '');
         if (!key || seen.has(key)) return false;
         seen.add(key);
         return true;
@@ -258,7 +258,9 @@ function renderAssignmentOfferingsTable() {
             const scheduleDisplay = hasSchedule
                 ? (getDayLabel(String(g.day)) + ' | Tiết ' + g.start + '-' + g.end)
                 : 'Chưa xếp lịch';
-            const roomDisplay = hasSchedule ? String(g.room) : '--';
+            const roomDisplay = hasSchedule
+                ? (typeof getRoomName === 'function' ? getRoomName(String(g.room)) : String(g.room))
+                : '--';
             const statusDisplay = asg.isOpen ? 'Đang mở' : 'Đã đóng';
             const groupCode = g.code || 'N1';
             const manageBtn = '<button class="btn btn-outline-primary" onclick="openSessionManager(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(mainTeacher || teacherDisplay) + '\', \'' + escapeHtml(groupCode) + '\')"><i class="bi bi-calendar-week me-1"></i>Quản lý lịch</button>';
@@ -286,6 +288,15 @@ function renderAssignmentOfferingsTable() {
         }).join('');
 
         const warningText = firstUnscheduled ? ('Chưa xếp lịch ' + getClassGroupLabel(asg.classCode, firstUnscheduled.code || 'N1')) : '';
+        const scheduledCount = groups.filter(function(g) { return g.day && g.start && g.end && g.room; }).length;
+        let footerStatus = '';
+        if (firstUnscheduled) {
+            footerStatus = warningText;
+        } else if (groups.length === 1) {
+            footerStatus = 'Đã xếp lịch ' + getClassGroupLabel(asg.classCode, groups[0].code || 'N1');
+        } else {
+            footerStatus = 'Đã xếp lịch ' + scheduledCount + '/' + groups.length + ' nhóm';
+        }
         const actionDisabled = asg.isOpen ? '' : ' disabled';
         const card = document.createElement('div');
         card.className = 'assignment-offering-card';
@@ -309,8 +320,7 @@ function renderAssignmentOfferingsTable() {
             '</div>' +
             rowsHtml +
             '<div class="assignment-offering-foot">' +
-                '<span>Số nhóm: ' + groups.length + ' | Thời gian mở: ' + (asg.openWindow || '--') + '</span>' +
-                (warningText ? '<span class="assignment-warning-chip">' + warningText + '</span>' : '') +
+                '<span>Số nhóm: ' + groups.length + ' | Thời gian mở: ' + (asg.openWindow || '--') + ' | ' + footerStatus + '</span>' +
             '</div>';
         container.appendChild(card);
     });

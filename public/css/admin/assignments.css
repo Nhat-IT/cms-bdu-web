@@ -242,16 +242,11 @@
 }
 
 .assignment-delete-group {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition: opacity 0.15s ease;
+    display: none !important;
 }
 
 .assignment-group-row:hover .assignment-delete-group {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
+    display: inline-flex !important;
 }
 
 .assignment-offering-foot {
