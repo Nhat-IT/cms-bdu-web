@@ -1,4 +1,14 @@
 (function () {
+    function adminDisplayDate(value) {
+        if (!value) return '';
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return String(value);
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        return `${dd}/${mm}/${yyyy}`;
+    }
+
     function applyProfile(me) {
         const displayName = me.full_name || me.username || 'Admin';
         const avatar = me.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0d6efd&color=fff`;
@@ -17,7 +27,7 @@
 
         const createdNode = document.getElementById('adminCreatedAtText');
         if (createdNode && me.created_at) {
-            createdNode.textContent = String(me.created_at).slice(0, 10);
+            createdNode.textContent = adminDisplayDate(me.created_at);
         }
 
         const fullNameInput = document.getElementById('adminFullNameInput');

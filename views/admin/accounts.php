@@ -75,6 +75,10 @@ if ($exportType === 'excel') {
     $out = fopen('php://output', 'w');
     fputcsv($out, $hasSecondaryRoleColumn ? ['username', 'full_name', 'academic_title', 'email', 'role', 'secondary_role', 'position', 'status', 'created_at'] : ['username', 'full_name', 'academic_title', 'email', 'role', 'position', 'status', 'created_at']);
     foreach ($exportRows as $row) {
+        $createdAtDisplay = '';
+        if (!empty($row['created_at'])) {
+            $createdAtDisplay = date('d/m/Y H:i:s', strtotime((string)$row['created_at']));
+        }
         $csvRow = [
             $row['username'] ?? '',
             $row['full_name'] ?? '',
@@ -87,7 +91,7 @@ if ($exportType === 'excel') {
         }
         $csvRow[] = $row['position'] ?? '';
         $csvRow[] = 'active';
-        $csvRow[] = $row['created_at'] ?? '';
+        $csvRow[] = $createdAtDisplay;
         fputcsv($out, $csvRow);
     }
     fclose($out);
