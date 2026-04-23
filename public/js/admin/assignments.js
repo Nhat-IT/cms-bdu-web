@@ -238,7 +238,12 @@ function renderAssignmentOfferingsTable() {
             const manageBtn = '<button class="btn btn-outline-primary" onclick="openSessionManager(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(mainTeacher || teacherDisplay) + '\', \'' + escapeHtml(groupCode) + '\')"><i class="bi bi-calendar-week me-1"></i>Quản lý lịch</button>';
             const classSubjectId = resolveClassSubjectId(asg);
             const scheduleBtn = '<button class="btn btn-primary" onclick="openGroupScheduleModal(\'' + classSubjectId + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(g.teacherMain || '') + '\', \'' + escapeHtml(g.teacherSub || '') + '\', \'' + escapeHtml(g.day || '') + '\', \'' + escapeHtml(g.start || '') + '\', \'' + escapeHtml(g.end || '') + '\', \'' + escapeHtml(g.room || '') + '\', \'' + escapeHtml(asg.classCode || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>';
-            const actionButtons = (!hasSchedule && asg.isOpen) ? scheduleBtn : manageBtn;
+            const primaryActionBtn = (!hasSchedule && asg.isOpen) ? scheduleBtn : manageBtn;
+            const uploadIconBtn = '<button class="btn btn-outline-dark btn-icon-only" title="Tải lên danh sách sinh viên" onclick="uploadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"' + (asg.isOpen ? '' : ' disabled') + '><i class="bi bi-upload"></i></button>';
+            const downloadIconBtn = asg.hasStudents
+                ? '<button class="btn btn-outline-success btn-icon-only" title="Tải xuống danh sách sinh viên" onclick="downloadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"><i class="bi bi-download"></i></button>'
+                : '';
+            const actionButtons = primaryActionBtn + '<span class="assignment-action-icons">' + uploadIconBtn + downloadIconBtn + '</span>';
 
             return '' +
                 '<div class="assignment-group-row">' +
@@ -262,8 +267,6 @@ function renderAssignmentOfferingsTable() {
                     '<div class="assignment-offering-subtitle">' + (asg.credits || 0) + ' tín chỉ | Năm học: ' + (asg.year || '--') + '</div>' +
                 '</div>' +
                 '<div class="assignment-head-actions">' +
-                    '<button class="btn btn-outline-dark" onclick="uploadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"' + actionDisabled + '><i class="bi bi-upload me-1"></i>Tải lên SV</button>' +
-                    '<button class="btn btn-outline-success" onclick="downloadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"><i class="bi bi-download me-1"></i>Tải xuống SV</button>' +
                     '<button class="btn btn-outline-primary" onclick="addGroupToClass(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(asg.subjectName) + '\')"' + actionDisabled + '><i class="bi bi-plus-circle me-1"></i>Thêm nhóm</button>' +
                 '</div>' +
             '</div>' +
@@ -428,34 +431,59 @@ function updateAssignmentDownloadButtons() {
 
 
 function downloadAssignmentStudentList(courseId) {
-    const rows = assignmentStudentsByClass[courseId] || [];
-    if (rows.length === 0) {
+    const course = allAssignmentCourses.find(function (c) { return c.id === courseId; });
+    if (!course) {
+        alert('Không tìm thấy lớp học phần.');
         return;
     }
 
-    const course = allAssignmentCourses.find(function (c) { return c.id === courseId; });
-    const classCode = course ? course.classCode : courseId;
+    const csId = resolveClassSubjectId(course);
+    if (!csId) {
+        alert('Không xác định được lớp học phần để tải danh sách.');
+        return;
+    }
 
-    const csv = [];
-    csv.push(['STT', 'MSSV', 'Họ và tên', 'Ngày sinh', 'Email', 'Mã lớp HP', 'Nhóm học'].join(','));
-    rows.forEach(function (student, index) {
-        csv.push([
-            String(index + 1),
-            student.mssv,
-            student.name,
-            student.dob,
-            student.email,
-            classCode,
-            student.section
-        ].join(','));
-    });
+    fetch('/cms/controllers/admin/classSubjectController.php?action=export_group_students&class_subject_id=' + encodeURIComponent(csId), {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+    })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            const students = (data && data.ok && Array.isArray(data.students)) ? data.students : [];
+            if (!students.length) {
+                if (window.showToast) window.showToast('Chưa có danh sách sinh viên trong DB để tải xuống.', 'warning');
+                else alert('Chưa có danh sách sinh viên trong DB để tải xuống.');
+                return;
+            }
 
-    const link = document.createElement('a');
-    link.href = 'data:text/csv;charset=utf-8,%EF%BB%BF' + encodeURIComponent(csv.join('\n'));
-    link.download = classCode + '_DanhSachSV.csv';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+            const classCode = course.classCode || courseId;
+            const csv = [];
+            csv.push(['STT', 'MSSV', 'Họ và tên', 'Ngày sinh', 'Lớp'].join(','));
+            students.forEach(function(student, index) {
+                const mssv = student.username || student.mssv || '';
+                const name = student.full_name || '';
+                const dob = student.birth_date || '';
+                const className = student.class_name || '';
+                csv.push([
+                    String(index + 1),
+                    mssv,
+                    name,
+                    dob,
+                    className
+                ].join(','));
+            });
+
+            const link = document.createElement('a');
+            link.href = 'data:text/csv;charset=utf-8,%EF%BB%BF' + encodeURIComponent(csv.join('\n'));
+            link.download = classCode + '_DanhSachSV.csv';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        })
+        .catch(function() {
+            if (window.showToast) window.showToast('Lỗi khi tải danh sách sinh viên từ DB.', 'error');
+            else alert('Lỗi khi tải danh sách sinh viên từ DB.');
+        });
 }
 
 function populatePeriodSelects() {

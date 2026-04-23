@@ -159,7 +159,7 @@
 }
 
 .assignment-grid-head-action {
-    text-align: right;
+    text-align: center;
 }
 
 .assignment-group-row:last-of-type {
@@ -224,6 +224,22 @@
     border-radius: 8px;
     min-width: 122px;
     white-space: nowrap;
+}
+
+.assignment-action-icons {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.assignment-action .btn.btn-icon-only {
+    min-width: 36px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .assignment-offering-foot {

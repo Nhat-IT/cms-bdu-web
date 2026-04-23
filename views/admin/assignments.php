@@ -79,6 +79,18 @@ $rawGroups = db_fetch_all("
     ORDER BY csg.class_subject_id, csg.group_code ASC
 ");
 
+// Số lượng SV theo lớp học phần (class_subject_id)
+$studentCountByCsId = [];
+$rawStudentCounts = db_fetch_all("
+    SELECT csg.class_subject_id, COUNT(gs.id) AS student_count
+    FROM class_subject_groups csg
+    LEFT JOIN group_students gs ON gs.class_subject_group_id = csg.id
+    GROUP BY csg.class_subject_id
+");
+foreach ($rawStudentCounts as $row) {
+    $studentCountByCsId[(int)$row['class_subject_id']] = (int)$row['student_count'];
+}
+
 // Group theo class_subject_id
 $groupsByCsId = [];
 foreach ($rawGroups as $g) {
@@ -144,6 +156,8 @@ foreach ($classes as $c) {
             'semester'       => $a['hk'] ?? '',
             'openWindow'     => $openFmt,
             'computedStatus' => $computedStatus,
+            'hasStudents'    => (($studentCountByCsId[(int)$csId] ?? 0) > 0),
+            'studentCount'   => (int)($studentCountByCsId[(int)$csId] ?? 0),
             'teacherMain'    => $a['main_teacher_id'] ? (string)$a['main_teacher_id'] : null,
             'teacherMainName'=> $mainTeacherName,
             'groups'         => array_map(fn($g) => [

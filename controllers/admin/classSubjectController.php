@@ -432,6 +432,19 @@ try {
         $groupCode = trim($_GET['group_code'] ?? '');
         $csId = (int) ($_GET['class_subject_id'] ?? 0);
 
+        if ($groupId <= 0 && $csId > 0 && $groupCode === '') {
+            $students = db_fetch_all(
+                'SELECT u.username, u.full_name, u.birth_date, gs.status, gs.mssv, gs.class_name
+                 FROM group_students gs
+                 JOIN class_subject_groups csg ON csg.id = gs.class_subject_group_id
+                 LEFT JOIN users u ON u.id = gs.student_id
+                 WHERE csg.class_subject_id = ?
+                 ORDER BY COALESCE(u.full_name, gs.full_name, gs.mssv) ASC',
+                [$csId]
+            );
+            jsonResponse(['ok' => true, 'students' => $students]);
+        }
+
         $targetGroupId = $groupId;
         if ($targetGroupId <= 0 && $csId > 0) {
             $g = db_fetch_one(
