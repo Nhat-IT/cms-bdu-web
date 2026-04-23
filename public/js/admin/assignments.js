@@ -211,13 +211,8 @@ function renderAssignmentOfferingsTable() {
             const statusDisplay = asg.computedStatus === '0' ? 'Đã đóng' : 'Đang mở';
             const groupCode = g.code || 'N1';
             const manageBtn = '<button class="btn btn-outline-primary" onclick="openSessionManager(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(mainTeacher || teacherDisplay) + '\', \'' + escapeHtml(groupCode) + '\')"><i class="bi bi-calendar-week me-1"></i>Quản lý lịch</button>';
-            let scheduleBtn = '';
-            if (asg.isOpen) {
-                scheduleBtn = hasSchedule
-                    ? ''
-                    : '<button class="btn btn-primary" onclick="openGroupScheduleModal(\'' + (asg.csId || '') + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(g.teacherMain || '') + '\', \'' + escapeHtml(g.teacherSub || '') + '\', \'' + escapeHtml(g.day || '') + '\', \'' + escapeHtml(g.start || '') + '\', \'' + escapeHtml(g.end || '') + '\', \'' + escapeHtml(g.room || '') + '\', \'' + escapeHtml(asg.classCode || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>';
-            }
-            const actionButtons = manageBtn + (scheduleBtn ? (' ' + scheduleBtn) : '');
+            const scheduleBtn = '<button class="btn btn-primary" onclick="openGroupScheduleModal(\'' + (asg.csId || '') + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(g.teacherMain || '') + '\', \'' + escapeHtml(g.teacherSub || '') + '\', \'' + escapeHtml(g.day || '') + '\', \'' + escapeHtml(g.start || '') + '\', \'' + escapeHtml(g.end || '') + '\', \'' + escapeHtml(g.room || '') + '\', \'' + escapeHtml(asg.classCode || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>';
+            const actionButtons = (!hasSchedule && asg.isOpen) ? scheduleBtn : manageBtn;
 
             return '' +
                 '<div class="assignment-group-row">' +
