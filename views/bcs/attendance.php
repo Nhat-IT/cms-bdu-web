@@ -16,6 +16,8 @@ $classWarning = '';
 $classId = null;
 $className = '';
 $semesters = [];
+$academicYears = [];
+$currentSemester = null;
 $subjects = [];
 $students = [];
 $unreadCount = 0;
@@ -49,7 +51,30 @@ try {
 
     if ($classId) {
         // Lấy danh sách học kỳ
-        $semesters = db_fetch_all("SELECT * FROM semesters ORDER BY id DESC");
+        $semesters = db_fetch_all(
+            "SELECT *
+             FROM semesters
+             ORDER BY academic_year DESC,
+                      FIELD(UPPER(semester_name), 'HK1', '1', 'HK2', '2', 'HK3', '3'),
+                      start_date DESC"
+        );
+        foreach ($semesters as $sem) {
+            $year = trim((string) ($sem['academic_year'] ?? ''));
+            if ($year !== '') {
+                $academicYears[$year] = true;
+            }
+            if (
+                $currentSemester === null
+                && !empty($sem['start_date']) && !empty($sem['end_date'])
+                && date('Y-m-d') >= $sem['start_date']
+                && date('Y-m-d') <= $sem['end_date']
+            ) {
+                $currentSemester = $sem;
+            }
+        }
+        if ($currentSemester === null && !empty($semesters)) {
+            $currentSemester = $semesters[0];
+        }
 
         // Lấy danh sách môn học của lớp
         $subjects = db_fetch_all(
@@ -81,6 +106,14 @@ try {
     $fullName = $_SESSION['full_name'] ?? 'BCS';
     $position = $_SESSION['position'] ?? 'Ban Cán Sự';
     $avatar = getAvatarUrl($_SESSION['avatar'] ?? null, $fullName, 55);
+}
+
+function attendanceSemesterLabel($semesterName, $academicYear) {
+    $code = strtoupper(trim((string)($semesterName ?? '')));
+    if (preg_match('/^(HK)?([123])$/', $code, $m)) {
+        return 'Học kỳ ' . $m[2] . ' - ' . (string)($academicYear ?? '');
+    }
+    return trim((string)$semesterName . ' - ' . (string)$academicYear);
 }
 ?>
 <!DOCTYPE html>
@@ -170,37 +203,49 @@ try {
         
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-2">
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-md-4">
+                        <label class="fw-bold small text-muted mb-1">NĂM HỌC</label>
+                        <select class="form-select border-primary bg-light fw-bold text-primary bcs-compact-select" id="filterAcademicYear">
+                            <option value="all">-- Tất cả --</option>
+                            <?php foreach (array_keys($academicYears) as $year): ?>
+                            <option value="<?= e($year) ?>"><?= e($year) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4">
                         <label class="fw-bold small text-muted mb-1">HỌC KỲ</label>
-                        <select class="form-select border-primary bg-light fw-bold text-primary" id="filterSemester">
+                        <select class="form-select border-primary bg-light fw-bold text-primary bcs-compact-select" id="filterSemester">
+                            <option value="all">-- Tất cả --</option>
                             <?php foreach ($semesters as $sem): ?>
-                            <option value="<?= $sem['id'] ?>"><?= e($sem['semester_name']) ?></option>
+                            <option value="<?= e($sem['semester_name']) ?>" data-year="<?= e($sem['academic_year'] ?? '') ?>">
+                                <?= e(($sem['semester_name'] ?? '') . ' - ' . ($sem['academic_year'] ?? '')) ?>
+                            </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-12 col-md-4">
                         <label class="fw-bold small text-muted mb-1">MÔN HỌC</label>
-                        <select class="form-select border-primary fw-bold text-dark" id="subjectSelect" onchange="onSubjectChange()">
+                        <select class="form-select border-primary fw-bold text-dark bcs-compact-select" id="subjectSelect" onchange="onSubjectChange()">
                             <option value="">-- Chọn môn học --</option>
-                            <?php foreach ($subjects as $subj): ?>
-                            <option value="<?= $subj['subject_id'] ?>" data-id="<?= $subj['class_subject_id'] ?>"><?= e($subj['subject_name']) ?></option>
-                            <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <label class="fw-bold small text-muted mb-1">NHÓM</label>
-                        <select class="form-select border-primary fw-bold text-dark" id="groupSelect" onchange="onGroupChange()">
-                            <option value="">-- Chọn nhóm --</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
+                </div>
+
+                <div class="row g-2 align-items-end mt-1">
+                    <div class="col-12 col-md-4">
                         <label class="fw-bold small text-muted mb-1">NGÀY HỌC</label>
                         <input type="date" class="form-control fw-bold" id="attendanceDate" value="<?= date('Y-m-d') ?>">
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-12 col-md-4">
+                        <label class="fw-bold small text-muted mb-1">NHÓM</label>
+                        <select class="form-select border-primary fw-bold text-dark bcs-group-select" id="groupSelect" onchange="onGroupChange()">
+                            <option value="">-- Chọn nhóm --</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4">
                         <label class="fw-bold small text-muted mb-1">BUỔI</label>
-                        <select class="form-select fw-bold text-dark" id="attendanceSession" onchange="checkSessionReason()">
+                        <select class="form-select fw-bold text-dark bcs-compact-select" id="attendanceSession" onchange="checkSessionReason()">
                             <option value="Sáng">Sáng</option>
                             <option value="Chiều">Chiều</option>
                             <option value="Tối">Tối</option>
@@ -208,8 +253,8 @@ try {
                     </div>
                 </div>
                 
-                <div class="row g-3 mt-1 align-items-center">
-                    <div class="col-md-8">
+                <div class="row g-3 mt-2 align-items-center">
+                    <div class="col-12 col-md-8">
                         <div class="p-2 bg-light rounded text-dark small border-start border-3 border-primary fixed-info-box" id="subjectInfoBox">
                             <div class="row g-2 w-100 m-0">
                                 <div class="col-md-4 p-0"><i class="bi bi-person-badge text-primary me-1"></i>Giảng viên: <strong id="lblTeacher">...</strong></div>
@@ -218,7 +263,7 @@ try {
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4 invisible" id="sessionReasonDiv">
+                    <div class="col-12 col-md-4 invisible" id="sessionReasonDiv">
                         <input type="text" class="form-control border-warning bg-warning bg-opacity-10" id="sessionReason" placeholder="Nhập lý do đổi buổi (*Bắt buộc)">
                     </div>
                 </div>
@@ -285,7 +330,7 @@ try {
             </div>
             <div class="card-footer bg-white p-3 d-flex justify-content-between align-items-center">
                 <span class="fw-bold text-primary" id="studentCountText">Sĩ số: <span id="totalCount"><?= count($students) ?></span> | Có mặt: <span id="presentCount">0</span> | Vắng: <span id="absentCount">0</span></span>
-                <button class="btn btn-primary px-5 fw-bold shadow-sm" onclick="saveAttendance()"><i class="bi bi-floppy-fill me-2"></i>Lưu Dữ Liệu</button>
+                <button class="btn btn-primary px-5 fw-bold shadow-sm" id="bcsSaveAttendanceBtn"><i class="bi bi-floppy-fill me-2"></i>Lưu Dữ Liệu</button>
             </div>
         </div>
 
@@ -336,37 +381,21 @@ try {
 <script src="../../public/js/script.js"></script>
 <script src="../../public/js/bcs/bcs-layout.js"></script>
 <script src="../../public/js/bcs/attendance.js"></script>
-<script>
-// Đồng bộ thông tin môn học khi chọn môn học/nhóm
-window.onGroupChange = function () {
-    const groupId = Number(document.getElementById('groupSelect')?.value || 0);
-    bcsAttendanceState.selectedGroupId = groupId;
-
-    const group = bcsAttendanceState.groups.find((g) => Number(g.group_id) === groupId);
-    if (group) {
-        const lblTeacher = document.getElementById('lblTeacher');
-        const lblTime = document.getElementById('lblTime');
-        const lblRoom = document.getElementById('lblRoom');
-        const sessionSelect = document.getElementById('attendanceSession');
-
-        if (lblTeacher) lblTeacher.textContent = group.teacher_name || 'Chưa cập nhật';
-        if (lblTime) {
-            lblTime.textContent = `${bcsFormatDate(group.start_date)} - ${bcsFormatDate(group.end_date)} | Tiết ${group.start_period || '?'}-${group.end_period || '?'}`;
-        }
-        if (lblRoom) lblRoom.textContent = group.room || 'N/A';
-        if (sessionSelect && group.study_session) {
-            sessionSelect.value = group.study_session;
-        }
-    }
-
-    bcsLoadRoster();
-};
-</script>
 <script src="../../public/js/bcs/attendance-dropdown.js"></script>
 <script>
 // Pass data to JavaScript
 const CLASS_ID = <?= json_encode($classId) ?>;
 const STUDENTS_DATA = <?= json_encode($students) ?>;
 </script>
+<style>
+    .bcs-compact-select {
+        width: 100%;
+    }
+    .bcs-group-select {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+    }
+</style>
 </body>
 </html>

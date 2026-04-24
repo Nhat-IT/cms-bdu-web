@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * CMS BDU - Kho Lưu Trữ Lớp (BCS)
  */
@@ -11,49 +11,108 @@ requireRole('bcs');
 
 $userId = $_SESSION['user_id'];
 $pageTitle = 'Kho Lưu Trữ Lớp';
+$dbError = '';
+$classWarning = '';
+$classId = null;
+$className = '';
+$fullName = $_SESSION['full_name'] ?? 'BCS';
+$position = $_SESSION['position'] ?? 'Ban Cán Sự';
+$avatar = getAvatarUrl($_SESSION['avatar'] ?? null, $fullName, 55);
+$unreadCount = 0;
+$semesters = [];
+$academicYears = [];
+$selectedYear = 'all';
+$selectedSemester = 'all';
+$documents = [];
+$currentSemester = null;
 
-// Lấy class_id của BCS từ class_students
-$stmt = $pdo->prepare("
-    SELECT cs.class_id, c.class_name 
-    FROM class_students cs
-    JOIN classes c ON cs.class_id = c.id
-    WHERE cs.student_id = ?
-");
-$stmt->execute([$userId]);
-$classInfo = $stmt->fetch();
-$classId = $classInfo['class_id'] ?? null;
-$className = $classInfo['class_name'] ?? '';
+try {
+    getDBConnection();
 
-// Lấy thông tin user
-$stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-$stmt->execute([$userId]);
-$currentUser = $stmt->fetch();
-$fullName = $currentUser['full_name'] ?? '';
-$position = $currentUser['position'] ?? 'Ban Cán Sự';
-$avatar = getAvatarUrl($currentUser['avatar'] ?? null, $fullName, 55);
+    // Lấy class_id của BCS từ class_students
+    $classInfo = db_fetch_one(
+        "SELECT cs.class_id, c.class_name
+         FROM class_students cs
+         JOIN classes c ON cs.class_id = c.id
+         WHERE cs.student_id = ?",
+        [$userId]
+    );
+    $classId = (int)($classInfo['class_id'] ?? 0);
+    $className = $classInfo['class_name'] ?? '';
 
-// Lấy số thông báo
-$stmt = $pdo->prepare("SELECT COUNT(*) as total FROM notification_logs WHERE user_id = ? AND is_read = 0");
-$stmt->execute([$userId]);
-$unreadCount = $stmt->fetch()['total'] ?? 0;
+    // Lấy thông tin user
+    $currentUser = db_fetch_one("SELECT * FROM users WHERE id = ?", [$userId]);
+    $fullName = $currentUser['full_name'] ?? '';
+    $position = $currentUser['position'] ?? 'Ban Cán Sự';
+    $avatar = getAvatarUrl($currentUser['avatar'] ?? null, $fullName, 55);
 
-// Lấy học kỳ hiện tại
-$stmt = $pdo->prepare("SELECT * FROM semesters ORDER BY id DESC LIMIT 1");
-$stmt->execute();
-$currentSemester = $stmt->fetch();
+    // Lấy số thông báo
+    $unreadCount = (int)(db_fetch_one(
+        "SELECT COUNT(*) as total FROM notification_logs WHERE user_id = ? AND is_read = 0",
+        [$userId]
+    )['total'] ?? 0);
 
-// Lấy tài liệu theo lớp
-$stmt = $pdo->prepare("
-    SELECT d.*, s.subject_name, u.full_name as uploader_name
-    FROM documents d
-    JOIN class_subjects cs ON d.class_subject_id = cs.id
-    JOIN subjects s ON cs.subject_id = s.id
-    LEFT JOIN users u ON d.uploader_id = u.id
-    WHERE d.semester = ? OR d.uploader_id = ?
-    ORDER BY d.created_at DESC
-");
-$stmt->execute([$currentSemester['semester_name'] ?? 'HK2', $userId]);
-$documents = $stmt->fetchAll();
+    // Lấy danh sách học kỳ và năm học
+    $semesters = db_fetch_all(
+        "SELECT id, semester_name, academic_year, start_date, end_date
+         FROM semesters
+         ORDER BY academic_year DESC,
+                  FIELD(UPPER(semester_name), 'HK1', '1', 'HK2', '2', 'HK3', '3'),
+                  start_date DESC"
+    );
+    foreach ($semesters as $sem) {
+        $year = trim((string)($sem['academic_year'] ?? ''));
+        if ($year !== '') $academicYears[$year] = true;
+    }
+
+    // Học kỳ mặc định theo ngày hiện tại
+    foreach ($semesters as $sem) {
+        if (!empty($sem['start_date']) && !empty($sem['end_date']) && date('Y-m-d') >= $sem['start_date'] && date('Y-m-d') <= $sem['end_date']) {
+            $currentSemester = $sem;
+            break;
+        }
+    }
+    if (!$currentSemester && !empty($semesters)) $currentSemester = $semesters[0];
+
+    $selectedYear = trim((string)($_GET['year'] ?? ''));
+    if ($selectedYear === '') $selectedYear = (string)($currentSemester['academic_year'] ?? 'all');
+    if ($selectedYear !== 'all' && !isset($academicYears[$selectedYear])) $selectedYear = 'all';
+
+    $selectedSemester = strtoupper(trim((string)($_GET['semester'] ?? '')));
+    if ($selectedSemester === '') $selectedSemester = strtoupper((string)($currentSemester['semester_name'] ?? 'ALL'));
+    if ($selectedSemester === 'ALL') {
+        $selectedSemester = 'all';
+    } elseif (preg_match('/^(HK)?([123])$/i', $selectedSemester, $m)) {
+        $selectedSemester = 'HK' . $m[2];
+    } else {
+        $selectedSemester = 'all';
+    }
+
+    // Lấy tài liệu theo lớp + bộ lọc năm/học kỳ
+    if ($classId > 0) {
+        $documents = db_fetch_all(
+            "SELECT d.*, s.subject_name, u.full_name as uploader_name, sm.semester_name, sm.academic_year
+             FROM documents d
+             JOIN class_subjects cs ON d.class_subject_id = cs.id
+             JOIN subjects s ON cs.subject_id = s.id
+             LEFT JOIN users u ON d.uploader_id = u.id
+             LEFT JOIN semesters sm ON cs.semester_id = sm.id
+             WHERE cs.class_id = ?
+               AND (? = 'all' OR sm.academic_year = ?)
+               AND (? = 'all' OR UPPER(sm.semester_name) = UPPER(?))
+             ORDER BY d.created_at DESC",
+            [$classId, $selectedYear, $selectedYear, $selectedSemester, $selectedSemester]
+        );
+    } else {
+        $classWarning = 'Tài khoản BCS chưa được gán lớp trong hệ thống.';
+    }
+} catch (Exception $e) {
+    error_log('BCS documents load error: ' . $e->getMessage());
+    $dbError = '';
+    $fullName = $_SESSION['full_name'] ?? 'BCS';
+    $position = $_SESSION['position'] ?? 'Ban Cán Sự';
+    $avatar = getAvatarUrl($_SESSION['avatar'] ?? null, $fullName, 55);
+}
 
 // Đếm theo danh mục
 $stats = [
@@ -143,7 +202,13 @@ foreach ($documents as $doc) {
         </div>
     </div>
 
-    <div class="p-4">      
+    <div class="p-4">
+        <?php if ($dbError !== ''): ?>
+        <div class="alert alert-danger mb-4" role="alert"><?= e($dbError) ?></div>
+        <?php endif; ?>
+        <?php if ($classWarning !== ''): ?>
+        <div class="alert alert-warning mb-4" role="alert"><?= e($classWarning) ?></div>
+        <?php endif; ?>
     
         <div class="row g-4 mb-4">
             <div class="col-md-3">
@@ -206,9 +271,16 @@ foreach ($documents as $doc) {
                 <h5 class="fw-bold text-dark m-0"><i class="bi bi-list-ul me-2 text-secondary"></i>Danh sách Tài liệu</h5>
                 
                 <div class="d-flex gap-2 align-items-center">
+                    <select class="form-select form-select-sm w-auto fw-bold text-primary border-primary" id="filterYear">
+                        <option value="all">Tất cả năm</option>
+                        <?php foreach (array_keys($academicYears) as $year): ?>
+                        <option value="<?= e($year) ?>" <?= $selectedYear === $year ? 'selected' : '' ?>><?= e($year) ?></option>
+                        <?php endforeach; ?>
+                    </select>
                     <select class="form-select form-select-sm w-auto fw-bold text-primary border-primary" id="filterSemester">
+                        <option value="all">Tất cả học kỳ</option>
                         <?php foreach (['HK1', 'HK2', 'HK3'] as $hk): ?>
-                        <option value="<?= $hk ?>" <?= ($currentSemester['semester_name'] ?? '') == $hk ? 'selected' : '' ?>><?= str_replace('HK', 'Học kỳ ', $hk) ?></option>
+                        <option value="<?= $hk ?>" <?= strtoupper((string)$selectedSemester) === $hk ? 'selected' : '' ?>><?= str_replace('HK', 'Học kỳ ', $hk) ?></option>
                         <?php endforeach; ?>
                     </select>
                     <select class="form-select form-select-sm w-auto" id="filterCategory">
@@ -236,7 +308,7 @@ foreach ($documents as $doc) {
                                 <th class="pe-4 py-3 text-end">HÀNH ĐỘNG</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="bcsDocumentsTableBody">
                             <?php if (!empty($documents)): ?>
                             <?php foreach ($documents as $doc): ?>
                             <?php 
@@ -247,7 +319,7 @@ foreach ($documents as $doc) {
                             elseif ($doc['icon_type'] == 'xls') { $iconClass = 'bi-file-earmark-excel-fill text-success'; $iconColor = 'text-success'; }
                             elseif ($doc['icon_type'] == 'zip') { $iconClass = 'bi-file-earmark-zip-fill text-warning'; $iconColor = 'text-warning'; }
                             ?>
-                            <tr>
+                            <tr data-title="<?= e(strtolower($doc['title'] ?? '')) ?>" data-note="<?= e(strtolower($doc['note'] ?? '')) ?>" data-category="<?= e(strtolower($doc['category'] ?? '')) ?>">
                                 <td class="ps-4 py-3">
                                     <a href="#" class="file-link d-flex align-items-center" onclick="handleFileView(event, '<?= e($doc['drive_link'] ?? '') ?>')">
                                         <i class="bi <?= $iconClass ?> fs-3 me-3"></i>

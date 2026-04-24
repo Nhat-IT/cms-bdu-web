@@ -1,108 +1,38 @@
-let bcsDocuments = [];
-let bcsDocumentMode = 'add';
-let bcsEditingDocumentId = 0;
-
-function bcsFormatDate(value) {
-    if (!value) return '';
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return String(value).slice(0, 10);
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
+function bcsNormalizeText(value) {
+    return String(value || '').trim().toLowerCase();
 }
 
-function bcsGetFileIconClass(title = '') {
-    const lower = String(title).toLowerCase();
-    if (lower.endsWith('.pdf')) return 'bi-file-earmark-pdf-fill text-danger';
-    if (lower.endsWith('.doc') || lower.endsWith('.docx')) return 'bi-file-earmark-word-fill text-primary';
-    if (lower.endsWith('.xls') || lower.endsWith('.xlsx') || lower.endsWith('.csv')) return 'bi-file-earmark-excel-fill text-success';
-    if (lower.endsWith('.zip') || lower.endsWith('.rar')) return 'bi-file-earmark-zip-fill text-warning';
-    return 'bi-file-earmark-text-fill text-secondary';
+function bcsApplyDocumentFilters() {
+    const keyword = bcsNormalizeText(document.getElementById('searchInput')?.value);
+    const category = bcsNormalizeText(document.getElementById('filterCategory')?.value);
+    const rows = Array.from(document.querySelectorAll('#bcsDocumentsTableBody tr[data-title]'));
+
+    rows.forEach((row) => {
+        const title = row.getAttribute('data-title') || '';
+        const note = row.getAttribute('data-note') || '';
+        const rowCategory = row.getAttribute('data-category') || '';
+
+        const matchKeyword = !keyword || title.includes(keyword) || note.includes(keyword);
+        const matchCategory = !category || rowCategory.includes(category);
+        row.style.display = (matchKeyword && matchCategory) ? '' : 'none';
+    });
 }
 
-function bcsRenderDocumentStats() {
-    const total = bcsDocuments.length;
-    const byCategory = bcsDocuments.reduce((acc, item) => {
-        const key = item.category || 'Khac';
-        acc[key] = (acc[key] || 0) + 1;
-        return acc;
-    }, {});
-
-    const statCards = document.querySelectorAll('.stat-card-custom h4');
-    if (statCards.length >= 4) {
-        statCards[0].textContent = String(byCategory['Thông báo'] || 0);
-        statCards[1].textContent = String(byCategory['Biên bản'] || 0);
-        statCards[2].textContent = String(byCategory['Học liệu'] || 0);
-        statCards[3].textContent = String(total);
-    }
+function bcsBuildQueryForSemesterYear() {
+    const year = document.getElementById('filterYear')?.value || 'all';
+    const semester = document.getElementById('filterSemester')?.value || 'all';
+    const url = new URL(window.location.href);
+    url.searchParams.set('year', year);
+    url.searchParams.set('semester', semester);
+    return url.toString();
 }
 
-function bcsRenderDocumentsTable() {
-    const tbody = document.getElementById('bcsDocumentsTableBody');
-    if (!tbody) return;
-
-    if (!bcsDocuments.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Chua co tai lieu trong lop.</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = bcsDocuments.map((doc) => {
-        const category = doc.category || 'Khac';
-        const badgeClass = category === 'Thông báo'
-            ? 'bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25'
-            : (category === 'Biên bản'
-                ? 'bg-warning bg-opacity-10 text-dark border border-warning border-opacity-50'
-                : 'bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25');
-
-        const title = doc.title || '';
-        const note = doc.note || '';
-        const link = doc.drive_link || '#';
-
-        return `
-            <tr>
-                <td class="ps-4 py-3">
-                    <a href="${link}" class="file-link d-flex align-items-center" target="_blank" rel="noopener noreferrer">
-                        <i class="bi ${bcsGetFileIconClass(title)} fs-3 me-3"></i>
-                        <div>
-                            <h6 class="mb-0 fw-bold text-dark file-title">${title}</h6>
-                            <small class="text-muted">${note || 'Khong co ghi chu'}</small>
-                        </div>
-                    </a>
-                </td>
-                <td><span class="badge ${badgeClass} px-2 py-1">${category}</span></td>
-                <td>${doc.uploader_name || 'BCS'}</td>
-                <td>${bcsFormatDate(doc.created_at)}</td>
-                <td class="text-center text-muted small">-</td>
-                <td class="pe-4 text-end">
-                    <button class="btn btn-sm btn-light text-success border me-1" title="Sua" data-bs-toggle="modal" data-bs-target="#uploadModal" onclick="openDocModal('edit', ${doc.id})"><i class="bi bi-pencil-square"></i></button>
-                    <button class="btn btn-sm btn-light text-danger border" title="Xoa" onclick="deleteDocument(${doc.id})"><i class="bi bi-trash"></i></button>
-                </td>
-            </tr>`;
-    }).join('');
+function bcsOnYearSemesterChange() {
+    window.location.href = bcsBuildQueryForSemesterYear();
 }
 
-async function loadBcsDocuments() {
-    const keyword = (document.getElementById('bcsDocumentKeyword')?.value || '').trim();
-    const category = document.getElementById('bcsDocumentCategoryFilter')?.value || 'all';
-
-    const query = new URLSearchParams({ keyword, category }).toString();
-    const res = await fetch(`/api/bcs/documents?${query}`, { headers: { Accept: 'application/json' } });
-
-    if (res.status === 401) {
-        window.location.href = '/login.html';
-        return;
-    }
-
-    const data = await res.json().catch(() => []);
-    if (!res.ok) {
-        alert(data.error || 'Khong the tai danh sach tai lieu.');
-        return;
-    }
-
-    bcsDocuments = Array.isArray(data) ? data : [];
-    bcsRenderDocumentStats();
-    bcsRenderDocumentsTable();
+function bcsIsCustomCategory(value) {
+    return bcsNormalizeText(value).startsWith('kh');
 }
 
 function toggleCustomCategory() {
@@ -110,7 +40,7 @@ function toggleCustomCategory() {
     const customDiv = document.getElementById('customCategoryDiv');
     if (!categorySelect || !customDiv) return;
 
-    if (categorySelect.value === 'Khác') {
+    if (bcsIsCustomCategory(categorySelect.value)) {
         customDiv.classList.remove('d-none');
         document.getElementById('customCategoryInput')?.focus();
     } else {
@@ -118,23 +48,36 @@ function toggleCustomCategory() {
     }
 }
 
-function openDocModal(mode, docId = 0) {
-    bcsDocumentMode = mode;
-    bcsEditingDocumentId = Number(docId || 0);
+function bcsSetSelectValue(selectEl, value) {
+    if (!selectEl) return false;
+    const target = String(value || '');
+    const option = Array.from(selectEl.options).find((opt) => String(opt.value) === target);
+    if (option) {
+        selectEl.value = target;
+        return true;
+    }
+    return false;
+}
 
+function openDocModal(mode, docData = null) {
     const modalTitle = document.getElementById('docModalTitle');
     const submitBtn = document.getElementById('docModalSubmitBtn');
     const fileContainer = document.getElementById('fileUploadContainer');
     const categorySelect = document.getElementById('docCategory');
     const customCategoryDiv = document.getElementById('customCategoryDiv');
     const customCategoryInput = document.getElementById('customCategoryInput');
+    const form = document.getElementById('uploadDocForm');
+
+    if (!modalTitle || !submitBtn || !fileContainer || !categorySelect || !form) return;
 
     if (mode === 'add') {
         modalTitle.innerHTML = '<i class="bi bi-cloud-arrow-up-fill me-2"></i>Tai Tai Lieu Len';
         submitBtn.innerText = 'XAC NHAN';
-        fileContainer?.classList.remove('d-none');
-        document.getElementById('uploadDocForm')?.reset();
-        if (categorySelect) categorySelect.value = 'Thông báo';
+        fileContainer.classList.remove('d-none');
+        form.reset();
+        if (!bcsSetSelectValue(categorySelect, 'Thong bao')) {
+            categorySelect.selectedIndex = 0;
+        }
         customCategoryDiv?.classList.add('d-none');
         if (customCategoryInput) customCategoryInput.value = '';
         return;
@@ -142,89 +85,49 @@ function openDocModal(mode, docId = 0) {
 
     modalTitle.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Chinh Sua Tai Lieu';
     submitBtn.innerText = 'LUU THAY DOI';
-    fileContainer?.classList.add('d-none');
+    fileContainer.classList.add('d-none');
 
-    const doc = bcsDocuments.find((item) => Number(item.id) === bcsEditingDocumentId);
+    const doc = (docData && typeof docData === 'object') ? docData : null;
     if (!doc) return;
 
     document.getElementById('docTitle').value = doc.title || '';
     document.getElementById('docNote').value = doc.note || '';
 
-    const defaultCategories = ['Thông báo', 'Biên bản', 'Học liệu'];
-    if (defaultCategories.includes(doc.category)) {
-        categorySelect.value = doc.category;
+    const hasDefault = bcsSetSelectValue(categorySelect, doc.category || '');
+    if (hasDefault && !bcsIsCustomCategory(categorySelect.value)) {
         customCategoryDiv?.classList.add('d-none');
-        customCategoryInput.value = '';
+        if (customCategoryInput) customCategoryInput.value = '';
     } else {
-        categorySelect.value = 'Khác';
+        const customOption = Array.from(categorySelect.options).find((opt) => bcsIsCustomCategory(opt.value));
+        if (customOption) categorySelect.value = customOption.value;
         customCategoryDiv?.classList.remove('d-none');
-        customCategoryInput.value = doc.category || '';
+        if (customCategoryInput) customCategoryInput.value = doc.category || '';
     }
 }
 
-async function saveDocument() {
-    const title = (document.getElementById('docTitle')?.value || '').trim();
-    if (!title) {
-        alert('Vui long nhap tieu de tai lieu.');
-        return;
-    }
-
-    const categorySelect = document.getElementById('docCategory');
-    const category = categorySelect?.value === 'Khác'
-        ? ((document.getElementById('customCategoryInput')?.value || '').trim() || 'Khác')
-        : (categorySelect?.value || 'Học liệu');
-
-    const payload = {
-        title,
-        note: (document.getElementById('docNote')?.value || '').trim(),
-        category,
-        driveLink: (document.getElementById('docFile')?.files?.[0]?.name || '').trim()
-    };
-
-    const url = bcsDocumentMode === 'edit'
-        ? `/api/bcs/documents/${bcsEditingDocumentId}`
-        : '/api/bcs/documents';
-
-    const method = bcsDocumentMode === 'edit' ? 'PUT' : 'POST';
-
-    const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(payload)
-    });
-
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-        alert(data.error || 'Khong the luu tai lieu.');
-        return;
-    }
-
-    await loadBcsDocuments();
+function saveDocument() {
+    alert('Chuc nang luu/chinh sua tai lieu can backend API.');
 }
 
-async function deleteDocument(id) {
-    if (!confirm('Ban co chac muon xoa tai lieu nay?')) return;
-
-    const res = await fetch(`/api/bcs/documents/${id}`, {
-        method: 'DELETE',
-        headers: { Accept: 'application/json' }
-    });
-
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-        alert(data.error || 'Khong the xoa tai lieu.');
-        return;
-    }
-
-    await loadBcsDocuments();
+function deleteDocument() {
+    alert('Chuc nang xoa tai lieu can backend API.');
 }
 
-function handleFileView(event) {
+function handleFileView(event, link) {
     event.preventDefault();
+    if (!link) return;
+    window.open(link, '_blank', 'noopener');
+}
+
+function downloadDocument(link) {
+    if (!link) return;
+    window.open(link, '_blank', 'noopener');
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('bcsDocumentKeyword')?.addEventListener('input', loadBcsDocuments);
-    document.getElementById('bcsDocumentCategoryFilter')?.addEventListener('change', loadBcsDocuments);
-    loadBcsDocuments();
+    document.getElementById('filterYear')?.addEventListener('change', bcsOnYearSemesterChange);
+    document.getElementById('filterSemester')?.addEventListener('change', bcsOnYearSemesterChange);
+    document.getElementById('filterCategory')?.addEventListener('change', bcsApplyDocumentFilters);
+    document.getElementById('searchInput')?.addEventListener('input', bcsApplyDocumentFilters);
+    bcsApplyDocumentFilters();
 });
