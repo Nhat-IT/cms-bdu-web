@@ -1,313 +1,158 @@
-let newsModal;
-let bcsAnnouncements = [];
-let bcsEditingAnnouncementId = 0;
+﻿let bcsEditingAnnouncementId = 0;
 
-function bcsFormatDateTime(value) {
-    if (!value) return '';
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return String(value).slice(0, 16);
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    const hh = String(d.getHours()).padStart(2, '0');
-    const min = String(d.getMinutes()).padStart(2, '0');
-    return `${dd}/${mm}/${yyyy}, ${hh}:${min}`;
-}
+function bcsSubmitAnnouncement(action, payload = {}) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'announcements.php';
 
-function handleSourceSelection(selectId, wrapId, inputId) {
-    const sourceSelect = document.getElementById(selectId);
-    const customWrap = document.getElementById(wrapId);
-    const customInput = document.getElementById(inputId);
-    const isCustom = sourceSelect.value === 'Khac';
-
-    customWrap.classList.toggle('d-none', !isCustom);
-    customInput.required = isCustom;
-
-    if (!isCustom) {
-        customInput.value = '';
-    }
-}
-
-function handleCategorySelection(selectId, wrapId, inputId) {
-    const categorySelect = document.getElementById(selectId);
-    const customWrap = document.getElementById(wrapId);
-    const customInput = document.getElementById(inputId);
-    const isCustom = categorySelect.value === 'Khac';
-
-    customWrap.classList.toggle('d-none', !isCustom);
-    customInput.required = isCustom;
-
-    if (!isCustom) {
-        customInput.value = '';
-    }
-}
-
-function handlePublishMode(nowRadioId, wrapId, inputIds) {
-    const isNow = document.getElementById(nowRadioId).checked;
-    const scheduleWrap = document.getElementById(wrapId);
-    const scheduleInputs = inputIds.map((id) => document.getElementById(id));
-
-    scheduleWrap.classList.toggle('d-none', isNow);
-    scheduleInputs.forEach((input) => {
-        input.required = !isNow;
+    const fields = Object.assign({ news_action: action }, payload);
+    Object.keys(fields).forEach((key) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = String(fields[key] ?? '');
+        form.appendChild(input);
     });
 
-    if (isNow) {
-        scheduleInputs.forEach((input) => {
-            input.value = '';
-        });
-    }
+    document.body.appendChild(form);
+    form.submit();
 }
 
-function confirmAction(actionText, onConfirm) {
-    if (confirm('Ban co chac chan muon ' + actionText + '?')) {
-        onConfirm();
-    }
+function bcsGetFormValue(id) {
+    return String(document.getElementById(id)?.value || '').trim();
 }
 
-function bcsRenderAnnouncementStats() {
-    const statCards = document.querySelectorAll('.stat-card-custom h3');
-    if (statCards.length >= 3) {
-        const total = bcsAnnouncements.length;
-        statCards[0].textContent = String(total);
-        statCards[1].textContent = String(total);
-        statCards[2].textContent = String(total);
-    }
-}
+window.saveDraft = function () {
+    const draft = {
+        title: bcsGetFormValue('newsTitle'),
+        content: bcsGetFormValue('newsContent')
+    };
+    localStorage.setItem('bcs_news_draft', JSON.stringify(draft));
+    alert('Đã lưu nháp trên trình duyệt.');
+};
 
-function bcsRenderAnnouncementLists() {
-    const listRoot = document.getElementById('bcsAnnouncementList');
-    const manageRoot = document.getElementById('bcsAnnouncementManageList');
-    if (!listRoot || !manageRoot) return;
-
-    if (!bcsAnnouncements.length) {
-        listRoot.innerHTML = '<div class="text-muted">Chua co thong bao nao.</div>';
-        manageRoot.innerHTML = '<div class="text-muted">Chua co ban tin da dang.</div>';
-        return;
-    }
-
-    listRoot.innerHTML = bcsAnnouncements.map((item, idx) => {
-        const isPinned = idx === 0;
-        return `
-            <div class="list-group-item announcement-item border rounded-3 mb-3">
-                <div class="d-flex justify-content-between align-items-start gap-3">
-                    <div>
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <span class="badge rounded-pill ${isPinned ? 'bg-warning text-dark' : 'bg-success text-white'} px-3 py-2 fw-normal">${isPinned ? 'Dang ghim' : 'Da dang'}</span>
-                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 fw-normal">Thong bao lop</span>
-                        </div>
-                        <h6 class="fw-bold text-dark mb-1">${item.title || ''}</h6>
-                        <p class="text-muted mb-2">${bcsFormatDateTime(item.created_at)}</p>
-                        <p class="mb-0 text-dark">${item.note || ''}</p>
-                    </div>
-                    <div class="text-end">
-                        <button class="btn btn-outline-primary btn-sm fw-bold mb-2" onclick="openViewModal(${item.id})"><i class="bi bi-eye me-1"></i>Xem</button>
-                        <div class="d-flex gap-2 justify-content-end flex-wrap">
-                            <button class="btn btn-sm btn-light border" onclick="openEditModalById(${item.id})"><i class="bi bi-pencil-square me-1"></i>Sua</button>
-                            <button class="btn btn-sm btn-light border text-danger" onclick="confirmDelete(${item.id})"><i class="bi bi-trash me-1"></i>Xoa</button>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-    }).join('');
-
-    manageRoot.innerHTML = bcsAnnouncements.slice(0, 8).map((item) => `
-        <div class="p-3 rounded-3 bg-light border">
-            <div class="d-flex justify-content-between align-items-start gap-2">
-                <div>
-                    <div class="fw-bold text-dark mb-1">${item.title || ''}</div>
-                    <div class="text-muted small">Da dang: ${bcsFormatDateTime(item.created_at)}</div>
-                </div>
-                <span class="badge bg-success">Dang hien thi</span>
-            </div>
-            <div class="d-flex gap-2 mt-3 flex-wrap">
-                <button class="btn btn-sm btn-outline-secondary" onclick="openEditModalById(${item.id})"><i class="bi bi-pencil-square me-1"></i>Sua</button>
-                <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(${item.id})"><i class="bi bi-trash me-1"></i>Xoa</button>
-            </div>
-        </div>`).join('');
-}
-
-async function loadAnnouncements() {
-    const keyword = (document.getElementById('bcsAnnouncementKeyword')?.value || '').trim();
-    const query = new URLSearchParams({ keyword }).toString();
-    const res = await fetch(`/api/bcs/announcements?${query}`, { headers: { Accept: 'application/json' } });
-
-    if (res.status === 401) {
-        window.location.href = '/login.html';
-        return;
-    }
-
-    const data = await res.json().catch(() => []);
-    if (!res.ok) {
-        alert(data.error || 'Khong the tai danh sach thong bao.');
-        return;
-    }
-
-    bcsAnnouncements = Array.isArray(data) ? data : [];
-    bcsRenderAnnouncementStats();
-    bcsRenderAnnouncementLists();
-}
-
-function saveDraft() {
-    alert('Ban nhap xong noi dung va bam Dang ban tin de luu vao CSDL.');
-}
-
-async function publishNews() {
-    const title = (document.getElementById('newsTitle')?.value || '').trim();
-    const content = (document.getElementById('newsContent')?.value || '').trim();
+window.publishNews = function () {
+    const title = bcsGetFormValue('newsTitle');
+    const content = bcsGetFormValue('newsContent');
 
     if (!title) {
-        alert('Vui long nhap tieu de ban tin.');
+        alert('Vui lòng nhập tiêu đề bản tin.');
         return;
     }
 
-    const res = await fetch('/api/bcs/announcements', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-            title,
-            content,
-            driveLink: (document.getElementById('newsFile')?.files?.[0]?.name || '').trim()
-        })
+    localStorage.removeItem('bcs_news_draft');
+    bcsSubmitAnnouncement('create', {
+        news_title: title,
+        news_content: content
     });
+};
 
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-        alert(data.error || 'Khong the dang ban tin.');
+window.openViewModal = function (announcement) {
+    const item = (announcement && typeof announcement === 'object') ? announcement : null;
+    if (!item) return;
+
+    const title = String(item.title || 'Thông báo').trim();
+    const content = String(item.message || item.content || 'Không có nội dung.').trim();
+    const creator = String(item.creator_name || 'Hệ thống').trim();
+    const createdAt = String(item.created_at || '').trim();
+
+    const titleEl = document.getElementById('announcementDetailTitle');
+    const metaEl = document.getElementById('announcementDetailMeta');
+    const contentEl = document.getElementById('announcementDetailContent');
+    if (titleEl) titleEl.textContent = title;
+    if (metaEl) metaEl.textContent = `${creator} • ${createdAt || 'Không rõ thời gian'}`;
+    if (contentEl) contentEl.textContent = content;
+
+    const modalEl = document.getElementById('announcementDetailModal');
+    if (!modalEl) return;
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+};
+
+window.downloadAnnouncementFile = function (announcement) {
+    const item = (announcement && typeof announcement === 'object') ? announcement : null;
+    if (!item) return;
+
+    const text = String(item.message || item.content || '');
+    const urlMatch = text.match(/https?:\/\/[^\s]+/i);
+    if (!urlMatch) {
+        alert('Thông báo này chưa có file đính kèm để tải xuống.');
         return;
     }
 
-    alert('Da dang ban tin thanh cong.');
-    document.getElementById('newsForm')?.reset();
-    await loadAnnouncements();
-}
+    window.open(urlMatch[0], '_blank', 'noopener');
+};
 
-function openViewModal(idOrTitle) {
-    const item = typeof idOrTitle === 'number'
-        ? bcsAnnouncements.find((x) => Number(x.id) === Number(idOrTitle))
-        : bcsAnnouncements.find((x) => x.title === idOrTitle || Number(x.id) === Number(idOrTitle));
-    if (!item) return;
-    alert(`${item.title}\n\n${item.note || ''}`);
-}
+window.openEditModal = function (announcement) {
+    if (!announcement || typeof announcement !== 'object') return;
 
-function openEditModalById(id) {
-    const item = bcsAnnouncements.find((x) => Number(x.id) === Number(id));
-    if (!item) return;
+    bcsEditingAnnouncementId = Number(announcement.id || 0);
+    document.getElementById('newsModalTitle').innerHTML = '<i class="bi bi-pencil-square me-2"></i>Chỉnh sửa bản tin';
+    document.getElementById('modalTitleInput').value = announcement.title || '';
+    document.getElementById('modalContentInput').value = announcement.message || announcement.content || '';
+};
 
-    bcsEditingAnnouncementId = Number(id);
-    document.getElementById('newsModalTitle').innerHTML = '<i class="bi bi-pencil-square me-2"></i>Chinh sua ban tin';
-    document.getElementById('modalTitleInput').value = item.title || '';
-    document.getElementById('modalContentInput').value = item.note || '';
+window.editAnnouncement = function (announcement) {
+    window.openEditModal(announcement);
+    const modalEl = document.getElementById('newsModal');
+    if (!modalEl) return;
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+};
 
-    newsModal.show();
-}
+window.saveEditedAnnouncement = function () {
+    if (!bcsEditingAnnouncementId) {
+        alert('Không xác định được bản tin cần sửa.');
+        return;
+    }
 
-function openEditModal(title) {
-    const item = bcsAnnouncements.find((x) => x.title === title);
-    if (!item) return;
-    openEditModalById(item.id);
-}
-
-async function saveEditedAnnouncement() {
-    if (!bcsEditingAnnouncementId) return;
-
-    const title = (document.getElementById('modalTitleInput')?.value || '').trim();
-    const content = (document.getElementById('modalContentInput')?.value || '').trim();
+    const title = bcsGetFormValue('modalTitleInput');
+    const content = bcsGetFormValue('modalContentInput');
     if (!title) {
-        alert('Vui long nhap tieu de ban tin.');
+        alert('Vui lòng nhập tiêu đề bản tin.');
         return;
     }
 
-    const res = await fetch(`/api/bcs/announcements/${bcsEditingAnnouncementId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ title, content })
+    bcsSubmitAnnouncement('update', {
+        news_id: bcsEditingAnnouncementId,
+        news_title: title,
+        news_content: content
     });
+};
 
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-        alert(data.error || 'Khong the cap nhat ban tin.');
+window.deleteCurrentAnnouncement = async function () {
+    if (!bcsEditingAnnouncementId) {
+        alert('Không xác định được bản tin cần xóa.');
         return;
     }
+    if (!confirm('Bạn có chắc muốn xóa bản tin này?')) return;
+    await window.confirmDelete(bcsEditingAnnouncementId, false);
+};
 
-    alert('Da luu thay doi ban tin.');
-    newsModal.hide();
-    await loadAnnouncements();
-}
+window.confirmDelete = async function (id, askConfirm = true) {
+    const itemId = Number(id || 0);
+    if (!itemId) return;
+    if (askConfirm && !confirm('Bạn có chắc muốn xóa bản tin này?')) return;
 
-async function confirmDelete(idOrTitle) {
-    const item = typeof idOrTitle === 'number'
-        ? bcsAnnouncements.find((x) => Number(x.id) === Number(idOrTitle))
-        : bcsAnnouncements.find((x) => x.title === idOrTitle);
-
-    if (!item) return;
-
-    if (!confirm(`Ban co chac muon xoa ban tin "${item.title}"?`)) {
-        return;
-    }
-
-    const res = await fetch(`/api/bcs/announcements/${item.id}`, {
-        method: 'DELETE',
-        headers: { Accept: 'application/json' }
+    bcsSubmitAnnouncement('delete', {
+        news_id: itemId
     });
-
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-        alert(data.error || 'Khong the xoa ban tin.');
-        return;
-    }
-
-    await loadAnnouncements();
-}
-
-function togglePin() {
-    alert('Thong bao moi nhat se duoc hien thi dau danh sach.');
-}
+};
 
 document.addEventListener('DOMContentLoaded', function () {
-    newsModal = new bootstrap.Modal(document.getElementById('newsModal'));
-
-    document.getElementById('newsSource').addEventListener('change', function () {
-        handleSourceSelection('newsSource', 'customNewsSourceWrap', 'customNewsSource');
-    });
-
-    document.getElementById('modalSourceInput').addEventListener('change', function () {
-        handleSourceSelection('modalSourceInput', 'customModalSourceWrap', 'customModalSource');
-    });
-
-    document.getElementById('newsCategory').addEventListener('change', function () {
-        handleCategorySelection('newsCategory', 'customNewsCategoryWrap', 'customNewsCategory');
-    });
-
-    document.getElementById('modalCategoryInput').addEventListener('change', function () {
-        handleCategorySelection('modalCategoryInput', 'customModalCategoryWrap', 'customModalCategory');
-    });
-
-    document.getElementById('publishNow').addEventListener('change', function () {
-        handlePublishMode('publishNow', 'schedulePublishWrap', ['schedulePublishDate', 'schedulePublishTime']);
-    });
-
-    document.getElementById('publishSchedule').addEventListener('change', function () {
-        handlePublishMode('publishNow', 'schedulePublishWrap', ['schedulePublishDate', 'schedulePublishTime']);
-    });
-
-    document.getElementById('modalPublishNow').addEventListener('change', function () {
-        handlePublishMode('modalPublishNow', 'modalSchedulePublishWrap', ['modalSchedulePublishDate', 'modalSchedulePublishTime']);
-    });
-
-    document.getElementById('modalPublishSchedule').addEventListener('change', function () {
-        handlePublishMode('modalPublishNow', 'modalSchedulePublishWrap', ['modalSchedulePublishDate', 'modalSchedulePublishTime']);
-    });
-
-    handleSourceSelection('newsSource', 'customNewsSourceWrap', 'customNewsSource');
-    handleSourceSelection('modalSourceInput', 'customModalSourceWrap', 'customModalSource');
-    handleCategorySelection('newsCategory', 'customNewsCategoryWrap', 'customNewsCategory');
-    handleCategorySelection('modalCategoryInput', 'customModalCategoryWrap', 'customModalCategory');
-    handlePublishMode('publishNow', 'schedulePublishWrap', ['schedulePublishDate', 'schedulePublishTime']);
-    handlePublishMode('modalPublishNow', 'modalSchedulePublishWrap', ['modalSchedulePublishDate', 'modalSchedulePublishTime']);
-
-    document.getElementById('bcsAnnouncementKeyword')?.addEventListener('input', loadAnnouncements);
-    document.getElementById('bcsAnnouncementSaveEditBtn')?.addEventListener('click', saveEditedAnnouncement);
-
-    loadAnnouncements();
+    const draftRaw = localStorage.getItem('bcs_news_draft');
+    if (!draftRaw) return;
+    try {
+        const draft = JSON.parse(draftRaw);
+        if (draft && typeof draft === 'object') {
+            if (!document.getElementById('newsTitle')?.value) {
+                document.getElementById('newsTitle').value = draft.title || '';
+            }
+            if (!document.getElementById('newsContent')?.value) {
+                document.getElementById('newsContent').value = draft.content || '';
+            }
+        }
+    } catch (_) {
+        // ignore corrupted local draft
+    }
 });

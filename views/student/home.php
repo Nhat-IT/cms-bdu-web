@@ -16,7 +16,7 @@ $extraJs = ['student/student-layout.js'];
 
 // Lấy số môn đang học
 $subjectCount = db_count("
-    SELECT COUNT(DISTINCT cs.class_subject_id) 
+    SELECT COUNT(DISTINCT csg.class_subject_id) 
     FROM student_subject_registration ssr
     JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
     WHERE ssr.student_id = ? AND ssr.status = 'Đang học'

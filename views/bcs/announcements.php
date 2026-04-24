@@ -24,6 +24,53 @@ $classInfo = $stmt->fetch();
 $classId = $classInfo['class_id'] ?? null;
 $className = $classInfo['class_name'] ?? '';
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['news_action'])) {
+    $action = strtolower(trim((string)($_POST['news_action'] ?? '')));
+    $id = (int)($_POST['news_id'] ?? 0);
+    $title = trim((string)($_POST['news_title'] ?? ''));
+    $content = trim((string)($_POST['news_content'] ?? ''));
+
+    try {
+        if ($action === 'create') {
+            if ($title !== '') {
+                db_query(
+                    "INSERT INTO notification_logs (user_id, title, message, is_read) VALUES (?, ?, ?, 1)",
+                    [$userId, $title, $content !== '' ? $content : null]
+                );
+
+                if ($classId) {
+                    $students = db_fetch_all(
+                        "SELECT student_id FROM class_students WHERE class_id = ? AND student_id <> ?",
+                        [$classId, $userId]
+                    );
+                    foreach ($students as $st) {
+                        $sid = (int)($st['student_id'] ?? 0);
+                        if ($sid <= 0) {
+                            continue;
+                        }
+                        db_query(
+                            "INSERT INTO notification_logs (user_id, title, message, is_read) VALUES (?, ?, ?, 0)",
+                            [$sid, $title, $content !== '' ? $content : null]
+                        );
+                    }
+                }
+            }
+        } elseif ($action === 'update' && $id > 0 && $title !== '') {
+            db_query(
+                "UPDATE notification_logs SET title = ?, message = ? WHERE id = ? AND user_id = ?",
+                [$title, $content !== '' ? $content : null, $id, $userId]
+            );
+        } elseif ($action === 'delete' && $id > 0) {
+            db_query("DELETE FROM notification_logs WHERE id = ? AND user_id = ?", [$id, $userId]);
+        }
+    } catch (Throwable $e) {
+        error_log('bcs announcements save error: ' . $e->getMessage());
+    }
+
+    header('Location: announcements.php');
+    exit;
+}
+
 // Lấy thông tin user
 $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$userId]);
@@ -110,7 +157,7 @@ $myAnnouncements = $stmt->fetchAll();
             <a href="feedback.php"><i class="bi bi-chat-dots"></i> Cổng Tương Tác</a>
 
             <div class="px-4 mt-3 mb-2 small text-white-50 fw-bold hide-on-collapse" style="font-size: 0.7rem; letter-spacing: 1px;">CÁ NHÂN</div>
-            <a href="../student/home.php" class="text-warning"><i class="bi bi-arrow-repeat"></i> Về Cổng Sinh Viên</a>
+            <a href="../switch-role.php?role=student&next=home" class="text-warning"><i class="bi bi-arrow-repeat"></i> Về Cổng Sinh Viên</a>
         </nav>
         </div>
     </div>
@@ -131,7 +178,7 @@ $myAnnouncements = $stmt->fetchAll();
 
         <div class="bcs-header-meta d-flex align-items-center text-white">
             <span class="bcs-header-label fw-bold">BAN CÁN SỰ</span>
-            <a href="feedback.php" class="bcs-notification-link" title="Có <?= $unreadCount ?> thông báo hệ thống">
+            <a href="../switch-role.php?role=student&next=notifications" class="bcs-notification-link" title="Có <?= $unreadCount ?> thông báo hệ thống">
                 <i class="bi bi-bell fs-5"></i>
                 <?php if ($unreadCount > 0): ?>
                 <span class="bcs-notification-count"><?= $unreadCount ?></span>
@@ -228,12 +275,9 @@ $myAnnouncements = $stmt->fetchAll();
                                         <p class="mb-0 text-dark"><?= e($ann['message'] ?? '') ?></p>
                                     </div>
                                     <div class="text-end">
-                                        <button class="btn btn-outline-primary btn-sm fw-bold mb-2" onclick="openViewModal('<?= e(addslashes($ann['title'] ?? '')) ?>')"><i class="bi bi-eye me-1"></i>Xem</button>
+                                        <button class="btn btn-outline-primary btn-sm fw-bold mb-2" onclick='openViewModal(<?= htmlspecialchars(json_encode($ann), ENT_QUOTES, "UTF-8") ?>)'><i class="bi bi-eye me-1"></i>Xem</button>
                                         <div class="d-flex gap-2 justify-content-end flex-wrap">
-                                            <?php if ($ann['user_id'] == $userId): ?>
-                                            <button class="btn btn-sm btn-light border" onclick="editAnnouncement(<?= $ann['id'] ?>)"><i class="bi bi-pencil me-1"></i>Sửa</button>
-                                            <?php endif; ?>
-                                            <button class="btn btn-sm btn-light border" onclick="confirmAction('tải file đính kèm thông báo này', function () { alert('Đã tải file.'); })"><i class="bi bi-download me-1"></i>Tải file</button>
+                                            <button class="btn btn-sm btn-light border" onclick='downloadAnnouncementFile(<?= htmlspecialchars(json_encode($ann), ENT_QUOTES, "UTF-8") ?>)'><i class="bi bi-download me-1"></i>Tải file</button>
                                         </div>
                                     </div>
                                 </div>
@@ -418,10 +462,8 @@ $myAnnouncements = $stmt->fetchAll();
                                                         <div class="fw-bold text-dark mb-1"><?= e($myAnn['title']) ?></div>
                                                         <div class="text-muted small">Đã đăng: <?= formatDate($myAnn['created_at']) ?></div>
                                                     </div>
-                                                    <span class="badge bg-success"><?= $myAnn['is_read'] ? 'Đã đọc' : 'Đang hiển thị' ?></span>
                                                 </div>
                                                 <div class="d-flex gap-2 mt-3 flex-wrap">
-                                                    <button class="btn btn-sm btn-outline-warning" onclick="togglePin(<?= $myAnn['id'] ?>)"><i class="bi bi-pin-angle me-1"></i>Ghim</button>
                                                     <button class="btn btn-sm btn-outline-secondary" onclick="openEditModal(<?= htmlspecialchars(json_encode($myAnn)) ?>)"><i class="bi bi-pencil-square me-1"></i>Sửa</button>
                                                     <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(<?= $myAnn['id'] ?>)"><i class="bi bi-trash me-1"></i>Xóa</button>
                                                 </div>
@@ -441,6 +483,25 @@ $myAnnouncements = $stmt->fetchAll();
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="announcementDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-eye me-2"></i>Chi tiết thông báo</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <h6 class="fw-bold text-dark mb-2" id="announcementDetailTitle">-</h6>
+                <div class="text-muted small mb-3" id="announcementDetailMeta">-</div>
+                <div class="p-3 bg-light border rounded text-dark" id="announcementDetailContent">-</div>
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
             </div>
         </div>
     </div>
@@ -466,10 +527,10 @@ $myAnnouncements = $stmt->fetchAll();
                 </form>
             </div>
             <div class="modal-footer border-0 pb-4 px-4 bg-light justify-content-between">
-                <button type="button" class="btn btn-outline-danger" onclick="confirmAction('xóa bản tin đang chỉnh sửa', function () { alert('Đã xóa bản tin.'); })"><i class="bi bi-trash me-1"></i>Xóa</button>
+                <button type="button" class="btn btn-outline-danger" onclick="deleteCurrentAnnouncement()"><i class="bi bi-trash me-1"></i>Xóa</button>
                 <div>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                    <button type="button" class="btn btn-primary fw-bold" onclick="confirmAction('lưu thay đổi bản tin', function () { alert('Đã lưu thay đổi.'); })"><i class="bi bi-check2-all me-1"></i>Lưu thay đổi</button>
+                    <button type="button" class="btn btn-primary fw-bold" onclick="saveEditedAnnouncement()"><i class="bi bi-check2-all me-1"></i>Lưu thay đổi</button>
                 </div>
             </div>
         </div>

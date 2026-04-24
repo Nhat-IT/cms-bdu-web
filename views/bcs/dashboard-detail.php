@@ -170,7 +170,7 @@ foreach ($absenceDetails as $abs) {
             <a href="feedback.php"><i class="bi bi-chat-dots"></i> Cổng Tương Tác</a>
             
             <div class="px-4 mt-3 mb-2 small text-white-50 fw-bold hide-on-collapse" style="font-size: 0.7rem; letter-spacing: 1px;">CÁ NHÂN</div>
-            <a href="../student/home.php" class="text-warning"><i class="bi bi-arrow-repeat"></i> Về Cổng Sinh Viên</a>
+            <a href="../switch-role.php?role=student&next=home" class="text-warning"><i class="bi bi-arrow-repeat"></i> Về Cổng Sinh Viên</a>
         </nav>
         </div>
     </div>
@@ -192,7 +192,7 @@ foreach ($absenceDetails as $abs) {
 
         <div class="bcs-header-meta d-flex align-items-center text-white">
             <span class="bcs-header-label fw-bold">BAN CÁN SỰ</span>
-            <a href="feedback.php" class="bcs-notification-link" title="Có <?= $unreadCount ?> thông báo hệ thống">
+            <a href="../switch-role.php?role=student&next=notifications" class="bcs-notification-link" title="Có <?= $unreadCount ?> thông báo hệ thống">
                 <i class="bi bi-bell fs-5"></i>
                 <?php if ($unreadCount > 0): ?>
                 <span class="bcs-notification-count"><?= $unreadCount ?></span>

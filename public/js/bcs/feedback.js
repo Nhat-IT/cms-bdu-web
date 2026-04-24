@@ -1,162 +1,102 @@
-let bcsFeedbackList = [];
-let bcsSelectedFeedbackId = 0;
+let bcsSelectedFeedback = null;
+const bcsFeedbackApiUrl = (window.cmsUrl || function (path) { return path; })('/api/bcs/feedbacks.php');
 
-function bcsFeedbackTime(value) {
-    if (!value) return '';
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return String(value).slice(0, 16);
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    const hh = String(d.getHours()).padStart(2, '0');
-    const min = String(d.getMinutes()).padStart(2, '0');
-    return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+function bcsFeedbackNormalize(value) {
+    return String(value || '').trim().toLowerCase();
 }
 
-function bcsRenderFeedbackStats() {
-    const total = bcsFeedbackList.length;
-    const pending = bcsFeedbackList.filter((x) => x.status === 'Pending').length;
-    const resolved = bcsFeedbackList.filter((x) => x.status === 'Resolved').length;
+function openFeedbackModal(feedback) {
+    if (!feedback || typeof feedback !== 'object') return;
+    bcsSelectedFeedback = feedback;
 
-    const cards = document.querySelectorAll('.stat-card-custom h3');
-    if (cards.length >= 3) {
-        cards[0].textContent = String(total);
-        cards[1].textContent = String(pending);
-        cards[2].textContent = String(resolved);
-    }
-}
-
-function openFeedbackDetail(id) {
-    bcsSelectedFeedbackId = Number(id || 0);
-    const fb = bcsFeedbackList.find((item) => Number(item.id) === bcsSelectedFeedbackId);
-    if (!fb) return;
-
-    document.getElementById('fbSenderName').textContent = `${fb.full_name || ''} (${fb.username || ''})`;
-    document.getElementById('fbTime').textContent = bcsFeedbackTime(fb.updated_at);
-    document.getElementById('fbSubject').textContent = fb.title || '';
-    document.getElementById('fbContent').textContent = fb.content || '';
-    document.getElementById('fbReply').value = fb.reply_content || '';
+    const sender = `${feedback.full_name || ''} (${feedback.student_code || feedback.username || ''})`;
+    document.getElementById('fbSenderName').textContent = sender.trim();
+    document.getElementById('fbTime').textContent = feedback.updated_at || '';
+    document.getElementById('fbSubject').textContent = feedback.title || 'Phản hồi';
+    document.getElementById('fbContent').textContent = feedback.content || '';
+    document.getElementById('fbReply').value = feedback.reply_content || '';
 
     const badge = document.getElementById('fbStatusBadge');
-    if (badge) {
-        if (fb.status === 'Pending') {
-            badge.className = 'badge bg-warning text-dark border border-warning';
-            badge.textContent = 'Cho xu ly';
-        } else {
-            badge.className = 'badge bg-success';
-            badge.textContent = 'Da giai quyet';
-        }
+    if (feedback.status === 'Resolved') {
+        badge.className = 'badge bg-success';
+        badge.textContent = 'Đã giải quyết';
+    } else {
+        badge.className = 'badge bg-warning text-dark border border-warning';
+        badge.textContent = 'Chờ xử lý';
     }
-
-    const modal = new bootstrap.Modal(document.getElementById('feedbackModal'));
-    modal.show();
 }
 
-function bcsRenderFeedbackTable() {
-    const tbody = document.getElementById('bcsFeedbackTableBody');
-    if (!tbody) return;
+window.openFeedbackModal = openFeedbackModal;
 
-    if (!bcsFeedbackList.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Chua co phan hoi tu sinh vien.</td></tr>';
+window.resolveFeedback = async function () {
+    const id = Number(bcsSelectedFeedback?.id || 0);
+    if (!id) {
+        alert('Không xác định được phản hồi cần xử lý.');
         return;
     }
 
-    tbody.innerHTML = bcsFeedbackList.map((fb) => {
-        const isPending = fb.status === 'Pending';
-        const statusBadge = isPending
-            ? '<span class="badge bg-warning text-dark px-3 py-2 rounded-pill"><i class="bi bi-hourglass me-1"></i>Cho xu ly</span>'
-            : '<span class="badge bg-success px-3 py-2 rounded-pill"><i class="bi bi-check-circle me-1"></i>Da giai quyet</span>';
-
-        return `
-            <tr ${isPending ? 'class="bg-light"' : ''}>
-                <td class="ps-4 py-3">
-                    <div class="fw-bold text-dark">${fb.full_name || ''}</div>
-                    <div class="text-muted small">MSSV: ${fb.username || ''}</div>
-                </td>
-                <td>
-                    <div class="fw-bold text-dark mb-1">${fb.title || ''}</div>
-                    <div class="text-muted small text-truncate" style="max-width: 300px;">${fb.content || ''}</div>
-                </td>
-                <td class="text-dark small">${bcsFeedbackTime(fb.updated_at)}</td>
-                <td>${statusBadge}</td>
-                <td class="pe-4 text-end">
-                    <button class="btn btn-sm ${isPending ? 'btn-primary' : 'btn-outline-secondary'} fw-bold" onclick="openFeedbackDetail(${fb.id})"><i class="bi bi-eye me-1"></i>Xem</button>
-                </td>
-            </tr>`;
-    }).join('');
-}
-
-async function loadBcsFeedbacks() {
-    const keyword = (document.getElementById('bcsFeedbackKeyword')?.value || '').trim();
-    const status = document.getElementById('bcsFeedbackStatusFilter')?.value || 'all';
-
-    const query = new URLSearchParams({ keyword, status }).toString();
-    const res = await fetch(`/api/bcs/feedbacks?${query}`, { headers: { Accept: 'application/json' } });
-
-    if (res.status === 401) {
-        window.location.href = '/login.html';
-        return;
-    }
-
-    const data = await res.json().catch(() => []);
-    if (!res.ok) {
-        alert(data.error || 'Khong the tai phan hoi.');
-        return;
-    }
-
-    bcsFeedbackList = Array.isArray(data) ? data : [];
-    bcsRenderFeedbackStats();
-    bcsRenderFeedbackTable();
-}
-
-async function resolveFeedback() {
-    if (!bcsSelectedFeedbackId) {
-        alert('Khong xac dinh duoc phan hoi.');
-        return;
-    }
-
-    const replyContent = (document.getElementById('fbReply')?.value || '').trim();
-    const res = await fetch(`/api/bcs/feedbacks/${bcsSelectedFeedbackId}/resolve`, {
+    const reply = (document.getElementById('fbReply')?.value || '').trim();
+    const res = await fetch(bcsFeedbackApiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ status: 'Resolved', replyContent })
+        body: JSON.stringify({
+            action: 'resolve',
+            id,
+            reply_content: reply
+        })
     });
 
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-        alert(data.error || 'Khong the cap nhat phan hoi.');
+    if (!res.ok || !data?.ok) {
+        alert(data?.error || 'Không thể cập nhật phản hồi.');
         return;
     }
 
-    alert('Da cap nhat phan hoi thanh cong.');
-    await loadBcsFeedbacks();
-}
+    window.location.reload();
+};
 
-async function confirmDelete() {
-    if (!bcsSelectedFeedbackId) {
-        alert('Khong xac dinh duoc phan hoi.');
+window.deleteFeedback = async function () {
+    const id = Number(bcsSelectedFeedback?.id || 0);
+    if (!id) {
+        alert('Không xác định được phản hồi cần xóa.');
         return;
     }
 
-    if (!confirm('Ban co chac muon xoa phan hoi nay?')) return;
+    if (!confirm('Bạn có chắc muốn xóa phản hồi này?')) return;
 
-    const res = await fetch(`/api/bcs/feedbacks/${bcsSelectedFeedbackId}`, {
-        method: 'DELETE',
-        headers: { Accept: 'application/json' }
+    const res = await fetch(bcsFeedbackApiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+            action: 'delete',
+            id
+        })
     });
 
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-        alert(data.error || 'Khong the xoa phan hoi.');
+    if (!res.ok || !data?.ok) {
+        alert(data?.error || 'Không thể xóa phản hồi.');
         return;
     }
 
-    alert('Da xoa phan hoi thanh cong.');
-    await loadBcsFeedbacks();
+    window.location.reload();
+};
+
+function bcsFilterFeedbackTable() {
+    const keyword = bcsFeedbackNormalize(document.getElementById('searchInput')?.value);
+    const status = bcsFeedbackNormalize(document.getElementById('filterStatus')?.value || 'all');
+
+    const rows = Array.from(document.querySelectorAll('#feedbackTable tbody tr[data-search]'));
+    rows.forEach((row) => {
+        const rowText = bcsFeedbackNormalize(row.getAttribute('data-search'));
+        const rowStatus = bcsFeedbackNormalize(row.getAttribute('data-status'));
+        const matchText = !keyword || rowText.includes(keyword);
+        const matchStatus = status === 'all' || rowStatus === status;
+        row.style.display = (matchText && matchStatus) ? '' : 'none';
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('bcsFeedbackKeyword')?.addEventListener('input', loadBcsFeedbacks);
-    document.getElementById('bcsFeedbackStatusFilter')?.addEventListener('change', loadBcsFeedbacks);
-    loadBcsFeedbacks();
+    document.getElementById('searchInput')?.addEventListener('input', bcsFilterFeedbackTable);
+    document.getElementById('filterStatus')?.addEventListener('change', bcsFilterFeedbackTable);
 });

@@ -161,6 +161,7 @@ async function uploadDocumentFileToDrive(file) {
     }
 
     return {
+        storage: data.storage || '',
         link: data.link || '',
         fileId: data.fileId || ''
     };

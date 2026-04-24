@@ -59,7 +59,7 @@ $resolvedFeedback = $stmt->fetch()['total'] ?? 0;
 
 // Lấy danh sách phản hồi
 $stmt = $pdo->prepare("
-    SELECT f.*, u.full_name, u.email as student_code
+    SELECT f.*, u.full_name, u.username as student_code
     FROM feedbacks f
     JOIN users u ON f.student_id = u.id
     JOIN class_students cs ON f.student_id = cs.student_id
@@ -118,7 +118,7 @@ $unreadCount = $stmt->fetch()['total'] ?? 0;
             <a href="feedback.php" class="active"><i class="bi bi-chat-dots"></i> Cổng Tương Tác</a>
             
             <div class="px-4 mt-3 mb-2 small text-white-50 fw-bold hide-on-collapse" style="font-size: 0.7rem; letter-spacing: 1px;">CÁ NHÂN</div>
-            <a href="../student/home.php" class="text-warning"><i class="bi bi-arrow-repeat"></i> Về Cổng Sinh Viên</a>
+            <a href="../switch-role.php?role=student&next=home" class="text-warning"><i class="bi bi-arrow-repeat"></i> Về Cổng Sinh Viên</a>
         </nav>
         </div>
     </div>
@@ -140,7 +140,7 @@ $unreadCount = $stmt->fetch()['total'] ?? 0;
         
         <div class="bcs-header-meta d-flex align-items-center text-white">
             <span class="bcs-header-label fw-bold">BAN CÁN SỰ</span>
-            <a href="feedback.php" class="bcs-notification-link" title="Có <?= $unreadCount ?> thông báo hệ thống">
+            <a href="../switch-role.php?role=student&next=notifications" class="bcs-notification-link" title="Có <?= $unreadCount ?> thông báo hệ thống">
                 <i class="bi bi-bell fs-5"></i>
                 <?php if ($unreadCount > 0): ?>
                 <span class="bcs-notification-count"><?= $unreadCount ?></span>
@@ -217,7 +217,7 @@ $unreadCount = $stmt->fetch()['total'] ?? 0;
                             <?php if (!empty($feedbacks)): ?>
                             <?php foreach ($feedbacks as $fb): ?>
                             <?php $isPending = $fb['status'] == 'Pending'; ?>
-                            <tr class="<?= $isPending ? 'bg-light' : '' ?>">
+                            <tr class="<?= $isPending ? 'bg-light' : '' ?>" data-search="<?= e(strtolower(($fb['full_name'] ?? '') . ' ' . ($fb['student_code'] ?? '') . ' ' . ($fb['title'] ?? '') . ' ' . ($fb['content'] ?? ''))) ?>" data-status="<?= $isPending ? 'pending' : 'resolved' ?>">
                                 <td class="ps-4 py-3">
                                     <div class="fw-bold text-dark"><?= e($fb['full_name']) ?></div>
                                     <div class="text-muted small">MSSV: <?= e($fb['student_code']) ?></div>
