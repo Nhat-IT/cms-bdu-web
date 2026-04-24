@@ -1,4 +1,4 @@
-function bcsNormalizeText(value) {
+﻿function bcsNormalizeText(value) {
     return String(value || '').trim().toLowerCase();
 }
 
@@ -18,17 +18,17 @@ function bcsApplyDocumentFilters() {
     });
 }
 
-function bcsBuildQueryForSemesterYear() {
-    const year = document.getElementById('filterYear')?.value || 'all';
-    const semester = document.getElementById('filterSemester')?.value || 'all';
+function bcsBuildQueryForSemester() {
+    const semesterId = document.getElementById('filterSemester')?.value || '';
     const url = new URL(window.location.href);
-    url.searchParams.set('year', year);
-    url.searchParams.set('semester', semester);
+    if (semesterId) {
+        url.searchParams.set('semester_id', semesterId);
+    }
     return url.toString();
 }
 
-function bcsOnYearSemesterChange() {
-    window.location.href = bcsBuildQueryForSemesterYear();
+function bcsOnSemesterChange() {
+    window.location.href = bcsBuildQueryForSemester();
 }
 
 function bcsIsCustomCategory(value) {
@@ -59,6 +59,14 @@ function bcsSetSelectValue(selectEl, value) {
     return false;
 }
 
+function bcsSyncModalAcademicYear() {
+    const modalSemester = document.getElementById('docSemesterId');
+    const yearInput = document.getElementById('docAcademicYear');
+    if (!modalSemester || !yearInput) return;
+    const y = modalSemester.selectedOptions?.[0]?.getAttribute('data-year') || '';
+    yearInput.value = y;
+}
+
 function openDocModal(mode, docData = null) {
     const modalTitle = document.getElementById('docModalTitle');
     const submitBtn = document.getElementById('docModalSubmitBtn');
@@ -71,27 +79,58 @@ function openDocModal(mode, docData = null) {
     if (!modalTitle || !submitBtn || !fileContainer || !categorySelect || !form) return;
 
     if (mode === 'add') {
-        modalTitle.innerHTML = '<i class="bi bi-cloud-arrow-up-fill me-2"></i>Tai Tai Lieu Len';
-        submitBtn.innerText = 'XAC NHAN';
+        modalTitle.innerHTML = '<i class="bi bi-cloud-arrow-up-fill me-2"></i>Tải Tài Liệu Lên';
+        submitBtn.innerText = 'XÁC NHẬN';
         fileContainer.classList.remove('d-none');
         form.reset();
-        if (!bcsSetSelectValue(categorySelect, 'Thong bao')) {
+
+        if (!bcsSetSelectValue(categorySelect, 'Thông báo')) {
             categorySelect.selectedIndex = 0;
         }
+
+        const idInput = document.getElementById('docId');
+        if (idInput) idInput.value = '';
+
+        const driveInput = document.getElementById('docDriveLink');
+        if (driveInput) driveInput.value = '';
+
+        const semesterFilter = document.getElementById('filterSemester');
+        const modalSemester = document.getElementById('docSemesterId');
+        if (semesterFilter && modalSemester) {
+            modalSemester.value = semesterFilter.value;
+        }
+        bcsSyncModalAcademicYear();
+
         customCategoryDiv?.classList.add('d-none');
         if (customCategoryInput) customCategoryInput.value = '';
         return;
     }
 
-    modalTitle.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Chinh Sua Tai Lieu';
-    submitBtn.innerText = 'LUU THAY DOI';
+    modalTitle.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Chỉnh Sửa Tài Liệu';
+    submitBtn.innerText = 'LƯU THAY ĐỔI';
     fileContainer.classList.add('d-none');
 
     const doc = (docData && typeof docData === 'object') ? docData : null;
     if (!doc) return;
 
+    const idInput = document.getElementById('docId');
+    if (idInput) idInput.value = String(doc.id || '');
+
     document.getElementById('docTitle').value = doc.title || '';
     document.getElementById('docNote').value = doc.note || '';
+
+    const driveInput = document.getElementById('docDriveLink');
+    if (driveInput) driveInput.value = doc.drive_link || '';
+
+    const modalSemester = document.getElementById('docSemesterId');
+    if (modalSemester) {
+        const matched = Array.from(modalSemester.options).find((opt) => {
+            const text = String(opt.textContent || '');
+            return text.includes(String(doc.semester_name || '')) && text.includes(String(doc.academic_year || ''));
+        });
+        if (matched) modalSemester.value = matched.value;
+    }
+    bcsSyncModalAcademicYear();
 
     const hasDefault = bcsSetSelectValue(categorySelect, doc.category || '');
     if (hasDefault && !bcsIsCustomCategory(categorySelect.value)) {
@@ -105,29 +144,162 @@ function openDocModal(mode, docData = null) {
     }
 }
 
-function saveDocument() {
-    alert('Chuc nang luu/chinh sua tai lieu can backend API.');
+async function uploadDocumentFileToDrive(file) {
+    if (!file) return { link: '', fileId: '' };
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch('/cms/api/upload-to-drive', {
+        method: 'POST',
+        body: formData
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.success) {
+        throw new Error(data?.error || 'Không thể tải file lên Drive');
+    }
+
+    return {
+        link: data.link || '',
+        fileId: data.fileId || ''
+    };
 }
 
-function deleteDocument() {
-    alert('Chuc nang xoa tai lieu can backend API.');
+async function saveDocument() {
+    const docId = Number(document.getElementById('docId')?.value || 0);
+    const title = (document.getElementById('docTitle')?.value || '').trim();
+    const note = (document.getElementById('docNote')?.value || '').trim();
+    const categorySelect = document.getElementById('docCategory');
+    const customCategory = (document.getElementById('customCategoryInput')?.value || '').trim();
+    const fileInput = document.getElementById('docFile');
+    const selectedFile = fileInput?.files?.[0] || null;
+    const driveInput = document.getElementById('docDriveLink');
+    const manualDriveLink = (driveInput?.value || '').trim();
+    const modalSemester = document.getElementById('docSemesterId');
+
+    if (!title) {
+        alert('Vui lòng nhập tiêu đề tài liệu.');
+        return;
+    }
+
+    let category = categorySelect ? String(categorySelect.value || '').trim() : '';
+    if (bcsIsCustomCategory(category)) {
+        category = customCategory || 'Khác';
+    }
+    if (!category) {
+        alert('Vui lòng chọn danh mục.');
+        return;
+    }
+
+    const semesterId = Number(modalSemester?.value || 0);
+    if (!semesterId) {
+        alert('Vui lòng chọn học kỳ lưu.');
+        return;
+    }
+
+    if (!selectedFile && !manualDriveLink && docId <= 0) {
+        alert('Vui lòng chọn file tải lên hoặc nhập link tài liệu.');
+        return;
+    }
+
+    let driveLink = manualDriveLink;
+    let driveFileId = '';
+    if (selectedFile) {
+        try {
+            const uploaded = await uploadDocumentFileToDrive(selectedFile);
+            driveLink = uploaded.link || driveLink;
+            driveFileId = uploaded.fileId || '';
+        } catch (e) {
+            if (!driveLink) {
+                alert((e.message || 'Không thể tải file lên Drive.') + ' Vui lòng nhập Link Google Drive thủ công.');
+                return;
+            }
+        }
+    }
+
+    const payload = {
+        action: docId > 0 ? 'update' : 'create',
+        id: docId > 0 ? docId : undefined,
+        title,
+        note,
+        category,
+        drive_link: driveLink,
+        drive_file_id: driveFileId,
+        semester_id: semesterId
+    };
+
+    try {
+        const res = await fetch('/cms/api/bcs/documents.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data?.ok) {
+            alert(data?.error || 'Không thể lưu tài liệu.');
+            return;
+        }
+
+        window.location.href = bcsBuildQueryForSemester();
+    } catch (_) {
+        alert('Không thể kết nối máy chủ.');
+    }
+}
+
+function deleteDocument(id) {
+    const docId = Number(id || 0);
+    if (!docId) return;
+
+    if (!confirm('Bạn có chắc muốn xóa tài liệu này?')) return;
+
+    fetch('/cms/api/bcs/documents.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json'
+        },
+        body: JSON.stringify({ action: 'delete', id: docId })
+    })
+        .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+            if (!ok || !data?.ok) {
+                alert(data?.error || 'Không thể xóa tài liệu.');
+                return;
+            }
+            window.location.href = bcsBuildQueryForSemester();
+        })
+        .catch(() => {
+            alert('Không thể kết nối máy chủ.');
+        });
 }
 
 function handleFileView(event, link) {
     event.preventDefault();
-    if (!link) return;
+    if (!link) {
+        alert('Tài liệu này chưa có đường dẫn để mở.');
+        return;
+    }
     window.open(link, '_blank', 'noopener');
 }
 
 function downloadDocument(link) {
-    if (!link) return;
+    if (!link) {
+        alert('Tài liệu này chưa có đường dẫn tải.');
+        return;
+    }
     window.open(link, '_blank', 'noopener');
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('filterYear')?.addEventListener('change', bcsOnYearSemesterChange);
-    document.getElementById('filterSemester')?.addEventListener('change', bcsOnYearSemesterChange);
+    document.getElementById('filterSemester')?.addEventListener('change', bcsOnSemesterChange);
+    document.getElementById('docSemesterId')?.addEventListener('change', bcsSyncModalAcademicYear);
     document.getElementById('filterCategory')?.addEventListener('change', bcsApplyDocumentFilters);
     document.getElementById('searchInput')?.addEventListener('input', bcsApplyDocumentFilters);
     bcsApplyDocumentFilters();
+    bcsSyncModalAcademicYear();
 });

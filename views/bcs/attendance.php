@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * CMS BDU - Quản Lý Chuyên Cần (BCS)
  */
@@ -204,22 +204,13 @@ function attendanceSemesterLabel($semesterName, $academicYear) {
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-body">
                 <div class="row g-2 align-items-end">
-                    <div class="col-12 col-md-4">
-                        <label class="fw-bold small text-muted mb-1">NĂM HỌC</label>
-                        <select class="form-select border-primary bg-light fw-bold text-primary bcs-compact-select" id="filterAcademicYear">
-                            <option value="all">-- Tất cả --</option>
-                            <?php foreach (array_keys($academicYears) as $year): ?>
-                            <option value="<?= e($year) ?>"><?= e($year) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-3">
                         <label class="fw-bold small text-muted mb-1">HỌC KỲ</label>
-                        <select class="form-select border-primary bg-light fw-bold text-primary bcs-compact-select" id="filterSemester">
+                        <select class="form-select border-primary bg-light fw-bold text-primary bcs-compact-select bcs-short-select" id="filterSemester">
                             <option value="all">-- Tất cả --</option>
                             <?php foreach ($semesters as $sem): ?>
-                            <option value="<?= e($sem['semester_name']) ?>" data-year="<?= e($sem['academic_year'] ?? '') ?>">
-                                <?= e(($sem['semester_name'] ?? '') . ' - ' . ($sem['academic_year'] ?? '')) ?>
+                            <option value="<?= e($sem['semester_name']) ?>" data-year="<?= e($sem['academic_year'] ?? '') ?>" <?= (($currentSemester['semester_name'] ?? '') === ($sem['semester_name'] ?? '') && ($currentSemester['academic_year'] ?? '') === ($sem['academic_year'] ?? '')) ? 'selected' : '' ?>>
+                                <?= e(attendanceSemesterLabel($sem['semester_name'] ?? '', $sem['academic_year'] ?? '')) ?>
                             </option>
                             <?php endforeach; ?>
                         </select>
@@ -230,22 +221,22 @@ function attendanceSemesterLabel($semesterName, $academicYear) {
                             <option value="">-- Chọn môn học --</option>
                         </select>
                     </div>
+                    <div class="col-12 col-md-5">
+                        <label class="fw-bold small text-muted mb-1">NGÀY HỌC</label>
+                        <input type="date" class="form-control fw-bold bcs-short-input" id="attendanceDate" value="<?= date('Y-m-d') ?>">
+                    </div>
                 </div>
 
                 <div class="row g-2 align-items-end mt-1">
-                    <div class="col-12 col-md-4">
-                        <label class="fw-bold small text-muted mb-1">NGÀY HỌC</label>
-                        <input type="date" class="form-control fw-bold" id="attendanceDate" value="<?= date('Y-m-d') ?>">
-                    </div>
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-3">
                         <label class="fw-bold small text-muted mb-1">NHÓM</label>
-                        <select class="form-select border-primary fw-bold text-dark bcs-group-select" id="groupSelect" onchange="onGroupChange()">
+                        <select class="form-select border-primary fw-bold text-dark bcs-group-select bcs-short-select" id="groupSelect" onchange="onGroupChange()">
                             <option value="">-- Chọn nhóm --</option>
                         </select>
                     </div>
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-3">
                         <label class="fw-bold small text-muted mb-1">BUỔI</label>
-                        <select class="form-select fw-bold text-dark bcs-compact-select" id="attendanceSession" onchange="checkSessionReason()">
+                        <select class="form-select fw-bold text-dark bcs-compact-select bcs-short-select" id="attendanceSession" onchange="checkSessionReason()">
                             <option value="Sáng">Sáng</option>
                             <option value="Chiều">Chiều</option>
                             <option value="Tối">Tối</option>
@@ -395,6 +386,12 @@ const STUDENTS_DATA = <?= json_encode($students) ?>;
         width: 100%;
         min-width: 0;
         max-width: none;
+    }
+    .bcs-short-select {
+        max-width: 220px;
+    }
+    .bcs-short-input {
+        max-width: 220px;
     }
 </style>
 </body>

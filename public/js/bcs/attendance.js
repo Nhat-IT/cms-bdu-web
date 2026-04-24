@@ -1,4 +1,4 @@
-const bcsAttendanceState = {
+﻿const bcsAttendanceState = {
     groups: [],
     subjectMap: new Map(),
     selectedGroupId: 0
@@ -34,19 +34,6 @@ function bcsNormalizeSemester(value) {
     if (!text || text === 'ALL') return 'ALL';
     const m = text.match(/(?:HK)?\s*([123])$/);
     return m ? `HK${m[1]}` : text;
-}
-
-function bcsGetDayLabel(dayValue) {
-    const map = {
-        2: 'Thu 2',
-        3: 'Thu 3',
-        4: 'Thu 4',
-        5: 'Thu 5',
-        6: 'Thu 6',
-        7: 'Thu 7',
-        8: 'Chu nhat'
-    };
-    return map[Number(dayValue)] || '--';
 }
 
 function bcsGetSessionByPeriods(startPeriod) {
@@ -116,12 +103,12 @@ function bcsRenderRoster(students) {
                 <td>${sv.class_name || ''}</td>
                 <td>
                     <select class="form-select form-select-sm status-select" onchange="window.updateColor(this)">
-                        <option value="1" ${statusValue === 1 ? 'selected' : ''}>Co mat</option>
-                        <option value="2" ${statusValue === 2 ? 'selected' : ''}>Vang co phep</option>
-                        <option value="3" ${statusValue === 3 ? 'selected' : ''}>Vang khong phep</option>
+                        <option value="1" ${statusValue === 1 ? 'selected' : ''}>Có mặt</option>
+                        <option value="2" ${statusValue === 2 ? 'selected' : ''}>Vắng có phép</option>
+                        <option value="3" ${statusValue === 3 ? 'selected' : ''}>Vắng không phép</option>
                     </select>
                 </td>
-                <td><input type="text" class="form-control form-control-sm bg-light border-0" placeholder="Ghi chu..."></td>
+                <td><input type="text" class="form-control form-control-sm bg-light border-0" placeholder="Ghi chú..."></td>
             </tr>`;
     }).join('');
 
@@ -129,53 +116,26 @@ function bcsRenderRoster(students) {
     window.recalculateAttendance();
 }
 
-function bcsSyncSemesterOptionsByYear() {
-    const yearSelect = document.getElementById('filterAcademicYear');
+function bcsGetSelectedSemesterFilter() {
     const semesterSelect = document.getElementById('filterSemester');
-    if (!yearSelect || !semesterSelect) return;
+    if (!semesterSelect) return { semester: 'ALL', year: 'all' };
 
-    const selectedYear = yearSelect.value || 'all';
-    let hasVisible = false;
-
-    Array.from(semesterSelect.options).forEach((opt) => {
-        if (opt.value === 'all') {
-            opt.hidden = false;
-            hasVisible = true;
-            return;
-        }
-        const optYear = String(opt.getAttribute('data-year') || '').trim();
-        const visible = selectedYear === 'all' || optYear === selectedYear;
-        opt.hidden = !visible;
-        if (visible) hasVisible = true;
-    });
-
-    if (!hasVisible) {
-        semesterSelect.value = 'all';
-        return;
-    }
-
-    const current = semesterSelect.selectedOptions && semesterSelect.selectedOptions[0];
-    if (current && current.hidden) {
-        semesterSelect.value = 'all';
-    }
-
-    if (selectedYear !== 'all') {
-        const visibleSemester = Array.from(semesterSelect.options).find((opt) => opt.value !== 'all' && !opt.hidden);
-        if (visibleSemester && semesterSelect.value === 'all') {
-            semesterSelect.value = visibleSemester.value;
-        }
-    }
+    const semester = bcsNormalizeSemester(semesterSelect.value || 'all');
+    const selectedYear = String(semesterSelect.selectedOptions?.[0]?.getAttribute('data-year') || 'all').trim();
+    return {
+        semester,
+        year: selectedYear || 'all'
+    };
 }
 
-function bcsFilterGroupsByYearSemester(groups) {
-    const year = document.getElementById('filterAcademicYear')?.value || 'all';
-    const semester = bcsNormalizeSemester(document.getElementById('filterSemester')?.value || 'all');
+function bcsFilterGroupsBySemester(groups) {
+    const selected = bcsGetSelectedSemesterFilter();
 
     return groups.filter((g) => {
-        const matchYear = year === 'all' || String(g.academic_year || '') === String(year);
+        if (selected.semester === 'ALL') return true;
         const groupSemester = bcsNormalizeSemester(g.semester_name || '');
-        const matchSemester = semester === 'ALL' || groupSemester === semester;
-        return matchYear && matchSemester;
+        const groupYear = String(g.academic_year || '').trim();
+        return groupSemester === selected.semester && groupYear === selected.year;
     });
 }
 
@@ -200,7 +160,7 @@ function bcsPopulateSelectors(groups) {
     });
 
     const currentSubject = subjectSelect.value;
-    const options = ['<option value="">-- Chon mon hoc --</option>'];
+    const options = ['<option value="">-- Chọn môn học --</option>'];
     Array.from(bcsAttendanceState.subjectMap.entries()).forEach(([key, value]) => {
         options.push(`<option value="${key}">${value.label}</option>`);
     });
@@ -213,7 +173,7 @@ function bcsPopulateSelectors(groups) {
     }
 
     if (!subjectSelect.value) {
-        groupSelect.innerHTML = '<option value="">-- Chon nhom --</option>';
+        groupSelect.innerHTML = '<option value="">-- Chọn nhóm --</option>';
         bcsAttendanceState.selectedGroupId = 0;
         bcsClearSubjectInfo();
         bcsRenderRoster([]);
@@ -225,7 +185,7 @@ function bcsPopulateSelectors(groups) {
 }
 
 function bcsApplyFilters() {
-    const filteredGroups = bcsFilterGroupsByYearSemester(bcsAttendanceState.groups);
+    const filteredGroups = bcsFilterGroupsBySemester(bcsAttendanceState.groups);
     bcsPopulateSelectors(filteredGroups);
 }
 
@@ -235,6 +195,7 @@ async function bcsLoadRoster() {
         bcsSetAttendanceAvailability(false);
         return;
     }
+
     const date = document.getElementById('attendanceDate')?.value;
     if (!date) return;
 
@@ -249,7 +210,7 @@ async function bcsLoadRoster() {
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-        alert(data.error || 'Khong the tai danh sach diem danh.');
+        alert(data.error || 'Không thể tải danh sách điểm danh.');
         return;
     }
 
@@ -267,7 +228,7 @@ window.onSubjectChange = function () {
     const groups = item ? item.groups : [];
 
     if (!groups.length) {
-        groupSelect.innerHTML = '<option value="">-- Chon nhom --</option>';
+        groupSelect.innerHTML = '<option value="">-- Chọn nhóm --</option>';
         bcsAttendanceState.selectedGroupId = 0;
         bcsClearSubjectInfo();
         bcsRenderRoster([]);
@@ -298,7 +259,7 @@ window.onGroupChange = function () {
         const sessionByPeriod = bcsGetSessionByPeriods(group.start_period);
         const sessionValue = sessionByPeriod || String(group.study_session || '').trim();
 
-        if (lblTeacher) lblTeacher.textContent = group.teacher_name || 'Chua cap nhat';
+        if (lblTeacher) lblTeacher.textContent = group.teacher_name || 'Chưa cập nhật';
         if (lblTime) {
             lblTime.textContent = `${bcsFormatDate(group.start_date)} - ${bcsFormatDate(group.end_date)}`;
         }
@@ -370,22 +331,22 @@ window.checkSessionReason = function () {
 };
 
 window.addStudentToTable = function () {
-    alert('Ban can them sinh vien tai trang phan cong lop hoc.');
+    alert('Bạn cần thêm sinh viên tại trang phân công lớp học.');
 };
 
 window.exportToExcel = function () {
-    const subject = document.getElementById('subjectSelect')?.selectedOptions?.[0]?.textContent?.trim() || 'Mon hoc';
-    const group = document.getElementById('groupSelect')?.selectedOptions?.[0]?.textContent?.trim() || 'Nhom';
+    const subject = document.getElementById('subjectSelect')?.selectedOptions?.[0]?.textContent?.trim() || 'Môn học';
+    const group = document.getElementById('groupSelect')?.selectedOptions?.[0]?.textContent?.trim() || 'Nhóm';
     const dateValue = document.getElementById('attendanceDate')?.value || new Date().toISOString().slice(0, 10);
 
     const rows = Array.from(document.querySelectorAll('#studentTableBody tr.student-row'));
     if (!rows.length) {
-        alert('Khong co du lieu de xuat.');
+        alert('Không có dữ liệu để xuất.');
         return;
     }
 
     const csvRows = [
-        ['MSSV', 'Ho ten', 'Ngay sinh', 'Lop', 'Trang thai'].join(','),
+        ['MSSV', 'Họ tên', 'Ngày sinh', 'Lớp', 'Trạng thái'].join(','),
         ...rows.map((row) => {
             const mssv = row.querySelector('.mssv-cell')?.textContent?.trim() || '';
             const name = row.querySelector('.name-cell')?.textContent?.trim() || '';
@@ -413,7 +374,7 @@ window.exportToExcel = function () {
 async function saveBcsAttendance() {
     const date = document.getElementById('attendanceDate')?.value;
     if (!bcsAttendanceState.selectedGroupId || !date) {
-        alert('Vui long chon nhom va ngay hoc truoc khi luu.');
+        alert('Vui lòng chọn nhóm và ngày học trước khi lưu.');
         return;
     }
 
@@ -421,6 +382,7 @@ async function saveBcsAttendance() {
         studentId: Number(row.getAttribute('data-student-id')),
         status: bcsParseStatus(row.querySelector('.status-select')?.value)
     }));
+
     if (!records.length) {
         alert('Chưa có dữ liệu điểm danh nên không thể lưu.');
         return;
@@ -439,11 +401,11 @@ async function saveBcsAttendance() {
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-        alert(data.error || 'Khong the luu diem danh.');
+        alert(data.error || 'Không thể lưu điểm danh.');
         return;
     }
 
-    alert('Da luu du lieu diem danh thanh cong.');
+    alert('Đã lưu dữ liệu điểm danh thành công.');
 }
 
 window.saveAttendance = saveBcsAttendance;
@@ -461,18 +423,12 @@ async function loadBcsAttendanceData() {
     const groups = await res.json();
     bcsAttendanceState.groups = Array.isArray(groups) ? groups : [];
 
-    const yearSelect = document.getElementById('filterAcademicYear');
     const semesterSelect = document.getElementById('filterSemester');
     const dateInput = document.getElementById('attendanceDate');
 
-    bcsSyncSemesterOptionsByYear();
     bcsApplyFilters();
     bcsSetAttendanceAvailability(false);
 
-    yearSelect?.addEventListener('change', function () {
-        bcsSyncSemesterOptionsByYear();
-        bcsApplyFilters();
-    });
     semesterSelect?.addEventListener('change', bcsApplyFilters);
 
     if (dateInput && !dateInput.value) {

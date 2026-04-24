@@ -20,11 +20,40 @@ $position = $_SESSION['position'] ?? 'Ban Cán Sự';
 $avatar = getAvatarUrl($_SESSION['avatar'] ?? null, $fullName, 55);
 $unreadCount = 0;
 $semesters = [];
-$academicYears = [];
-$selectedYear = 'all';
-$selectedSemester = 'all';
+$selectedSemesterId = 0;
+$selectedSemesterName = '';
 $documents = [];
 $currentSemester = null;
+
+function bcsFormatFileSize($bytes) {
+    $size = (int)$bytes;
+    if ($size < 1024) return $size . ' B';
+    if ($size < 1024 * 1024) return round($size / 1024, 1) . ' KB';
+    if ($size < 1024 * 1024 * 1024) return round($size / (1024 * 1024), 1) . ' MB';
+    return round($size / (1024 * 1024 * 1024), 1) . ' GB';
+}
+
+function bcsDocumentSizeLabel($driveLink) {
+    $link = trim((string)$driveLink);
+    if ($link === '') return '-';
+
+    $path = (string)(parse_url($link, PHP_URL_PATH) ?? '');
+    if ($path === '') return '-';
+
+    $basePath = (string)(parse_url(BASE_URL, PHP_URL_PATH) ?? '/cms');
+    $prefix = rtrim($basePath, '/') . '/public/uploads/documents/';
+    if (strpos($path, $prefix) !== 0) return '-';
+
+    $fileName = basename(urldecode(substr($path, strlen($prefix))));
+    if ($fileName === '') return '-';
+
+    $fullPath = BASE_PATH . '/public/uploads/documents/' . $fileName;
+    if (!is_file($fullPath)) return '-';
+
+    $bytes = @filesize($fullPath);
+    if ($bytes === false) return '-';
+    return bcsFormatFileSize($bytes);
+}
 
 try {
     getDBConnection();
@@ -60,11 +89,6 @@ try {
                   FIELD(UPPER(semester_name), 'HK1', '1', 'HK2', '2', 'HK3', '3'),
                   start_date DESC"
     );
-    foreach ($semesters as $sem) {
-        $year = trim((string)($sem['academic_year'] ?? ''));
-        if ($year !== '') $academicYears[$year] = true;
-    }
-
     // Học kỳ mặc định theo ngày hiện tại
     foreach ($semesters as $sem) {
         if (!empty($sem['start_date']) && !empty($sem['end_date']) && date('Y-m-d') >= $sem['start_date'] && date('Y-m-d') <= $sem['end_date']) {
@@ -74,21 +98,18 @@ try {
     }
     if (!$currentSemester && !empty($semesters)) $currentSemester = $semesters[0];
 
-    $selectedYear = trim((string)($_GET['year'] ?? ''));
-    if ($selectedYear === '') $selectedYear = (string)($currentSemester['academic_year'] ?? 'all');
-    if ($selectedYear !== 'all' && !isset($academicYears[$selectedYear])) $selectedYear = 'all';
-
-    $selectedSemester = strtoupper(trim((string)($_GET['semester'] ?? '')));
-    if ($selectedSemester === '') $selectedSemester = strtoupper((string)($currentSemester['semester_name'] ?? 'ALL'));
-    if ($selectedSemester === 'ALL') {
-        $selectedSemester = 'all';
-    } elseif (preg_match('/^(HK)?([123])$/i', $selectedSemester, $m)) {
-        $selectedSemester = 'HK' . $m[2];
-    } else {
-        $selectedSemester = 'all';
+    $selectedSemesterId = (int)($_GET['semester_id'] ?? 0);
+    if ($selectedSemesterId <= 0) {
+        $selectedSemesterId = (int)($currentSemester['id'] ?? 0);
+    }
+    foreach ($semesters as $sem) {
+        if ((int)($sem['id'] ?? 0) === $selectedSemesterId) {
+            $selectedSemesterName = strtoupper(trim((string)($sem['semester_name'] ?? '')));
+            break;
+        }
     }
 
-    // Lấy tài liệu theo lớp + bộ lọc năm/học kỳ
+    // Lấy tài liệu theo lớp + bộ lọc học kỳ
     if ($classId > 0) {
         $documents = db_fetch_all(
             "SELECT d.*, s.subject_name, u.full_name as uploader_name, sm.semester_name, sm.academic_year
@@ -98,10 +119,9 @@ try {
              LEFT JOIN users u ON d.uploader_id = u.id
              LEFT JOIN semesters sm ON cs.semester_id = sm.id
              WHERE cs.class_id = ?
-               AND (? = 'all' OR sm.academic_year = ?)
-               AND (? = 'all' OR UPPER(sm.semester_name) = UPPER(?))
+               AND (? <= 0 OR cs.semester_id = ? OR UPPER(COALESCE(d.semester, '')) = ?)
              ORDER BY d.created_at DESC",
-            [$classId, $selectedYear, $selectedYear, $selectedSemester, $selectedSemester]
+            [$classId, $selectedSemesterId, $selectedSemesterId, $selectedSemesterName]
         );
     } else {
         $classWarning = 'Tài khoản BCS chưa được gán lớp trong hệ thống.';
@@ -271,16 +291,17 @@ foreach ($documents as $doc) {
                 <h5 class="fw-bold text-dark m-0"><i class="bi bi-list-ul me-2 text-secondary"></i>Danh sách Tài liệu</h5>
                 
                 <div class="d-flex gap-2 align-items-center">
-                    <select class="form-select form-select-sm w-auto fw-bold text-primary border-primary" id="filterYear">
-                        <option value="all">Tất cả năm</option>
-                        <?php foreach (array_keys($academicYears) as $year): ?>
-                        <option value="<?= e($year) ?>" <?= $selectedYear === $year ? 'selected' : '' ?>><?= e($year) ?></option>
-                        <?php endforeach; ?>
-                    </select>
                     <select class="form-select form-select-sm w-auto fw-bold text-primary border-primary" id="filterSemester">
-                        <option value="all">Tất cả học kỳ</option>
-                        <?php foreach (['HK1', 'HK2', 'HK3'] as $hk): ?>
-                        <option value="<?= $hk ?>" <?= strtoupper((string)$selectedSemester) === $hk ? 'selected' : '' ?>><?= str_replace('HK', 'Học kỳ ', $hk) ?></option>
+                        <?php foreach ($semesters as $sem): ?>
+                        <?php
+                            $code = strtoupper((string)($sem['semester_name'] ?? ''));
+                            $label = preg_match('/^(HK)?([123])$/', $code, $m)
+                                ? ('Học kỳ ' . $m[2] . ' - ' . ($sem['academic_year'] ?? ''))
+                                : (($sem['semester_name'] ?? '') . ' - ' . ($sem['academic_year'] ?? ''));
+                        ?>
+                        <option value="<?= (int)($sem['id'] ?? 0) ?>" <?= ((int)($sem['id'] ?? 0) === $selectedSemesterId) ? 'selected' : '' ?>>
+                            <?= e($label) ?>
+                        </option>
                         <?php endforeach; ?>
                     </select>
                     <select class="form-select form-select-sm w-auto" id="filterCategory">
@@ -340,7 +361,7 @@ foreach ($documents as $doc) {
                                 </td>
                                 <td><?= e($doc['uploader_name'] ?? 'Không xác định') ?></td>
                                 <td><?= formatDate($doc['created_at']) ?></td>
-                                <td class="text-center text-muted small">-</td>
+                                <td class="text-center text-muted small"><?= e(bcsDocumentSizeLabel($doc['drive_link'] ?? '')) ?></td>
                                 <td class="pe-4 text-end">
                                     <?php if ($doc['uploader_id'] == $userId): ?>
                                     <button class="btn btn-sm btn-light text-success border me-1" title="Sửa" data-bs-toggle="modal" data-bs-target="#uploadModal" onclick="openDocModal('edit', <?= htmlspecialchars(json_encode($doc)) ?>)"><i class="bi bi-pencil-square"></i></button>
@@ -385,6 +406,12 @@ foreach ($documents as $doc) {
           </div>
 
           <div class="mb-3">
+            <label class="form-label fw-bold">Link Google Drive (nếu có)</label>
+            <input type="url" class="form-control" id="docDriveLink" placeholder="https://drive.google.com/...">
+            <small class="text-muted">Nếu chưa chọn file tải lên Drive, bạn có thể dán link thủ công.</small>
+          </div>
+
+          <div class="mb-3">
             <label class="form-label fw-bold">Tiêu đề tài liệu <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="docTitle" placeholder="VD: Slide chương 1 - Java" required>
           </div>
@@ -405,6 +432,29 @@ foreach ($documents as $doc) {
           <div class="mb-3">
             <label class="form-label fw-bold">Ghi chú thêm (Note)</label>
             <textarea class="form-control" id="docNote" rows="2" placeholder="VD: Bản Word có chữ ký số..."></textarea>
+          </div>
+
+          <div class="row g-2">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Năm học</label>
+              <input type="text" class="form-control" id="docAcademicYear" readonly value="<?= e($currentSemester['academic_year'] ?? '') ?>">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Học kỳ lưu</label>
+              <select class="form-select" id="docSemesterId">
+                <?php foreach ($semesters as $sem): ?>
+                <?php
+                    $code = strtoupper((string)($sem['semester_name'] ?? ''));
+                    $label = preg_match('/^(HK)?([123])$/', $code, $m)
+                        ? ('Học kỳ ' . $m[2] . ' - ' . ($sem['academic_year'] ?? ''))
+                        : (($sem['semester_name'] ?? '') . ' - ' . ($sem['academic_year'] ?? ''));
+                ?>
+                <option value="<?= (int)($sem['id'] ?? 0) ?>" data-year="<?= e($sem['academic_year'] ?? '') ?>" <?= ((int)($sem['id'] ?? 0) === $selectedSemesterId) ? 'selected' : '' ?>>
+                    <?= e($label) ?>
+                </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
           </div>
 
         </form>
