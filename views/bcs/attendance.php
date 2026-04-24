@@ -11,55 +11,77 @@ requireRole('bcs');
 
 $userId = $_SESSION['user_id'];
 $pageTitle = 'Quản Lý Chuyên Cần';
+$dbError = '';
+$classWarning = '';
+$classId = null;
+$className = '';
+$semesters = [];
+$subjects = [];
+$students = [];
+$unreadCount = 0;
 
-// Lấy class_id của BCS từ class_students
-$classRow = db_fetch_one(
-    "SELECT cs.class_id, c.class_name
-     FROM class_students cs
-     JOIN classes c ON cs.class_id = c.id
-     WHERE cs.student_id = ?",
-    [$userId]
-);
-$classId = $classRow['class_id'] ?? null;
-$className = $classRow['class_name'] ?? '';
+try {
+    // Ensure DB connection is available for this page.
+    getDBConnection();
 
-// Lấy thông tin user
-$currentUser = db_fetch_one("SELECT * FROM users WHERE id = ?", [$userId]);
-$fullName = $currentUser['full_name'] ?? '';
-$position = $currentUser['position'] ?? 'Ban Cán Sự';
-$avatar = getAvatarUrl($currentUser['avatar'] ?? null, $fullName, 55);
+    // Lấy class_id của BCS từ class_students
+    $classRow = db_fetch_one(
+        "SELECT cs.class_id, c.class_name
+         FROM class_students cs
+         JOIN classes c ON cs.class_id = c.id
+         WHERE cs.student_id = ?",
+        [$userId]
+    );
+    $classId = $classRow['class_id'] ?? null;
+    $className = $classRow['class_name'] ?? '';
 
-// Lấy danh sách học kỳ
-$semesters = db_fetch_all("SELECT * FROM semesters ORDER BY id DESC");
+    // Lấy thông tin user
+    $currentUser = db_fetch_one("SELECT * FROM users WHERE id = ?", [$userId]);
+    $fullName = $currentUser['full_name'] ?? '';
+    $position = $currentUser['position'] ?? 'Ban Cán Sự';
+    $avatar = getAvatarUrl($currentUser['avatar'] ?? null, $fullName, 55);
 
-// Lấy danh sách môn học của lớp
-$subjects = db_fetch_all(
-    "SELECT DISTINCT cs.id as class_subject_id, s.id as subject_id, s.subject_name, s.subject_code
-     FROM class_subjects cs
-     JOIN subjects s ON cs.subject_id = s.id
-     JOIN class_subject_groups csg ON csg.class_subject_id = cs.id
-     JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
-     JOIN class_students cs2 ON cs2.student_id = ssr.student_id AND cs2.class_id = ?
-     WHERE ssr.status = 'Đang học'
-     ORDER BY s.subject_name",
-    [$classId]
-);
+    // Đếm notification
+    $unreadCount = db_fetch_one(
+        "SELECT COUNT(*) as total FROM notification_logs WHERE user_id = ? AND is_read = 0",
+        [$userId]
+    )['total'] ?? 0;
 
-// Lấy danh sách sinh viên trong lớp
-$students = db_fetch_all(
-    "SELECT u.id, u.full_name, u.username as student_code, u.birth_date
-     FROM users u
-     JOIN class_students cs ON u.id = cs.student_id
-     WHERE cs.class_id = ?
-     ORDER BY u.full_name",
-    [$classId]
-);
+    if ($classId) {
+        // Lấy danh sách học kỳ
+        $semesters = db_fetch_all("SELECT * FROM semesters ORDER BY id DESC");
 
-// Đếm notification
-$unreadCount = db_fetch_one(
-    "SELECT COUNT(*) as total FROM notification_logs WHERE user_id = ? AND is_read = 0",
-    [$userId]
-)['total'] ?? 0;
+        // Lấy danh sách môn học của lớp
+        $subjects = db_fetch_all(
+            "SELECT DISTINCT cs.id as class_subject_id, s.id as subject_id, s.subject_name, s.subject_code
+             FROM class_subjects cs
+             JOIN subjects s ON cs.subject_id = s.id
+             JOIN class_subject_groups csg ON csg.class_subject_id = cs.id
+             JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
+             JOIN class_students cs2 ON cs2.student_id = ssr.student_id AND cs2.class_id = ?
+             WHERE ssr.status = 'Đang học'
+             ORDER BY s.subject_name",
+            [$classId]
+        );
+
+        // Lấy danh sách sinh viên trong lớp
+        $students = db_fetch_all(
+            "SELECT u.id, u.full_name, u.username as student_code, u.birth_date
+             FROM users u
+             JOIN class_students cs ON u.id = cs.student_id
+             WHERE cs.class_id = ?
+             ORDER BY u.full_name",
+            [$classId]
+        );
+    } else {
+        $classWarning = 'Tài khoản BCS chưa được gán lớp trong hệ thống.';
+    }
+} catch (Exception $e) {
+    $dbError = 'Không thể kết nối cơ sở dữ liệu hoặc tải dữ liệu điểm danh.';
+    $fullName = $_SESSION['full_name'] ?? 'BCS';
+    $position = $_SESSION['position'] ?? 'Ban Cán Sự';
+    $avatar = getAvatarUrl($_SESSION['avatar'] ?? null, $fullName, 55);
+}
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -134,6 +156,17 @@ $unreadCount = db_fetch_one(
     </div>
 
     <div class="p-4">
+        <?php if ($dbError !== ''): ?>
+        <div class="alert alert-danger mb-4" role="alert">
+            <?= e($dbError) ?>
+        </div>
+        <?php endif; ?>
+
+        <?php if ($classWarning !== ''): ?>
+        <div class="alert alert-warning mb-4" role="alert">
+            <?= e($classWarning) ?>
+        </div>
+        <?php endif; ?>
         
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-body">

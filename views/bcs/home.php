@@ -125,7 +125,7 @@ $unreadCount = $unreadRow['total'] ?? 0;
                 <img src="<?= e($avatar) ?>" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar BCS">
                 <div class="hide-on-collapse">
                     <div class="text-white fw-bold fs-6"><?= e($fullName) ?></div>
-                    <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">Vai trò: <?= e($position) ?></div>
+                    <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">Chức vụ: <?= e($position) ?></div>
                 </div>
             </a>
             <span class="badge bcs-class-badge mt-1 hide-on-collapse">LỚP: <?= e($className) ?></span>

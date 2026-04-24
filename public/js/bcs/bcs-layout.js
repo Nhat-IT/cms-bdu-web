@@ -1,33 +1,18 @@
-// Giao diện dùng chung BCS: xử lý nút mở/đóng sidebar trên mobile cho tất cả trang BCS.
+// Giao diện dùng chung BCS: xử lý dữ liệu sidebar và menu.
 resetBcsLayoutPlaceholders();
 
 document.addEventListener('DOMContentLoaded', function () {
-    const sidebarToggle = document.getElementById('sidebarToggle');
-    const sidebar = document.getElementById('sidebar');
-    const mainContent = document.querySelector('.main-content');
-
-    if (!sidebarToggle || !sidebar) {
-        return;
-    }
-
-    sidebarToggle.classList.remove('d-md-none');
-    sidebarToggle.classList.add('border-0');
-
-    const toggleIcon = sidebarToggle.querySelector('i');
-    if (toggleIcon) {
-        toggleIcon.classList.remove('fs-4');
-        toggleIcon.classList.add('fs-3');
-    }
-
-    if (mainContent) {
-        sidebarToggle.addEventListener('click', function () {
-            sidebar.classList.toggle('collapsed');
-            mainContent.classList.toggle('expanded');
+    // Use shared menu initializer to avoid double-binding click handlers.
+    if (window.CMSMenu && typeof window.CMSMenu.init === 'function') {
+        window.CMSMenu.init({
+            sidebarSelector: '#sidebar',
+            mainContentSelector: '#mainContent, .main-content',
+            toggleSelector: '#sidebarToggle',
+            topNavbarSelector: '.top-navbar-blue'
         });
     }
 
     hydrateBcsSharedData();
-
 });
 
 function resetBcsLayoutPlaceholders() {
@@ -43,7 +28,7 @@ function resetBcsLayoutPlaceholders() {
 
     const roleNode = document.querySelector('.bcs-profile-container .text-white-50.small.mb-1');
     if (roleNode) {
-        roleNode.textContent = 'Vai trò: BCS';
+        roleNode.textContent = 'Chức vụ: --';
     }
 
     document.querySelectorAll('.bcs-class-badge, #userClassName').forEach(function (node) {
@@ -58,7 +43,6 @@ function resetBcsLayoutPlaceholders() {
         node.textContent = '0';
     });
 
-    // Keep BCS modal/list placeholders neutral until real data arrives.
     const textFallbacks = [
         ['#fbSenderName', 'Đang tải...'],
         ['#fbTime', 'Đang tải...'],
@@ -77,14 +61,15 @@ function resetBcsLayoutPlaceholders() {
 }
 
 async function hydrateBcsSharedData() {
+    const toUrl = window.cmsUrl || function (path) { return path; };
     try {
         const [meRes, unreadRes] = await Promise.all([
-            fetch('/api/me', { headers: { Accept: 'application/json' } }),
-            fetch('/api/notifications/unread-count', { headers: { Accept: 'application/json' } })
+            fetch(toUrl('/api/me'), { headers: { Accept: 'application/json' } }),
+            fetch(toUrl('/api/notifications/unread-count'), { headers: { Accept: 'application/json' } })
         ]);
 
         if (meRes.status === 401 || unreadRes.status === 401) {
-            window.location.href = '/login.html';
+            window.location.href = toUrl('/login.php');
             return;
         }
 
@@ -94,6 +79,7 @@ async function hydrateBcsSharedData() {
             const avatar = me.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0d6efd&color=fff`;
             const className = me.class_name || '--';
             const departmentName = me.department_name || '';
+            const position = me.position || '--';
 
             const profileImg = document.querySelector('.bcs-profile-container img[alt="Avatar BCS"]');
             if (profileImg) {
@@ -107,7 +93,7 @@ async function hydrateBcsSharedData() {
 
             const roleNode = document.querySelector('.bcs-profile-container .text-white-50.small.mb-1');
             if (roleNode) {
-                roleNode.textContent = `Vai trò: ${me.role || 'bcs'}`;
+                roleNode.textContent = `Chức vụ: ${position}`;
             }
 
             document.querySelectorAll('.bcs-class-badge, #userClassName').forEach(function (node) {

@@ -179,6 +179,74 @@ function getDayOfWeekFromDate(dateStr) {
     return jsDay === 0 ? '8' : String(jsDay + 1); // 2..8
 }
 
+function parseYmdLocal(ymd) {
+    const raw = String(ymd || '').trim();
+    if (!raw) return null;
+    const parts = raw.split('-');
+    if (parts.length !== 3) return null;
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
+    const date = new Date(y, m, d);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function toYmdLocal(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + d;
+}
+
+function formatYmdForUi(ymd) {
+    const d = parseYmdLocal(ymd);
+    if (!d) return '--';
+    return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+}
+
+function getCourseDateRange(course) {
+    const directStart = parseYmdLocal(course && course.startDate);
+    const directEnd = parseYmdLocal(course && course.endDate);
+    if (directStart && directEnd && directStart <= directEnd) {
+        return { start: directStart, end: directEnd };
+    }
+
+    const semester = normalizeSemesterCode(course && course.semester);
+    const year = String((course && course.year) || '').trim();
+    const semesterKey = semester && year ? (semester + '|||' + year) : '';
+    const range = (window.semesterRanges && semesterKey) ? window.semesterRanges[semesterKey] : null;
+    const rangeStart = parseYmdLocal(range && range.start);
+    const rangeEnd = parseYmdLocal(range && range.end);
+    if (rangeStart && rangeEnd && rangeStart <= rangeEnd) {
+        return { start: rangeStart, end: rangeEnd };
+    }
+
+    return null;
+}
+
+function buildScheduleDatesForGroup(course, group) {
+    const dayValue = parseInt(group && group.day, 10);
+    if (!Number.isFinite(dayValue) || dayValue < 2 || dayValue > 8) return [];
+
+    const range = getCourseDateRange(course);
+    if (!range) return [];
+
+    const desiredJsDay = dayValue === 8 ? 0 : (dayValue - 1);
+    const cursor = new Date(range.start.getFullYear(), range.start.getMonth(), range.start.getDate());
+    while (cursor.getDay() !== desiredJsDay) {
+        cursor.setDate(cursor.getDate() + 1);
+        if (cursor > range.end) return [];
+    }
+
+    const dates = [];
+    while (cursor <= range.end) {
+        dates.push(toYmdLocal(cursor));
+        cursor.setDate(cursor.getDate() + 7);
+    }
+    return dates;
+}
+
 function resolveSingleSessionCourse(context) {
     if (!context) return null;
 
@@ -1314,50 +1382,96 @@ function renderSessionManagerRows(course, groupCode = null) {
     }
 
     tbody.innerHTML = '';
-    displayedGroups.forEach(function (group, index) {
+    let rowIndex = 1;
+    displayedGroups.forEach(function (group) {
         const hasGroupSchedule = Boolean(group.day && group.start && group.end && group.room);
-        const row = document.createElement('tr');
-        const dateLabel = '--';
         const teacherId = group.teacherMain || '';
+        const scheduledDates = hasGroupSchedule ? buildScheduleDatesForGroup(course, group) : [];
 
-        const dayCell = document.createElement('td');
-        dayCell.textContent = hasGroupSchedule ? getDayLabel(group.day) : 'Chưa xếp';
+        if (!hasGroupSchedule) {
+            const unscheduledRow = document.createElement('tr');
+            unscheduledRow.appendChild(createTextCell(String(rowIndex++), 'fw-bold'));
+            unscheduledRow.appendChild(createTextCell(getClassGroupLabel(course.classCode || '', group.code), 'fw-bold text-primary'));
+            unscheduledRow.appendChild(createTextCell('--', 'fw-bold text-dark'));
+            unscheduledRow.appendChild(createTextCell('Chưa xếp', ''));
+            unscheduledRow.appendChild(createTextCell('--', ''));
+            unscheduledRow.appendChild(createTextCell('--', 'fw-bold text-danger'));
+            unscheduledRow.appendChild(createStatusCell(course.isOpen ? 'Đang mở' : 'Đã đóng', course.isOpen ? 'status-normal' : 'bg-secondary'));
+            const unscheduledAction = document.createElement('td');
+            const addButton = document.createElement('button');
+            addButton.className = 'btn btn-sm btn-light text-primary border';
+            addButton.title = 'Xếp lịch nhóm';
+            addButton.innerHTML = '<i class="bi bi-pencil-square"></i>';
+            addButton.onclick = function () {
+                openEditSingleSession(
+                    'add',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    'normal',
+                    course.classCode || course.id,
+                    course.name,
+                    teacherId,
+                    group.code,
+                    course.csId || ''
+                );
+            };
+            unscheduledAction.appendChild(addButton);
+            unscheduledRow.appendChild(unscheduledAction);
+            tbody.appendChild(unscheduledRow);
+            return;
+        }
 
-        const actionCell = document.createElement('td');
-        const editButton = document.createElement('button');
-        editButton.className = 'btn btn-sm btn-light text-primary border';
-        editButton.title = 'Sửa từng ngày';
-        editButton.innerHTML = '<i class="bi bi-pencil-square"></i>';
-        editButton.onclick = function () {
-            openEditSingleSession(
-                hasGroupSchedule ? 'edit' : 'add',
-                '',
-                '',
-                hasGroupSchedule ? group.day : '',
-                hasGroupSchedule ? String(group.start) : '',
-                hasGroupSchedule ? String(group.end) : '',
-                hasGroupSchedule ? group.room : '',
-                'normal',
-                course.classCode || course.id,
-                course.name,
-                teacherId,
-                group.code,
-                course.csId || ''
-            );
-        };
-        actionCell.appendChild(editButton);
+        const datesToRender = scheduledDates.length ? scheduledDates : [''];
+        datesToRender.forEach(function (dateYmd) {
+            const row = document.createElement('tr');
+            const dateLabel = dateYmd ? formatYmdForUi(dateYmd) : '--';
 
-        row.innerHTML = '';
-        row.appendChild(createTextCell(String(index + 1), 'fw-bold'));
-        row.appendChild(createTextCell(getClassGroupLabel(course.classCode || '', group.code), 'fw-bold text-primary'));
-        row.appendChild(createTextCell(dateLabel, 'fw-bold text-dark'));
-        row.appendChild(dayCell);
-        row.appendChild(createTextCell(hasGroupSchedule ? ('Tiết ' + group.start + ' - ' + group.end) : '--', ''));
-        row.appendChild(createTextCell(hasGroupSchedule ? group.room : '--', 'fw-bold text-danger'));
-        row.appendChild(createStatusCell(course.isOpen ? 'Đang mở' : 'Đã đóng', course.isOpen ? 'status-normal' : 'bg-secondary'));
-        row.appendChild(actionCell);
-        tbody.appendChild(row);
+            const dayCell = document.createElement('td');
+            dayCell.textContent = getDayLabel(group.day);
+
+            const actionCell = document.createElement('td');
+            const editButton = document.createElement('button');
+            editButton.className = 'btn btn-sm btn-light text-primary border';
+            editButton.title = 'Sửa lịch nhóm';
+            editButton.innerHTML = '<i class="bi bi-pencil-square"></i>';
+            editButton.onclick = function () {
+                openEditSingleSession(
+                    'edit',
+                    dateLabel,
+                    dateYmd,
+                    group.day ? String(group.day) : '',
+                    group.start ? String(group.start) : '',
+                    group.end ? String(group.end) : '',
+                    group.room || '',
+                    'normal',
+                    course.classCode || course.id,
+                    course.name,
+                    teacherId,
+                    group.code,
+                    course.csId || ''
+                );
+            };
+            actionCell.appendChild(editButton);
+
+            row.appendChild(createTextCell(String(rowIndex++), 'fw-bold'));
+            row.appendChild(createTextCell(getClassGroupLabel(course.classCode || '', group.code), 'fw-bold text-primary'));
+            row.appendChild(createTextCell(dateLabel, 'fw-bold text-dark'));
+            row.appendChild(dayCell);
+            row.appendChild(createTextCell('Tiết ' + group.start + ' - ' + group.end, ''));
+            row.appendChild(createTextCell(group.room || '--', 'fw-bold text-danger'));
+            row.appendChild(createStatusCell(course.isOpen ? 'Đang mở' : 'Đã đóng', course.isOpen ? 'status-normal' : 'bg-secondary'));
+            row.appendChild(actionCell);
+            tbody.appendChild(row);
+        });
     });
+
+    if (!tbody.children.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-muted py-4">Chưa có buổi học nào để hiển thị.</td></tr>';
+    }
 }
 
 function createTextCell(text, className) {

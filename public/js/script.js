@@ -1,6 +1,47 @@
 (function () {
     const MOBILE_BREAKPOINT = 768;
     const originalFetch = window.fetch ? window.fetch.bind(window) : null;
+    const APP_BASE_PATH = detectAppBasePath();
+
+    window.CMS_BASE_PATH = APP_BASE_PATH;
+    window.cmsUrl = function (path) {
+        if (!path) {
+            return APP_BASE_PATH || '';
+        }
+        if (/^https?:\/\//i.test(path)) {
+            return path;
+        }
+        const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+        if (!APP_BASE_PATH) {
+            return normalizedPath;
+        }
+        if (normalizedPath.startsWith(`${APP_BASE_PATH}/`) || normalizedPath === APP_BASE_PATH) {
+            return normalizedPath;
+        }
+        return `${APP_BASE_PATH}${normalizedPath}`;
+    };
+
+    function detectAppBasePath() {
+        const pathname = String(window.location.pathname || '');
+        const segments = pathname.split('/').filter(Boolean);
+        if (segments.length > 0 && segments[0].toLowerCase() === 'cms') {
+            return `/${segments[0]}`;
+        }
+        return '';
+    }
+
+    function normalizeRequestUrl(url) {
+        if (typeof url !== 'string') {
+            return url;
+        }
+        if (!url.startsWith('/')) {
+            return url;
+        }
+        if (url.startsWith('/api/') || url.startsWith('/auth/') || url === '/login.php' || url.startsWith('/login.php?') || url === '/logout.php' || url.startsWith('/logout.php?')) {
+            return window.cmsUrl(url);
+        }
+        return url;
+    }
 
     function installGlobalAuthGuard() {
         if (!originalFetch || window.__cmsAuthGuardInstalled) {
@@ -9,14 +50,26 @@
 
         window.__cmsAuthGuardInstalled = true;
         window.fetch = async function (...args) {
-            const response = await originalFetch(...args);
-            const requestUrl = String(args[0] || '');
-            const isApiCall = requestUrl.startsWith('/api/');
-            const isLoginCall = requestUrl.includes('/auth/login');
-            const isOnLoginPage = window.location.pathname.endsWith('/login.html');
+            const normalizedArgs = [...args];
+            normalizedArgs[0] = normalizeRequestUrl(normalizedArgs[0]);
+
+            const response = await originalFetch(...normalizedArgs);
+            const requestUrl = String(normalizedArgs[0] || '');
+            let requestPath = requestUrl;
+            if (/^https?:\/\//i.test(requestUrl)) {
+                try {
+                    requestPath = new URL(requestUrl).pathname;
+                } catch (e) {
+                    requestPath = requestUrl;
+                }
+            }
+
+            const isApiCall = requestPath.includes('/api/');
+            const isLoginCall = requestPath.includes('/auth/login');
+            const isOnLoginPage = window.location.pathname.endsWith('/login.php') || window.location.pathname.endsWith('/login.html');
 
             if (isApiCall && !isLoginCall && response.status === 401 && !isOnLoginPage) {
-                window.location.href = '/login.html?error=session_expired';
+                window.location.href = window.cmsUrl('/login.php?error=session_expired');
             }
 
             return response;

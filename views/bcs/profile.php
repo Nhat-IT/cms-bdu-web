@@ -73,7 +73,7 @@ $unreadCount = $stmt->fetch()['total'] ?? 0;
                 <img src="<?= e($avatar) ?>" id="sidebarAvatar" class="rounded-circle shadow-sm mb-2 border border-2 border-primary" width="55" alt="Avatar BCS">
                 <div class="hide-on-collapse">
                     <div class="text-white fw-bold fs-6"><?= e($fullName) ?></div>
-                    <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">Vai trò: <span id="sidebarRoleText"><?= e($position) ?></span></div>
+                    <div class="text-white-50 small mb-1" style="font-size: 0.8rem;">Chức vụ: <span id="sidebarRoleText"><?= e($position) ?></span></div>
                 </div>
             </a>
             <span class="badge bcs-class-badge mt-1 hide-on-collapse">LỚP: <?= e($className) ?></span>
@@ -170,29 +170,29 @@ $unreadCount = $stmt->fetch()['total'] ?? 0;
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Họ và tên đầy đủ</label>
-                                    <input type="text" class="form-control border-secondary bg-light" value="<?= e($fullName) ?>" readonly title="Không thể tự thay đổi">
+                                    <input type="text" id="bcsFullNameInput" class="form-control border-secondary bg-light" value="<?= e($fullName) ?>" readonly title="Không thể tự thay đổi">
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold">Ngày sinh <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control border-secondary" name="birth_date" value="<?= e($birthDate) ?>" required>
+                                    <input type="text" id="bcsBirthDateInput" class="form-control border-secondary" name="birth_date" value="<?= e($birthDate ? formatDate($birthDate, 'd/m/Y') : '') ?>" required placeholder="dd/mm/yyyy" pattern="\d{2}/\d{2}/\d{4}" inputmode="numeric">
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Email trường cấp</label>
-                                    <input type="email" class="form-control border-secondary bg-light" value="<?= e($email) ?>" readonly title="Không thể tự thay đổi">
+                                    <input type="email" id="bcsEmailInput" class="form-control border-secondary bg-light" value="<?= e($email) ?>" readonly title="Không thể tự thay đổi">
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold">Số điện thoại cá nhân <span class="text-danger">*</span></label>
-                                    <input type="tel" class="form-control border-secondary" name="phone_number" value="<?= e($phone) ?>" required placeholder="Dùng để liên lạc">
+                                    <input type="tel" id="bcsPhoneInput" class="form-control border-secondary" name="phone_number" value="<?= e($phone) ?>" required placeholder="Dùng để liên lạc">
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">MSSV</label>
-                                    <input type="text" class="form-control border-secondary bg-light" value="<?= e($username) ?>" readonly>
+                                    <input type="text" id="bcsCodeInput" class="form-control border-secondary bg-light" value="<?= e($username) ?>" readonly>
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold">Chức vụ BCS <span class="text-danger">*</span></label>
@@ -208,7 +208,7 @@ $unreadCount = $stmt->fetch()['total'] ?? 0;
 
                             <div class="mb-4">
                                 <label class="form-label fw-bold">Địa chỉ hiện tại</label>
-                                <input type="text" class="form-control border-secondary" name="address" value="<?= e($address) ?>" placeholder="Nhập địa chỉ tạm trú/thường trú">
+                                <input type="text" id="bcsAddressInput" class="form-control border-secondary" name="address" value="<?= e($address) ?>" placeholder="Nhập địa chỉ tạm trú/thường trú">
                             </div>
 
                             <div class="text-end border-top pt-3">
@@ -257,3 +257,4 @@ $unreadCount = $stmt->fetch()['total'] ?? 0;
 <script src="../../public/js/bcs/profile.js"></script>
 </body>
 </html>
+

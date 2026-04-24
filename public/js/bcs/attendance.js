@@ -3,6 +3,7 @@ const bcsAttendanceState = {
     subjectMap: new Map(),
     selectedGroupId: 0
 };
+const bcsToUrl = window.cmsUrl || function (path) { return path; };
 
 function bcsFormatDate(value) {
     if (!value) return '';
@@ -96,12 +97,12 @@ async function bcsLoadRoster() {
     const date = document.getElementById('attendanceDate')?.value;
     if (!date) return;
 
-    const res = await fetch(`/api/bcs/attendance/roster?groupId=${bcsAttendanceState.selectedGroupId}&date=${encodeURIComponent(date)}`, {
+    const res = await fetch(bcsToUrl(`/api/bcs/attendance/roster?groupId=${bcsAttendanceState.selectedGroupId}&date=${encodeURIComponent(date)}`), {
         headers: { Accept: 'application/json' }
     });
 
     if (res.status === 401) {
-        window.location.href = '/login.html';
+        window.location.href = bcsToUrl('/login.php');
         return;
     }
 
@@ -260,7 +261,7 @@ async function saveBcsAttendance() {
         status: bcsParseStatus(row.querySelector('.status-select')?.value)
     }));
 
-    const res = await fetch('/api/bcs/attendance/save', {
+    const res = await fetch(bcsToUrl('/api/bcs/attendance/save'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
@@ -281,9 +282,9 @@ async function saveBcsAttendance() {
 }
 
 async function loadBcsAttendanceData() {
-    const res = await fetch('/api/bcs/groups', { headers: { Accept: 'application/json' } });
+    const res = await fetch(bcsToUrl('/api/bcs/groups'), { headers: { Accept: 'application/json' } });
     if (res.status === 401) {
-        window.location.href = '/login.html';
+        window.location.href = bcsToUrl('/login.php');
         return;
     }
     if (!res.ok) {
