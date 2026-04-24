@@ -88,6 +88,26 @@ $unreadCount = $stmt->fetch()['total'] ?? 0;
     <link rel="stylesheet" href="../../public/css/style.css">
     <link rel="stylesheet" href="../../public/css/layout.css">
     <link rel="stylesheet" href="../../public/css/bcs/bcs-layout.css">
+    <style>
+        .feedback-content-preview {
+            max-width: 320px;
+        }
+
+        .feedback-content-box {
+            font-size: 0.95rem;
+            line-height: 1.65;
+            white-space: pre-line;
+            word-break: break-word;
+            max-height: 320px;
+            overflow-y: auto;
+            background: #f8fafc;
+            border: 1px solid #d7dde7;
+        }
+
+        .btn-view-feedback {
+            min-width: 86px;
+        }
+    </style>
 </head>
 <body class="dashboard-body">
 
@@ -217,6 +237,11 @@ $unreadCount = $stmt->fetch()['total'] ?? 0;
                             <?php if (!empty($feedbacks)): ?>
                             <?php foreach ($feedbacks as $fb): ?>
                             <?php $isPending = $fb['status'] == 'Pending'; ?>
+                            <?php
+                                $rawContent = trim((string)($fb['content'] ?? ''));
+                                $preview = mb_substr($rawContent, 0, 80);
+                                $preview .= (mb_strlen($rawContent) > 80) ? '...' : '';
+                            ?>
                             <tr class="<?= $isPending ? 'bg-light' : '' ?>" data-search="<?= e(strtolower(($fb['full_name'] ?? '') . ' ' . ($fb['student_code'] ?? '') . ' ' . ($fb['title'] ?? '') . ' ' . ($fb['content'] ?? ''))) ?>" data-status="<?= $isPending ? 'pending' : 'resolved' ?>">
                                 <td class="ps-4 py-3">
                                     <div class="fw-bold text-dark"><?= e($fb['full_name']) ?></div>
@@ -224,7 +249,7 @@ $unreadCount = $stmt->fetch()['total'] ?? 0;
                                 </td>
                                 <td>
                                     <div class="fw-bold text-dark mb-1"><?= e($fb['title'] ?? 'Phản hồi') ?></div>
-                                    <div class="text-muted small text-truncate" style="max-width: 300px;"><?= e(mb_substr($fb['content'], 0, 80)) ?>...</div>
+                                    <div class="text-muted small text-truncate feedback-content-preview"><?= e($preview) ?></div>
                                 </td>
                                 <td class="text-dark small"><?= formatDateTime($fb['updated_at']) ?></td>
                                 <td>
@@ -235,9 +260,9 @@ $unreadCount = $stmt->fetch()['total'] ?? 0;
                                     <?php endif; ?>
                                 </td>
                                 <td class="pe-4 text-end">
-                                    <button class="btn btn-sm <?= $isPending ? 'btn-primary' : 'btn-outline-secondary' ?> fw-bold shadow-sm" 
+                                    <button class="btn btn-sm <?= $isPending ? 'btn-primary' : 'btn-outline-secondary' ?> fw-bold shadow-sm btn-view-feedback" 
                                             data-bs-toggle="modal" data-bs-target="#feedbackModal" 
-                                            onclick="openFeedbackModal(<?= htmlspecialchars(json_encode($fb)) ?>)">
+                                            onclick="openFeedbackModal(<?= htmlspecialchars(json_encode($fb, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') ?>)">
                                         <i class="bi bi-eye me-1"></i> Xem
                                     </button>
                                 </td>
@@ -280,7 +305,7 @@ $unreadCount = $stmt->fetch()['total'] ?? 0;
         </div>
 
         <h6 class="fw-bold text-primary mb-2" id="fbSubject">-</h6>
-        <div class="p-3 bg-light rounded border mb-3 text-dark" style="font-size: 0.95rem; line-height: 1.6;" id="fbContent">
+        <div class="p-3 rounded mb-3 text-dark feedback-content-box" id="fbContent">
             -
         </div>
 

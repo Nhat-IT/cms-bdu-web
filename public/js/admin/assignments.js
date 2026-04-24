@@ -76,6 +76,7 @@ const days = [
 let assignmentOfferingsFiltered = [];
 
 let pendingAssignmentUploadClass = '';
+let pendingAssignmentUploadGroup = '';
 let currentSessionCourse = null;
 let currentSessionGroupCode = null;
 let currentSingleSessionContext = null;
@@ -722,28 +723,28 @@ function renderAssignmentOfferingsTable() {
             const hasClassSubject = Number.isFinite(classSubjectId) && classSubjectId > 0;
             const isClosedSubject = !subj.isOpen;
             const manageBtn = (hasClassSubject && !isClosedSubject)
-                ? '<button class="btn btn-outline-primary" onclick="openSessionManager(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(mainTeacher || teacherDisplay) + '\', \'' + escapeHtml(groupCode) + '\')"><i class="bi bi-calendar-week me-1"></i>Quản lý lịch</button>'
+                ? '<button class="btn btn-outline-primary" onclick="openSessionManager(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(mainTeacher || teacherDisplay) + '\', \'' + escapeHtml(normalizedGroupCode) + '\')"><i class="bi bi-calendar-week me-1"></i>Quản lý lịch</button>'
                 : (isClosedSubject
                     ? '<button class="btn btn-secondary" disabled title="Môn đã đóng, không thể xếp lịch"><i class="bi bi-lock me-1"></i>Môn đã đóng</button>'
                     : '<button class="btn btn-primary" onclick="addSubjectClass(\'' + escapeHtml(String(asg.subjectId || '')) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>');
             const scheduleBtn = (hasClassSubject && !isClosedSubject)
-                ? '<button class="btn btn-primary" onclick="openGroupScheduleModal(\'' + classSubjectId + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(g.teacherMain || '') + '\', \'' + escapeHtml(g.teacherSub || '') + '\', \'' + escapeHtml(g.day || '') + '\', \'' + escapeHtml(g.start || '') + '\', \'' + escapeHtml(g.end || '') + '\', \'' + escapeHtml(g.room || '') + '\', \'' + escapeHtml(asg.classCode || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>'
+                ? '<button class="btn btn-primary" onclick="openGroupScheduleModal(\'' + classSubjectId + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(normalizedGroupCode) + '\', \'' + escapeHtml(g.teacherMain || '') + '\', \'' + escapeHtml(g.teacherSub || '') + '\', \'' + escapeHtml(g.day || '') + '\', \'' + escapeHtml(g.start || '') + '\', \'' + escapeHtml(g.end || '') + '\', \'' + escapeHtml(g.room || '') + '\', \'' + escapeHtml(asg.classCode || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>'
                 : (isClosedSubject
                     ? '<button class="btn btn-secondary" disabled title="Môn đã đóng, không thể xếp lịch"><i class="bi bi-lock me-1"></i>Môn đã đóng</button>'
                     : '<button class="btn btn-primary" onclick="addSubjectClass(\'' + escapeHtml(String(asg.subjectId || '')) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>');
             const primaryActionBtn = hasClassSubject ? ((!hasSchedule && subj.isOpen) ? scheduleBtn : manageBtn) : manageBtn;
             const uploadIconBtn = hasClassSubject
-                ? '<button class="btn btn-outline-dark btn-icon-only" title="Tải lên danh sách sinh viên" onclick="uploadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"><i class="bi bi-upload"></i></button>'
+                ? '<button class="btn btn-outline-dark btn-icon-only" title="Tải lên danh sách sinh viên" onclick="uploadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(normalizedGroupCode) + '\')"><i class="bi bi-upload"></i></button>'
                 : '<button class="btn btn-outline-secondary btn-icon-only" title="Cần xếp lịch trước khi tải lên danh sách sinh viên" disabled><i class="bi bi-upload"></i></button>';
             const downloadIconBtn = asg.hasStudents
                 ? (hasClassSubject
-                    ? '<button class="btn btn-outline-success btn-icon-only" title="Tải xuống danh sách sinh viên" onclick="downloadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\')"><i class="bi bi-download"></i></button>'
+                    ? '<button class="btn btn-outline-success btn-icon-only" title="Tải xuống danh sách sinh viên" onclick="downloadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(normalizedGroupCode) + '\')"><i class="bi bi-download"></i></button>'
                     : '<button class="btn btn-outline-secondary btn-icon-only" title="Cần xếp lịch trước khi tải xuống danh sách sinh viên" disabled><i class="bi bi-download"></i></button>')
                 : (hasClassSubject
                     ? '<button class="btn btn-outline-secondary btn-icon-only" title="Chưa có danh sách sinh viên trong DB" disabled><i class="bi bi-download"></i></button>'
                     : '<button class="btn btn-outline-secondary btn-icon-only" title="Cần xếp lịch trước khi tải xuống danh sách sinh viên" disabled><i class="bi bi-download"></i></button>');
             const deleteGroupBtn = (totalRows > 1 && hasClassSubject && !isFirstGroup)
-                ? '<button class="btn btn-outline-danger btn-icon-only assignment-delete-group" title="Xóa nhóm ' + groupCode + ' (total:' + totalRows + ')" onclick="deleteGroupFromClass(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(groupCode) + '\', \'' + escapeHtml(asg.subjectName || '') + '\', \'' + escapeHtml(String(asg.subjectId || '')) + '\')"><i class="bi bi-trash"></i></button>'
+                ? '<button class="btn btn-outline-danger btn-icon-only assignment-delete-group" title="Xóa nhóm ' + normalizedGroupCode + ' (total:' + totalRows + ')" onclick="deleteGroupFromClass(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(normalizedGroupCode) + '\', \'' + escapeHtml(asg.subjectName || '') + '\', \'' + escapeHtml(String(asg.subjectId || '')) + '\')"><i class="bi bi-trash"></i></button>'
                 : '';
             const actionButtons = primaryActionBtn + '<span class="assignment-action-icons">' + uploadIconBtn + downloadIconBtn + deleteGroupBtn + '</span>';
 
@@ -809,10 +810,11 @@ function renderAssignmentOfferings() {
 }
 
 
-function uploadAssignmentStudentList(courseId) {
-    const course = allAssignmentCourses.find(function (c) { return c.id === courseId; });
+function uploadAssignmentStudentList(courseId, groupCode = 'N1') {
+    const course = findAssignmentCourse(courseId);
     if (!course) {
-        alert('Không tìm thấy môn học.');
+        if (window.showToast) window.showToast('Không tìm thấy môn học.', 'error');
+        else alert('Không tìm thấy môn học.');
         return;
     }
 
@@ -824,6 +826,7 @@ function uploadAssignmentStudentList(courseId) {
     }
 
     pendingAssignmentUploadClass = courseId;
+    pendingAssignmentUploadGroup = groupCode;
     const guideModalEl = document.getElementById('studentUploadGuideModal');
     if (guideModalEl && typeof bootstrap !== 'undefined') {
         bootstrap.Modal.getOrCreateInstance(guideModalEl).show();
@@ -833,7 +836,8 @@ function uploadAssignmentStudentList(courseId) {
 }
 
 function parseAssignmentCsv(content) {
-    const lines = content.replace(/\r/g, '').split('\n').filter(function (line) {
+    const normalizedContent = String(content || '').replace(/^\uFEFF/, '');
+    const lines = normalizedContent.replace(/\r/g, '').split('\n').filter(function (line) {
         return line.trim().length > 0;
     });
     if (lines.length < 1) {
@@ -857,15 +861,51 @@ function parseAssignmentCsv(content) {
         return raw;
     }
 
+    function splitCsvLine(line, delimiter) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i += 1) {
+            const ch = line[i];
+            if (ch === '"') {
+                if (inQuotes && line[i + 1] === '"') {
+                    current += '"';
+                    i += 1;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+                continue;
+            }
+            if (ch === delimiter && !inQuotes) {
+                result.push(current);
+                current = '';
+                continue;
+            }
+            current += ch;
+        }
+        result.push(current);
+        return result;
+    }
+
+    function detectDelimiter(sampleLine) {
+        const line = String(sampleLine || '');
+        const commaCount = (line.match(/,/g) || []).length;
+        const semicolonCount = (line.match(/;/g) || []).length;
+        const tabCount = (line.match(/\t/g) || []).length;
+        if (semicolonCount > commaCount && semicolonCount >= tabCount) return ';';
+        if (tabCount > commaCount && tabCount > semicolonCount) return '\t';
+        return ',';
+    }
+
     function parseByColumns(cols) {
         const c = cols.map(function (item) { return String(item || '').trim(); });
         const hasSttFirst = /^\d*$/.test(c[0] || '') && (c[1] || '') !== '';
-        const mssv = hasSttFirst ? (c[1] || '') : (c[0] || '');
+        const mssv = (hasSttFirst ? (c[1] || '') : (c[0] || '')).replace(/^\uFEFF/, '');
         const name = hasSttFirst ? (c[2] || '') : (c[1] || '');
         const dob = normalizeCsvDate(hasSttFirst ? (c[3] || '') : (c[2] || ''));
         const className = hasSttFirst ? (c[4] || '') : (c[3] || '');
         if (!mssv || !name) return null;
-        return { mssv: mssv, name: name, dob: dob, className: className, section: 'N1' };
+        return { mssv: mssv, name: name, dob: dob, className: className, class: className, section: 'N1' };
     }
 
     const parsed = [];
@@ -875,8 +915,9 @@ function parseAssignmentCsv(content) {
         startIndex = 1;
     }
 
+    const delimiter = detectDelimiter(lines[startIndex] || lines[0] || '');
     for (let i = startIndex; i < lines.length; i += 1) {
-        const cols = lines[i].split(',');
+        const cols = splitCsvLine(lines[i], delimiter);
         const row = parseByColumns(cols);
         if (row) parsed.push(row);
     }
@@ -914,12 +955,12 @@ function parseAssignmentXlsx(buffer) {
     function parseByColumns(cols) {
         const c = cols.map(function (item) { return String(item || '').trim(); });
         const hasSttFirst = /^\d*$/.test(c[0] || '') && (c[1] || '') !== '';
-        const mssv = hasSttFirst ? (c[1] || '') : (c[0] || '');
+        const mssv = (hasSttFirst ? (c[1] || '') : (c[0] || '')).replace(/^\uFEFF/, '');
         const name = hasSttFirst ? (c[2] || '') : (c[1] || '');
         const dob = normalizeXlsxDate(hasSttFirst ? cols[3] : cols[2]);
         const className = hasSttFirst ? (c[4] || '') : (c[3] || '');
         if (!mssv || !name) return null;
-        return { mssv: mssv, name: name, dob: dob, className: className, section: 'N1' };
+        return { mssv: mssv, name: name, dob: dob, className: className, class: className, section: 'N1' };
     }
 
     const parsed = [];
@@ -967,15 +1008,17 @@ function handleAssignmentUploadChange(event) {
             return;
         }
 
-        const course = allAssignmentCourses.find(function (c) { return c.id === pendingAssignmentUploadClass; });
+        const course = findAssignmentCourse(pendingAssignmentUploadClass);
         if (!course) {
-            alert('Không xác định được lớp học phần để import.');
+            if (window.showToast) window.showToast('Không xác định được lớp học phần để import.', 'error');
+            else alert('Không xác định được lớp học phần để import.');
             return;
         }
 
         const csId = resolveClassSubjectId(course);
         if (!csId) {
-            alert('Không xác định được class_subject_id để import.');
+            if (window.showToast) window.showToast('Không xác định được class_subject_id để import.', 'error');
+            else alert('Không xác định được class_subject_id để import.');
             return;
         }
 
@@ -986,7 +1029,7 @@ function handleAssignmentUploadChange(event) {
 
         window.callApi('import_group_students', {
             class_subject_id: csId,
-            group_code: 'N1',
+            group_code: pendingAssignmentUploadGroup || 'N1',
             students: JSON.stringify(parsed)
         })
             .then(function(res) {
@@ -999,16 +1042,24 @@ function handleAssignmentUploadChange(event) {
                         alert('Đã import danh sách sinh viên thành công.');
                     }
                     pendingAssignmentUploadClass = '';
+                    pendingAssignmentUploadGroup = '';
                     markStudentsImportedByCsId(csId, res ? res.imported : parsed.length);
                     if (typeof applyAssignmentFilters === 'function') {
                         applyAssignmentFilters();
                     }
                     return;
                 }
-                alert('Import thất bại. Vui lòng thử lại.');
+                const message = (res && res.message) ? String(res.message) : 'Import thất bại. Vui lòng thử lại.';
+                if (window.showToast) window.showToast(message, 'error');
+                else alert(message);
             })
             .catch(function() {
                 alert('Lỗi kết nối server khi import danh sách sinh viên.');
+            })
+            .finally(function() {
+                if (event && event.target) {
+                    event.target.value = '';
+                }
             });
     };
 
@@ -1028,10 +1079,11 @@ function updateAssignmentDownloadButtons() {
 }
 
 
-function downloadAssignmentStudentList(courseId) {
-    const course = allAssignmentCourses.find(function (c) { return c.id === courseId; });
+function downloadAssignmentStudentList(courseId, groupCode = 'N1') {
+    const course = findAssignmentCourse(courseId);
     if (!course) {
-        alert('Không tìm thấy lớp học phần.');
+        if (window.showToast) window.showToast('Không tìm thấy lớp học phần.', 'error');
+        else alert('Không tìm thấy lớp học phần.');
         return;
     }
 
@@ -1042,7 +1094,7 @@ function downloadAssignmentStudentList(courseId) {
         return;
     }
 
-    fetch('/cms/controllers/admin/classSubjectController.php?action=export_group_students&class_subject_id=' + encodeURIComponent(csId), {
+    fetch('/cms/controllers/admin/classSubjectController.php?action=export_group_students&class_subject_id=' + encodeURIComponent(csId) + '&group_code=' + encodeURIComponent(groupCode), {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
     })
@@ -1074,7 +1126,7 @@ function downloadAssignmentStudentList(courseId) {
 
             const link = document.createElement('a');
             link.href = 'data:text/csv;charset=utf-8,%EF%BB%BF' + encodeURIComponent(csv.join('\n'));
-            link.download = classCode + '_DanhSachSV.csv';
+            link.download = classCode + '_Nhom' + groupCode + '_DanhSachSV.csv';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -1115,7 +1167,7 @@ function populatePeriodSelects() {
 function openInitialScheduleModal(mode, csId, classCode, subjectName, teacher = '', startDate = '', endDate = '', dayOfWeek = '', startPeriod = '', endPeriod = '', room = '', assistant = '', group = 'N1', subjectId = '') {
     window._currentCsId = csId;
     window._currentSubjectId = subjectId || '';
-    const normalizedGroup = (group && group !== 'ALL') ? group : (currentSessionGroupCode || 'N1');
+    const normalizedGroup = getGroupCode((group && group !== 'ALL') ? group : (currentSessionGroupCode || 'N1'));
     window._currentGroupCode = normalizedGroup;
 
     const classCodeSelect = document.getElementById('initClassCode');
@@ -1179,7 +1231,7 @@ function openGroupScheduleModal(csId, subjectName, groupCode, teacherId, assista
         else alert('Môn học đã đóng, không thể xếp lịch.');
         return;
     }
-    openInitialScheduleModal('edit', parsedCsId, classCode || parsedCsId, subjectName, teacherId, '', '', dayOfWeek, startPeriod, endPeriod, room, assistantId, groupCode);
+    openInitialScheduleModal('edit', parsedCsId, classCode || parsedCsId, subjectName, teacherId, '', '', dayOfWeek, startPeriod, endPeriod, room, assistantId, getGroupCode(groupCode || 'N1'));
 }
 
 function handleInitialScheduleSubmit(event) {
@@ -1275,7 +1327,7 @@ function handleInitialScheduleSubmit(event) {
 }
 
 function openSessionManager(courseId, subjectName, teacherName, groupCode = null) {
-    const course = allAssignmentCourses.find(function (item) { return item.id === courseId; });
+    const course = findAssignmentCourse(courseId);
     if (!course) {
         if (window.showToast) window.showToast('Không tìm thấy dữ liệu lớp học phần để quản lý lịch.', 'error');
         else alert('Không tìm thấy dữ liệu lớp học phần để quản lý lịch.');
@@ -1286,7 +1338,7 @@ function openSessionManager(courseId, subjectName, teacherName, groupCode = null
     document.getElementById('lblClassInfo').innerText = displayClassCode + ' | ' + subjectName + groupText + ' | GV: ' + teacherName;
 
     currentSessionCourse = course || null;
-    currentSessionGroupCode = groupCode || null;
+    currentSessionGroupCode = groupCode ? getGroupCode(groupCode) : null;
     renderSessionManagerRows(course, currentSessionGroupCode);
 
     const editWholeScheduleBtn = document.getElementById('btnEditWholeSchedule');
@@ -1294,7 +1346,7 @@ function openSessionManager(courseId, subjectName, teacherName, groupCode = null
         editWholeScheduleBtn.onclick = function () {
             if (course && course.groups.length > 0) {
                 const targetGroup = currentSessionGroupCode
-                    ? (course.groups.find(function(g){ return g.code === currentSessionGroupCode; }) || course.groups[0])
+                    ? (course.groups.find(function(g){ return getGroupCode(g.code) === getGroupCode(currentSessionGroupCode); }) || course.groups[0])
                     : course.groups[0];
                 openInitialScheduleModal(
                     'edit',
@@ -1338,7 +1390,9 @@ function openAddSingleSessionFromManager() {
 
     let targetGroup = null;
     if (currentSessionGroupCode) {
-        targetGroup = course.groups.find(function (group) { return group.code === currentSessionGroupCode; }) || null;
+        targetGroup = course.groups.find(function (group) {
+            return getGroupCode(group.code) === getGroupCode(currentSessionGroupCode);
+        }) || null;
     }
     if (!targetGroup) {
         targetGroup = course.groups && course.groups.length > 0 ? course.groups[0] : null;
@@ -1372,8 +1426,9 @@ function renderSessionManagerRows(course, groupCode = null) {
         return;
     }
 
-    const displayedGroups = groupCode
-        ? course.groups.filter(function (group) { return group.code === groupCode; })
+    const normalizedTargetGroup = groupCode ? getGroupCode(groupCode) : '';
+    const displayedGroups = normalizedTargetGroup
+        ? course.groups.filter(function (group) { return getGroupCode(group.code) === normalizedTargetGroup; })
         : course.groups;
 
     if (displayedGroups.length === 0) {

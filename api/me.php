@@ -59,6 +59,14 @@ function me_get_user(int $userId): ?array {
     if (!empty($user['secondary_role'])) {
         $roles[] = $user['secondary_role'];
     }
+    if (!empty($_SESSION['roles']) && is_array($_SESSION['roles'])) {
+        foreach ($_SESSION['roles'] as $sessionRole) {
+            $value = trim((string)$sessionRole);
+            if ($value !== '') {
+                $roles[] = $value;
+            }
+        }
+    }
     $user['roles'] = array_values(array_unique($roles));
 
     if (!empty($user['birth_date'])) {

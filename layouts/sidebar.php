@@ -78,12 +78,6 @@ $unreadCount = db_count("SELECT COUNT(*) FROM notification_logs WHERE user_id = 
                 <a href="schedule.php" class="nav-link <?= $currentPage === 'schedule' ? 'active' : '' ?>" title="Xem Lịch học">
                     <i class="bi bi-calendar-week"></i> <span class="hide-on-collapse">Xem Lịch học</span>
                 </a>
-                <a href="assignments.php" class="nav-link <?= $currentPage === 'assignments' ? 'active' : '' ?>" title="Bài tập của tôi">
-                    <i class="bi bi-journal-text"></i> <span class="hide-on-collapse">Bài tập của tôi</span>
-                </a>
-                <a href="grades.php" class="nav-link <?= $currentPage === 'grades' ? 'active' : '' ?>" title="Kết quả học tập">
-                    <i class="bi bi-bar-chart-fill"></i> <span class="hide-on-collapse">Kết quả học tập</span>
-                </a>
                 <a href="documents.php" class="nav-link <?= $currentPage === 'documents' ? 'active' : '' ?>" title="Kho Tài liệu lớp">
                     <i class="bi bi-folder2-open"></i> <span class="hide-on-collapse">Kho Tài liệu lớp</span>
                 </a>

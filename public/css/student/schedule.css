@@ -1,116 +1,168 @@
-/* Mô tả: Giao diện thời khóa biểu sinh viên (bảng lịch học, cuộn ngang, nhãn tiết). */
+/* Student schedule table - aligned with admin master schedule look */
 
-/* ==========================================
-           TÙY CHỈNH BẢNG THỜI KHÓA BIỂU
-           ========================================== */
-        .schedule-table-wrapper {
-            /* Vùng bọc ngoài cho phép cuộn ngang bảng lịch */
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        .schedule-table { 
-            /* Bảng thời khóa biểu có chiều rộng lớn hơn màn hình */
-            min-width: 1000px; 
-            border-collapse: collapse; 
-            border: 2px solid #b71c1c; 
-        }
-        .schedule-table th, .schedule-table td { border: 1px solid #dee2e6; }
-        .schedule-table th { background-color: #f8f9fa; text-align: center; vertical-align: middle; padding: 10px; font-size: 0.85rem; }
-        .schedule-table td { vertical-align: top; padding: 0; position: relative; height: auto; min-height: 55px; }
-        
-        /* Header cột nút chuyển tuần - nền đỏ, chữ trắng */
-        .edge-col-header {
-            background-color: #b71c1c !important;
-            color: #ffffff !important;
-            text-align: center !important;
-            vertical-align: middle !important;
-            font-weight: bold;
-        }
+.schedule-wrapper {
+    overflow-x: auto;
+    background: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
 
-        /* Cột tiết - nền nhạt, chữ đậm */
-        .schedule-table td:nth-child(2) {
-            background-color: #fff3f3;
-            text-align: center;
-        }
-        
-        /* Cột giờ - nền nhạt, chữ mờ */
-        .schedule-table td:nth-child(3) {
-            background-color: #fff3f3;
-            font-size: 0.8rem;
-            text-align: center;
-            color: #6c757d;
-        }
-        
-        /* Các cột ngày trong tuần - nền trắng */
-        .schedule-table td:nth-child(n+4):not(.edge-col):not(.has-subject) {
-            background-color: #ffffff;
-        }
-        
-        /* Cell có môn học */
-        .schedule-table td.has-subject {
-            background-color: #ffffff;
-            vertical-align: top;
-        }
-        }
-        
-        .subject-block {
-            /* Ô môn học trong từng khung tiết */
-            background-color: #dbeafe;
-            border: 1px solid #dc3545;
-            padding: 8px;
-            height: 100%;
-            width: 100%;
-            font-size: 0.8rem;
-            line-height: 1.4;
-            color: #000;
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5);
-            transition: all 0.2s ease;
-        }
-        .subject-block:hover { 
-            /* Hiệu ứng hover ô môn học */
-            background-color: #bfdbfe; 
-            cursor: pointer; 
-            transform: scale(0.99);
-        }
-        .subject-title { font-weight: bold; margin-bottom: 4px; font-size: 0.85rem; }
-        /* Tiêu đề môn học trong ô lịch */
-        
-        .week-nav-btn { cursor: pointer; padding: 0 10px; font-weight: bold; color: #495057; transition: color 0.2s; }
-        /* Nút chuyển tuần trước/sau */
-        .week-nav-btn:hover { color: #dc3545 !important; } 
+.master-schedule-table {
+    width: 100%;
+    min-width: 1100px;
+    border-collapse: collapse;
+    border: 2px solid #b71c1c;
+}
 
-        @media (max-width: 768px) {
-            .schedule-table {
-                min-width: 900px;
-            }
+.master-schedule-table th,
+.master-schedule-table td {
+    border: 1px solid #dee2e6;
+}
 
-            .schedule-table th {
-                font-size: 0.78rem;
-                padding: 8px;
-            }
+.master-schedule-table thead th {
+    background-color: #fff;
+    text-align: center;
+    padding: 8px 6px;
+    font-weight: 700;
+    color: #000;
+    vertical-align: middle;
+}
 
-            .subject-block {
-                font-size: 0.75rem;
-                padding: 6px;
-            }
+.master-schedule-table td {
+    width: 12%;
+    height: 35px;
+    padding: 0;
+    vertical-align: top;
+}
 
-            .subject-title {
-                font-size: 0.8rem;
-            }
+.master-cell {
+    height: 35px;
+    padding: 2px !important;
+    vertical-align: top !important;
+}
 
-            .edge-col {
-                width: 72px !important;
-                min-width: 72px !important;
-                max-width: 72px !important;
-            }
-        }
+.edge-col {
+    background-color: #b71c1c !important;
+    color: #fff !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    font-weight: 700;
+    width: 60px !important;
+    min-width: 60px !important;
+    font-size: 0.8rem;
+    padding: 4px !important;
+}
 
-        /* Chế độ in ấn */
-        @media print {
-            .sidebar, .top-navbar-blue, .filter-section { display: none !important; }
-            .main-content { margin-left: 0 !important; padding: 0 !important; }
-            .card { border: none !important; box-shadow: none !important; }
-            .schedule-table { border: 2px solid #000; }
-            .subject-block { border: 1px solid #000; background-color: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .edge-col-header { background-color: #333 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        }
+.subject-block {
+    position: relative;
+    background-color: #dbeafe;
+    border: 1px solid #b71c1c;
+    border-radius: 4px;
+    padding: 4px;
+    height: 100%;
+    width: 100%;
+    font-size: 0.7rem;
+    line-height: 1.25;
+    color: #000;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.subject-block:hover {
+    background-color: #bfdbfe;
+    transform: scale(0.98);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.subject-title {
+    font-weight: 700;
+    margin-bottom: 1px;
+    font-size: 0.72rem;
+}
+
+.subject-meta {
+    font-size: 0.7rem;
+    color: #475569;
+}
+
+.subject-room {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #b91c1c;
+    margin-top: 2px;
+}
+
+.conflict-badge {
+    position: absolute;
+    top: 3px;
+    right: 4px;
+    background: #dc2626;
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 2px 6px;
+}
+
+.week-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.week-nav-btn:hover {
+    color: #dc3545;
+}
+
+@media (max-width: 992px) {
+    .master-schedule-table {
+        min-width: 980px;
+    }
+
+    .master-schedule-table thead th {
+        font-size: 0.82rem;
+    }
+}
+
+@media print {
+    .sidebar,
+    .top-navbar-blue,
+    .filter-section {
+        display: none !important;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
+
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .master-schedule-table {
+        border: 2px solid #000;
+    }
+
+    .subject-block {
+        border: 1px solid #000;
+        background-color: #eee !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .edge-col {
+        background-color: #333 !important;
+        color: #fff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}

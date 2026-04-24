@@ -79,13 +79,13 @@ function getHomeUrl($role) {
 // Lấy URL profile theo role
 function getProfileUrl($role) {
     $urls = [
-        'student' => BASE_URL . '/student/student-profile.php',
-        'bcs' => BASE_URL . '/bcs/profile.php',
-        'teacher' => BASE_URL . '/teacher/teacher-profile.php',
+        'student' => BASE_URL . '/views/student/student-profile.php',
+        'bcs' => BASE_URL . '/views/bcs/profile.php',
+        'teacher' => BASE_URL . '/views/teacher/teacher-profile.php',
         'support_admin' => BASE_URL . '/views/admin/admin-profile.php',
         'admin' => BASE_URL . '/views/admin/admin-profile.php',
     ];
-    return $urls[$role] ?? BASE_URL . '/profile.php';
+    return $urls[$role] ?? BASE_URL . '/views/student/student-profile.php';
 }
 
 // Lấy URL login

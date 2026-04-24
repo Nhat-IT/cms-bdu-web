@@ -201,13 +201,13 @@ $semesterLabel = studentAttendanceSemesterLabel(
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-body">
                 <div class="row g-3 align-items-center mb-3">
-                    <div class="col-md-3">
+                    <div class="col-md-3 col-lg-2">
                         <label class="attendance-filter-label mb-1">HỌC KỲ</label>
-                        <select class="form-select attendance-select bg-light" id="studentSemesterSelect" disabled>
+                        <select class="form-select form-select-sm attendance-select bg-light" id="studentSemesterSelect" disabled>
                             <option selected><?= e($semesterLabel !== '' ? $semesterLabel : 'Học kỳ - Chưa xác định') ?></option>
                         </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 col-lg-4">
                         <label class="attendance-filter-label mb-1">CHỌN MÔN HỌC</label>
                         <select class="form-select attendance-select border-primary text-primary" id="studentSubjectSelect" onchange="window.location.href='my-attendance.php?subject_id=' + this.value">
                             <?php if (empty($subjects)): ?>

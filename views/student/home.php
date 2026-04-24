@@ -87,6 +87,7 @@ $attendanceStatus = db_fetch_all("
 
 // Lấy số thông báo chưa đọc
 $unreadNotifications = db_count("SELECT COUNT(*) FROM notification_logs WHERE user_id = ? AND is_read = 0", [$userId]);
+$notice = trim((string)($_GET['notice'] ?? ''));
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -129,6 +130,15 @@ $unreadNotifications = db_count("SELECT COUNT(*) FROM notification_logs WHERE us
     </div>
 
     <div class="p-4">
+        <?php if ($notice === 'assignments_disabled'): ?>
+        <div class="alert alert-warning border-0 shadow-sm mb-4">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>Chức năng Bài tập của tôi đang tạm ẩn để nâng cấp.
+        </div>
+        <?php elseif ($notice === 'grades_disabled'): ?>
+        <div class="alert alert-warning border-0 shadow-sm mb-4">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>Chức năng Kết quả học tập đang tạm ẩn để nâng cấp.
+        </div>
+        <?php endif; ?>
         
         <div class="row g-4 mb-4">
             <div class="col-md-3">

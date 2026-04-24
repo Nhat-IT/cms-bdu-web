@@ -1,6 +1,6 @@
-<?php
+﻿<?php
 /**
- * CMS BDU - Phản Hồi Của Tôi
+ * CMS BDU - Phản hồi của tôi
  */
 
 require_once __DIR__ . '/../../config/config.php';
@@ -9,81 +9,93 @@ require_once __DIR__ . '/../../config/helpers.php';
 
 requireRole('student');
 
-$userId = $_SESSION['user_id'];
-$pageTitle = 'Phản Hồi Của Tôi';
+$userId = (int)($_SESSION['user_id'] ?? 0);
+$pageTitle = 'Phản hồi của tôi';
 $extraCss = ['layout.css', 'student/student-layout.css', 'student/my-feedback.css'];
-$extraJs = ['student/student-layout.js', 'student/my-feedback.js'];
+$extraJs = ['student/student-layout.js'];
 
-// Xử lý gửi phản hồi mới
 $submitSuccess = false;
 $submitError = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    if ($_POST['action'] === 'submit_feedback') {
-        $topic = trim($_POST['topic'] ?? '');
-        $content = trim($_POST['content'] ?? '');
-        
-        if (empty($topic) || empty($content)) {
+    $action = (string)$_POST['action'];
+
+    if ($action === 'submit_feedback') {
+        $topic = trim((string)($_POST['topic'] ?? ''));
+        $content = trim((string)($_POST['content'] ?? ''));
+
+        if ($topic === '' || $content === '') {
             $submitError = 'Vui lòng điền đầy đủ thông tin.';
         } else {
             try {
-                $stmt = $pdo->prepare("
-                    INSERT INTO feedbacks (student_id, title, content, status)
-                    VALUES (?, ?, ?, 'Pending')
-                ");
-                $stmt->execute([$userId, $topic, $content]);
+                db_query(
+                    "INSERT INTO feedbacks (student_id, title, content, status) VALUES (?, ?, ?, 'Pending')",
+                    [$userId, $topic, $content]
+                );
                 $submitSuccess = true;
-            } catch (PDOException $e) {
+            } catch (Throwable $e) {
                 $submitError = 'Đã xảy ra lỗi khi gửi phản hồi.';
             }
         }
-    } elseif ($_POST['action'] === 'update_feedback') {
-        $feedbackId = intval($_POST['feedback_id'] ?? 0);
-        $content = trim($_POST['content'] ?? '');
-        
-        if ($feedbackId > 0 && !empty($content)) {
-            try {
-                // Chỉ cho phép sửa khi status là Pending
-                $stmt = $pdo->prepare("UPDATE feedbacks SET title = ?, content = ? WHERE id = ? AND student_id = ? AND status = 'Pending'");
-                $stmt->execute([$_POST['topic'] ?? '', $content, $feedbackId, $userId]);
-                echo json_encode(['success' => true]);
-            } catch (PDOException $e) {
-                echo json_encode(['success' => false, 'error' => 'Đã xảy ra lỗi.']);
-            }
+    }
+
+    if ($action === 'update_feedback' || $action === 'delete_feedback') {
+        header('Content-Type: application/json; charset=utf-8');
+        $feedbackId = (int)($_POST['feedback_id'] ?? 0);
+
+        if ($feedbackId <= 0) {
+            echo json_encode(['success' => false, 'error' => 'Phản hồi không hợp lệ'], JSON_UNESCAPED_UNICODE);
             exit;
         }
-    } elseif ($_POST['action'] === 'delete_feedback') {
-        $feedbackId = intval($_POST['feedback_id'] ?? 0);
-        
-        if ($feedbackId > 0) {
-            try {
-                $stmt = $pdo->prepare("DELETE FROM feedbacks WHERE id = ? AND student_id = ? AND status = 'Pending'");
-                $stmt->execute([$feedbackId, $userId]);
-                echo json_encode(['success' => true]);
-            } catch (PDOException $e) {
-                echo json_encode(['success' => false, 'error' => 'Đã xảy ra lỗi.']);
+
+        try {
+            if ($action === 'update_feedback') {
+                $topic = trim((string)($_POST['topic'] ?? ''));
+                $content = trim((string)($_POST['content'] ?? ''));
+                if ($topic === '' || $content === '') {
+                    echo json_encode(['success' => false, 'error' => 'Vui lòng nhập đầy đủ nội dung'], JSON_UNESCAPED_UNICODE);
+                    exit;
+                }
+
+                db_query(
+                    "UPDATE feedbacks
+                     SET title = ?, content = ?
+                     WHERE id = ? AND student_id = ? AND status = 'Pending'",
+                    [$topic, $content, $feedbackId, $userId]
+                );
+
+                echo json_encode(['success' => true], JSON_UNESCAPED_UNICODE);
+                exit;
             }
+
+            db_query(
+                "DELETE FROM feedbacks
+                 WHERE id = ? AND student_id = ? AND status = 'Pending'",
+                [$feedbackId, $userId]
+            );
+
+            echo json_encode(['success' => true], JSON_UNESCAPED_UNICODE);
+            exit;
+        } catch (Throwable $e) {
+            echo json_encode(['success' => false, 'error' => 'Đã xảy ra lỗi xử lý dữ liệu'], JSON_UNESCAPED_UNICODE);
             exit;
         }
     }
 }
 
-// Lấy danh sách phản hồi
-$stmt = $pdo->prepare("
-    SELECT * FROM feedbacks 
-    WHERE student_id = ?
-    ORDER BY updated_at DESC
-");
-$stmt->execute([$userId]);
-$feedbacks = $stmt->fetchAll();
+$feedbacks = db_fetch_all(
+    "SELECT id, title, content, status, reply_content, updated_at
+     FROM feedbacks
+     WHERE student_id = ?
+     ORDER BY updated_at DESC",
+    [$userId]
+);
 
-// Đếm tổng số phản hồi
 $totalFeedbacks = count($feedbacks);
-
-// Lấy số thông báo chưa đọc
-$stmt = $pdo->prepare("SELECT COUNT(*) as total FROM notification_logs WHERE user_id = ? AND is_read = 0");
-$stmt->execute([$userId]);
-$unreadNotifications = $stmt->fetch()['total'];
+$unreadNotifications = (int)db_count(
+    "SELECT COUNT(*) as total FROM notification_logs WHERE user_id = ? AND is_read = 0",
+    [$userId]
+);
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -108,7 +120,7 @@ $unreadNotifications = $stmt->fetch()['total'];
             <button class="btn btn-outline-light me-3 border-0" id="sidebarToggle"><i class="bi bi-list fs-3"></i></button>
             <h5 class="m-0 text-white fw-bold d-flex align-items-center">CỔNG TƯƠNG TÁC SINH VIÊN</h5>
         </div>
-        
+
         <div class="d-flex align-items-center text-white">
             <a href="notifications-all.php" class="text-white text-decoration-none" title="Xem thông báo">
                 <i class="bi bi-bell fs-5 text-white position-relative cursor-pointer">
@@ -123,27 +135,26 @@ $unreadNotifications = $stmt->fetch()['total'];
     </div>
 
     <div class="p-4">
-        
         <?php if ($submitSuccess): ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle me-2"></i>Phản hồi của bạn đã được gửi thành công!
+            <i class="bi bi-check-circle me-2"></i>Phản hồi của bạn đã được gửi thành công.
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
         <?php endif; ?>
-        
-        <?php if ($submitError): ?>
+
+        <?php if ($submitError !== ''): ?>
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="bi bi-exclamation-circle me-2"></i><?= e($submitError) ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
         <?php endif; ?>
-        
+
         <div class="row g-4">
             <div class="col-lg-5">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-header bg-white pt-4 border-0">
                         <h5 class="fw-bold text-dark"><i class="bi bi-pencil-square text-primary me-2"></i>Gửi phản hồi mới</h5>
-                        <p class="text-muted small">Mọi thắc mắc của bạn sẽ được giải đáp trong thời gian sớm nhất.</p>
+                        <p class="text-muted small">Mọi thắc mắc của bạn sẽ được xử lý sớm nhất.</p>
                     </div>
                     <div class="card-body">
                         <form method="POST" action="">
@@ -180,15 +191,16 @@ $unreadNotifications = $stmt->fetch()['total'];
                         <?php if (!empty($feedbacks)): ?>
                             <?php foreach ($feedbacks as $feedback): ?>
                                 <?php
-                                $statusInfo = getFeedbackStatusLabel($feedback['status']);
-                                $statusBadgeClass = $feedback['status'] === 'Pending' ? 'bg-warning text-dark' : 'bg-success';
+                                $isPending = (string)$feedback['status'] === 'Pending';
+                                $statusClass = $isPending ? 'bg-warning text-dark' : 'bg-success text-white';
+                                $statusText = $isPending ? 'Chờ xử lý' : 'Đã xử lý';
                                 ?>
-                                <div class="feedback-item p-3 border rounded mb-3 bg-white shadow-sm" 
-                                     onclick="showFeedbackDetail(<?= htmlspecialchars(json_encode($feedback)) ?>)"
+                                <div class="feedback-item p-3 border rounded mb-3 bg-white shadow-sm"
+                                     onclick='showFeedbackDetail(<?= json_encode($feedback, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_TAG | JSON_HEX_QUOT) ?>)'
                                      style="cursor: pointer;">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                         <div>
-                                            <span class="badge <?= $statusBadgeClass ?> mb-1"><?= $statusInfo['text'] ?></span>
+                                            <span class="badge <?= $statusClass ?> mb-1"><?= e($statusText) ?></span>
                                             <h6 class="fw-bold text-dark mb-0"><?= e($feedback['title']) ?></h6>
                                         </div>
                                         <small class="text-muted"><?= formatDateTime($feedback['updated_at'], 'd/m/Y H:i') ?></small>
@@ -196,7 +208,7 @@ $unreadNotifications = $stmt->fetch()['total'];
                                     <p class="text-muted small mb-0" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                                         <?= e($feedback['content']) ?>
                                     </p>
-                                    <?php if ($feedback['reply_content']): ?>
+                                    <?php if (!empty($feedback['reply_content'])): ?>
                                         <div class="mt-2 p-2 rounded bg-success bg-opacity-10 border border-success border-opacity-25">
                                             <small class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Đã có phản hồi</small>
                                         </div>
@@ -217,7 +229,6 @@ $unreadNotifications = $stmt->fetch()['total'];
     </div>
 </div>
 
-<!-- Modal Chi tiết phản hồi -->
 <div class="modal fade" id="feedbackDetailModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow">
@@ -273,39 +284,37 @@ let isEditing = false;
 function showFeedbackDetail(feedback) {
     currentFeedback = feedback;
     isEditing = false;
-    
-    // Set modal content
+
     document.getElementById('feedbackModalTitle').textContent = feedback.title || 'Chi tiết phản hồi';
     document.getElementById('feedbackModalTopic').value = feedback.title || '';
     document.getElementById('feedbackModalContent').value = feedback.content || '';
     document.getElementById('feedbackModalDate').textContent = formatDateTime(feedback.updated_at);
-    
-    // Set status badge
+
     const statusBadge = document.getElementById('feedbackModalStatus');
-    if (feedback.status === 'Pending') {
+    const isPending = feedback.status === 'Pending';
+    if (isPending) {
         statusBadge.className = 'badge bg-warning text-dark';
         statusBadge.textContent = 'Chờ xử lý';
     } else {
-        statusBadge.className = 'badge bg-success';
+        statusBadge.className = 'badge bg-success text-white';
         statusBadge.textContent = 'Đã xử lý';
     }
-    
-    // Show/hide reply
+
     const replyBox = document.getElementById('feedbackReplyBox');
     if (feedback.reply_content) {
         replyBox.classList.remove('d-none');
-        document.getElementById('feedbackModalReply').innerHTML = feedback.reply_content;
+        document.getElementById('feedbackModalReply').textContent = feedback.reply_content;
     } else {
         replyBox.classList.add('d-none');
+        document.getElementById('feedbackModalReply').textContent = '';
     }
-    
-    // Show/hide edit controls
+
     const editHint = document.getElementById('feedbackEditHint');
     const deleteBtn = document.getElementById('deleteFeedbackBtn');
     const editBtn = document.getElementById('toggleEditFeedbackBtn');
     const saveBtn = document.getElementById('saveFeedbackBtn');
-    
-    if (feedback.status === 'Pending') {
+
+    if (isPending) {
         editHint.textContent = 'Bạn có thể chỉnh sửa nội dung này.';
         deleteBtn.classList.remove('d-none');
         editBtn.classList.remove('d-none');
@@ -314,44 +323,36 @@ function showFeedbackDetail(feedback) {
         deleteBtn.classList.add('d-none');
         editBtn.classList.add('d-none');
     }
-    
-    // Reset edit state
+
     document.getElementById('feedbackModalContent').readOnly = true;
     document.getElementById('feedbackModalTopic').readOnly = true;
     saveBtn.classList.add('d-none');
     editBtn.innerHTML = '<i class="bi bi-pencil-square me-1"></i>Sửa nội dung';
-    
-    // Show modal
+
     const modal = new bootstrap.Modal(document.getElementById('feedbackDetailModal'));
     modal.show();
 }
 
 function toggleEditFeedback() {
     if (!currentFeedback) return;
-    
+
     isEditing = !isEditing;
     const contentInput = document.getElementById('feedbackModalContent');
     const topicInput = document.getElementById('feedbackModalTopic');
     const editBtn = document.getElementById('toggleEditFeedbackBtn');
     const saveBtn = document.getElementById('saveFeedbackBtn');
-    
+
     if (isEditing) {
         contentInput.readOnly = false;
         topicInput.readOnly = false;
-        contentInput.classList.add('bg-white');
-        topicInput.classList.add('bg-white');
         saveBtn.classList.remove('d-none');
         editBtn.innerHTML = '<i class="bi bi-x-lg me-1"></i>Hủy sửa';
         contentInput.focus();
     } else {
         contentInput.readOnly = true;
         topicInput.readOnly = true;
-        contentInput.classList.remove('bg-white');
-        topicInput.classList.remove('bg-white');
         saveBtn.classList.add('d-none');
         editBtn.innerHTML = '<i class="bi bi-pencil-square me-1"></i>Sửa nội dung';
-        
-        // Reset content
         contentInput.value = currentFeedback.content || '';
         topicInput.value = currentFeedback.title || '';
     }
@@ -359,46 +360,44 @@ function toggleEditFeedback() {
 
 function saveFeedbackChanges() {
     if (!currentFeedback) return;
-    
+
     const content = document.getElementById('feedbackModalContent').value;
     const topic = document.getElementById('feedbackModalTopic').value;
-    
+
     fetch('my-feedback.php', {
         method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: `action=update_feedback&feedback_id=${currentFeedback.id}&topic=${encodeURIComponent(topic)}&content=${encodeURIComponent(content)}`
     })
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            currentFeedback.content = content;
-            currentFeedback.title = topic;
-            toggleEditFeedback();
             location.reload();
-        } else {
-            alert('Có lỗi xảy ra: ' + (data.error || ''));
+            return;
         }
-    });
+        alert(data.error || 'Không thể cập nhật phản hồi.');
+    })
+    .catch(() => alert('Không thể cập nhật phản hồi.'));
 }
 
 function deleteCurrentFeedback() {
     if (!currentFeedback) return;
-    
     if (!confirm('Bạn có chắc chắn muốn xóa phản hồi này?')) return;
-    
+
     fetch('my-feedback.php', {
         method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: `action=delete_feedback&feedback_id=${currentFeedback.id}`
     })
     .then(res => res.json())
     .then(data => {
         if (data.success) {
             location.reload();
-        } else {
-            alert('Có lỗi xảy ra: ' + (data.error || ''));
+            return;
         }
-    });
+        alert(data.error || 'Không thể xóa phản hồi.');
+    })
+    .catch(() => alert('Không thể xóa phản hồi.'));
 }
 
 function formatDateTime(dateStr) {

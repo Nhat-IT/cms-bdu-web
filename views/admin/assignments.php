@@ -341,6 +341,34 @@ foreach ($rawMasterScheduleRows as $row) {
     ];
 }
 $dbMasterCourses = array_values($masterCoursesByCsId);
+
+// Lich ghi de theo ngay (chi ap dung cho 1 ngay cu the, khong doi lich ca nhom)
+$rawMasterOverrides = db_fetch_all("
+    SELECT
+        cs.id            AS cs_id,
+        csg.group_code   AS group_code,
+        ec.extra_date    AS extra_date,
+        ec.day_of_week   AS day_of_week,
+        ec.start_period  AS start_period,
+        ec.end_period    AS end_period,
+        ec.room          AS room
+    FROM extra_classes ec
+    JOIN class_subject_groups csg ON csg.id = ec.class_subject_group_id
+    JOIN class_subjects cs ON cs.id = csg.class_subject_id
+    WHERE ec.is_regular = 1
+    ORDER BY ec.extra_date DESC, ec.id DESC
+");
+$dbMasterOverrides = array_map(function ($row) {
+    return [
+        'csId'       => (int)($row['cs_id'] ?? 0),
+        'groupCode'  => $row['group_code'] ?? 'N1',
+        'date'       => $row['extra_date'] ?? '',
+        'day'        => !empty($row['day_of_week']) ? (string)$row['day_of_week'] : null,
+        'start'      => !empty($row['start_period']) ? (string)$row['start_period'] : null,
+        'end'        => !empty($row['end_period']) ? (string)$row['end_period'] : null,
+        'room'       => $row['room'] ?? null
+    ];
+}, $rawMasterOverrides);
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -821,6 +849,7 @@ window.allClasses.forEach(function(cls) {
 
 // Dataset Master Schedule lấy trực tiếp từ DB
 window.masterScheduleCourses = <?= json_encode($dbMasterCourses, JSON_UNESCAPED_UNICODE) ?>;
+window.masterScheduleOverrides = <?= json_encode($dbMasterOverrides, JSON_UNESCAPED_UNICODE) ?>;
 window.semesterRanges = <?= json_encode($semesterRanges, JSON_UNESCAPED_UNICODE) ?>;
 
 // Map tiết → giờ (phải khai báo trước khi renderMasterSchedule được gọi)
