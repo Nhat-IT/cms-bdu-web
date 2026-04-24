@@ -131,6 +131,28 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
             </div>
         <?php endif; ?>
 
+        <?php if (isset($_GET['subject_success'])): ?>
+            <div class="alert alert-success d-flex align-items-center" role="alert" id="permanentAlert">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <span>Lưu môn học thành công!</span>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($_GET['subject_error'])): ?>
+            <?php
+            $subjectErrors = [
+                'missing_data' => 'Thiếu mã môn, tên môn hoặc số tín chỉ.',
+                'missing_id'   => 'Không tìm thấy môn học cần thao tác.',
+                '1'            => 'Đã xảy ra lỗi khi lưu môn học.',
+            ];
+            $subjectErrMsg = $subjectErrors[$_GET['subject_error']] ?? 'Lỗi không xác định.';
+            ?>
+            <div class="alert alert-danger d-flex align-items-center" role="alert" id="permanentAlert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span><?= e($subjectErrMsg) ?></span>
+            </div>
+        <?php endif; ?>
+
         <?php if (isset($_GET['import_done'])): ?>
             <?php
             $importOk = (int) ($_GET['import_ok'] ?? 0);
@@ -333,10 +355,31 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                                                 </td>
                                                 <td class="text-end pe-4">
                                                     <button class="btn btn-light action-btn text-warning border" title="Lịch sử mở/đóng"
-                                                        onclick="openSubjectHistoryModal2('<?php echo e($subject['id']); ?>', '[<?php echo e($subject['subject_code']); ?>] <?php echo e($subject['subject_name']); ?>', '<?php echo e($subject['academic_year'] ?? ''); ?>', '<?php echo e($subject['semester'] ?? ''); ?>', '<?php echo e($subject['open_date'] ?? ''); ?>', '<?php echo e($subject['close_date'] ?? ''); ?>', '<?php echo e($subject['computed_status']); ?>')">
+                                                        onclick='openSubjectHistoryModal2(
+                                                            <?php echo json_encode((string) ($subject["id"] ?? ""), JSON_UNESCAPED_UNICODE); ?>,
+                                                            <?php echo json_encode("[" . ($subject["subject_code"] ?? "") . "] " . ($subject["subject_name"] ?? ""), JSON_UNESCAPED_UNICODE); ?>,
+                                                            <?php echo json_encode((string) ($subject["academic_year"] ?? ""), JSON_UNESCAPED_UNICODE); ?>,
+                                                            <?php echo json_encode((string) ($subject["semester"] ?? ""), JSON_UNESCAPED_UNICODE); ?>,
+                                                            <?php echo json_encode((string) ($subject["open_date"] ?? ""), JSON_UNESCAPED_UNICODE); ?>,
+                                                            <?php echo json_encode((string) ($subject["close_date"] ?? ""), JSON_UNESCAPED_UNICODE); ?>,
+                                                            <?php echo json_encode((string) ($subject["computed_status"] ?? ""), JSON_UNESCAPED_UNICODE); ?>
+                                                        )'>
                                                         <i class="bi bi-clock-history"></i>
                                                     </button>
-                                                    <button class="btn btn-light action-btn text-primary border" title="Sửa môn học" onclick="openSubjectModal('edit', '<?php echo e($subject['subject_code']); ?>', '<?php echo e($subject['subject_name']); ?>', '<?php echo e($subject['prerequisite_code'] ?? ''); ?>', <?php echo e($subject['credits']); ?>, '<?php echo e($subject['id']); ?>', '<?php echo e($subject['computed_status']); ?>', '<?php echo e($subject['year_level'] ?? ''); ?>', '<?php echo e($subject['semester'] ?? ''); ?>', '<?php echo e($subject['open_date'] ?? ''); ?>', '<?php echo e($subject['close_date'] ?? ''); ?>', '<?php echo e($subject['academic_year'] ?? ''); ?>')" data-bs-toggle="modal" data-bs-target="#subjectModal">
+                                                    <button class="btn btn-light action-btn text-primary border" title="Sửa môn học" onclick='openSubjectModal(
+                                                        "edit",
+                                                        <?php echo json_encode((string) ($subject["subject_code"] ?? ""), JSON_UNESCAPED_UNICODE); ?>,
+                                                        <?php echo json_encode((string) ($subject["subject_name"] ?? ""), JSON_UNESCAPED_UNICODE); ?>,
+                                                        <?php echo json_encode((string) ($subject["prerequisite_code"] ?? ""), JSON_UNESCAPED_UNICODE); ?>,
+                                                        <?php echo json_encode((string) ($subject["credits"] ?? ""), JSON_UNESCAPED_UNICODE); ?>,
+                                                        <?php echo json_encode((string) ($subject["id"] ?? ""), JSON_UNESCAPED_UNICODE); ?>,
+                                                        <?php echo json_encode((string) ($subject["computed_status"] ?? "0"), JSON_UNESCAPED_UNICODE); ?>,
+                                                        <?php echo json_encode((string) ($subject["year_level"] ?? ""), JSON_UNESCAPED_UNICODE); ?>,
+                                                        <?php echo json_encode((string) ($subject["semester"] ?? ""), JSON_UNESCAPED_UNICODE); ?>,
+                                                        <?php echo json_encode((string) ($subject["open_date"] ?? ""), JSON_UNESCAPED_UNICODE); ?>,
+                                                        <?php echo json_encode((string) ($subject["close_date"] ?? ""), JSON_UNESCAPED_UNICODE); ?>,
+                                                        <?php echo json_encode((string) ($subject["academic_year"] ?? ""), JSON_UNESCAPED_UNICODE); ?>
+                                                    )' data-bs-toggle="modal" data-bs-target="#subjectModal">
                                                         <i class="bi bi-pencil-square"></i>
                                                     </button>
                                                     <form method="POST" action="../../controllers/admin/subjectController.php" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa môn <?php echo e($subject['subject_code']); ?> - <?php echo e($subject['subject_name']); ?>?');">

@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $action = $_POST['action'] ?? '';
 $id = (int) ($_POST['id'] ?? 0);
-$className = trim($_POST['class_name'] ?? '');
+$className = strtoupper(trim($_POST['class_name'] ?? ''));
 $academicYear = trim($_POST['academic_year'] ?? '');
 $departmentId = trim($_POST['department_id'] ?? '');
 
@@ -26,6 +26,10 @@ if (!in_array($action, ['save', 'delete'], true)) {
 
 if ($action === 'save' && ($className === '' || $academicYear === '')) {
     redirect('../../views/admin/classes-subjects.php?class_error=missing_data');
+}
+
+if ($action === 'save' && in_array($className, ['--', '-', 'N/A', 'NULL'], true)) {
+    redirect('../../views/admin/classes-subjects.php?class_error=invalid_class_name');
 }
 
 $departmentIdValue = $departmentId === '' ? null : (int) $departmentId;
@@ -41,12 +45,25 @@ try {
     }
 
     if ($id > 0) {
+        $duplicate = db_fetch_one(
+            'SELECT id FROM classes WHERE class_name = ? AND id <> ? LIMIT 1',
+            [$className, $id]
+        );
+        if ($duplicate) {
+            redirect('../../views/admin/classes-subjects.php?class_error=duplicate_class_name');
+        }
+
         db_query(
             'UPDATE classes SET class_name = ?, academic_year = ?, department_id = ? WHERE id = ?',
             [$className, $academicYear, $departmentIdValue, $id]
         );
         logSystem("Cập nhật lớp học ID #$id - $className", 'classes', $id);
     } else {
+        $duplicate = db_fetch_one('SELECT id FROM classes WHERE class_name = ? LIMIT 1', [$className]);
+        if ($duplicate) {
+            redirect('../../views/admin/classes-subjects.php?class_error=duplicate_class_name');
+        }
+
         db_query(
             'INSERT INTO classes (class_name, academic_year, department_id) VALUES (?, ?, ?)',
             [$className, $academicYear, $departmentIdValue]

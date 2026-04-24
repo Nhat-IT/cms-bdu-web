@@ -478,12 +478,16 @@ try {
 
     if ($action === 'import_accounts') {
         $hasBirthDate = usersHasBirthDateColumn();
-        $defaultPasswordHash = password_hash('Bdu@123456', PASSWORD_DEFAULT);
+        $defaultPasswordHash = password_hash('123456@', PASSWORD_DEFAULT);
         $validRoles = ['admin', 'support_admin', 'teacher', 'bcs', 'student'];
+        $seenUsernames = [];
 
 
         foreach ($rows as $row) {
-            if (count($row) < 8) { // cần ít nhất 8 cột nếu có academic_title
+            // Mẫu import tài khoản chuẩn hiện tại có 7 cột:
+            // STT | Mã GV/MSSV | Họ và tên | Ngày sinh | Lớp học | Email | Vai trò
+            // Cột academic_title là tùy chọn (cột 8 nếu có).
+            if (count($row) < 7) {
                 $skip++;
                 continue;
             }
@@ -499,10 +503,31 @@ try {
             }
             $academicTitle = trim($row[7] ?? '');
 
-            if ($username === '' || $fullName === '' || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || !in_array($role, $validRoles, true)) {
+            if ($username === '' || $fullName === '' || !in_array($role, $validRoles, true)) {
                 $skip++;
                 continue;
             }
+
+            // Sinh viên/BCS: chuẩn hóa email theo MSSV để tránh fail khi phần trước @student không trùng username.
+            if ($role === 'student' || $role === 'bcs') {
+                $expectedStudentEmail = strtolower($username) . '@student.bdu.edu.vn';
+                if ($email === '' || preg_match('/@student\.bdu\.edu\.vn$/i', $email)) {
+                    $email = $expectedStudentEmail;
+                }
+            }
+
+            if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $skip++;
+                continue;
+            }
+
+            // Không cho tạo trùng MSSV/Mã GV trong cùng file import.
+            $usernameKey = strtolower($username);
+            if (isset($seenUsernames[$usernameKey])) {
+                $skip++;
+                continue;
+            }
+            $seenUsernames[$usernameKey] = true;
 
             $classId = null;
             if ($role === 'student' || $role === 'bcs') {
@@ -519,25 +544,27 @@ try {
             }
 
             try {
-                $user = db_fetch_one('SELECT id FROM users WHERE username = ? OR email = ? LIMIT 1', [$username, $email]);
-                $userId = 0;
-
-                if ($user) {
-                    $userId = (int) $user['id'];
-                    if ($hasBirthDate) {
-                        db_query('UPDATE users SET full_name = ?, email = ?, role = ?, birth_date = ?, academic_title = ? WHERE id = ?', [$fullName, $email, $role, $birthDate, $academicTitle, $userId]);
-                    } else {
-                        db_query('UPDATE users SET full_name = ?, email = ?, role = ?, academic_title = ? WHERE id = ?', [$fullName, $email, $role, $academicTitle, $userId]);
-                    }
-                } else {
-                    if ($hasBirthDate) {
-                        db_query('INSERT INTO users (username, password, full_name, email, role, birth_date, academic_title) VALUES (?, ?, ?, ?, ?, ?, ?)', [$username, $defaultPasswordHash, $fullName, $email, $role, $birthDate, $academicTitle]);
-                    } else {
-                        db_query('INSERT INTO users (username, password, full_name, email, role, academic_title) VALUES (?, ?, ?, ?, ?, ?)', [$username, $defaultPasswordHash, $fullName, $email, $role, $academicTitle]);
-                    }
-                    $created = db_fetch_one('SELECT id FROM users WHERE username = ? LIMIT 1', [$username]);
-                    $userId = (int) ($created['id'] ?? 0);
+                // Yêu cầu nghiệp vụ: tạo mới, nếu trùng MSSV/Mã GV thì tự bỏ qua.
+                $existingByUsername = db_fetch_one('SELECT id FROM users WHERE username = ? LIMIT 1', [$username]);
+                if ($existingByUsername) {
+                    $skip++;
+                    continue;
                 }
+
+                // Email trùng cũng bỏ qua để tránh lỗi unique.
+                $existingByEmail = db_fetch_one('SELECT id FROM users WHERE email = ? LIMIT 1', [$email]);
+                if ($existingByEmail) {
+                    $skip++;
+                    continue;
+                }
+
+                if ($hasBirthDate) {
+                    db_query('INSERT INTO users (username, password, full_name, email, role, birth_date, academic_title) VALUES (?, ?, ?, ?, ?, ?, ?)', [$username, $defaultPasswordHash, $fullName, $email, $role, $birthDate, $academicTitle]);
+                } else {
+                    db_query('INSERT INTO users (username, password, full_name, email, role, academic_title) VALUES (?, ?, ?, ?, ?, ?)', [$username, $defaultPasswordHash, $fullName, $email, $role, $academicTitle]);
+                }
+                $created = db_fetch_one('SELECT id FROM users WHERE username = ? LIMIT 1', [$username]);
+                $userId = (int) ($created['id'] ?? 0);
 
                 if ($userId <= 0) {
                     $err++;

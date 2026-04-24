@@ -343,7 +343,13 @@ foreach ($rawMasterScheduleRows as $row) {
 $dbMasterCourses = array_values($masterCoursesByCsId);
 
 // Lich ghi de theo ngay (chi ap dung cho 1 ngay cu the, khong doi lich ca nhom)
-$rawMasterOverrides = db_fetch_all("
+$hasExtraClassesTable = (int) db_count(
+    "SELECT COUNT(*) AS total
+     FROM information_schema.tables
+     WHERE table_schema = DATABASE()
+       AND table_name = 'extra_classes'"
+) > 0;
+$rawMasterOverrides = $hasExtraClassesTable ? db_fetch_all("
     SELECT
         cs.id            AS cs_id,
         csg.group_code   AS group_code,
@@ -351,13 +357,13 @@ $rawMasterOverrides = db_fetch_all("
         ec.day_of_week   AS day_of_week,
         ec.start_period  AS start_period,
         ec.end_period    AS end_period,
-        ec.room          AS room
+        ec.room          AS room,
+        ec.is_regular    AS is_regular
     FROM extra_classes ec
     JOIN class_subject_groups csg ON csg.id = ec.class_subject_group_id
     JOIN class_subjects cs ON cs.id = csg.class_subject_id
-    WHERE ec.is_regular = 1
     ORDER BY ec.extra_date DESC, ec.id DESC
-");
+") : [];
 $dbMasterOverrides = array_map(function ($row) {
     return [
         'csId'       => (int)($row['cs_id'] ?? 0),
@@ -366,7 +372,8 @@ $dbMasterOverrides = array_map(function ($row) {
         'day'        => !empty($row['day_of_week']) ? (string)$row['day_of_week'] : null,
         'start'      => !empty($row['start_period']) ? (string)$row['start_period'] : null,
         'end'        => !empty($row['end_period']) ? (string)$row['end_period'] : null,
-        'room'       => $row['room'] ?? null
+        'room'       => $row['room'] ?? null,
+        'isRegular'  => isset($row['is_regular']) ? (int)$row['is_regular'] : 1
     ];
 }, $rawMasterOverrides);
 ?>
@@ -1108,6 +1115,13 @@ function renderMasterSchedule() {
     [2,3,4,5,6,7,8].forEach(d => occupied[d] = {});
     const dayOffsetMap = {2:0,3:1,4:2,5:3,6:4,7:5,8:6};
     const primarySlots = {};
+    const toYmd = function(d) {
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    };
+    const normGroup = function(code) {
+        const m = String(code || 'N1').match(/^N?(\d+)$/i);
+        return m ? ('N' + m[1]) : String(code || 'N1');
+    };
     const escHtml = function(v) {
         return String(v == null ? '' : v)
             .replace(/&/g, '&amp;')
@@ -1116,6 +1130,13 @@ function renderMasterSchedule() {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
     };
+    const overrideMap = {};
+    (window.masterScheduleOverrides || []).forEach(function(ov) {
+        const key = String(ov.csId || '') + '|' + normGroup(ov.groupCode || 'N1') + '|' + String(ov.date || '');
+        if (String(ov.csId || '') && String(ov.date || '')) {
+            overrideMap[key] = ov;
+        }
+    });
 
     (window.masterScheduleCourses || []).forEach(function(course) {
         if (yearFilter !== 'all' && String(course.year || '') !== yearFilter) return;
@@ -1123,11 +1144,22 @@ function renderMasterSchedule() {
 
         course.groups.forEach(function(g) {
             if (!g.day || !g.start || !g.end) return;
-            const day   = parseInt(g.day,   10);
-            const start = parseInt(g.start, 10);
-            const end   = parseInt(g.end,   10);
+            const baseDay = parseInt(g.day, 10);
+            if (!Number.isFinite(baseDay) || !Object.prototype.hasOwnProperty.call(dayOffsetMap, baseDay)) return;
+
+            const targetDate = new Date(mondayDate);
+            targetDate.setDate(mondayDate.getDate() + dayOffsetMap[baseDay]);
+            const targetYmd = toYmd(targetDate);
+            const overrideKey = String(course.csId || '') + '|' + normGroup(g.code || 'N1') + '|' + targetYmd;
+            const override = overrideMap[overrideKey] || null;
+
+            const day   = parseInt((override && override.day) ? override.day : g.day, 10);
+            const start = parseInt((override && override.start) ? override.start : g.start, 10);
+            const end   = parseInt((override && override.end) ? override.end : g.end, 10);
+            const roomValue = (override && override.room) ? override.room : g.room;
+            if (!Number.isFinite(day) || !Number.isFinite(start) || !Number.isFinite(end)) return;
             if (teacherFilter !== 'all' && g.teacherMain !== teacherFilter) return;
-            if (roomFilter    !== 'all' && g.room        !== roomFilter)    return;
+            if (roomFilter    !== 'all' && roomValue     !== roomFilter)    return;
             const teacherObj = (window.teachers || []).find(t => t.id === g.teacherMain);
             const teacherDisplay = teacherObj ? ((teacherObj.title ? teacherObj.title + '. ' : '') + teacherObj.name) : '—';
             const slotKey = String(day) + '-' + String(start);
@@ -1135,7 +1167,7 @@ function renderMasterSchedule() {
                 subject: course.name || '',
                 classCode: course.classCode || '',
                 groupCode: (g.code === 'N1' ? 'Nhóm 1' : (g.code || 'N1')),
-                roomName: getRoomName(g.room),
+                roomName: getRoomName(roomValue),
                 teacher: teacherDisplay
             };
             if (occupied[day] && occupied[day][start]) {
@@ -1173,26 +1205,25 @@ function renderMasterSchedule() {
             block.innerHTML =
                 '<div class="subject-title" style="font-size:0.86rem;font-weight:700">' + course.name + '</div>' +
                 '<div style="font-size:0.78rem">Lớp: <b class="text-primary">' + course.classCode + '</b> (' + (g.code === "N1" ? "Nhóm 1" : g.code) + ')</div>' +
-                '<div style="font-size:0.78rem">🏛 <b>' + getRoomName(g.room) + '</b></div>' +
+                '<div style="font-size:0.78rem">🏛 <b>' + getRoomName(roomValue) + '</b></div>' +
                 '<div style="font-size:0.78rem">👤 ' + tName + '</div>';
 
-            (function(cc, cg, offset) {
+            (function(cc, cg, fixedDate, fixedDay, fixedStart, fixedEnd, fixedRoom) {
                 block.addEventListener('click', function() {
-                    const sd = new Date(mondayDate);
-                    sd.setDate(mondayDate.getDate() + offset);
-                    const sdStr     = sd.toISOString().slice(0, 10);
+                    const sd = new Date(fixedDate);
+                    const sdStr = toYmd(sd);
                     const sdDisplay = sd.getDate().toString().padStart(2,'0') + '/' +
                                       (sd.getMonth()+1).toString().padStart(2,'0') + '/' +
                                       sd.getFullYear();
                     openEditSingleSession(
                         'edit_master', sdDisplay, sdStr,
-                        String(cg.day), String(cg.start), String(cg.end),
-                        cg.room || '', 'normal',
+                        String(fixedDay), String(fixedStart), String(fixedEnd),
+                        fixedRoom || '', 'normal',
                         cc.classCode, cc.name,
                         cg.teacherMain || '', cg.code, cc.csId || ''
                     );
                 });
-            })(course, g, dayOffsetMap[day] !== undefined ? dayOffsetMap[day] : 0);
+            })(course, g, targetDate, day, start, end, roomValue);
 
             cell.appendChild(block);
             primarySlots[slotKey] = { block: block, items: [slotItem] };
