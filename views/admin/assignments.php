@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/helpers.php';
-requireRole('admin');
+requireRole(['admin', 'support_admin']);
 $currentUser = getCurrentUser();
 $teachers = db_fetch_all("
     SELECT id, full_name as name, academic_title
@@ -820,17 +820,21 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
             </div>
             <div class="modal-body p-4">
                 <p class="mb-3">File hỗ trợ: <strong>CSV</strong>, <strong>XLSX</strong>, <strong>XLS</strong></p>
-                <p class="fw-bold mb-2">Cột chuẩn theo file điểm danh (khớp DB):</p>
+                <p class="fw-bold mb-2">Cột chuẩn (tự nhận diện theo tên header):</p>
+                <div class="alert alert-warning py-2 mb-3 small">
+                    <i class="bi bi-lightbulb me-1"></i>
+                    <strong>Ưu tiên:</strong> Hệ thống tự nhận diện cột theo tên header. Header có thể viết hoa/thường, có dấu hoặc không dấu.
+                </div>
                 <ul class="list-group list-group-flush mb-3">
-                    <li class="list-group-item px-0 py-1"><strong>Cột A:</strong> STT <span class="text-muted">(có thể bỏ trống)</span></li>
-                    <li class="list-group-item px-0 py-1"><strong>Cột B:</strong> MSSV <span class="text-danger">*</span></li>
-                    <li class="list-group-item px-0 py-1"><strong>Cột C:</strong> Họ và tên <span class="text-danger">*</span></li>
-                    <li class="list-group-item px-0 py-1"><strong>Cột D:</strong> Ngày sinh <span class="text-muted">— dd/mm/yyyy hoặc định dạng ngày Excel</span></li>
-                    <li class="list-group-item px-0 py-1"><strong>Cột E:</strong> Lớp</li>
+                    <li class="list-group-item px-0 py-1"><strong>STT</strong> <span class="text-muted">(có thể bỏ trống, nhận diện: stt, tt, #, no,...)</span></li>
+                    <li class="list-group-item px-0 py-1"><strong>MSSV</strong> <span class="text-danger">*</span> <span class="text-muted">(nhận diện: mssv, mã sv, ma sv, student id,...)</span></li>
+                    <li class="list-group-item px-0 py-1"><strong>HỌ VÀ TÊN</strong> <span class="text-danger">*</span> <span class="text-muted">(nhận diện: họ và tên, họ tên, ho va ten, ho ten, full name,...)</span></li>
+                    <li class="list-group-item px-0 py-1"><strong>NGÀY SINH</strong> <span class="text-muted">— dd/mm/yyyy hoặc định dạng ngày Excel</span></li>
+                    <li class="list-group-item px-0 py-1"><strong>LỚP</strong> <span class="text-muted">(nhận diện: lớp, lop, class,...)</span></li>
                 </ul>
                 <div class="alert alert-info py-2 mb-0 small">
-                    <i class="bi bi-lightbulb me-1"></i>
-                    <strong>Lưu ý:</strong> Hệ thống ưu tiên đọc đúng mẫu điểm danh: <code>STT | MSSV | HỌ VÀ TÊN | NGÀY SINH | LỚP</code>.
+                    <i class="bi bi-info-circle me-1"></i>
+                    <strong>Lưu ý:</strong> Nếu header không khớp, hệ thống sẽ tự động dùng thứ tự cột mặc định: <code>STT | MSSV | HỌ VÀ TÊN | NGÀY SINH | LỚP</code>
                 </div>
             </div>
             <div class="modal-footer bg-light border-0 pt-0">

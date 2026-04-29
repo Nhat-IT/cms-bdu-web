@@ -377,6 +377,9 @@ try {
     }
 
     if ($action === 'save_extra_class') {
+        // Debug: log all POST data
+        error_log("DEBUG save_extra_class POST: " . json_encode($_POST));
+
         $groupId = (int) ($_POST['group_id'] ?? 0);
         if ($groupId <= 0 && isset($_POST['class_subject_id'], $_POST['group_code'])) {
             $groupData = db_fetch_one('SELECT id FROM class_subject_groups WHERE class_subject_id = ? AND group_code = ? LIMIT 1', [$_POST['class_subject_id'], $_POST['group_code']]);
@@ -392,30 +395,61 @@ try {
         $extraNote = trim($_POST['extra_note'] ?? '');
         $isRegular = isset($_POST['extra_is_regular']) ? 1 : 0;
 
-        if ($groupId <= 0 || $extraDate === '' || $extraDay < 2 || $extraDay > 8 || $extraStart < 1 || $extraEnd < $extraStart || $extraRoom === '') {
-            respondOrRedirect(false, 'invalid_schedule_data', $returnPage);
+        // Debug log chi tiết
+        error_log("DEBUG save_extra_class values: groupId=$groupId, date='$extraDate', day=$extraDay, start=$extraStart, end=$extraEnd, room='$extraRoom'");
+
+        // Validate
+        $validationErrors = [];
+        if ($groupId <= 0) $validationErrors[] = 'groupId_invalid';
+        if ($extraDate === '') $validationErrors[] = 'date_empty';
+        if ($extraDay < 2 || $extraDay > 8) $validationErrors[] = 'day_invalid';
+        if ($extraStart < 1) $validationErrors[] = 'start_invalid';
+        if ($extraEnd < $extraStart) $validationErrors[] = 'end_before_start';
+        if ($extraRoom === '') $validationErrors[] = 'room_empty';
+
+        if (!empty($validationErrors)) {
+            error_log("DEBUG save_extra_class validation FAILED: " . implode(', ', $validationErrors));
+            // Trả về chi tiết lỗi trong response
+            if (isset($_POST['format']) && $_POST['format'] === 'json') {
+                jsonResponse([
+                    'ok' => false,
+                    'message' => 'invalid_schedule_data',
+                    'errors' => $validationErrors,
+                    'debug' => [
+                        'groupId' => $groupId,
+                        'date' => $extraDate,
+                        'day' => $extraDay,
+                        'start' => $extraStart,
+                        'end' => $extraEnd,
+                        'room' => $extraRoom
+                    ]
+                ], 400);
+            }
+            respondOrRedirect(false, 'invalid_schedule_data: ' . implode(', ', $validationErrors), $returnPage);
         }
 
+        // Kiểm tra xem đã có buổi học bù cho ngày này chưa (trong class_subject_groups)
+        $groupCode = $_POST['group_code'] ?? '';
         $existingExtra = null;
         if ($isRegular === 1) {
             $existingExtra = db_fetch_one(
-                'SELECT id
-                 FROM extra_classes
-                 WHERE class_subject_group_id = ? AND extra_date = ? AND is_regular = 1
-                 LIMIT 1',
-                [$groupId, $extraDate]
+                'SELECT id FROM class_subject_groups
+                 WHERE class_subject_id = (SELECT class_subject_id FROM class_subject_groups WHERE id = ?)
+                 AND group_code = ? AND is_extra = 1 AND extra_date = ? LIMIT 1',
+                [$groupId, $groupCode, $extraDate]
             );
         }
 
         if ($existingExtra) {
-            $extraId = (int) ($existingExtra['id'] ?? 0);
+            // UPDATE buổi học bù thay thế lịch cố định
             db_query(
-                'UPDATE extra_classes
+                'UPDATE class_subject_groups
                  SET day_of_week = ?, start_period = ?, end_period = ?, room = ?, note = ?
                  WHERE id = ?',
-                [$extraDay, $extraStart, $extraEnd, $extraRoom, $extraNote !== '' ? $extraNote : null, $extraId]
+                [$extraDay, $extraStart, $extraEnd, $extraRoom, $extraNote !== '' ? $extraNote : null, $existingExtra['id']]
             );
-            logSystem("Cập nhật buổi học theo ngày ID #$extraId cho nhóm ID #$groupId", 'extra_classes', $extraId);
+            $extraId = (int) $existingExtra['id'];
+            logSystem("Cập nhật buổi học bù ID #$extraId cho nhóm ID #$groupId", 'class_subject_groups', $extraId);
             if (isset($_POST['format']) && $_POST['format'] === 'json') {
                 jsonResponse([
                     'ok' => true,
@@ -429,24 +463,25 @@ try {
                     'is_regular' => 1
                 ]);
             }
-            respondOrRedirect(true, 'extra_class_added', $returnPage);
+            respondOrRedirect(true, 'extra_class_updated', $returnPage);
         }
 
+        // INSERT buổi học bù mới vào class_subject_groups
         db_query(
-            'INSERT INTO extra_classes (class_subject_group_id, extra_date, day_of_week, start_period, end_period, room, note, is_regular)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [$groupId, $extraDate, $extraDay, $extraStart, $extraEnd, $extraRoom, $extraNote !== '' ? $extraNote : null, $isRegular]
+            'INSERT INTO class_subject_groups (class_subject_id, group_code, room, day_of_week, start_period, end_period, note, is_extra, extra_date)
+             SELECT class_subject_id, ?, ?, ?, ?, ?, ?, 1, ?
+             FROM class_subject_groups WHERE id = ?',
+            [$groupCode, $extraRoom, $extraDay, $extraStart, $extraEnd, $extraNote !== '' ? $extraNote : null, $extraDate, $groupId]
         );
         $createdExtra = db_fetch_one(
-            'SELECT id
-             FROM extra_classes
-             WHERE class_subject_group_id = ? AND extra_date = ? AND day_of_week = ? AND start_period = ? AND end_period = ? AND room = ?
-             ORDER BY id DESC
-             LIMIT 1',
-            [$groupId, $extraDate, $extraDay, $extraStart, $extraEnd, $extraRoom]
+            'SELECT id FROM class_subject_groups
+             WHERE class_subject_id = (SELECT class_subject_id FROM class_subject_groups WHERE id = ?)
+             AND group_code = ? AND is_extra = 1 AND extra_date = ?
+             ORDER BY id DESC LIMIT 1',
+            [$groupId, $groupCode, $extraDate]
         );
         $extraId = (int) ($createdExtra['id'] ?? 0);
-        logSystem("Thêm buổi học bù cho nhóm ID #$groupId", 'extra_classes', $extraId > 0 ? $extraId : null);
+        logSystem("Thêm buổi học bù cho nhóm ID #$groupId", 'class_subject_groups', $extraId > 0 ? $extraId : null);
         if (isset($_POST['format']) && $_POST['format'] === 'json') {
             jsonResponse([
                 'ok' => true,
@@ -564,7 +599,7 @@ try {
                 db_query('DELETE FROM attendance_sessions WHERE class_subject_group_id = ?', [$targetGroupId]);
             }
             if (dbTableExists('extra_classes')) {
-                db_query('DELETE FROM extra_classes WHERE class_subject_group_id = ?', [$targetGroupId]);
+                db_query('DELETE FROM class_subject_groups WHERE class_subject_id = ? AND is_extra = 1', [$targetGroupId]);
             }
             if (dbTableExists('student_subject_registration')) {
                 db_query('DELETE FROM student_subject_registration WHERE class_subject_group_id = ?', [$targetGroupId]);

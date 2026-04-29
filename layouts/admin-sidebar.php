@@ -39,8 +39,7 @@ $adminMenuItems = [
     </div>
 
     <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-        <a href="<?= BASE_URL ?>/logout.php" class="nav-link logout-btn"
-           onclick="return confirm('Bạn có chắc chắn muốn đăng xuất?');" title="Đăng xuất">
+        <a href="<?= BASE_URL ?>/logout.php" class="nav-link logout-btn" title="Đăng xuất">
             <i class="bi bi-box-arrow-left"></i>
             <span class="hide-on-collapse fw-bold">Đăng xuất</span>
         </a>

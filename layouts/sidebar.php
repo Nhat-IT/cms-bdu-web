@@ -160,8 +160,8 @@ $unreadCount = db_count("SELECT COUNT(*) FROM notification_logs WHERE user_id = 
                 <a href="classes-subjects.php" class="nav-link <?= $currentPage === 'classes-subjects' ? 'active' : '' ?>" title="Lớp học & Môn học">
                     <i class="bi bi-building"></i> <span class="hide-on-collapse">Lớp học & Môn học</span>
                 </a>
-                <a href="assignments.php" class="nav-link <?= $currentPage === 'assignments' ? 'active' : '' ?>" title="Bài tập">
-                    <i class="bi bi-journal-text"></i> <span class="hide-on-collapse">Bài tập</span>
+                <a href="assignments.php" class="nav-link <?= $currentPage === 'assignments' ? 'active' : '' ?>" title="Phân công giảng dạy">
+                    <i class="bi bi-journal-text"></i> <span class="hide-on-collapse">Phân công giảng dạy</span>
                 </a>
                 
                 <div class="px-4 mt-3 mb-2 small text-white-50 fw-bold hide-on-collapse" style="font-size: 0.7rem; letter-spacing: 1px;">HỆ THỐNG</div>
@@ -171,12 +171,33 @@ $unreadCount = db_count("SELECT COUNT(*) FROM notification_logs WHERE user_id = 
                 <a href="system-logs.php" class="nav-link <?= $currentPage === 'system-logs' ? 'active' : '' ?>" title="Nhật ký hệ thống">
                     <i class="bi bi-clock-history"></i> <span class="hide-on-collapse">Nhật ký hệ thống</span>
                 </a>
+
+            <?php elseif ($role === 'support_admin'): ?>
+                <!-- Menu Support Admin -->
+                <div class="px-4 mb-2 small text-white-50 fw-bold hide-on-collapse" style="font-size: 0.7rem; letter-spacing: 1px;">QUẢN TRỊ</div>
+                <a href="home.php" class="nav-link <?= $currentPage === 'home' ? 'active' : '' ?>" title="Tổng quan hệ thống">
+                    <i class="bi bi-grid-1x2-fill"></i> <span class="hide-on-collapse">Tổng quan hệ thống</span>
+                </a>
+                <a href="accounts.php" class="nav-link <?= $currentPage === 'accounts' ? 'active' : '' ?>" title="Quản lý tài khoản">
+                    <i class="bi bi-people-fill"></i> <span class="hide-on-collapse">Quản lý tài khoản</span>
+                </a>
+                <a href="classes-subjects.php" class="nav-link <?= $currentPage === 'classes-subjects' ? 'active' : '' ?>" title="Quản lý lớp & Môn">
+                    <i class="bi bi-building"></i> <span class="hide-on-collapse">Quản lý lớp & Môn</span>
+                </a>
+                <a href="assignments.php" class="nav-link <?= $currentPage === 'assignments' ? 'active' : '' ?>" title="Phân công giảng dạy">
+                    <i class="bi bi-journal-text"></i> <span class="hide-on-collapse">Phân công giảng dạy</span>
+                </a>
+                
+                <div class="px-4 mt-3 mb-2 small text-white-50 fw-bold hide-on-collapse" style="font-size: 0.7rem; letter-spacing: 1px;">CẤU HÌNH</div>
+                <a href="org-settings.php" class="nav-link <?= $currentPage === 'org-settings' ? 'active' : '' ?>" title="Cấu hình học vụ">
+                    <i class="bi bi-gear-fill"></i> <span class="hide-on-collapse">Cấu hình học vụ</span>
+                </a>
             <?php endif; ?>
         </nav>
     </div>
     
     <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-        <a href="../logout.php" class="nav-link logout-btn" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?');" title="Đăng xuất">
+        <a href="../logout.php" class="nav-link logout-btn" title="Đăng xuất">
             <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
         </a>
     </div>

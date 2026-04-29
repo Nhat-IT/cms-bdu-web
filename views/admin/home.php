@@ -8,8 +8,8 @@ require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/helpers.php';
 
-// Bảo vệ trang - chỉ admin được phép truy cập
-requireRole('admin');
+// Bảo vệ trang - chỉ admin và support_admin được phép truy cập
+requireRole(['admin', 'support_admin']);
 
 // Lấy thông tin admin hiện tại
 $currentUser = getCurrentUser();

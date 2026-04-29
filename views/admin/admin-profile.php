@@ -1,24 +1,46 @@
 <?php
 /**
- * CMS BDU - Hồ Sơ Quản Trị Viên
- * Trang hồ sơ cá nhân của Admin
+ * CMS BDU - Hồ Sơ Admin/Support Admin
+ * Trang hồ sơ cá nhân của Admin và Support Admin
  */
 
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/helpers.php';
 
-// Bảo vệ trang - chỉ admin được phép truy cập
-requireRole('admin');
+// Bảo vệ trang - chỉ admin và support_admin được phép truy cập
+requireRole(['admin', 'support_admin']);
 
 // Lấy thông tin admin hiện tại
 $currentUser = getCurrentUser();
+$role = $currentUser['role'];
 
 // Lấy thông tin đầy đủ từ database
 $user = db_fetch_one("SELECT * FROM users WHERE id = ?", [$_SESSION['user_id']]);
 
-// Lấy thông tin đăng nhập cuối (giả lập - trong thực tế cần bảng login_history)
-$lastLogin = 'Hôm nay, lúc ' . date('H:i:s');
+// Lấy thông tin đăng nhập cuối từ system_logs
+$lastLoginRecord = db_fetch_one(
+    "SELECT created_at FROM system_logs 
+     WHERE user_id = ? AND action = 'Đăng nhập thành công' 
+     ORDER BY created_at DESC LIMIT 1",
+    [$_SESSION['user_id']]
+);
+
+if ($lastLoginRecord && !empty($lastLoginRecord['created_at'])) {
+    $lastLoginTimestamp = strtotime($lastLoginRecord['created_at']);
+    $today = strtotime('today');
+    $yesterday = strtotime('yesterday');
+    
+    if (date('Y-m-d', $lastLoginTimestamp) === date('Y-m-d', $today)) {
+        $lastLogin = 'Hôm nay, lúc ' . date('H:i:s', $lastLoginTimestamp);
+    } elseif (date('Y-m-d', $lastLoginTimestamp) === date('Y-m-d', $yesterday)) {
+        $lastLogin = 'Hôm qua, lúc ' . date('H:i:s', $lastLoginTimestamp);
+    } else {
+        $lastLogin = formatDate($lastLoginRecord['created_at'], 'd/m/Y H:i:s');
+    }
+} else {
+    $lastLogin = 'Chưa có thông tin';
+}
 
 // Xử lý cập nhật thông tin
 $flashMessage = '';
@@ -52,9 +74,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $user = db_fetch_one("SELECT * FROM users WHERE id = ?", [$_SESSION['user_id']]);
         }
     } elseif ($_POST['action'] === 'change_password') {
+        $currentUserId = (int)($_SESSION['user_id'] ?? 0);
         $oldPassword = $_POST['old_password'] ?? '';
         $newPassword = $_POST['new_password'] ?? '';
         $confirmPassword = $_POST['confirm_password'] ?? '';
+        
+        // Debug: hiển thị user_id đang dùng
+        error_log("DEBUG: change_password - session_user_id=" . ($_SESSION['user_id'] ?? 'NULL') . ", username=" . ($_SESSION['username'] ?? 'NULL'));
         
         if (empty($oldPassword) || empty($newPassword) || empty($confirmPassword)) {
             $flashMessage = 'Vui lòng điền đầy đủ thông tin.';
@@ -79,14 +105,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             } else {
                 // Cập nhật mật khẩu mới
                 $newHashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-                db_query("UPDATE users SET password = ? WHERE id = ?", [$newHashedPassword, $_SESSION['user_id']]);
-                logSystem("Đổi mật khẩu", 'users', $_SESSION['user_id']);
-
-                $flashMessage = 'Đổi mật khẩu thành công! Bạn sẽ được đăng xuất.';
-                $flashType = 'success';
                 
-                // Đăng xuất sau 2 giây
-                echo '<script>setTimeout(function(){ window.location.href = "../logout.php"; }, 2000);</script>';
+                // Debug: log độ dài password hash
+                error_log("DEBUG: New password hash length = " . strlen($newHashedPassword));
+                
+                $conn = getDBConnection();
+                $sql = "UPDATE users SET password = ? WHERE id = ?";
+                $stmt = mysqli_prepare($conn, $sql);
+                
+                if ($stmt) {
+                    mysqli_stmt_bind_param($stmt, "si", $newHashedPassword, $_SESSION['user_id']);
+                    $execResult = mysqli_stmt_execute($stmt);
+                    $affected = mysqli_stmt_affected_rows($stmt);
+                    mysqli_stmt_close($stmt);
+                    
+                    // Debug: hiển thị thông tin update
+                    $debugInfo = "DEBUG: Updating user_id=" . ($_SESSION['user_id'] ?? 'NULL') . " (" . ($_SESSION['username'] ?? 'NULL') . ")";
+                    error_log($debugInfo);
+                    error_log("DEBUG: Password update result - exec=" . ($execResult ? 'true' : 'false') . ", affected=" . $affected);
+                    
+                    // Verify update
+                    $verifyRow = db_fetch_one("SELECT password FROM users WHERE id = ?", [$_SESSION['user_id']]);
+                    error_log("DEBUG: Stored password hash length = " . strlen($verifyRow['password'] ?? ''));
+                    
+                    if ($execResult && $affected >= 0) {
+                        logSystem("Đổi mật khẩu", 'users', $_SESSION['user_id']);
+                        $flashMessage = 'Đổi mật khẩu thành công! Bạn sẽ được đăng xuất. (User ID: ' . ($_SESSION['user_id'] ?? 'NULL') . ')';
+                        $flashType = 'success';
+                        echo '<script>setTimeout(function(){ window.location.href = "../logout.php"; }, 2000);</script>';
+                    } else {
+                        $flashMessage = 'Có lỗi khi cập nhật mật khẩu.';
+                        $flashType = 'danger';
+                    }
+                } else {
+                    error_log("DEBUG: Failed to prepare statement - " . mysqli_error($conn));
+                    $flashMessage = 'Có lỗi khi cập nhật mật khẩu: ' . mysqli_error($conn);
+                    $flashType = 'danger';
+                }
             }
         }
     }
@@ -100,7 +155,7 @@ $headerAvatarUrl = getAvatarUrl($user['avatar'] ?? null, $user['full_name'] ?? '
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CMS BDU - Hồ Sơ Quản Trị Viên</title>
+    <title>CMS BDU - <?php echo $role === 'support_admin' ? 'Hồ Sơ Hỗ Trợ Quản Trị' : 'Hồ Sơ Quản Trị Viên'; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../../public/css/style.css">
@@ -117,7 +172,7 @@ require_once __DIR__ . '/../../layouts/admin-sidebar.php';
 
 <div class="main-content admin-main-content" id="mainContent">
 <?php
-$pageTitle  = 'Hồ SƠ QUẢN TRỊ VIÊN';
+$pageTitle  = $role === 'support_admin' ? 'HỒ SƠ HỖ TRỢ QUẢN TRỊ' : 'HỒ SƠ QUẢN TRỊ VIÊN';
 $pageIcon   = 'bi-person-badge-fill';
 require_once __DIR__ . '/../../layouts/admin-topbar.php';
 ?>
@@ -148,10 +203,17 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                         </div>
                         
                         <h5 class="fw-bold text-dark mb-1"><?php echo e($user['full_name'] ?? 'Admin'); ?></h5>
-                        <p class="text-muted small mb-3"><i class="bi bi-shield-fill-check text-danger me-1"></i>Quản trị viên Hệ thống</p>
+                        <p class="text-muted small mb-3">
+                            <i class="bi bi-shield-fill-check text-danger me-1"></i>
+                            <?php echo $role === 'support_admin' ? 'Hỗ trợ Quản trị Hệ thống' : 'Quản trị viên Hệ thống'; ?>
+                        </p>
                         
                         <div class="d-flex justify-content-center gap-2 mb-4">
+                            <?php if ($role === 'admin'): ?>
                             <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">Toàn quyền (Super Admin)</span>
+                            <?php else: ?>
+                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning">Hỗ trợ (Support Admin)</span>
+                            <?php endif; ?>
                             <span class="badge bg-success bg-opacity-10 text-success border border-success">Đang hoạt động</span>
                         </div>
 
@@ -208,7 +270,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                 <!-- Form Đổi mật khẩu -->
                 <div class="card shadow-sm border-0 border-start border-4 border-danger">
                     <div class="card-header bg-white pt-4 pb-2 border-0">
-                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-shield-lock-fill text-danger me-2"></i>Đổi Mật Khẩu Quản Trị</h5>
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-shield-lock-fill text-danger me-2"></i>Đổi Mật Khẩu <?php echo $role === 'support_admin' ? 'Hỗ Trợ' : 'Quản Trị'; ?></h5>
                         <p class="text-muted small mt-1 mb-0">Vui lòng sử dụng mật khẩu mạnh (chứa chữ hoa, chữ thường, số và ký tự đặc biệt).</p>
                     </div>
                     <div class="card-body">

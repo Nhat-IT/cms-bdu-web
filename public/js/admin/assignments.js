@@ -46,10 +46,19 @@
         fd.append('action', action);
         fd.append('format', 'json');
         Object.keys(params).forEach(function(k) { fd.append(k, params[k]); });
+
+        console.log('API Request:', action, params);
+
         return fetch('/cms/controllers/admin/classSubjectController.php', {
             method: 'POST',
             body: fd
-        }).then(function(res) { return res.json(); });
+        }).then(function(res) {
+            console.log('API Response Status:', res.status, res.statusText);
+            return res.json();
+        }).then(function(data) {
+            console.log('API Response Data:', data);
+            return data;
+        });
     };
 
     initAssignmentEnhancements();
@@ -898,7 +907,7 @@ function parseAssignmentCsv(content) {
         return ',';
     }
 
-    // Tự động nhận diện cột theo header
+    // Tự động nhận diện cột theo header (CSV)
     function detectColumns(headers) {
         const cols = {
             mssv: -1,
@@ -910,19 +919,39 @@ function parseAssignmentCsv(content) {
         const lowerHeaders = headers.map(function (h) { return String(h || '').toLowerCase().trim(); });
         
         lowerHeaders.forEach(function (h, idx) {
-            if (cols.mssv < 0 && (h.includes('mssv') || h.includes('mã') || h.includes('ma sv') || h.includes('student') || h.includes('student_id') || h.includes('studentid') || h.includes('mã sv'))) {
+            if (cols.mssv < 0 && (
+                h === 'mssv' || h === 'mã sv' || h === 'ma sv' || h === 'mã sinh viên' || 
+                h.includes('mssv') || h.includes('mã sv') || h.includes('mã sinh') ||
+                h.includes('student id') || h.includes('studentid') || h.includes('student_code')
+            )) {
                 cols.mssv = idx;
             }
-            if (cols.name < 0 && (h.includes('họ tên') || h.includes('họ và tên') || h.includes('ho ten') || h.includes('ho va ten') || h.includes('tên') || h.includes('ten') || h.includes('name') || h.includes('ho va'))) {
+            if (cols.name < 0 && (
+                h === 'họ và tên' || h === 'họ tên' || h === 'họ tên đệm' ||
+                h.includes('họ và tên') || h.includes('họ tên') || h.includes('ho va ten') ||
+                h.includes('ho ten') || h.includes('full name') || h.includes('fullname') ||
+                (h.includes('ten') && !h.includes('ngày') && h.length <= 10)
+            )) {
                 cols.name = idx;
             }
-            if (cols.dob < 0 && (h.includes('sinh') || h.includes('dob') || h.includes('birth') || h.includes('ngày') || h.includes('ngay') || h.includes('date'))) {
+            if (cols.dob < 0 && (
+                h === 'ngày sinh' || h === 'dob' || h === 'birthdate' ||
+                h.includes('ngày sinh') || h.includes('ngay sinh') || h.includes('dob') ||
+                h.includes('birth') || h.includes('sinh')
+            )) {
                 cols.dob = idx;
             }
-            if (cols.className < 0 && (h.includes('lớp') || h.includes('lop') || h.includes('class') || h.includes('lớp'))) {
+            if (cols.className < 0 && (
+                h === 'lớp' || h === 'lop' || h === 'class' || h === 'lớp sinh viên' ||
+                h.includes('lớp') || h.includes('lop ') || h.includes(' lop') ||
+                h.includes('class ') || h.includes('class_name')
+            )) {
                 cols.className = idx;
             }
-            if (cols.stt < 0 && (h.includes('stt') || h.includes('tt') || h.includes('no') || h.includes('#'))) {
+            if (cols.stt < 0 && (
+                h === 'stt' || h === 'tt' || h === '#' || h === 'no' || h === 'stt.' ||
+                h.includes('stt') || h.includes(' số tt') || h === 'số tt'
+            )) {
                 cols.stt = idx;
             }
         });
@@ -1003,7 +1032,7 @@ function parseAssignmentXlsx(buffer) {
         return String(value).trim();
     }
 
-    // Tự động nhận diện cột theo header
+    // Tự động nhận diện cột theo header (XLSX)
     function detectColumns(headers) {
         const cols = {
             mssv: -1,
@@ -1015,19 +1044,39 @@ function parseAssignmentXlsx(buffer) {
         const lowerHeaders = headers.map(function (h) { return String(h || '').toLowerCase().trim(); });
         
         lowerHeaders.forEach(function (h, idx) {
-            if (cols.mssv < 0 && (h.includes('mssv') || h.includes('mã') || h.includes('ma sv') || h.includes('student') || h.includes('student_id') || h.includes('studentid') || h.includes('mã sv'))) {
+            if (cols.mssv < 0 && (
+                h === 'mssv' || h === 'mã sv' || h === 'ma sv' || h === 'mã sinh viên' || 
+                h.includes('mssv') || h.includes('mã sv') || h.includes('mã sinh') ||
+                h.includes('student id') || h.includes('studentid') || h.includes('student_code')
+            )) {
                 cols.mssv = idx;
             }
-            if (cols.name < 0 && (h.includes('họ tên') || h.includes('họ và tên') || h.includes('ho ten') || h.includes('ho va ten') || h.includes('tên') || h.includes('ten') || h.includes('name') || h.includes('ho va'))) {
+            if (cols.name < 0 && (
+                h === 'họ và tên' || h === 'họ tên' || h === 'họ tên đệm' ||
+                h.includes('họ và tên') || h.includes('họ tên') || h.includes('ho va ten') ||
+                h.includes('ho ten') || h.includes('full name') || h.includes('fullname') ||
+                (h.includes('ten') && !h.includes('ngày') && h.length <= 10)
+            )) {
                 cols.name = idx;
             }
-            if (cols.dob < 0 && (h.includes('sinh') || h.includes('dob') || h.includes('birth') || h.includes('ngày') || h.includes('ngay') || h.includes('date'))) {
+            if (cols.dob < 0 && (
+                h === 'ngày sinh' || h === 'dob' || h === 'birthdate' ||
+                h.includes('ngày sinh') || h.includes('ngay sinh') || h.includes('dob') ||
+                h.includes('birth') || h.includes('sinh')
+            )) {
                 cols.dob = idx;
             }
-            if (cols.className < 0 && (h.includes('lớp') || h.includes('lop') || h.includes('class') || h.includes('lớp'))) {
+            if (cols.className < 0 && (
+                h === 'lớp' || h === 'lop' || h === 'class' || h === 'lớp sinh viên' ||
+                h.includes('lớp') || h.includes('lop ') || h.includes(' lop') ||
+                h.includes('class ') || h.includes('class_name')
+            )) {
                 cols.className = idx;
             }
-            if (cols.stt < 0 && (h.includes('stt') || h.includes('tt') || h.includes('no') || h.includes('#'))) {
+            if (cols.stt < 0 && (
+                h === 'stt' || h === 'tt' || h === '#' || h === 'no' || h === 'stt.' ||
+                h.includes('stt') || h.includes(' số tt') || h === 'số tt'
+            )) {
                 cols.stt = idx;
             }
         });
