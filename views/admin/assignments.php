@@ -138,6 +138,7 @@ $rawGroups = db_fetch_all("
     LEFT JOIN users u ON csg.sub_teacher_id = u.id
     LEFT JOIN users um ON csg.main_teacher_id = um.id
     LEFT JOIN rooms r ON (r.room_code = csg.room OR r.room_name = csg.room)
+    WHERE csg.is_extra = 0 OR csg.is_extra IS NULL
     ORDER BY csg.class_subject_id, csg.group_code ASC
 ");
 
@@ -329,7 +330,8 @@ $rawMasterScheduleRows = db_fetch_all("
     JOIN classes c ON c.id = cs.class_id
     JOIN subjects s ON s.id = cs.subject_id
     LEFT JOIN semesters sm ON sm.id = cs.semester_id
-    WHERE csg.day_of_week IS NOT NULL
+    WHERE (csg.is_extra = 0 OR csg.is_extra IS NULL)
+      AND csg.day_of_week IS NOT NULL
       AND csg.start_period IS NOT NULL
       AND csg.end_period IS NOT NULL
     ORDER BY sm.academic_year DESC, sm.semester_name ASC, c.class_name ASC, cs.id ASC, csg.group_code ASC
