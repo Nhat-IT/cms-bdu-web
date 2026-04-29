@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * CMS BDU - Class Subject Controller
  * Xử lý thao tác đóng/mở lớp học phần và cập nhật lịch nhóm.
@@ -74,9 +74,9 @@ if ($classSubjectId <= 0 && $action !== 'add_group' && $action !== 'get_group_st
 // Action: lấy số SV mỗi nhóm (GET)
 if ($action === 'get_group_student_counts') {
     $rows = db_fetch_all(
-        'SELECT csg.class_subject_id, csg.group_code, COUNT(gs.id) AS cnt
+        'SELECT csg.class_subject_id, csg.group_code, COUNT(ssr.id) AS cnt
          FROM class_subject_groups csg
-         LEFT JOIN group_students gs ON gs.class_subject_group_id = csg.id
+         LEFT JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
          GROUP BY csg.class_subject_id, csg.group_code'
     );
     $counts = [];
@@ -112,6 +112,9 @@ try {
     }
 
     if ($action === 'save_group_schedule') {
+        error_log("=== save_group_schedule START ===");
+        error_log("POST data: " . json_encode($_POST));
+        
         $groupCodeRaw = $_POST['group_code_select'] ?? $_POST['group_code'] ?? '';
         $groupCode = trim((string) $groupCodeRaw);
         $teacherMain = (int) ($_POST['teacher_main_id'] ?? 0);
@@ -124,7 +127,10 @@ try {
         $semesterName = trim((string) ($_POST['semester_name'] ?? ''));
         $academicYear = trim((string) ($_POST['academic_year'] ?? ''));
 
+        error_log("Parsed: teacherMain=$teacherMain, dayOfWeek=$dayOfWeek, room=$room, classSubjectId=$classSubjectId");
+        
         if ($groupCode === '' || $teacherMain <= 0 || $dayOfWeek < 2 || $dayOfWeek > 8 || $startPeriod < 1 || $endPeriod < $startPeriod || $room === '') {
+            error_log("Validation failed");
             respondOrRedirect(false, 'invalid_schedule_data', $returnPage);
         }
 
@@ -176,6 +182,7 @@ try {
             if ($existingCs) {
                 $classSubjectId = (int) $existingCs['id'];
             } else {
+                $insertTeacherId = $teacherMain > 0 ? $teacherMain : null;
                 db_query(
                     'INSERT INTO class_subjects (semester_id, class_id, subject_id, teacher_id, start_date, end_date)
                      VALUES (?, ?, ?, ?, ?, ?)',
@@ -183,7 +190,7 @@ try {
                         $semesterId,
                         $classId,
                         $subjectId,
-                        $teacherMain > 0 ? $teacherMain : null,
+                        $insertTeacherId,
                         $semesterRow['start_date'] ?? null,
                         $semesterRow['end_date'] ?? null
                     ]
@@ -220,7 +227,7 @@ try {
             }
         }
 
-        $groupData = db_fetch_one('SELECT id, sub_teacher_id FROM class_subject_groups WHERE class_subject_id = ? AND group_code = ? LIMIT 1', [$classSubjectId, $groupCode]);
+        $groupData = db_fetch_one('SELECT id, sub_teacher_id, main_teacher_id FROM class_subject_groups WHERE class_subject_id = ? AND group_code = ? LIMIT 1', [$classSubjectId, $groupCode]);
         $isUpdate = (bool) $groupData;
         $syncMainTeacher = isset($_POST['sync_main_teacher']) ? ((int) $_POST['sync_main_teacher'] === 1) : !$isUpdate;
 
@@ -271,14 +278,14 @@ try {
              JOIN classes c ON c.id = cs.class_id
              JOIN subjects s ON s.id = cs.subject_id
              LEFT JOIN rooms r ON r.room_code = csg.room
-             WHERE (cs.teacher_id = ? OR csg.sub_teacher_id = ?)
+             WHERE (csg.main_teacher_id = ? OR cs.teacher_id = ? OR csg.sub_teacher_id = ?)
                AND csg.day_of_week = ?
                AND csg.start_period <= ?
                AND csg.end_period >= ?
                AND csg.room IS NOT NULL
                AND NOT (csg.class_subject_id = ? AND csg.group_code = ?)
              LIMIT 1',
-            [$teacherMain, $teacherMain, $dayOfWeek, $endPeriod, $startPeriod, $classSubjectId, $groupCode]
+            [$teacherMain, $teacherMain, $teacherMain, $dayOfWeek, $endPeriod, $startPeriod, $classSubjectId, $groupCode]
         );
         if ($teacherConflict) {
             $tInfo = db_fetch_one('SELECT full_name, academic_title FROM users WHERE id = ? LIMIT 1', [$teacherMain]);
@@ -298,25 +305,36 @@ try {
         }
 
         $teacherSubRaw = $_POST['teacher_sub_id'] ?? null;
-        if ($teacherSubRaw === null && $isUpdate) {
-            $teacherSub = $groupData['sub_teacher_id'];
+        // Handle string "null", empty string, or 0 as NULL
+        if ($teacherSubRaw === null || $teacherSubRaw === '' || $teacherSubRaw === 'null' || $teacherSubRaw === '0') {
+            $teacherSub = null;
         } else {
-            $teacherSub = ($teacherSubRaw === '') ? null : (int) $teacherSubRaw;
+            $teacherSubInt = (int) $teacherSubRaw;
+            $teacherSub = $teacherSubInt > 0 ? $teacherSubInt : null;
+        }
+
+        // Validation: Giảng viên không thể vừa là chính vừa là trợ giảng
+        if ($teacherMain > 0 && $teacherSub > 0 && $teacherMain === $teacherSub) {
+            jsonResponse([
+                'ok' => false,
+                'message' => 'same_teacher_roles',
+                'detail' => 'Giảng viên không thể vừa là giảng viên chính vừa là trợ giảng cho cùng một nhóm.'
+            ], 400);
         }
 
         if ($isUpdate) {
-            db_query(
-                'UPDATE class_subject_groups
-                 SET room = ?, day_of_week = ?, start_period = ?, end_period = ?, sub_teacher_id = ?
-                 WHERE id = ?',
-                [$room, $dayOfWeek, $startPeriod, $endPeriod, $teacherSub, (int) $groupData['id']]
-            );
+            $updateSql = 'UPDATE class_subject_groups
+                 SET room = ?, day_of_week = ?, start_period = ?, end_period = ?, sub_teacher_id = ?, main_teacher_id = ?
+                 WHERE id = ?';
+            $updateParams = [$room, $dayOfWeek, $startPeriod, $endPeriod, $teacherSub, $teacherMain > 0 ? $teacherMain : null, (int) $groupData['id']];
+            $affected = db_query($updateSql, $updateParams);
+            error_log("DB_UPDATE_GROUP affected rows: " . $affected);
         } else {
-            db_query(
-                'INSERT INTO class_subject_groups (class_subject_id, group_code, room, day_of_week, start_period, end_period, sub_teacher_id)
-                 VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [$classSubjectId, $groupCode, $room, $dayOfWeek, $startPeriod, $endPeriod, $teacherSub]
-            );
+            $insertSql = 'INSERT INTO class_subject_groups (class_subject_id, group_code, room, day_of_week, start_period, end_period, sub_teacher_id, main_teacher_id)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+            $insertParams = [$classSubjectId, $groupCode, $room, $dayOfWeek, $startPeriod, $endPeriod, $teacherSub, $teacherMain > 0 ? $teacherMain : null];
+            $affected = db_query($insertSql, $insertParams);
+            error_log("DB_INSERT_GROUP affected rows: " . $affected);
         }
 
         if ($syncMainTeacher && $teacherMain > 0) {
@@ -324,6 +342,8 @@ try {
         }
         $logMsg = $isUpdate ? "Cập nhật" : "Tạo";
         logSystem("$logMsg lịch nhóm $groupCode - lớp học phần ID #$classSubjectId", 'class_subject_groups', $isUpdate ? (int) $groupData['id'] : null);
+        error_log("=== save_group_schedule SUCCESS ===");
+        
         if (isset($_POST['format']) && $_POST['format'] === 'json') {
             jsonResponse([
                 'ok' => true,
@@ -616,12 +636,13 @@ try {
         }
 
         $students = db_fetch_all(
-            'SELECT gs.id, gs.student_id, gs.mssv, gs.full_name, gs.birth_date, gs.class_name, gs.status,
-                    u.username
-             FROM group_students gs
-             LEFT JOIN users u ON u.id = gs.student_id
-             WHERE gs.class_subject_group_id = ?
-             ORDER BY COALESCE(gs.full_name, u.full_name, gs.mssv) ASC',
+            'SELECT ssr.id, ssr.student_id, u.username, u.full_name, u.birth_date, c.class_name, ssr.status
+             FROM student_subject_registration ssr
+             JOIN users u ON ssr.student_id = u.id
+             JOIN class_students cs ON ssr.student_id = cs.student_id
+             JOIN classes c ON cs.class_id = c.id
+             WHERE ssr.class_subject_group_id = ?
+             ORDER BY u.full_name ASC',
             [$targetGroupId]
         );
         jsonResponse(['ok' => true, 'students' => $students]);
@@ -659,8 +680,6 @@ try {
         $skipped = 0;
         $errors = [];
 
-        // Không chỉnh AUTO_INCREMENT theo prepared statement vì MariaDB không hỗ trợ placeholder ở vị trí này.
-
         foreach ($students as $i => $s) {
             $mssv = trim((string) ($s['mssv'] ?? ''));
             $name = trim((string) ($s['name'] ?? ''));
@@ -678,20 +697,16 @@ try {
                 $studentId = (int) $user['id'];
             }
 
-            // Kiểm tra đã tồn tại (theo student_id hoặc mssv)
-            $existing = null;
-            if ($studentId) {
-                $existing = db_fetch_one(
-                    'SELECT id FROM group_students WHERE class_subject_group_id = ? AND student_id = ? LIMIT 1',
-                    [$targetGroupId, $studentId]
-                );
+            if (!$studentId) {
+                $skipped++;
+                continue;
             }
-            if (!$existing) {
-                $existing = db_fetch_one(
-                    'SELECT id FROM group_students WHERE class_subject_group_id = ? AND mssv = ? LIMIT 1',
-                    [$targetGroupId, $mssv]
-                );
-            }
+
+            // Kiểm tra đã tồn tại trong student_subject_registration
+            $existing = db_fetch_one(
+                'SELECT id FROM student_subject_registration WHERE class_subject_group_id = ? AND student_id = ? LIMIT 1',
+                [$targetGroupId, $studentId]
+            );
             if ($existing) {
                 $skipped++;
                 continue;
@@ -699,8 +714,8 @@ try {
 
             try {
                 db_query(
-                    'INSERT INTO group_students (class_subject_group_id, student_id, mssv, full_name, birth_date, class_name) VALUES (?, ?, ?, ?, ?, ?)',
-                    [$targetGroupId, $studentId, $studentId ? null : $mssv, $name ?: null, $dob ?: null, $className ?: null]
+                    'INSERT INTO student_subject_registration (class_subject_group_id, student_id, status) VALUES (?, ?, ?)',
+                    [$targetGroupId, $studentId, 'Đang học']
                 );
                 $imported++;
             } catch (Exception $e) {
@@ -708,7 +723,7 @@ try {
             }
         }
 
-        logSystem("Import $imported sinh viên vào nhóm ID #$targetGroupId", 'group_students', $targetGroupId);
+        logSystem("Import $imported sinh viên vào nhóm ID #$targetGroupId", 'student_subject_registration', $targetGroupId);
         jsonResponse([
             'ok' => true,
             'imported' => $imported,
@@ -724,12 +739,14 @@ try {
 
         if ($groupId <= 0 && $csId > 0 && $groupCode === '') {
             $students = db_fetch_all(
-                'SELECT u.username, u.full_name, u.birth_date, gs.status, gs.mssv, gs.class_name
-                 FROM group_students gs
-                 JOIN class_subject_groups csg ON csg.id = gs.class_subject_group_id
-                 LEFT JOIN users u ON u.id = gs.student_id
+                'SELECT u.username, u.full_name, u.birth_date, ssr.status, c.class_name
+                 FROM student_subject_registration ssr
+                 JOIN users u ON ssr.student_id = u.id
+                 JOIN class_students cs ON ssr.student_id = cs.student_id
+                 JOIN classes c ON cs.class_id = c.id
+                 JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
                  WHERE csg.class_subject_id = ?
-                 ORDER BY COALESCE(u.full_name, gs.full_name, gs.mssv) ASC',
+                 ORDER BY u.full_name ASC',
                 [$csId]
             );
             jsonResponse(['ok' => true, 'students' => $students]);
@@ -747,11 +764,13 @@ try {
         $students = [];
         if ($targetGroupId > 0) {
             $students = db_fetch_all(
-                'SELECT u.username, u.full_name, u.birth_date, gs.status, gs.mssv, gs.class_name
-                 FROM group_students gs
-                 LEFT JOIN users u ON u.id = gs.student_id
-                 WHERE gs.class_subject_group_id = ?
-                 ORDER BY u.full_name ASC, gs.mssv ASC',
+                'SELECT u.username, u.full_name, u.birth_date, ssr.status, c.class_name
+                 FROM student_subject_registration ssr
+                 JOIN users u ON ssr.student_id = u.id
+                 JOIN class_students cs ON ssr.student_id = cs.student_id
+                 JOIN classes c ON cs.class_id = c.id
+                 WHERE ssr.class_subject_group_id = ?
+                 ORDER BY u.full_name ASC',
                 [$targetGroupId]
             );
         }
@@ -779,20 +798,21 @@ try {
         }
 
         $students = db_fetch_all(
-            'SELECT gs.id, gs.student_id, gs.mssv, gs.full_name, gs.birth_date, gs.class_name, gs.status,
-                    u.username
-             FROM group_students gs
-             LEFT JOIN users u ON u.id = gs.student_id
-             WHERE gs.class_subject_group_id = ?
-             ORDER BY COALESCE(gs.full_name, u.full_name, gs.mssv) ASC',
+            'SELECT ssr.id, ssr.student_id, u.username, u.full_name, u.birth_date, c.class_name, ssr.status
+             FROM student_subject_registration ssr
+             JOIN users u ON ssr.student_id = u.id
+             JOIN class_students cs ON ssr.student_id = cs.student_id
+             JOIN classes c ON cs.class_id = c.id
+             WHERE ssr.class_subject_group_id = ?
+             ORDER BY u.full_name ASC',
             [$targetGroupId]
         );
 
         $rows = [['STT', 'MSSV', 'Ho va ten', 'Ngay sinh', 'Lop']];
         $stt = 1;
         foreach ($students as $s) {
-            $mssv = !empty($s['username']) ? $s['username'] : ($s['mssv'] ?? '');
-            $fullName = $s['full_name'] ?: ($s['username'] ?? '');
+            $mssv = $s['username'] ?? '';
+            $fullName = $s['full_name'] ?? '';
 
             $birthDate = $s['birth_date'] ?? '';
             if ($birthDate !== '' && is_numeric($birthDate)) {
@@ -838,12 +858,13 @@ try {
         }
 
         $students = db_fetch_all(
-            'SELECT gs.id, gs.student_id, gs.mssv, gs.full_name, gs.birth_date, gs.class_name, gs.status,
-                    u.username
-             FROM group_students gs
-             LEFT JOIN users u ON u.id = gs.student_id
-             WHERE gs.class_subject_group_id = ?
-             ORDER BY COALESCE(gs.full_name, u.full_name, gs.mssv) ASC',
+            'SELECT ssr.id, ssr.student_id, u.username, u.full_name, u.birth_date, c.class_name, ssr.status
+             FROM student_subject_registration ssr
+             JOIN users u ON ssr.student_id = u.id
+             JOIN class_students cs ON ssr.student_id = cs.student_id
+             JOIN classes c ON cs.class_id = c.id
+             WHERE ssr.class_subject_group_id = ?
+             ORDER BY u.full_name ASC',
             [$targetGroupId]
         );
 
@@ -855,8 +876,8 @@ try {
         fputcsv($out, ['STT', 'MSSV', 'Ho va ten', 'Ngay sinh', 'Lop']);
         $stt = 1;
         foreach ($students as $s) {
-            $mssv = !empty($s['username']) ? $s['username'] : ($s['mssv'] ?? '');
-            $fullName = $s['full_name'] ?: ($s['username'] ?? '');
+            $mssv = $s['username'] ?? '';
+            $fullName = $s['full_name'] ?? '';
             $birthDate = $s['birth_date'] ?? '';
             fputcsv($out, [
                 $stt++,

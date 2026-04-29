@@ -12,17 +12,11 @@ requireRole('bcs');
 $userId = $_SESSION['user_id'];
 $pageTitle = 'Dashboard Chi Tiết Lớp';
 
-// Lấy class_id của BCS từ class_students
-$stmt = $pdo->prepare("
-    SELECT cs.class_id, c.class_name 
-    FROM class_students cs
-    JOIN classes c ON cs.class_id = c.id
-    WHERE cs.student_id = ?
-");
-$stmt->execute([$userId]);
-$classInfo = $stmt->fetch();
-$classId = $classInfo['class_id'] ?? null;
-$className = $classInfo['class_name'] ?? '';
+// Lấy thông tin lớp của BCS (hỗ trợ cả class_students và group_students)
+$classInfo = getUserClassInfo($userId);
+$classId = $classInfo['class_id'];
+$className = $classInfo['class_name'];
+$sourceType = $classInfo['source'];
 
 // Lấy thông tin user
 $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
@@ -33,61 +27,115 @@ $position = $currentUser['position'] ?? 'Ban Cán Sự';
 $avatar = getAvatarUrl($currentUser['avatar'] ?? null, $fullName, 55);
 
 // Lấy tổng sinh viên
-$stmt = $pdo->prepare("SELECT COUNT(*) as total FROM class_students WHERE class_id = ?");
-$stmt->execute([$classId]);
+if ($sourceType === 'class_students' && $classId) {
+    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM class_students WHERE class_id = ?");
+    $stmt->execute([$classId]);
+} else {
+    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM class_students WHERE class_id = (SELECT class_id FROM class_students WHERE student_id = ? LIMIT 1)");
+    $stmt->execute([$userId]);
+}
 $totalStudents = $stmt->fetch()['total'] ?? 0;
 
 // Lấy số SV cảnh báo (vắng >= 3 buổi trên 1 môn)
-$stmt = $pdo->prepare("
-    SELECT COUNT(DISTINCT ar.student_id) as total
-    FROM attendance_records ar
-    JOIN attendance_sessions a_s ON ar.session_id = a_s.id
-    JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
-    JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
-    JOIN class_students cs ON cs.student_id = ssr.student_id AND cs.class_id = ?
-    WHERE ar.status = 3
-    GROUP BY ar.student_id, csg.class_subject_id
-    HAVING COUNT(*) >= 3
-");
-$stmt->execute([$classId]);
+if ($sourceType === 'class_students' && $classId) {
+    $stmt = $pdo->prepare("
+        SELECT COUNT(DISTINCT ar.student_id) as total
+        FROM attendance_records ar
+        JOIN attendance_sessions a_s ON ar.session_id = a_s.id
+        JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
+        JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
+        JOIN class_students cs ON cs.student_id = ssr.student_id AND cs.class_id = ?
+        WHERE ar.status = 3
+        GROUP BY ar.student_id, csg.class_subject_id
+        HAVING COUNT(*) >= 3
+    ");
+    $stmt->execute([$classId]);
+} else {
+    $stmt = $pdo->prepare("
+        SELECT COUNT(DISTINCT ar.student_id) as total
+        FROM attendance_records ar
+        JOIN attendance_sessions a_s ON ar.session_id = a_s.id
+        JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
+        JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
+        JOIN class_students cs ON cs.student_id = ssr.student_id AND cs.class_id = (SELECT class_id FROM class_students WHERE student_id = ? LIMIT 1)
+        WHERE ar.status = 3
+        GROUP BY ar.student_id, csg.class_subject_id
+        HAVING COUNT(*) >= 3
+    ");
+    $stmt->execute([$userId]);
+}
 $warningStudents = $stmt->fetchAll();
 $warningStudentCount = count($warningStudents);
 
 // Lấy số môn cảnh báo
-$stmt = $pdo->prepare("
-    SELECT COUNT(DISTINCT csg.class_subject_id) as total
-    FROM attendance_records ar
-    JOIN attendance_sessions a_s ON ar.session_id = a_s.id
-    JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
-    JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
-    JOIN class_students cs ON cs.student_id = ssr.student_id AND cs.class_id = ?
-    WHERE ar.status = 3
-    GROUP BY csg.class_subject_id
-    HAVING COUNT(*) >= 3
-");
-$stmt->execute([$classId]);
+if ($sourceType === 'class_students' && $classId) {
+    $stmt = $pdo->prepare("
+        SELECT COUNT(DISTINCT csg.class_subject_id) as total
+        FROM attendance_records ar
+        JOIN attendance_sessions a_s ON ar.session_id = a_s.id
+        JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
+        JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
+        JOIN class_students cs ON cs.student_id = ssr.student_id AND cs.class_id = ?
+        WHERE ar.status = 3
+        GROUP BY csg.class_subject_id
+        HAVING COUNT(*) >= 3
+    ");
+    $stmt->execute([$classId]);
+} else {
+    $stmt = $pdo->prepare("
+        SELECT COUNT(DISTINCT csg.class_subject_id) as total
+        FROM attendance_records ar
+        JOIN attendance_sessions a_s ON ar.session_id = a_s.id
+        JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
+        JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
+        JOIN class_students cs ON cs.student_id = ssr.student_id AND cs.class_id = (SELECT class_id FROM class_students WHERE student_id = ? LIMIT 1)
+        WHERE ar.status = 3
+        GROUP BY csg.class_subject_id
+        HAVING COUNT(*) >= 3
+    ");
+    $stmt->execute([$userId]);
+}
 $warningSubjects = $stmt->fetchAll();
 $warningSubjectCount = count($warningSubjects);
 
 // Lấy chi tiết vắng học theo sinh viên
-$stmt = $pdo->prepare("
-    SELECT u.id as student_id, u.full_name, u.email as student_code,
-           s.subject_name, a_s.attendance_date, csg.study_session,
-           ar.status, ae.id as evidence_id, ae.status as evidence_status
-    FROM attendance_records ar
-    JOIN attendance_sessions a_s ON ar.session_id = a_s.id
-    JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
-    JOIN class_subjects cs ON csg.class_subject_id = cs.id
-    JOIN subjects s ON cs.subject_id = s.id
-    JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
-    JOIN class_students cs2 ON cs2.student_id = ssr.student_id AND cs2.class_id = ?
-    JOIN users u ON ar.student_id = u.id
-    LEFT JOIN attendance_evidences ae ON ae.attendance_record_id = ar.id
-    WHERE ar.status = 3
-    ORDER BY u.full_name, a_s.attendance_date DESC
-    LIMIT 50
-");
-$stmt->execute([$classId]);
+if ($sourceType === 'class_students' && $classId) {
+    $stmt = $pdo->prepare("
+        SELECT u.id as student_id, u.full_name, u.email as student_code,
+               s.subject_name, a_s.attendance_date, csg.study_session,
+               ar.status, ar.evidence_status as evidence_status
+        FROM attendance_records ar
+        JOIN attendance_sessions a_s ON ar.session_id = a_s.id
+        JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
+        JOIN class_subjects cs ON csg.class_subject_id = cs.id
+        JOIN subjects s ON cs.subject_id = s.id
+        JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
+        JOIN class_students cs2 ON cs2.student_id = ssr.student_id AND cs2.class_id = ?
+        JOIN users u ON ar.student_id = u.id
+        WHERE ar.status = 3
+        ORDER BY u.full_name, a_s.attendance_date DESC
+        LIMIT 50
+    ");
+    $stmt->execute([$classId]);
+} else {
+    $stmt = $pdo->prepare("
+        SELECT u.id as student_id, u.full_name, u.username as student_code,
+               s.subject_name, a_s.attendance_date, csg.study_session,
+               ar.status, ar.evidence_status as evidence_status
+        FROM attendance_records ar
+        JOIN attendance_sessions a_s ON ar.session_id = a_s.id
+        JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
+        JOIN class_subjects cs ON csg.class_subject_id = cs.id
+        JOIN subjects s ON cs.subject_id = s.id
+        JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
+        JOIN class_students cs2 ON cs2.student_id = ssr.student_id AND cs2.class_id = (SELECT class_id FROM class_students WHERE student_id = ? LIMIT 1)
+        JOIN users u ON ar.student_id = u.id
+        WHERE ar.status = 3
+        ORDER BY u.full_name, a_s.attendance_date DESC
+        LIMIT 50
+    ");
+    $stmt->execute([$userId]);
+}
 $absenceDetails = $stmt->fetchAll();
 
 // Đếm notification
@@ -98,15 +146,17 @@ $unreadCount = $stmt->fetch()['total'] ?? 0;
 // Nhóm absence theo student
 $groupedAbsences = [];
 foreach ($absenceDetails as $abs) {
-    $sid = $abs['student_id'];
-    if (!isset($groupedAbsences[$sid])) {
-        $groupedAbsences[$sid] = [
-            'student_name' => $abs['full_name'],
-            'student_code' => $abs['student_code'],
+    // Sử dụng student_code (mssv) làm key thay vì student_id
+    // vì student_id có thể NULL khi dùng group_students
+    $key = $abs['student_code'] ?? ('temp_' . $abs['student_id'] ?? uniqid());
+    if (!isset($groupedAbsences[$key])) {
+        $groupedAbsences[$key] = [
+            'student_name' => $abs['full_name'] ?? 'N/A',
+            'student_code' => $abs['student_code'] ?? 'N/A',
             'absences' => []
         ];
     }
-    $groupedAbsences[$sid]['absences'][] = $abs;
+    $groupedAbsences[$key]['absences'][] = $abs;
 }
 ?>
 <!DOCTYPE html>
@@ -164,7 +214,7 @@ foreach ($absenceDetails as $abs) {
         <div class="sidebar-scrollable w-100">
         <nav class="d-flex flex-column mt-3">
             <a href="home.php"><i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển</a>
-            <a href="attendance.php" class="active"><i class="bi bi-calendar-check"></i> Quản lý Chuyên cần</a>
+            <a href="attendance.php"><i class="bi bi-calendar-check"></i> Quản lý Chuyên cần</a>
             <a href="documents.php"><i class="bi bi-folder2-open"></i> Kho Lưu Trữ</a>
             <a href="announcements.php"><i class="bi bi-megaphone-fill"></i> Thông báo & Bản tin</a>
             <a href="feedback.php"><i class="bi bi-chat-dots"></i> Cổng Tương Tác</a>
@@ -187,6 +237,9 @@ foreach ($absenceDetails as $abs) {
     <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 py-3">
         <div class="d-flex align-items-center">
             <button class="btn btn-outline-light d-md-none me-3" id="sidebarToggle"><i class="bi bi-list fs-4"></i></button>
+            <a href="home.php" class="text-white text-decoration-none d-flex align-items-center me-3">
+                <i class="bi bi-house-fill"></i>
+            </a>
             <h4 class="m-0 text-white fw-bold d-flex align-items-center">THỐNG KÊ CHI TIẾT</h4>
         </div>
 

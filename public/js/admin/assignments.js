@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function () {
+﻿document.addEventListener('DOMContentLoaded', function () {
     const sidebarToggle = document.getElementById('sidebarToggle');
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', function () {
@@ -142,8 +142,9 @@ function getGroupCode(groupCode) {
 }
 
 function getClassGroupLabel(classCode, groupCode) {
-    const code = (classCode && String(classCode).trim()) ? String(classCode).trim() : '--';
-    return code + ' - ' + getGroupCode(groupCode);
+    const cls = String(classCode || '').trim();
+    const grp = getGroupCode(groupCode);
+    return cls && cls !== '--' ? (cls + ' - ' + grp) : ('Nhóm: ' + grp);
 }
 
 function normalizeSemesterCode(value) {
@@ -702,8 +703,8 @@ function renderAssignmentOfferingsTable() {
                 return text;
             }
 
-            const mainTeacher = normalizeTeacherName(g.teacherSubName || getTeacherName(g.teacherSub));
-            const subTeacher = normalizeTeacherName(g.teacherMainName || getTeacherName(g.teacherMain));
+            const mainTeacher = normalizeTeacherName(g.teacherMainName || getTeacherName(g.teacherMain));
+            const subTeacher = normalizeTeacherName(g.teacherSubName || getTeacherName(g.teacherSub));
             const teacherDisplay = (mainTeacher && subTeacher) ? (mainTeacher + ' + ' + subTeacher) : (mainTeacher || subTeacher || '--');
             const teacherHtml = mainTeacher && subTeacher
                 ? ('<span class="assignment-col-value assignment-teacher-main">' + mainTeacher + '</span><span class="assignment-teacher-sub">+ ' + subTeacher + '</span>')
@@ -728,7 +729,7 @@ function renderAssignmentOfferingsTable() {
                     ? '<button class="btn btn-secondary" disabled title="Môn đã đóng, không thể xếp lịch"><i class="bi bi-lock me-1"></i>Môn đã đóng</button>'
                     : '<button class="btn btn-primary" onclick="addSubjectClass(\'' + escapeHtml(String(asg.subjectId || '')) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>');
             const scheduleBtn = (hasClassSubject && !isClosedSubject)
-                ? '<button class="btn btn-primary" onclick="openGroupScheduleModal(\'' + classSubjectId + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(normalizedGroupCode) + '\', \'' + escapeHtml(g.teacherSub || g.teacherMain || '') + '\', \'' + escapeHtml(g.teacherSub || '') + '\', \'' + escapeHtml(g.day || '') + '\', \'' + escapeHtml(g.start || '') + '\', \'' + escapeHtml(g.end || '') + '\', \'' + escapeHtml(g.room || '') + '\', \'' + escapeHtml(asg.classCode || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>'
+                ? '<button class="btn btn-primary" onclick="openGroupScheduleModal(\'' + classSubjectId + '\', \'' + escapeHtml(asg.subjectName) + '\', \'' + escapeHtml(normalizedGroupCode) + '\', \'' + escapeHtml(g.teacherMain || '') + '\', \'' + escapeHtml(g.teacherSub || '') + '\', \'' + escapeHtml(g.day || '') + '\', \'' + escapeHtml(g.start || '') + '\', \'' + escapeHtml(g.end || '') + '\', \'' + escapeHtml(g.room || '') + '\', \'' + escapeHtml(asg.classCode || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>'
                 : (isClosedSubject
                     ? '<button class="btn btn-secondary" disabled title="Môn đã đóng, không thể xếp lịch"><i class="bi bi-lock me-1"></i>Môn đã đóng</button>'
                     : '<button class="btn btn-primary" onclick="addSubjectClass(\'' + escapeHtml(String(asg.subjectId || '')) + '\', \'' + escapeHtml(asg.subjectName || '') + '\')"><i class="bi bi-plus-square me-1"></i>Xếp lịch ngay</button>');
@@ -897,28 +898,78 @@ function parseAssignmentCsv(content) {
         return ',';
     }
 
-    function parseByColumns(cols) {
+    // Tự động nhận diện cột theo header
+    function detectColumns(headers) {
+        const cols = {
+            mssv: -1,
+            name: -1,
+            dob: -1,
+            className: -1,
+            stt: -1
+        };
+        const lowerHeaders = headers.map(function (h) { return String(h || '').toLowerCase().trim(); });
+        
+        lowerHeaders.forEach(function (h, idx) {
+            if (cols.mssv < 0 && (h.includes('mssv') || h.includes('mã') || h.includes('ma sv') || h.includes('student') || h.includes('student_id') || h.includes('studentid') || h.includes('mã sv'))) {
+                cols.mssv = idx;
+            }
+            if (cols.name < 0 && (h.includes('họ tên') || h.includes('họ và tên') || h.includes('ho ten') || h.includes('ho va ten') || h.includes('tên') || h.includes('ten') || h.includes('name') || h.includes('ho va'))) {
+                cols.name = idx;
+            }
+            if (cols.dob < 0 && (h.includes('sinh') || h.includes('dob') || h.includes('birth') || h.includes('ngày') || h.includes('ngay') || h.includes('date'))) {
+                cols.dob = idx;
+            }
+            if (cols.className < 0 && (h.includes('lớp') || h.includes('lop') || h.includes('class') || h.includes('lớp'))) {
+                cols.className = idx;
+            }
+            if (cols.stt < 0 && (h.includes('stt') || h.includes('tt') || h.includes('no') || h.includes('#'))) {
+                cols.stt = idx;
+            }
+        });
+        
+        return cols;
+    }
+
+    const delimiter = detectDelimiter(lines[0]);
+    const firstLineCols = splitCsvLine(lines[0], delimiter);
+    const headers = firstLineCols.map(function (item) { return String(item || '').trim(); });
+    const firstLineLower = headers.join(' ').toLowerCase();
+    
+    // Kiểm tra xem dòng đầu có phải là header không
+    const isHeaderRow = firstLineLower.includes('mssv') || firstLineLower.includes('họ') || firstLineLower.includes('ho') || firstLineLower.includes('tên') || firstLineLower.includes('ten') || firstLineLower.includes('name') || firstLineLower.includes('sinh') || firstLineLower.includes('lớp') || firstLineLower.includes('lop') || firstLineLower.includes('ngày') || firstLineLower.includes('va');
+    
+    let startIndex = isHeaderRow ? 1 : 0;
+    let colMap = detectColumns(firstLineCols);
+    
+    // Fallback: nếu không nhận diện được cột từ header, dùng logic cũ
+    if (colMap.mssv < 0 || colMap.name < 0) {
+        const firstDataCols = splitCsvLine(lines[startIndex] || lines[0], delimiter);
+        const hasSttFirst = /^\d*$/.test((firstDataCols[0] || '').trim()) && (firstDataCols[1] || '').trim() !== '';
+        colMap = {
+            stt: hasSttFirst ? 0 : -1,
+            mssv: hasSttFirst ? 1 : 0,
+            name: hasSttFirst ? 2 : 1,
+            dob: hasSttFirst ? 3 : 2,
+            className: hasSttFirst ? 4 : 3
+        };
+    }
+
+    function parseRowByMap(cols, map) {
         const c = cols.map(function (item) { return String(item || '').trim(); });
-        const hasSttFirst = /^\d*$/.test(c[0] || '') && (c[1] || '') !== '';
-        const mssv = (hasSttFirst ? (c[1] || '') : (c[0] || '')).replace(/^\uFEFF/, '');
-        const name = hasSttFirst ? (c[2] || '') : (c[1] || '');
-        const dob = normalizeCsvDate(hasSttFirst ? (c[3] || '') : (c[2] || ''));
-        const className = hasSttFirst ? (c[4] || '') : (c[3] || '');
+        const mssv = map.mssv >= 0 ? (c[map.mssv] || '').replace(/^\uFEFF/, '') : (c[0] || '');
+        const name = map.name >= 0 ? (c[map.name] || '') : (c[1] || '');
+        const dobRaw = map.dob >= 0 ? (c[map.dob] || '') : (c[2] || '');
+        const dob = normalizeCsvDate(dobRaw);
+        const className = map.className >= 0 ? (c[map.className] || '') : (c[3] || '');
+        
         if (!mssv || !name) return null;
         return { mssv: mssv, name: name, dob: dob, className: className, class: className, section: 'N1' };
     }
 
     const parsed = [];
-    let startIndex = 0;
-    const first = lines[0].toLowerCase();
-    if (first.includes('mssv') || first.includes('họ và tên') || first.includes('ho va ten')) {
-        startIndex = 1;
-    }
-
-    const delimiter = detectDelimiter(lines[startIndex] || lines[0] || '');
     for (let i = startIndex; i < lines.length; i += 1) {
         const cols = splitCsvLine(lines[i], delimiter);
-        const row = parseByColumns(cols);
+        const row = parseRowByMap(cols, colMap);
         if (row) parsed.push(row);
     }
 
@@ -952,28 +1003,78 @@ function parseAssignmentXlsx(buffer) {
         return String(value).trim();
     }
 
-    function parseByColumns(cols) {
+    // Tự động nhận diện cột theo header
+    function detectColumns(headers) {
+        const cols = {
+            mssv: -1,
+            name: -1,
+            dob: -1,
+            className: -1,
+            stt: -1
+        };
+        const lowerHeaders = headers.map(function (h) { return String(h || '').toLowerCase().trim(); });
+        
+        lowerHeaders.forEach(function (h, idx) {
+            if (cols.mssv < 0 && (h.includes('mssv') || h.includes('mã') || h.includes('ma sv') || h.includes('student') || h.includes('student_id') || h.includes('studentid') || h.includes('mã sv'))) {
+                cols.mssv = idx;
+            }
+            if (cols.name < 0 && (h.includes('họ tên') || h.includes('họ và tên') || h.includes('ho ten') || h.includes('ho va ten') || h.includes('tên') || h.includes('ten') || h.includes('name') || h.includes('ho va'))) {
+                cols.name = idx;
+            }
+            if (cols.dob < 0 && (h.includes('sinh') || h.includes('dob') || h.includes('birth') || h.includes('ngày') || h.includes('ngay') || h.includes('date'))) {
+                cols.dob = idx;
+            }
+            if (cols.className < 0 && (h.includes('lớp') || h.includes('lop') || h.includes('class') || h.includes('lớp'))) {
+                cols.className = idx;
+            }
+            if (cols.stt < 0 && (h.includes('stt') || h.includes('tt') || h.includes('no') || h.includes('#'))) {
+                cols.stt = idx;
+            }
+        });
+        
+        return cols;
+    }
+
+    const firstLineCols = rows[0] || [];
+    const headers = firstLineCols.map(function (item) { return String(item || '').trim(); });
+    const firstLineLower = headers.join(' ').toLowerCase();
+    
+    // Kiểm tra xem dòng đầu có phải là header không
+    const isHeaderRow = firstLineLower.includes('mssv') || firstLineLower.includes('họ') || firstLineLower.includes('ho') || firstLineLower.includes('tên') || firstLineLower.includes('ten') || firstLineLower.includes('name') || firstLineLower.includes('sinh') || firstLineLower.includes('lớp') || firstLineLower.includes('lop') || firstLineLower.includes('ngày') || firstLineLower.includes('va');
+    
+    let startIndex = isHeaderRow ? 1 : 0;
+    let colMap = detectColumns(firstLineCols);
+    
+    // Fallback: nếu không nhận diện được cột từ header, dùng logic cũ
+    if (colMap.mssv < 0 || colMap.name < 0) {
+        const firstDataCols = rows[startIndex] || rows[0] || [];
+        const hasSttFirst = /^\d*$/.test((firstDataCols[0] || '').toString().trim()) && (firstDataCols[1] || '').toString().trim() !== '';
+        colMap = {
+            stt: hasSttFirst ? 0 : -1,
+            mssv: hasSttFirst ? 1 : 0,
+            name: hasSttFirst ? 2 : 1,
+            dob: hasSttFirst ? 3 : 2,
+            className: hasSttFirst ? 4 : 3
+        };
+    }
+
+    function parseRowByMap(cols, map) {
         const c = cols.map(function (item) { return String(item || '').trim(); });
-        const hasSttFirst = /^\d*$/.test(c[0] || '') && (c[1] || '') !== '';
-        const mssv = (hasSttFirst ? (c[1] || '') : (c[0] || '')).replace(/^\uFEFF/, '');
-        const name = hasSttFirst ? (c[2] || '') : (c[1] || '');
-        const dob = normalizeXlsxDate(hasSttFirst ? cols[3] : cols[2]);
-        const className = hasSttFirst ? (c[4] || '') : (c[3] || '');
+        const mssv = map.mssv >= 0 ? (c[map.mssv] || '').replace(/^\uFEFF/, '') : (c[0] || '');
+        const name = map.name >= 0 ? (c[map.name] || '') : (c[1] || '');
+        const dobRaw = map.dob >= 0 ? (c[map.dob] || '') : (c[2] || '');
+        const dob = normalizeXlsxDate(dobRaw);
+        const className = map.className >= 0 ? (c[map.className] || '') : (c[3] || '');
+        
         if (!mssv || !name) return null;
         return { mssv: mssv, name: name, dob: dob, className: className, class: className, section: 'N1' };
     }
 
     const parsed = [];
-    let startIndex = 0;
-    if (rows[0] && rows[0].length) {
-        const firstLine = rows[0].map(function (x) { return String(x || '').toLowerCase(); }).join(' ');
-        if (firstLine.includes('mssv') || firstLine.includes('họ và tên') || firstLine.includes('ho va ten')) {
-            startIndex = 1;
-        }
-    }
     for (let i = startIndex; i < rows.length; i += 1) {
-        const parsedRow = parseByColumns(rows[i] || []);
-        if (parsedRow) parsed.push(parsedRow);
+        const cols = rows[i] || [];
+        const row = parseRowByMap(cols, colMap);
+        if (row) parsed.push(row);
     }
 
     return parsed;
@@ -1269,6 +1370,17 @@ function handleInitialScheduleSubmit(event) {
         return false;
     }
 
+    const assistantId = String(document.getElementById('initAssistantTeacher')?.value || '').trim();
+    if (assistantId && assistantId === teacherMainId) {
+        if (window.showToast) window.showToast('Giảng viên không thể vừa là chính vừa là trợ giảng.', 'error');
+        else alert('Giảng viên không thể vừa là chính vừa là trợ giảng.');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+        return false;
+    }
+
     const payload = {
         class_subject_id: window._currentCsId,
         subject_id: window._currentSubjectId || '',
@@ -1277,7 +1389,7 @@ function handleInitialScheduleSubmit(event) {
         academic_year: document.getElementById('assignFilterYear') ? document.getElementById('assignFilterYear').value : 'all',
         group_code: window._currentGroupCode || 'N1',
         teacher_main_id: teacherMainId,
-        teacher_sub_id: teacherMainId,
+        teacher_sub_id: assistantId && assistantId.trim() ? assistantId.trim() : '',
         sync_main_teacher: '0',
         day_of_week: document.getElementById('initDayOfWeek').value,
         start_period: document.getElementById('initStartPeriod').value,
@@ -1293,11 +1405,13 @@ function handleInitialScheduleSubmit(event) {
     if (window.callApi) {
         window.callApi('save_group_schedule', payload)
             .then(function(res) {
+                console.log('API Response:', res);
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
                 
                 if (res && res.ok) {
-                    upsertScheduleIntoClientData(payload, res || {});
+                    console.log('Schedule saved successfully, updating UI...');
+                    upsertScheduleIntoClientData(payload, res);
                     if (res.class_subject_id) {
                         window._currentCsId = String(res.class_subject_id);
                     }
@@ -1314,10 +1428,14 @@ function handleInitialScheduleSubmit(event) {
                     if (res.message === 'conflict_room') msg = res.detail || 'Phòng học đã bị trùng trong thời gian này.';
                     else if (res.message === 'conflict_teacher') msg = res.detail || 'Giảng viên đã bị trùng lịch trong thời gian này.';
                     else if (res.message === 'subject_closed') msg = 'Môn học đã đóng, không thể xếp lịch.';
+                    else if (res.message === 'same_teacher_roles') msg = res.detail || 'Giảng viên không thể vừa là chính vừa là trợ giảng.';
+                    else if (res.message) msg = res.message;
+                    console.error('Save failed:', msg);
                     window.showToast(msg, 'error');
                 }
             })
             .catch(function(err) {
+                console.error('API Error:', err);
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
                 window.showToast('Lỗi kết nối đến server.', 'error');
@@ -1410,7 +1528,7 @@ function openAddSingleSessionFromManager() {
         'normal',
         course.classCode || course.id,
         course.name,
-        targetGroup ? (targetGroup.teacherSub || targetGroup.teacherMain || '') : '',
+        targetGroup ? (targetGroup.teacherMain || targetGroup.teacherSub || '') : '',
         targetGroup && targetGroup.code ? targetGroup.code : '01',
         course.csId || ''
     );
@@ -1441,7 +1559,7 @@ function renderSessionManagerRows(course, groupCode = null) {
     let rowIndex = 1;
     displayedGroups.forEach(function (group) {
         const hasGroupSchedule = Boolean(group.day && group.start && group.end && group.room);
-        const teacherId = group.teacherSub || group.teacherMain || '';
+        const teacherId = group.teacherMain || group.teacherSub || '';
         const scheduledDates = hasGroupSchedule ? buildScheduleDatesForGroup(course, group) : [];
 
         if (!hasGroupSchedule) {
@@ -1609,8 +1727,12 @@ function openEditSingleSession(mode, dateStr, dateVal, day, start, end, room, st
 
     document.getElementById('qsSubjectInfo').innerText = subjectName;
     document.getElementById('qsClassCode').innerHTML = '<i class="bi bi-tags-fill me-1 text-muted"></i>Lớp: ' + classCode;
-    document.getElementById('qsGroup').innerText = 'Lớp - Nhóm: ' + getClassGroupLabel(classCode, normalizedGroup);
-    document.getElementById('singleDate').value = normalizedDate;
+    document.getElementById('qsGroup').innerText = 'Nhóm: ' + normalizedGroup;
+    const singleDateInput = document.getElementById('singleDate');
+    if (singleDateInput) {
+        singleDateInput.value = normalizedDate;
+        singleDateInput.disabled = (mode === 'edit_day' || mode === 'edit_master');
+    }
     document.getElementById('singleStart').value = start;
     document.getElementById('singleEnd').value = end;
 
@@ -1718,8 +1840,11 @@ function saveSingleSession() {
         return;
     }
 
-    const groupCode = context.groupCode || currentSessionGroupCode || 'N1';
-    const teacherSubId = teacherMainId;
+    const groupCode = getGroupCode(context.groupCode || currentSessionGroupCode || 'N1');
+    const currentGroup = (course && Array.isArray(course.groups))
+        ? (course.groups.find(function (g) { return getGroupCode(g.code) === groupCode; }) || null)
+        : null;
+    const assistantId = (currentGroup && currentGroup.teacherSub) ? String(currentGroup.teacherSub).trim() : '';
 
     if (!window.callApi) {
         if (window.showToast) window.showToast('Không thể kết nối API lưu lịch.', 'error');
@@ -1799,8 +1924,10 @@ function saveSingleSession() {
     const payload = {
         class_subject_id: classSubjectId,
         group_code: groupCode,
+        class_code: (course && course.classCode) ? String(course.classCode) : String(context.classCode || ''),
+        subject_id: (course && course.subjectId) ? String(course.subjectId) : '',
         teacher_main_id: teacherMainId,
-        teacher_sub_id: teacherSubId,
+        teacher_sub_id: assistantId && assistantId.trim() ? assistantId.trim() : '',
         sync_main_teacher: '0',
         day_of_week: dayOfWeek,
         start_period: String(start),
@@ -1821,44 +1948,22 @@ function saveSingleSession() {
                 return;
             }
 
-            if (course && Array.isArray(course.groups)) {
-                const target = course.groups.find(function (g) { return getGroupCode(g.code) === getGroupCode(groupCode); });
-                if (target) {
-                    target.day = String(dayOfWeek);
-                    target.start = String(start);
-                    target.end = String(end);
-                    target.room = room;
-                    target.teacherSub = String(teacherMainId);
-                    target.teacherSubName = getTeacherDisplayNameById(String(teacherMainId));
-                }
-            }
-            if (Array.isArray(window.masterScheduleCourses)) {
-                const masterCourse = window.masterScheduleCourses.find(function (c) { return parseInt(c.csId, 10) === classSubjectId; });
-                if (masterCourse && Array.isArray(masterCourse.groups)) {
-                    const masterGroup = masterCourse.groups.find(function (g) { return getGroupCode(g.code) === getGroupCode(groupCode); });
-                    if (masterGroup) {
-                        masterGroup.day = String(dayOfWeek);
-                        masterGroup.start = String(start);
-                        masterGroup.end = String(end);
-                        masterGroup.room = room;
-                        masterGroup.teacherMain = String(teacherMainId);
-                    }
-                }
-            }
+            upsertScheduleIntoClientData(payload, res);
 
             if (window.showToast) window.showToast('Đã lưu thay đổi lịch học vào hệ thống.', 'success');
 
             const singleModal = bootstrap.Modal.getInstance(document.getElementById('singleSessionModal'));
             if (singleModal) singleModal.hide();
 
+            currentSessionCourse = resolveSingleSessionCourse(context) || currentSessionCourse;
             if (currentSessionCourse) {
                 renderSessionManagerRows(currentSessionCourse, currentSessionGroupCode);
             }
-            if (typeof renderMasterSchedule === 'function') {
-                renderMasterSchedule();
-            }
             if (typeof applyAssignmentFilters === 'function') {
                 applyAssignmentFilters();
+            }
+            if (typeof renderMasterSchedule === 'function') {
+                renderMasterSchedule();
             }
         })
         .catch(function () {

@@ -13,6 +13,17 @@ $teachers = db_fetch_all("
 $dbYears   = db_fetch_all("SELECT DISTINCT academic_year FROM semesters ORDER BY academic_year DESC");
 $dbSemesters = ['HK1' => 'Học kỳ 1', 'HK2' => 'Học kỳ 2', 'HK3' => 'Học kỳ 3 (Hè)'];
 
+// Tìm học kỳ hiện tại để đặt làm mặc định
+$currentSemester = db_fetch_one("
+    SELECT semester_name, academic_year 
+    FROM semesters 
+    WHERE CURDATE() BETWEEN start_date AND end_date 
+    ORDER BY start_date DESC 
+    LIMIT 1
+");
+$defaultYear = $currentSemester['academic_year'] ?? ($dbYears[0]['academic_year'] ?? '');
+$defaultSemester = $currentSemester['semester_name'] ?? '';
+
 function formatSemesterNameLabel($semesterName, $dbSemesters) {
     $raw = trim((string)($semesterName ?? ''));
     if ($raw === '') return 'Học kỳ';
@@ -88,7 +99,13 @@ $rawAssignments = db_fetch_all("
         c.class_name,
         sm.semester_name       AS hk,
         sm.academic_year,
-        cs.teacher_id          AS main_teacher_id
+        COALESCE(
+            (SELECT csg2.main_teacher_id 
+             FROM class_subject_groups csg2 
+             WHERE csg2.class_subject_id = cs.id AND csg2.main_teacher_id IS NOT NULL
+             LIMIT 1),
+            cs.teacher_id
+        ) AS main_teacher_id
     FROM class_subjects cs
     JOIN classes  c  ON cs.class_id    = c.id
     LEFT JOIN semesters sm ON cs.semester_id = sm.id
@@ -112,10 +129,14 @@ $rawGroups = db_fetch_all("
         csg.start_period,
         csg.end_period,
         csg.sub_teacher_id,
+        csg.main_teacher_id,
         u.full_name  AS sub_name,
-        u.academic_title AS sub_title
+        u.academic_title AS sub_title,
+        um.full_name AS main_name,
+        um.academic_title AS main_title
     FROM class_subject_groups csg
     LEFT JOIN users u ON csg.sub_teacher_id = u.id
+    LEFT JOIN users um ON csg.main_teacher_id = um.id
     LEFT JOIN rooms r ON (r.room_code = csg.room OR r.room_name = csg.room)
     ORDER BY csg.class_subject_id, csg.group_code ASC
 ");
@@ -123,10 +144,10 @@ $rawGroups = db_fetch_all("
 // Số lượng SV theo lớp học phần (class_subject_id)
 $studentCountByCsId = [];
 $rawStudentCounts = db_fetch_all("
-    SELECT csg.class_subject_id, COUNT(gs.id) AS student_count
-    FROM class_subject_groups csg
-    LEFT JOIN group_students gs ON gs.class_subject_group_id = csg.id
-    GROUP BY csg.class_subject_id
+    SELECT cs.id AS class_subject_id, COUNT(cs2.student_id) AS student_count
+    FROM class_subjects cs
+    LEFT JOIN class_students cs2 ON cs2.class_id = cs.class_id
+    GROUP BY cs.id
 ");
 foreach ($rawStudentCounts as $row) {
     $studentCountByCsId[(int)$row['class_subject_id']] = (int)$row['student_count'];
@@ -165,7 +186,7 @@ foreach ($classes as $c) {
     
     foreach ($asgByClass[$className] ?? [] as $a) {
         $csId   = $a['cs_id'];
-        $groups = $groupsByCsId[$csId] ?? [['group_code'=>'N1','room'=>null,'day_of_week'=>null,'start_period'=>null,'end_period'=>null,'sub_teacher_id'=>null]];
+        $groups = $groupsByCsId[$csId] ?? [['group_code'=>'N1','room'=>null,'day_of_week'=>null,'start_period'=>null,'end_period'=>null,'sub_teacher_id'=>null,'main_teacher_id'=>null]];
         $mainTeacherName = $a['main_teacher_id'] ? ($teacherMap[(string)$a['main_teacher_id']] ?? null) : null;
         
         $subjInfo = $subjectMap[$a['subject_id']] ?? null;
@@ -207,8 +228,10 @@ foreach ($classes as $c) {
             'teacherMainName'=> $mainTeacherName,
             'groups'         => array_map(fn($g) => [
                 'code'        => $g['group_code'],
-                'teacherMain' => $a['main_teacher_id'] ? (string)$a['main_teacher_id'] : null,
-                'teacherMainName' => $mainTeacherName,
+                'teacherMain' => $g['main_teacher_id'] ? (string)$g['main_teacher_id'] : ($a['main_teacher_id'] ? (string)$a['main_teacher_id'] : null),
+                'teacherMainName' => $g['main_teacher_id']
+                    ? (isset($teacherMap[(string)$g['main_teacher_id']]) ? $teacherMap[(string)$g['main_teacher_id']] : (($g['main_title'] ? $g['main_title'] . '. ' : '') . $g['main_name']))
+                    : $mainTeacherName,
                 'teacherSub'  => $g['sub_teacher_id']  ? (string)$g['sub_teacher_id']  : null,
                 'teacherSubName' => ($g['sub_teacher_id'] && isset($teacherMap[(string)$g['sub_teacher_id']])) ? $teacherMap[(string)$g['sub_teacher_id']] : null,
                 'day'         => $g['day_of_week']  ? (string)$g['day_of_week']  : null,
@@ -295,7 +318,7 @@ $rawMasterScheduleRows = db_fetch_all("
         s.subject_name      AS subject_name,
         sm.semester_name    AS semester_name,
         sm.academic_year    AS academic_year,
-        cs.teacher_id       AS teacher_main_id,
+        COALESCE(csg.main_teacher_id, cs.teacher_id) AS teacher_main_id,
         csg.group_code      AS group_code,
         csg.day_of_week     AS day_of_week,
         csg.start_period    AS start_period,
@@ -389,6 +412,16 @@ $dbMasterOverrides = array_map(function ($row) {
     <link rel="stylesheet" href="../../public/css/layout.css">
     <link rel="stylesheet" href="../../public/css/admin/admin-layout.css">
     <link rel="stylesheet" href="../../public/css/admin/assignments.css?v=<?= filemtime(__DIR__ . '/../../public/css/admin/assignments.css') ?>">
+    <style>
+        .filter-container {
+            display: flex;
+            gap: 12px;
+        }
+        .filter-container > * {
+            flex: 1;
+            min-width: 120px;
+        }
+    </style>
 </head>
 <body class="dashboard-body">
 
@@ -431,13 +464,13 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                     </div>
 
                     <div class="assignment-filter-panel">
-                        <div class="row g-3">
+                        <div class="row g-3 filter-container">
                             <div class="col-12 col-md-4">
                                 <label class="assignment-filter-label">NĂM HỌC</label>
                                 <select class="form-select assignment-filter-select" id="assignFilterYear">
                                     <option value="all">Chọn tất cả</option>
                                     <?php foreach ($dbYears as $y): ?>
-                                        <option value="<?= e($y['academic_year']) ?>"><?= e($y['academic_year']) ?></option>
+                                        <option value="<?= e($y['academic_year']) ?>" <?= ($y['academic_year'] === $defaultYear) ? 'selected' : '' ?>><?= e($y['academic_year']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -446,7 +479,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                                 <select class="form-select assignment-filter-select" id="assignFilterSemester">
                                     <option value="all">Chọn tất cả</option>
                                     <?php foreach ($dbSemesters as $v => $l): ?>
-                                        <option value="<?= $v ?>"><?= e($l) ?></option>
+                                        <option value="<?= $v ?>" <?= ($v === $defaultSemester) ? 'selected' : '' ?>><?= e($l) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -575,7 +608,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                             </div>
                         </div>
                         <div class="small text-muted mt-2">
-                            <i class="bi bi-collection me-1"></i>Nhóm đang chỉnh: <span class="fw-bold text-dark" id="initGroupLabel">-- - N1</span>
+                            <i class="bi bi-collection me-1"></i>Nhóm đang chỉnh: <span class="fw-bold text-dark" id="initGroupLabel">Nhóm: --</span>
                         </div>
                     </div>
 
@@ -1204,7 +1237,7 @@ function renderMasterSchedule() {
             block.title           = 'Click để chỉnh sửa lịch ngày này';
             block.innerHTML =
                 '<div class="subject-title" style="font-size:0.86rem;font-weight:700">' + course.name + '</div>' +
-                '<div style="font-size:0.78rem">Lớp: <b class="text-primary">' + course.classCode + '</b> (' + (g.code === "N1" ? "Nhóm 1" : g.code) + ')</div>' +
+                '<div style="font-size:0.78rem">Nhóm: <b class="text-primary">' + (g.code === "N1" ? "Nhóm 1" : g.code) + '</b></div>' +
                 '<div style="font-size:0.78rem">🏛 <b>' + getRoomName(roomValue) + '</b></div>' +
                 '<div style="font-size:0.78rem">👤 ' + tName + '</div>';
 
@@ -1255,7 +1288,7 @@ function renderMasterSchedule() {
         const listHtml = slot.items.map(function(it, idx) {
             return '<div style="padding:6px 0;border-top:' + (idx ? '1px solid #e2e8f0' : '0') + ';">'
                 + '<div style="font-weight:700;color:#0f172a;font-size:0.86rem;">' + escHtml(it.subject) + '</div>'
-                + '<div style="font-size:0.8rem;color:#334155;">Lớp: ' + escHtml(it.classCode) + ' (' + escHtml(it.groupCode) + ')</div>'
+                + '<div style="font-size:0.8rem;color:#334155;">Nhóm: ' + escHtml(it.groupCode) + '</div>'
                 + '<div style="font-size:0.8rem;color:#334155;">Phòng: ' + escHtml(it.roomName) + '</div>'
                 + '<div style="font-size:0.8rem;color:#334155;">GV: ' + escHtml(it.teacher) + '</div>'
                 + '</div>';

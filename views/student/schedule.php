@@ -31,9 +31,28 @@ $semesters = db_fetch_all(
               start_date DESC"
 );
 
+// Lấy danh sách năm học unique
+$academicYears = array_unique(array_filter(array_column($semesters, 'academic_year')));
+sort($academicYears, SORT_STRING);
+$academicYears = array_values($academicYears);
+rsort($academicYears);
+
+$selectedYear = trim((string)($_GET['year'] ?? ''));
+$selectedSemesterId = (int)($_GET['semester_id'] ?? 0);
+
+// Lọc semesters theo year nếu được chọn
+$filteredSemesters = $semesters;
+if ($selectedYear !== '') {
+    $filteredSemesters = array_filter($semesters, function($sem) use ($selectedYear) {
+        return ($sem['academic_year'] ?? '') === $selectedYear;
+    });
+    $filteredSemesters = array_values($filteredSemesters);
+}
+
+// Tìm currentSemester trong filtered list
 $currentSemester = null;
 $today = date('Y-m-d');
-foreach ($semesters as $sem) {
+foreach ($filteredSemesters as $sem) {
     $start = $sem['start_date'] ?? '';
     $end = $sem['end_date'] ?? '';
     if ($start !== '' && $end !== '' && $today >= $start && $today <= $end) {
@@ -41,17 +60,25 @@ foreach ($semesters as $sem) {
         break;
     }
 }
-if ($currentSemester === null && !empty($semesters)) {
-    $currentSemester = $semesters[0];
+if ($currentSemester === null && !empty($filteredSemesters)) {
+    $currentSemester = $filteredSemesters[0];
 }
 
-$selectedSemesterId = (int)($_GET['semester_id'] ?? ($currentSemester['id'] ?? 0));
-$selectedSemester = $currentSemester;
-foreach ($semesters as $sem) {
+// Nếu chưa có semester được chọn, dùng current
+if ($selectedSemesterId <= 0 && $currentSemester) {
+    $selectedSemesterId = (int)($currentSemester['id'] ?? 0);
+}
+
+$selectedSemester = null;
+foreach ($filteredSemesters as $sem) {
     if ((int)$sem['id'] === $selectedSemesterId) {
         $selectedSemester = $sem;
         break;
     }
+}
+if ($selectedSemester === null && !empty($filteredSemesters)) {
+    $selectedSemester = $filteredSemesters[0];
+    $selectedSemesterId = (int)($selectedSemester['id'] ?? 0);
 }
 
 $semesterStartTs = strtotime((string)($selectedSemester['start_date'] ?? '')) ?: strtotime(date('Y-m-d'));
@@ -226,9 +253,19 @@ function periodTimeRange(int $startPeriod, int $endPeriod): string {
     <div class="p-4">
         <div class="filter-section mb-3">
             <form method="get" class="row g-2 align-items-center">
+                <div class="col-12 col-md-3 col-lg-2">
+                    <select class="form-select form-select-sm fw-bold text-secondary shadow-sm border-secondary" name="year" id="yearSelect" onchange="this.form.submit()">
+                        <option value="">Tất cả năm học</option>
+                        <?php foreach ($academicYears as $year): ?>
+                            <option value="<?= e($year) ?>" <?= $selectedYear === $year ? 'selected' : '' ?>>
+                                <?= e($year) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
                 <div class="col-12 col-md-4 col-lg-3">
                     <select class="form-select form-select-sm fw-bold text-dark shadow-sm border-secondary" name="semester_id" id="semesterSelect" onchange="this.form.submit()">
-                        <?php foreach ($semesters as $sem): ?>
+                        <?php foreach ($filteredSemesters as $sem): ?>
                             <option value="<?= (int)$sem['id'] ?>" <?= (int)$sem['id'] === (int)$selectedSemesterId ? 'selected' : '' ?>>
                                 <?= e(studentSemesterLabel($sem['semester_name'] ?? '', $sem['academic_year'] ?? '')) ?>
                             </option>
@@ -249,13 +286,8 @@ function periodTimeRange(int $startPeriod, int $endPeriod): string {
                 </div>
                 <div class="col-12 col-md-3 col-lg-3 text-md-end">
                     <?php $prevWeek = max(1, $selectedWeek - 1); $nextWeek = min($semesterWeeks, $selectedWeek + 1); ?>
-                    <a class="btn btn-outline-secondary btn-sm" href="?semester_id=<?= (int)$selectedSemesterId ?>&week=<?= $prevWeek ?>"><i class="bi bi-chevron-left"></i></a>
-                    <a class="btn btn-outline-secondary btn-sm" href="?semester_id=<?= (int)$selectedSemesterId ?>&week=<?= $nextWeek ?>"><i class="bi bi-chevron-right"></i></a>
-                </div>
-                <div class="col-12 col-md-12 col-lg-2 text-lg-end">
-                    <button type="button" class="btn btn-outline-danger btn-sm fw-bold shadow-sm" onclick="window.print()">
-                        <i class="bi bi-printer-fill me-1"></i>In lịch
-                    </button>
+                    <a class="btn btn-outline-secondary btn-sm" href="?year=<?= e($selectedYear) ?>&semester_id=<?= (int)$selectedSemesterId ?>&week=<?= $prevWeek ?>"><i class="bi bi-chevron-left"></i></a>
+                    <a class="btn btn-outline-secondary btn-sm" href="?year=<?= e($selectedYear) ?>&semester_id=<?= (int)$selectedSemesterId ?>&week=<?= $nextWeek ?>"><i class="bi bi-chevron-right"></i></a>
                 </div>
             </form>
             <div class="small text-muted mt-2">Đang xem tuần <?= $selectedWeek ?>: <?= e($weekStartText) ?> - <?= e($weekEndText) ?></div>
@@ -268,7 +300,7 @@ function periodTimeRange(int $startPeriod, int $endPeriod): string {
                         <thead>
                             <tr>
                                 <th style="width:80px;">
-                                    <a class="week-nav-btn" href="?semester_id=<?= (int)$selectedSemesterId ?>&week=<?= $prevWeek ?>" title="Tuần trước">
+                                    <a class="week-nav-btn" href="?year=<?= e($selectedYear) ?>&semester_id=<?= (int)$selectedSemesterId ?>&week=<?= $prevWeek ?>" title="Tuần trước">
                                         <i class="bi bi-arrow-left fs-5"></i>
                                     </a>
                                 </th>
@@ -280,7 +312,7 @@ function periodTimeRange(int $startPeriod, int $endPeriod): string {
                                 <th>Thứ 7<br><span class="fw-normal text-muted"><?= e($dayDates[5]) ?></span></th>
                                 <th>Chủ nhật<br><span class="fw-normal text-muted"><?= e($dayDates[6]) ?></span></th>
                                 <th style="width:80px;">
-                                    <a class="week-nav-btn" href="?semester_id=<?= (int)$selectedSemesterId ?>&week=<?= $nextWeek ?>" title="Tuần sau">
+                                    <a class="week-nav-btn" href="?year=<?= e($selectedYear) ?>&semester_id=<?= (int)$selectedSemesterId ?>&week=<?= $nextWeek ?>" title="Tuần sau">
                                         <i class="bi bi-arrow-right fs-5"></i>
                                     </a>
                                 </th>

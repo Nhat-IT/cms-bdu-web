@@ -48,13 +48,12 @@ function getStudentSchedule($studentId, $dayOfWeek = null) {
 function getStudentAttendanceRecords($studentId, $subjectId = null) {
     $sql = "
         SELECT ar.*, a_s.attendance_date, s.subject_name, csg.room,
-               ae.status as evidence_status, ae.drive_link
+               ar.evidence_status as evidence_status, ar.evidence_link
         FROM attendance_records ar
         JOIN attendance_sessions a_s ON ar.session_id = a_s.id
         JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
         JOIN class_subjects cs ON csg.class_subject_id = cs.id
         JOIN subjects s ON cs.subject_id = s.id
-        LEFT JOIN attendance_evidences ae ON ar.id = ae.attendance_record_id
         WHERE ar.student_id = ?
     ";
     

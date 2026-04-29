@@ -1,8 +1,11 @@
-// Mô tả: Khởi tạo hành vi layout riêng cho trang Admin.
+const ADMIN_REPLACEMENT_ATTRS = ['value', 'placeholder', 'title', 'onclick', 'data-source'];
+const ADMIN_PLACEHOLDER_PATTERN = /(Admin\s+Khoa\s*CNTT|Gi[aá]o\s*v[uụ]\s*khoa\s*CNTT|\b25TH01\b|\bKHOA\s*CNTT\b|\bKhoa\s*CNTT\b)/i;
+
 resetAdminLayoutPlaceholders();
 
 document.addEventListener('DOMContentLoaded', function () {
-    // Dùng chung engine menu hiện có, nhưng chỉ định rõ selector cho Admin.
+    resetAdminLayoutPlaceholders();
+
     if (window.CMSMenu && typeof window.CMSMenu.init === 'function') {
         window.CMSMenu.init({
             sidebarSelector: '#sidebar',
@@ -12,7 +15,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Đồng bộ xác nhận cho nút đăng xuất ở sidebar admin.
     const logoutLinks = document.querySelectorAll('#sidebar .logout-btn');
     logoutLinks.forEach(function (link) {
         if (link.dataset.adminLogoutBound === '1') {
@@ -38,6 +40,71 @@ function resetAdminLayoutPlaceholders() {
     }
 }
 
+function applyAdminTextReplacements(raw, options) {
+    const input = String(raw || '');
+    if (!input || !ADMIN_PLACEHOLDER_PATTERN.test(input)) {
+        return input;
+    }
+
+    let next = input
+        .replace(/Admin\s+Khoa\s*CNTT/gi, options.displayName)
+        .replace(/Gi[aá]o\s*v[uụ]\s*khoa\s*CNTT/gi, options.displayName)
+        .replace(/\b25TH01\b/g, options.className);
+
+    if (options.departmentName) {
+        next = next.replace(/\bKHOA\s*CNTT\b/gi, options.departmentName);
+        next = next.replace(/\bKhoa\s*CNTT\b/g, options.departmentName);
+    }
+
+    return next;
+}
+
+function hydrateTextNodes(options) {
+    if (!document.body || typeof document.createTreeWalker !== 'function') {
+        return;
+    }
+
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode: function (node) {
+            const text = String(node.nodeValue || '');
+            if (!text.trim()) {
+                return NodeFilter.FILTER_REJECT;
+            }
+            return ADMIN_PLACEHOLDER_PATTERN.test(text) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+        }
+    });
+
+    const textNodes = [];
+    while (walker.nextNode()) {
+        textNodes.push(walker.currentNode);
+    }
+
+    textNodes.forEach(function (node) {
+        const before = String(node.nodeValue || '');
+        const after = applyAdminTextReplacements(before, options);
+        if (after !== before) {
+            node.nodeValue = after;
+        }
+    });
+}
+
+function hydrateAttributes(options) {
+    const nodes = document.querySelectorAll('[value], [placeholder], [title], [onclick], [data-source]');
+    nodes.forEach(function (node) {
+        ADMIN_REPLACEMENT_ATTRS.forEach(function (attr) {
+            if (!node.hasAttribute(attr)) {
+                return;
+            }
+
+            const before = String(node.getAttribute(attr) || '');
+            const after = applyAdminTextReplacements(before, options);
+            if (after !== before) {
+                node.setAttribute(attr, after);
+            }
+        });
+    });
+}
+
 async function hydrateAdminSharedData() {
     try {
         const res = await fetch('/api/me', { headers: { Accept: 'application/json' } });
@@ -52,7 +119,11 @@ async function hydrateAdminSharedData() {
         const me = await res.json();
         const displayName = me.full_name || me.username || 'Admin';
         const avatar = me.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0d6efd&color=fff`;
-        const departmentName = me.department_name || '';
+        const replacements = {
+            displayName,
+            className: me.class_name || '--',
+            departmentName: me.department_name || ''
+        };
 
         document.querySelectorAll('.admin-operator-name, .admin-display-name').forEach(function (node) {
             node.textContent = displayName;
@@ -63,48 +134,8 @@ async function hydrateAdminSharedData() {
             headerAvatar.src = avatar;
         }
 
-        const leafNodes = document.querySelectorAll('span, b, strong, p, h5, td, option');
-        leafNodes.forEach(function (node) {
-            if (node.children.length > 0) {
-                return;
-            }
-            const text = String(node.textContent || '');
-            let next = text
-                .replace(/Admin\s+Khoa\s*CNTT/gi, displayName)
-                .replace(/Giáo\s*vụ\s*khoa\s*CNTT/gi, displayName)
-                .replace(/\b25TH01\b/g, me.class_name || '--');
-
-            if (departmentName) {
-                next = next.replace(/\bKHOA\s*CNTT\b/gi, departmentName);
-                next = next.replace(/\bKhoa\s*CNTT\b/g, departmentName);
-            }
-
-            if (next !== text) {
-                node.textContent = next;
-            }
-        });
-
-        document.querySelectorAll('*').forEach(function (node) {
-            ['value', 'placeholder', 'title', 'onclick', 'data-source'].forEach(function (attr) {
-                if (!node.hasAttribute(attr)) {
-                    return;
-                }
-                const raw = String(node.getAttribute(attr) || '');
-                let next = raw
-                    .replace(/Admin\s+Khoa\s*CNTT/gi, displayName)
-                    .replace(/Giáo\s*vụ\s*khoa\s*CNTT/gi, displayName)
-                    .replace(/\b25TH01\b/g, me.class_name || '--');
-
-                if (departmentName) {
-                    next = next.replace(/\bKHOA\s*CNTT\b/gi, departmentName);
-                    next = next.replace(/\bKhoa\s*CNTT\b/g, departmentName);
-                }
-
-                if (next !== raw) {
-                    node.setAttribute(attr, next);
-                }
-            });
-        });
+        hydrateTextNodes(replacements);
+        hydrateAttributes(replacements);
     } catch (error) {
         console.error('Admin shared data hydration error:', error);
     }

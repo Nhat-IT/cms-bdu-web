@@ -14,8 +14,8 @@ requireRole('admin');
 // Lấy thông tin admin hiện tại
 $currentUser = getCurrentUser();
 
-// Đếm tổng số sinh viên (từ class_students — danh sách SV đã import vào lớp)
-$totalStudents = (int) db_count("SELECT COUNT(*) FROM class_students");
+// Đếm tổng số sinh viên (từ bảng users)
+$totalStudents = (int) db_count("SELECT COUNT(*) FROM users WHERE role = 'student'");
 
 // Đếm tổng số giảng viên
 $totalTeachers = (int) db_count("SELECT COUNT(*) FROM users WHERE role = 'teacher'");

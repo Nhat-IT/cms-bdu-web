@@ -12,17 +12,10 @@ requireRole('bcs');
 $userId = $_SESSION['user_id'];
 $pageTitle = 'Hồ Sơ Ban Cán Sự';
 
-// Lấy class_id của BCS từ class_students
-$stmt = $pdo->prepare("
-    SELECT cs.class_id, c.class_name 
-    FROM class_students cs
-    JOIN classes c ON cs.class_id = c.id
-    WHERE cs.student_id = ?
-");
-$stmt->execute([$userId]);
-$classInfo = $stmt->fetch();
-$classId = $classInfo['class_id'] ?? null;
-$className = $classInfo['class_name'] ?? '';
+// Lấy thông tin lớp của BCS (hỗ trợ cả class_students và group_students)
+$classInfo = getUserClassInfo($userId);
+$classId = $classInfo['class_id'];
+$className = $classInfo['class_name'];
 
 // Lấy thông tin user
 $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
@@ -136,6 +129,11 @@ $unreadCount = $stmt->fetch()['total'] ?? 0;
                         <div class="d-flex justify-content-center gap-2 mb-4">
                             <span class="badge bg-primary bg-opacity-10 text-primary border border-primary"><?= e($className) ?></span>
                             <span class="badge bg-success bg-opacity-10 text-success border border-success">Đang hoạt động</span>
+                        </div>
+
+                        <div class="alert alert-primary py-2 px-3 mb-4 d-flex align-items-center justify-content-center">
+                            <i class="bi bi-house-door-fill me-2"></i>
+                            <strong>LỚP: <?= e($className) ?></strong>
                         </div>
 
                         <hr class="text-muted border-opacity-25">

@@ -12,17 +12,11 @@ requireRole('bcs');
 $userId = $_SESSION['user_id'];
 $pageTitle = 'Thông Báo & Bản Tin';
 
-// Lấy class_id của BCS từ class_students
-$stmt = $pdo->prepare("
-    SELECT cs.class_id, c.class_name 
-    FROM class_students cs
-    JOIN classes c ON cs.class_id = c.id
-    WHERE cs.student_id = ?
-");
-$stmt->execute([$userId]);
-$classInfo = $stmt->fetch();
-$classId = $classInfo['class_id'] ?? null;
-$className = $classInfo['class_name'] ?? '';
+// Lấy thông tin lớp của BCS (hỗ trợ cả class_students và group_students)
+$classInfo = getUserClassInfo($userId);
+$classId = $classInfo['class_id'];
+$className = $classInfo['class_name'];
+$sourceType = $classInfo['source'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['news_action'])) {
     $action = strtolower(trim((string)($_POST['news_action'] ?? '')));

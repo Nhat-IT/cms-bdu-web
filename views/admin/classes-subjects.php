@@ -14,10 +14,15 @@ requireRole('admin');
 // Lấy thông tin admin hiện tại
 $currentUser = getCurrentUser();
 
-// Lấy danh sách lớp học
+// Lấy danh sách lớp học với số lượng sinh viên (từ class_students)
 $classes = db_fetch_all("
     SELECT c.*, d.department_name,
-           (SELECT COUNT(*) FROM class_students cs WHERE cs.class_id = c.id) as student_count
+           COALESCE(
+               (SELECT COUNT(*) 
+                FROM class_students cs2
+                WHERE cs2.class_id = c.id),
+               0
+           ) as student_count
     FROM classes c
     LEFT JOIN departments d ON c.department_id = d.id
     ORDER BY c.class_name DESC

@@ -1,5 +1,7 @@
 let adminAccountsCache = [];
 let editAccountId = null;
+let loadAccountsAbortController = null;
+let loadAccountsRequestId = 0;
 
 function getRoleLabel(role) {
     const map = {
@@ -21,8 +23,34 @@ function getRoleBadge(role) {
     return '<span class="badge bg-info bg-opacity-10 text-info border border-info px-2 py-1">Sinh viên</span>';
 }
 
+function toggleClassFieldByRole(role) {
+    const classInput = document.getElementById('modalClass');
+    const classInputGroup = document.getElementById('classInputGroup');
+    const needsClass = role === 'student' || role === 'bcs';
+
+    if (classInputGroup) {
+        classInputGroup.style.display = needsClass ? 'block' : 'none';
+    }
+
+    if (!classInput) {
+        return;
+    }
+
+    if (needsClass) {
+        classInput.setAttribute('required', 'true');
+        return;
+    }
+
+    classInput.removeAttribute('required');
+    classInput.value = '';
+}
+
 function openAccountModal(mode, account) {
     const modalEl = document.getElementById('accountModal');
+    if (!modalEl) {
+        return;
+    }
+
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
 
     const title = document.getElementById('accountModalTitle');
@@ -30,8 +58,11 @@ function openAccountModal(mode, account) {
     const fullNameInput = document.getElementById('modalFullName');
     const emailInput = document.getElementById('modalEmail');
     const classInput = document.getElementById('modalClass');
-    const classInputGroup = document.getElementById('classInputGroup');
     const roleSelect = document.getElementById('modalRoleSingle');
+
+    if (!title || !usernameInput || !fullNameInput || !emailInput || !classInput || !roleSelect) {
+        return;
+    }
 
     if (mode === 'add') {
         editAccountId = null;
@@ -51,19 +82,7 @@ function openAccountModal(mode, account) {
         roleSelect.value = account.role || 'student';
     }
 
-    const needsClass = roleSelect.value === 'student' || roleSelect.value === 'bcs';
-    if (classInputGroup) {
-        classInputGroup.style.display = needsClass ? 'block' : 'none';
-    }
-    if (classInput) {
-        if (needsClass) {
-            classInput.setAttribute('required', 'true');
-        } else {
-            classInput.removeAttribute('required');
-            classInput.value = '';
-        }
-    }
-
+    toggleClassFieldByRole(roleSelect.value);
     modal.show();
 }
 
@@ -103,57 +122,154 @@ function renderAccounts(rows) {
                 </td>
             </tr>`;
     }).join('');
+}
 
-    tbody.querySelectorAll('button[data-action="edit"]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            const id = Number(btn.getAttribute('data-id'));
-            const account = adminAccountsCache.find(function (item) { return Number(item.id) === id; });
-            if (account) {
-                openAccountModal('edit', account);
-            }
-        });
-    });
-
-    tbody.querySelectorAll('button[data-action="reset"]').forEach(function (btn) {
-        btn.addEventListener('click', async function () {
-            const id = Number(btn.getAttribute('data-id'));
-            if (!confirm('Khôi phục mật khẩu khởi tạo theo cấu hình hệ thống cho tài khoản này?')) {
-                return;
-            }
-
-            const res = await fetch(`/api/admin/accounts/${id}/reset-password`, { method: 'POST', headers: { Accept: 'application/json' } });
-            if (res.ok) {
-                alert('Đã reset mật khẩu thành công.');
-            } else {
-                const data = await res.json().catch(function () { return {}; });
-                alert(data.error || 'Không thể reset mật khẩu.');
-            }
-        });
+function findAccountById(id) {
+    return adminAccountsCache.find(function (item) {
+        return Number(item.id) === Number(id);
     });
 }
 
-async function loadAccounts() {
+async function resetAccountPassword(id) {
+    if (!confirm('Khôi phục mật khẩu khởi tạo theo cấu hình hệ thống cho tài khoản này?')) {
+        return;
+    }
+
+    const res = await fetch(`/api/admin/accounts/${id}/reset-password`, {
+        method: 'POST',
+        headers: { Accept: 'application/json' }
+    });
+
+    if (res.ok) {
+        alert('Đã reset mật khẩu thành công.');
+        return;
+    }
+
+    const data = await res.json().catch(function () {
+        return {};
+    });
+    alert(data.error || 'Không thể reset mật khẩu.');
+}
+
+function bindAccountsTableEvents() {
+    const tbody = document.getElementById('adminAccountsTableBody');
+    if (!tbody || tbody.dataset.accountsEventBound === '1') {
+        return;
+    }
+
+    tbody.dataset.accountsEventBound = '1';
+    tbody.addEventListener('click', async function (event) {
+        const button = event.target.closest('button[data-action][data-id]');
+        if (!button || !tbody.contains(button)) {
+            return;
+        }
+
+        const id = Number(button.getAttribute('data-id'));
+        if (!Number.isFinite(id)) {
+            return;
+        }
+
+        const action = button.getAttribute('data-action');
+        if (action === 'edit') {
+            const account = findAccountById(id);
+            if (account) {
+                openAccountModal('edit', account);
+            }
+            return;
+        }
+
+        if (action === 'reset') {
+            if (button.dataset.loading === '1') {
+                return;
+            }
+
+            button.dataset.loading = '1';
+            button.disabled = true;
+            try {
+                await resetAccountPassword(id);
+            } finally {
+                button.disabled = false;
+                button.dataset.loading = '0';
+            }
+        }
+    });
+}
+
+function buildAccountsQuery() {
     const keyword = document.getElementById('accountSearchInput')?.value?.trim() || '';
     const role = document.getElementById('accountRoleFilter')?.value || 'all';
 
     const query = new URLSearchParams();
-    if (keyword) query.set('keyword', keyword);
-    if (role) query.set('role', role);
+    if (keyword) {
+        query.set('keyword', keyword);
+    }
+    if (role) {
+        query.set('role', role);
+    }
+    return query;
+}
 
-    const res = await fetch(`/api/admin/accounts?${query.toString()}`, { headers: { Accept: 'application/json' } });
-    if (res.status === 401) {
-        window.location.href = '/login.html';
-        return;
-    }
-    if (res.status === 403) {
-        return;
-    }
-    if (!res.ok) {
-        throw new Error('Không thể tải danh sách tài khoản');
+async function loadAccounts() {
+    if (loadAccountsAbortController) {
+        loadAccountsAbortController.abort();
     }
 
-    adminAccountsCache = await res.json();
-    renderAccounts(adminAccountsCache);
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    loadAccountsAbortController = controller;
+    const requestId = ++loadAccountsRequestId;
+
+    try {
+        const query = buildAccountsQuery();
+        const fetchOptions = {
+            headers: { Accept: 'application/json' }
+        };
+
+        if (controller) {
+            fetchOptions.signal = controller.signal;
+        }
+
+        const res = await fetch(`/api/admin/accounts?${query.toString()}`, fetchOptions);
+        if (res.status === 401) {
+            window.location.href = '/login.html';
+            return;
+        }
+        if (res.status === 403) {
+            return;
+        }
+        if (!res.ok) {
+            throw new Error('Không thể tải danh sách tài khoản');
+        }
+
+        const data = await res.json();
+        if (requestId !== loadAccountsRequestId) {
+            return;
+        }
+
+        adminAccountsCache = Array.isArray(data) ? data : [];
+        renderAccounts(adminAccountsCache);
+    } catch (error) {
+        if (error && error.name === 'AbortError') {
+            return;
+        }
+        throw error;
+    } finally {
+        if (requestId === loadAccountsRequestId) {
+            loadAccountsAbortController = null;
+        }
+    }
+}
+
+function debounce(callback, wait) {
+    let timeout = null;
+
+    return function () {
+        const context = this;
+        const args = arguments;
+        clearTimeout(timeout);
+        timeout = setTimeout(function () {
+            callback.apply(context, args);
+        }, wait);
+    };
 }
 
 async function submitAccountForm(event) {
@@ -181,7 +297,10 @@ async function submitAccountForm(event) {
         body: JSON.stringify(payload)
     });
 
-    const data = await res.json().catch(function () { return {}; });
+    const data = await res.json().catch(function () {
+        return {};
+    });
+
     if (!res.ok) {
         alert(data.error || 'Không thể lưu tài khoản.');
         return false;
@@ -200,36 +319,38 @@ function bindEvents() {
     const form = document.getElementById('accountForm');
     const roleSelect = document.getElementById('modalRoleSingle');
     const importBtn = document.getElementById('accountImportBtn');
-
-    if (searchInput) searchInput.addEventListener('input', function () { loadAccounts(); });
-    if (roleFilter) roleFilter.addEventListener('change', function () { loadAccounts(); });
     const statusFilter = document.getElementById('accountStatusFilter');
-    if (statusFilter) statusFilter.addEventListener('change', function () { loadAccounts(); });
+    const debouncedLoadAccounts = debounce(function () {
+        loadAccounts();
+    }, 250);
+
+    if (searchInput) {
+        searchInput.addEventListener('input', debouncedLoadAccounts);
+    }
+    if (roleFilter) {
+        roleFilter.addEventListener('change', function () {
+            loadAccounts();
+        });
+    }
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function () {
+            loadAccounts();
+        });
+    }
+
     if (addBtn) {
         addBtn.addEventListener('click', function () {
             openAccountModal('add', null);
         });
     }
+
     if (form) {
         form.addEventListener('submit', submitAccountForm);
     }
 
     if (roleSelect) {
         roleSelect.addEventListener('change', function () {
-            const classInput = document.getElementById('modalClass');
-            const classInputGroup = document.getElementById('classInputGroup');
-            const needsClass = roleSelect.value === 'student' || roleSelect.value === 'bcs';
-            if (classInputGroup) {
-                classInputGroup.style.display = needsClass ? 'block' : 'none';
-            }
-            if (classInput) {
-                if (needsClass) {
-                    classInput.setAttribute('required', 'true');
-                } else {
-                    classInput.removeAttribute('required');
-                    classInput.value = '';
-                }
-            }
+            toggleClassFieldByRole(roleSelect.value);
         });
     }
 
@@ -244,6 +365,8 @@ function bindEvents() {
             bootstrap.Modal.getInstance(document.getElementById('importAccountModal'))?.hide();
         });
     }
+
+    bindAccountsTableEvents();
 }
 
 document.addEventListener('DOMContentLoaded', async function () {

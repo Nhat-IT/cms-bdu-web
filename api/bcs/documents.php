@@ -34,11 +34,42 @@ function docs_detect_icon(string $title, string $fallback = 'file'): string {
 }
 
 function docs_get_bcs_class_id(int $userId): int {
+    // Ưu tiên từ class_students
     $row = db_fetch_one('SELECT class_id FROM class_students WHERE student_id = ? LIMIT 1', [$userId]);
-    return (int)($row['class_id'] ?? 0);
+    $classId = (int)($row['class_id'] ?? 0);
+    if ($classId > 0) {
+        return $classId;
+    }
+    // Fallback: không có class_id từ class_students, trả về 0
+    return 0;
 }
 
-function docs_find_class_subject_id(int $classId, string $year, string $semester): int {
+function docs_get_bcs_class_name(int $userId): string {
+    $row = db_fetch_one('SELECT c.class_name FROM class_students cs JOIN classes c ON cs.class_id = c.id WHERE cs.student_id = ? LIMIT 1', [$userId]);
+    return $row['class_name'] ?? '';
+}
+
+function docs_find_class_subject_id(int $classId, string $className, string $year, string $semester): int {
+    if ($classId > 0) {
+        $row = db_fetch_one(
+            "SELECT cs.id
+             FROM class_subjects cs
+             LEFT JOIN semesters sm ON sm.id = cs.semester_id
+             WHERE cs.class_id = ?
+               AND (? = '' OR sm.academic_year = ?)
+               AND (? = '' OR UPPER(sm.semester_name) = UPPER(?))
+             ORDER BY cs.id DESC
+             LIMIT 1",
+            [$classId, $year, $year, $semester, $semester]
+        );
+
+        if ($row && !empty($row['id'])) return (int)$row['id'];
+
+        $fallback = db_fetch_one('SELECT id FROM class_subjects WHERE class_id = ? ORDER BY id DESC LIMIT 1', [$classId]);
+        return (int)($fallback['id'] ?? 0);
+    }
+    
+    // Với class_students: tìm theo class_id
     $row = db_fetch_one(
         "SELECT cs.id
          FROM class_subjects cs
@@ -57,9 +88,34 @@ function docs_find_class_subject_id(int $classId, string $year, string $semester
     return (int)($fallback['id'] ?? 0);
 }
 
-function docs_find_class_subject_by_semester_id(int $classId, int $semesterId): int {
+function docs_find_class_subject_by_semester_id(int $classId, string $className, int $semesterId): int {
     if ($semesterId <= 0) return 0;
 
+    if ($classId > 0) {
+        $row = db_fetch_one(
+            "SELECT id
+             FROM class_subjects
+             WHERE class_id = ? AND semester_id = ?
+             ORDER BY id DESC
+             LIMIT 1",
+            [$classId, $semesterId]
+        );
+        if ($row && !empty($row['id'])) {
+            return (int)$row['id'];
+        }
+
+        $fallback = db_fetch_one(
+            "SELECT id
+             FROM class_subjects
+             WHERE class_id = ?
+             ORDER BY id DESC
+             LIMIT 1",
+            [$classId]
+        );
+        return (int)($fallback['id'] ?? 0);
+    }
+    
+    // Với class_students
     $row = db_fetch_one(
         "SELECT id
          FROM class_subjects
@@ -72,7 +128,6 @@ function docs_find_class_subject_by_semester_id(int $classId, int $semesterId): 
         return (int)$row['id'];
     }
 
-    // Fallback để vẫn lưu tài liệu chung cho lớp trong trường hợp chưa có học phần mở theo học kỳ.
     $fallback = db_fetch_one(
         "SELECT id
          FROM class_subjects
@@ -88,7 +143,10 @@ try {
     getDBConnection();
 
     $classId = docs_get_bcs_class_id($userId);
-    if ($classId <= 0) {
+    $className = docs_get_bcs_class_name($userId);
+    
+    // Kiểm tra: cần có classId hoặc className
+    if ($classId <= 0 && $className === '') {
         docs_json(400, ['ok' => false, 'error' => 'Tài khoản BCS chưa được gán lớp.']);
     }
 
@@ -127,8 +185,8 @@ try {
         }
 
         $classSubjectId = $semesterId > 0
-            ? docs_find_class_subject_by_semester_id($classId, $semesterId)
-            : docs_find_class_subject_id($classId, $year, $semester);
+            ? docs_find_class_subject_by_semester_id($classId, $className, $semesterId)
+            : docs_find_class_subject_id($classId, $className, $year, $semester);
 
         if ($classSubjectId <= 0) {
             docs_json(400, ['ok' => false, 'error' => 'Không tìm thấy lớp học phần phù hợp để lưu tài liệu']);
@@ -171,14 +229,28 @@ try {
             docs_json(400, ['ok' => false, 'error' => 'Dữ liệu cập nhật không hợp lệ']);
         }
 
-        $doc = db_fetch_one(
-            "SELECT d.id, d.uploader_id
-             FROM documents d
-             JOIN class_subjects cs ON cs.id = d.class_subject_id
-             WHERE d.id = ? AND cs.class_id = ?
-             LIMIT 1",
-            [$docId, $classId]
-        );
+        // Tìm tài liệu - kiểm tra quyền sửa
+        $doc = null;
+        if ($classId > 0) {
+            $doc = db_fetch_one(
+                "SELECT d.id, d.uploader_id
+                 FROM documents d
+                 JOIN class_subjects cs ON cs.id = d.class_subject_id
+                 WHERE d.id = ? AND cs.class_id = ?
+                 LIMIT 1",
+                [$docId, $classId]
+            );
+        }
+        if (!$doc && $classId > 0) {
+            $doc = db_fetch_one(
+                "SELECT d.id, d.uploader_id
+                 FROM documents d
+                 JOIN class_subjects cs ON cs.id = d.class_subject_id
+                 WHERE d.id = ? AND cs.class_id = ?
+                 LIMIT 1",
+                [$docId, $classId]
+            );
+        }
 
         if (!$doc) {
             docs_json(404, ['ok' => false, 'error' => 'Không tìm thấy tài liệu']);
@@ -213,14 +285,28 @@ try {
             docs_json(400, ['ok' => false, 'error' => 'Thiếu id tài liệu']);
         }
 
-        $doc = db_fetch_one(
-            "SELECT d.id, d.uploader_id
-             FROM documents d
-             JOIN class_subjects cs ON cs.id = d.class_subject_id
-             WHERE d.id = ? AND cs.class_id = ?
-             LIMIT 1",
-            [$docId, $classId]
-        );
+        // Tìm tài liệu - kiểm tra quyền xóa
+        $doc = null;
+        if ($classId > 0) {
+            $doc = db_fetch_one(
+                "SELECT d.id, d.uploader_id
+                 FROM documents d
+                 JOIN class_subjects cs ON cs.id = d.class_subject_id
+                 WHERE d.id = ? AND cs.class_id = ?
+                 LIMIT 1",
+                [$docId, $classId]
+            );
+        }
+        if (!$doc && $classId > 0) {
+            $doc = db_fetch_one(
+                "SELECT d.id, d.uploader_id
+                 FROM documents d
+                 JOIN class_subjects cs ON cs.id = d.class_subject_id
+                 WHERE d.id = ? AND cs.class_id = ?
+                 LIMIT 1",
+                [$docId, $classId]
+            );
+        }
 
         if (!$doc) {
             docs_json(404, ['ok' => false, 'error' => 'Không tìm thấy tài liệu']);

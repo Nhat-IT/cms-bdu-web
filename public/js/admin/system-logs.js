@@ -1,4 +1,6 @@
 let adminSystemLogs = [];
+let systemLogsAbortController = null;
+let systemLogsRequestId = 0;
 
 function adminLogDateTime(value) {
     if (!value) return '';
@@ -51,28 +53,75 @@ function renderAdminLogsTable() {
     }).join('');
 }
 
-async function loadAdminSystemLogs() {
-    const params = new URLSearchParams({
+function buildSystemLogParams() {
+    return new URLSearchParams({
         keyword: (document.getElementById('adminLogKeyword')?.value || '').trim(),
         role: document.getElementById('adminLogRole')?.value || 'all',
         action: document.getElementById('adminLogAction')?.value || 'all',
         date: document.getElementById('adminLogDate')?.value || ''
     });
+}
 
-    const res = await fetch(`/api/admin/system-logs?${params.toString()}`, { headers: { Accept: 'application/json' } });
-    if (res.status === 401) {
-        window.location.href = '/login.html';
-        return;
+async function loadAdminSystemLogs() {
+    if (systemLogsAbortController) {
+        systemLogsAbortController.abort();
     }
 
-    const data = await res.json().catch(() => []);
-    if (!res.ok) {
-        alert(data.error || 'Khong the tai system logs.');
-        return;
-    }
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    systemLogsAbortController = controller;
+    const requestId = ++systemLogsRequestId;
 
-    adminSystemLogs = Array.isArray(data) ? data : [];
-    renderAdminLogsTable();
+    try {
+        const params = buildSystemLogParams();
+        const fetchOptions = {
+            headers: { Accept: 'application/json' }
+        };
+        if (controller) {
+            fetchOptions.signal = controller.signal;
+        }
+
+        const res = await fetch(`/api/admin/system-logs?${params.toString()}`, fetchOptions);
+        if (res.status === 401) {
+            window.location.href = '/login.html';
+            return;
+        }
+
+        const data = await res.json().catch(() => []);
+        if (!res.ok) {
+            alert(data.error || 'Khong the tai system logs.');
+            return;
+        }
+
+        if (requestId !== systemLogsRequestId) {
+            return;
+        }
+
+        adminSystemLogs = Array.isArray(data) ? data : [];
+        renderAdminLogsTable();
+    } catch (error) {
+        if (error && error.name === 'AbortError') {
+            return;
+        }
+        throw error;
+    } finally {
+        if (requestId === systemLogsRequestId) {
+            systemLogsAbortController = null;
+        }
+    }
+}
+
+function debounce(callback, wait) {
+    let timeout = null;
+
+    return function () {
+        const context = this;
+        const args = arguments;
+
+        clearTimeout(timeout);
+        timeout = setTimeout(function () {
+            callback.apply(context, args);
+        }, wait);
+    };
 }
 
 function exportLogs() {
@@ -108,11 +157,30 @@ function exportLogs() {
     URL.revokeObjectURL(url);
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('adminLogKeyword')?.addEventListener('input', loadAdminSystemLogs);
-    document.getElementById('adminLogRole')?.addEventListener('change', loadAdminSystemLogs);
-    document.getElementById('adminLogAction')?.addEventListener('change', loadAdminSystemLogs);
-    document.getElementById('adminLogDate')?.addEventListener('change', loadAdminSystemLogs);
+async function safeLoadAdminSystemLogs() {
+    try {
+        await loadAdminSystemLogs();
+    } catch (error) {
+        console.error('Load admin system logs error:', error);
+        alert('Khong the tai system logs. Vui long thu lai.');
+    }
+}
 
-    loadAdminSystemLogs();
+document.addEventListener('DOMContentLoaded', function () {
+    const debouncedKeywordLoad = debounce(function () {
+        safeLoadAdminSystemLogs();
+    }, 300);
+
+    document.getElementById('adminLogKeyword')?.addEventListener('input', debouncedKeywordLoad);
+    document.getElementById('adminLogRole')?.addEventListener('change', function () {
+        safeLoadAdminSystemLogs();
+    });
+    document.getElementById('adminLogAction')?.addEventListener('change', function () {
+        safeLoadAdminSystemLogs();
+    });
+    document.getElementById('adminLogDate')?.addEventListener('change', function () {
+        safeLoadAdminSystemLogs();
+    });
+
+    safeLoadAdminSystemLogs();
 });

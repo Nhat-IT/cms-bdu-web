@@ -224,7 +224,9 @@ function db_query($sql, $params = []) {
     $stmt = mysqli_prepare($conn, $sql);
     
     if ($stmt === false) {
-        throw new Exception("Lỗi prepare: " . mysqli_error($conn));
+        $error = mysqli_error($conn);
+        error_log("DB_PREPARE_ERROR: " . $error . " | SQL: " . substr($sql, 0, 200));
+        throw new Exception("Lỗi prepare: " . $error);
     }
     
     if (!empty($params)) {
@@ -232,10 +234,39 @@ function db_query($sql, $params = []) {
         mysqli_stmt_bind_param($stmt, $types, ...$params);
     }
     
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
+    $execResult = mysqli_stmt_execute($stmt);
     
-    return $result;
+    if ($execResult === false) {
+        $error = mysqli_stmt_error($stmt);
+        error_log("DB_EXECUTE_ERROR: " . $error . " | SQL: " . substr($sql, 0, 200));
+        mysqli_stmt_close($stmt);
+        throw new Exception("Lỗi execute: " . $error);
+    }
+    
+    // Kiểm tra loại query: SELECT hay INSERT/UPDATE/DELETE
+    $trimmedSql = trim($sql);
+    $isSelect = preg_match('/^\s*(SELECT|SHOW|DESCRIBE|EXPLAIN)\s/i', $trimmedSql);
+    
+    if ($isSelect) {
+        $result = mysqli_stmt_get_result($stmt);
+        return $result;
+    } else {
+        // INSERT/UPDATE/DELETE - lấy số dòng bị ảnh hưởng
+        mysqli_stmt_store_result($stmt);
+        $affected = mysqli_stmt_affected_rows($stmt);
+        
+        // Kiểm tra xem INSERT/UPDATE có thực sự thành công không
+        if ($affected < 0) {
+            $error = mysqli_stmt_error($stmt);
+            error_log("DB_AFFECTED_ERROR: " . $error . " | SQL: " . substr($sql, 0, 200) . " | affected=" . $affected);
+            mysqli_stmt_close($stmt);
+            throw new Exception("Lỗi khi thực hiện query: " . $error);
+        }
+        
+        error_log("DB_QUERY_SUCCESS: affected=" . $affected . " | SQL: " . substr($sql, 0, 100));
+        mysqli_stmt_close($stmt);
+        return $affected;
+    }
 }
 
 // Hàm lấy một dòng

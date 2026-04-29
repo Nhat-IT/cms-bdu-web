@@ -107,3 +107,27 @@ function logSystem(string $action, ?string $targetTable = null, ?int $targetId =
         [$userId, $action, $targetTable, $targetId]
     );
 }
+
+/**
+ * Lấy thông tin lớp của user từ class_students
+ * Trả về array: ['class_id' => int|null, 'class_name' => string, 'source' => string]
+ */
+function getUserClassInfo($userId) {
+    $result = ['class_id' => null, 'class_name' => '', 'source' => ''];
+
+    // Lấy từ class_students (qua student_id)
+    $classRow = db_fetch_one(
+        "SELECT cs.class_id, c.class_name
+         FROM class_students cs
+         JOIN classes c ON cs.class_id = c.id
+         WHERE cs.student_id = ?",
+        [$userId]
+    );
+    if ($classRow && !empty($classRow['class_id'])) {
+        $result['class_id'] = $classRow['class_id'];
+        $result['class_name'] = $classRow['class_name'];
+        $result['source'] = 'class_students';
+    }
+
+    return $result;
+}

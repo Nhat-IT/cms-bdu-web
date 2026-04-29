@@ -273,7 +273,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                         <thead class="table-light small text-muted fw-bold">
                             <tr>
                                 <th class="ps-4 py-3 text-center" style="width: 60px;">STT</th>
-                                <th class="py-3">MÃ GV/SV</th>
+                                <th class="py-3">TÊN ĐĂNG NHẬP</th>
                                 <th class="py-3">HỌ VÀ TÊN / EMAIL</th>
                                 <th class="py-3 text-center">VAI TRÒ</th>
                                 <th class="py-3 text-center">TRẠNG THÁI</th>

@@ -12,17 +12,11 @@ requireRole('bcs');
 $userId = $_SESSION['user_id'];
 $pageTitle = 'Cổng Tương Tác';
 
-// Lấy class_id của BCS từ class_students
-$stmt = $pdo->prepare("
-    SELECT cs.class_id, c.class_name 
-    FROM class_students cs
-    JOIN classes c ON cs.class_id = c.id
-    WHERE cs.student_id = ?
-");
-$stmt->execute([$userId]);
-$classInfo = $stmt->fetch();
-$classId = $classInfo['class_id'] ?? null;
-$className = $classInfo['class_name'] ?? '';
+// Lấy thông tin lớp của BCS (hỗ trợ cả class_students và group_students)
+$classInfo = getUserClassInfo($userId);
+$classId = $classInfo['class_id'];
+$className = $classInfo['class_name'];
+$sourceType = $classInfo['source'];
 
 // Lấy thông tin user
 $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
@@ -33,43 +27,89 @@ $position = $currentUser['position'] ?? 'Ban Cán Sự';
 $avatar = getAvatarUrl($currentUser['avatar'] ?? null, $fullName, 55);
 
 // Lấy thống kê phản hồi
-$stmt = $pdo->prepare("
-    SELECT COUNT(*) as total FROM feedbacks f
-    JOIN class_students cs ON f.student_id = cs.student_id
-    WHERE cs.class_id = ?
-");
-$stmt->execute([$classId]);
+if ($sourceType === 'class_students' && $classId) {
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) as total FROM feedbacks f
+        JOIN class_students cs ON f.student_id = cs.student_id
+        WHERE cs.class_id = ?
+    ");
+    $stmt->execute([$classId]);
+} else {
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) as total FROM feedbacks f
+        JOIN class_students cs ON f.student_id = cs.student_id
+        JOIN class_students cs2 ON cs2.class_id = cs.class_id
+        WHERE cs2.student_id = ?
+    ");
+    $stmt->execute([$userId]);
+}
 $totalFeedback = $stmt->fetch()['total'] ?? 0;
 
-$stmt = $pdo->prepare("
-    SELECT COUNT(*) as total FROM feedbacks f
-    JOIN class_students cs ON f.student_id = cs.student_id
-    WHERE cs.class_id = ? AND f.status = 'Pending'
-");
-$stmt->execute([$classId]);
+if ($sourceType === 'class_students' && $classId) {
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) as total FROM feedbacks f
+        JOIN class_students cs ON f.student_id = cs.student_id
+        WHERE cs.class_id = ? AND f.status = 'Pending'
+    ");
+    $stmt->execute([$classId]);
+} else {
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) as total FROM feedbacks f
+        JOIN class_students cs ON f.student_id = cs.student_id
+        JOIN class_students cs2 ON cs2.class_id = cs.class_id
+        WHERE cs2.student_id = ? AND f.status = 'Pending'
+    ");
+    $stmt->execute([$userId]);
+}
 $pendingFeedback = $stmt->fetch()['total'] ?? 0;
 
-$stmt = $pdo->prepare("
-    SELECT COUNT(*) as total FROM feedbacks f
-    JOIN class_students cs ON f.student_id = cs.student_id
-    WHERE cs.class_id = ? AND f.status = 'Resolved'
-");
-$stmt->execute([$classId]);
+if ($sourceType === 'class_students' && $classId) {
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) as total FROM feedbacks f
+        JOIN class_students cs ON f.student_id = cs.student_id
+        WHERE cs.class_id = ? AND f.status = 'Resolved'
+    ");
+    $stmt->execute([$classId]);
+} else {
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) as total FROM feedbacks f
+        JOIN class_students cs ON f.student_id = cs.student_id
+        JOIN class_students cs2 ON cs2.class_id = cs.class_id
+        WHERE cs2.student_id = ? AND f.status = 'Resolved'
+    ");
+    $stmt->execute([$userId]);
+}
 $resolvedFeedback = $stmt->fetch()['total'] ?? 0;
 
 // Lấy danh sách phản hồi
-$stmt = $pdo->prepare("
-    SELECT f.*, u.full_name, u.username as student_code
-    FROM feedbacks f
-    JOIN users u ON f.student_id = u.id
-    JOIN class_students cs ON f.student_id = cs.student_id
-    WHERE cs.class_id = ?
-    ORDER BY 
-        CASE WHEN f.status = 'Pending' THEN 0 ELSE 1 END,
-        f.updated_at DESC
-    LIMIT 50
-");
-$stmt->execute([$classId]);
+if ($sourceType === 'class_students' && $classId) {
+    $stmt = $pdo->prepare("
+        SELECT DISTINCT f.*, u.full_name, u.username as student_code
+        FROM feedbacks f
+        JOIN users u ON f.student_id = u.id
+        JOIN class_students cs ON f.student_id = cs.student_id
+        WHERE cs.class_id = ?
+        ORDER BY 
+            CASE WHEN f.status = 'Pending' THEN 0 ELSE 1 END,
+            f.updated_at DESC
+        LIMIT 50
+    ");
+    $stmt->execute([$classId]);
+} else {
+    $stmt = $pdo->prepare("
+        SELECT DISTINCT f.*, u.full_name, u.username as student_code
+        FROM feedbacks f
+        JOIN users u ON f.student_id = u.id
+        JOIN class_students cs ON f.student_id = cs.student_id
+        JOIN class_students cs2 ON cs2.class_id = cs.class_id
+        WHERE cs2.student_id = ?
+        ORDER BY 
+            CASE WHEN f.status = 'Pending' THEN 0 ELSE 1 END,
+            f.updated_at DESC
+        LIMIT 50
+    ");
+    $stmt->execute([$userId]);
+}
 $feedbacks = $stmt->fetchAll();
 
 // Đếm notification

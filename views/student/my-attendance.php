@@ -134,13 +134,12 @@ if ($selectedSubjectId > 0) {
 
         $attendanceRecords = db_fetch_all(
             "SELECT ar.*, a_s.attendance_date, csg.start_period,
-                    ae.status as evidence_status, ae.drive_link, ae.uploaded_at,
+                    ar.evidence_status, ar.evidence_link as drive_link, ar.evidence_uploaded_at,
                     u.full_name as approved_by_name
              FROM attendance_records ar
              JOIN attendance_sessions a_s ON ar.session_id = a_s.id
              JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
-             LEFT JOIN attendance_evidences ae ON ae.attendance_record_id = ar.id
-             LEFT JOIN users u ON ae.approved_by = u.id
+             LEFT JOIN users u ON ar.evidence_approved_by = u.id
              WHERE csg.class_subject_id = ? AND ar.student_id = ?
              ORDER BY a_s.attendance_date DESC",
             [$selectedSubjectId, $userId]

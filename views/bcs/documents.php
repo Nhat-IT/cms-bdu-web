@@ -58,16 +58,11 @@ function bcsDocumentSizeLabel($driveLink) {
 try {
     getDBConnection();
 
-    // Lấy class_id của BCS từ class_students
-    $classInfo = db_fetch_one(
-        "SELECT cs.class_id, c.class_name
-         FROM class_students cs
-         JOIN classes c ON cs.class_id = c.id
-         WHERE cs.student_id = ?",
-        [$userId]
-    );
-    $classId = (int)($classInfo['class_id'] ?? 0);
-    $className = $classInfo['class_name'] ?? '';
+    // Lấy thông tin lớp của BCS (hỗ trợ cả class_students và group_students)
+    $classInfo = getUserClassInfo($userId);
+    $classId = $classInfo['class_id'];
+    $className = $classInfo['class_name'];
+    $sourceType = $classInfo['source'];
 
     // Lấy thông tin user
     $currentUser = db_fetch_one("SELECT * FROM users WHERE id = ?", [$userId]);
@@ -110,19 +105,35 @@ try {
     }
 
     // Lấy tài liệu theo lớp + bộ lọc học kỳ
-    if ($classId > 0) {
-        $documents = db_fetch_all(
-            "SELECT d.*, s.subject_name, u.full_name as uploader_name, sm.semester_name, sm.academic_year
-             FROM documents d
-             JOIN class_subjects cs ON d.class_subject_id = cs.id
-             JOIN subjects s ON cs.subject_id = s.id
-             LEFT JOIN users u ON d.uploader_id = u.id
-             LEFT JOIN semesters sm ON cs.semester_id = sm.id
-             WHERE cs.class_id = ?
-               AND (? <= 0 OR cs.semester_id = ? OR UPPER(COALESCE(d.semester, '')) = ?)
-             ORDER BY d.created_at DESC",
-            [$classId, $selectedSemesterId, $selectedSemesterId, $selectedSemesterName]
-        );
+    if ($sourceType !== '') {
+        if ($sourceType === 'class_students' && $classId > 0) {
+            $documents = db_fetch_all(
+                "SELECT d.*, s.subject_name, u.full_name as uploader_name, sm.semester_name, sm.academic_year
+                 FROM documents d
+                 JOIN class_subjects cs ON d.class_subject_id = cs.id
+                 JOIN subjects s ON cs.subject_id = s.id
+                 LEFT JOIN users u ON d.uploader_id = u.id
+                 LEFT JOIN semesters sm ON cs.semester_id = sm.id
+                 WHERE cs.class_id = ?
+                   AND (? <= 0 OR cs.semester_id = ? OR UPPER(COALESCE(d.semester, '')) = ?)
+                 ORDER BY d.created_at DESC",
+                [$classId, $selectedSemesterId, $selectedSemesterId, $selectedSemesterName]
+            );
+        } else {
+            // Với class_students: lấy tài liệu dựa trên lớp
+            $documents = db_fetch_all(
+                "SELECT d.*, s.subject_name, u.full_name as uploader_name, sm.semester_name, sm.academic_year
+                 FROM documents d
+                 JOIN class_subjects cs ON d.class_subject_id = cs.id
+                 JOIN subjects s ON cs.subject_id = s.id
+                 JOIN class_students cs2 ON cs2.class_id = cs.class_id AND cs2.student_id = ?
+                 LEFT JOIN users u ON d.uploader_id = u.id
+                 LEFT JOIN semesters sm ON cs.semester_id = sm.id
+                 WHERE (? <= 0 OR cs.semester_id = ? OR UPPER(COALESCE(d.semester, '')) = ?)
+                 ORDER BY d.created_at DESC",
+                [$userId, $selectedSemesterId, $selectedSemesterId, $selectedSemesterName]
+            );
+        }
     } else {
         $classWarning = 'Tài khoản BCS chưa được gán lớp trong hệ thống.';
     }

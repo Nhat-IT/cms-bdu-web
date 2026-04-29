@@ -23,19 +23,13 @@ $students = [];
 $unreadCount = 0;
 
 try {
-    // Ensure DB connection is available for this page.
     getDBConnection();
 
-    // Lấy class_id của BCS từ class_students
-    $classRow = db_fetch_one(
-        "SELECT cs.class_id, c.class_name
-         FROM class_students cs
-         JOIN classes c ON cs.class_id = c.id
-         WHERE cs.student_id = ?",
-        [$userId]
-    );
-    $classId = $classRow['class_id'] ?? null;
-    $className = $classRow['class_name'] ?? '';
+    // Lấy thông tin lớp của BCS (hỗ trợ cả class_students và group_students)
+    $classInfo = getUserClassInfo($userId);
+    $classId = $classInfo['class_id'];
+    $className = $classInfo['class_name'];
+    $sourceType = $classInfo['source'];
 
     // Lấy thông tin user
     $currentUser = db_fetch_one("SELECT * FROM users WHERE id = ?", [$userId]);
@@ -44,12 +38,12 @@ try {
     $avatar = getAvatarUrl($currentUser['avatar'] ?? null, $fullName, 55);
 
     // Đếm notification
-    $unreadCount = db_fetch_one(
+    $unreadCount = (int)(db_fetch_one(
         "SELECT COUNT(*) as total FROM notification_logs WHERE user_id = ? AND is_read = 0",
         [$userId]
-    )['total'] ?? 0;
+    )['total'] ?? 0);
 
-    if ($classId) {
+    if ($sourceType !== '') {
         // Lấy danh sách học kỳ
         $semesters = db_fetch_all(
             "SELECT *
@@ -77,27 +71,52 @@ try {
         }
 
         // Lấy danh sách môn học của lớp
-        $subjects = db_fetch_all(
-            "SELECT DISTINCT cs.id as class_subject_id, s.id as subject_id, s.subject_name, s.subject_code
-             FROM class_subjects cs
-             JOIN subjects s ON cs.subject_id = s.id
-             JOIN class_subject_groups csg ON csg.class_subject_id = cs.id
-             JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
-             JOIN class_students cs2 ON cs2.student_id = ssr.student_id AND cs2.class_id = ?
-             WHERE ssr.status = 'Đang học'
-             ORDER BY s.subject_name",
-            [$classId]
-        );
+        if ($sourceType === 'class_students' && $classId) {
+            $subjects = db_fetch_all(
+                "SELECT DISTINCT cs.id as class_subject_id, s.id as subject_id, s.subject_name, s.subject_code
+                 FROM class_subjects cs
+                 JOIN subjects s ON cs.subject_id = s.id
+                 JOIN class_subject_groups csg ON csg.class_subject_id = cs.id
+                 JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
+                 JOIN class_students cs2 ON cs2.student_id = ssr.student_id AND cs2.class_id = ?
+                 WHERE ssr.status = 'Đang học'
+                 ORDER BY s.subject_name",
+                [$classId]
+            );
 
-        // Lấy danh sách sinh viên trong lớp
-        $students = db_fetch_all(
-            "SELECT u.id, u.full_name, u.username as student_code, u.birth_date
-             FROM users u
-             JOIN class_students cs ON u.id = cs.student_id
-             WHERE cs.class_id = ?
-             ORDER BY u.full_name",
-            [$classId]
-        );
+            // Lấy danh sách sinh viên trong lớp
+            $students = db_fetch_all(
+                "SELECT u.id as student_id, u.full_name, u.username, u.birth_date
+                 FROM users u
+                 JOIN class_students cs ON u.id = cs.student_id
+                 WHERE cs.class_id = ?
+                 ORDER BY u.full_name",
+                [$classId]
+            );
+        } else {
+            // Từ class_students
+            $subjects = db_fetch_all(
+                "SELECT DISTINCT cs.id as class_subject_id, s.id as subject_id, s.subject_name, s.subject_code
+                 FROM class_subjects cs
+                 JOIN subjects s ON cs.subject_id = s.id
+                 JOIN class_subject_groups csg ON csg.class_subject_id = cs.id
+                 JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
+                 JOIN class_students cs2 ON cs2.student_id = ssr.student_id AND cs2.class_id = ?
+                 WHERE ssr.status = 'Đang học'
+                 ORDER BY s.subject_name",
+                [$classId]
+            );
+
+            // Lấy danh sách sinh viên từ class_students
+            $students = db_fetch_all(
+                "SELECT u.id as student_id, u.full_name, u.username, u.birth_date
+                 FROM users u
+                 JOIN class_students cs ON u.id = cs.student_id
+                 WHERE cs.class_id = ?
+                 ORDER BY u.full_name",
+                [$classId]
+            );
+        }
     } else {
         $classWarning = 'Tài khoản BCS chưa được gán lớp trong hệ thống.';
     }
@@ -297,21 +316,21 @@ function attendanceSemesterLabel($semesterName, $academicYear) {
                         </thead>
                         <tbody id="studentTableBody">
                             <?php foreach ($students as $idx => $student): ?>
-                            <tr data-student-id="<?= $student['id'] ?>">
+                            <tr data-student-id="<?= $student['student_id'] ?>">
                                 <td class="text-center"><?= $idx + 1 ?></td>
-                                <td><?= e($student['student_code']) ?></td>
+                                <td><?= e($student['username'] ?? '') ?></td>
                                 <td class="fw-bold text-dark"><?= e($student['full_name']) ?></td>
                                 <td><?= $student['birth_date'] ? formatDate($student['birth_date']) : '-' ?></td>
                                 <td><?= e($className) ?></td>
                                 <td>
-                                    <select class="form-select form-select-sm attendance-status-dropdown" id="status_<?= $student['id'] ?>" onchange="setAttendanceDropdown(<?= $student['id'] ?>, this.value)">
+                                    <select class="form-select form-select-sm attendance-status-dropdown" id="status_<?= $student['student_id'] ?>" onchange="setAttendanceDropdown(<?= $student['student_id'] ?>, this.value)">
                                         <option value="1" selected>Có mặt</option>
                                         <option value="2">Có phép</option>
                                         <option value="3">Vắng</option>
                                     </select>
                                 </td>
                                 <td>
-                                    <input type="text" class="form-control form-control-sm" placeholder="Ghi chú..." id="note_<?= $student['id'] ?>">
+                                    <input type="text" class="form-control form-control-sm" placeholder="Ghi chú..." id="note_<?= $student['student_id'] ?>">
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -377,6 +396,8 @@ function attendanceSemesterLabel($semesterName, $academicYear) {
 // Pass data to JavaScript
 const CLASS_ID = <?= json_encode($classId) ?>;
 const STUDENTS_DATA = <?= json_encode($students) ?>;
+const SOURCE_TYPE = <?= json_encode($sourceType) ?>;
+const CLASS_NAME = <?= json_encode($className) ?>;
 </script>
 <style>
     .bcs-compact-select {
