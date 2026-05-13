@@ -19,7 +19,6 @@ $semesters = [];
 $academicYears = [];
 $currentSemester = null;
 $subjects = [];
-$students = [];
 $unreadCount = 0;
 
 try {
@@ -44,6 +43,9 @@ try {
     )['total'] ?? 0);
 
     if ($sourceType !== '') {
+        // Lấy học kỳ hiện tại theo cấu hình admin (org-settings.php)
+        $currentSemester = getCurrentSemester();
+
         // Lấy danh sách học kỳ
         $semesters = db_fetch_all(
             "SELECT *
@@ -57,66 +59,20 @@ try {
             if ($year !== '') {
                 $academicYears[$year] = true;
             }
-            if (
-                $currentSemester === null
-                && !empty($sem['start_date']) && !empty($sem['end_date'])
-                && date('Y-m-d') >= $sem['start_date']
-                && date('Y-m-d') <= $sem['end_date']
-            ) {
-                $currentSemester = $sem;
-            }
-        }
-        if ($currentSemester === null && !empty($semesters)) {
-            $currentSemester = $semesters[0];
         }
 
-        // Lấy danh sách môn học của lớp
-        if ($sourceType === 'class_students' && $classId) {
-            $subjects = db_fetch_all(
-                "SELECT DISTINCT cs.id as class_subject_id, s.id as subject_id, s.subject_name, s.subject_code
-                 FROM class_subjects cs
-                 JOIN subjects s ON cs.subject_id = s.id
-                 JOIN class_subject_groups csg ON csg.class_subject_id = cs.id
-                 JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
-                 JOIN class_students cs2 ON cs2.student_id = ssr.student_id AND cs2.class_id = ?
-                 WHERE ssr.status = 'Đang học'
-                 ORDER BY s.subject_name",
-                [$classId]
-            );
-
-            // Lấy danh sách sinh viên trong lớp
-            $students = db_fetch_all(
-                "SELECT u.id as student_id, u.full_name, u.username, u.birth_date
-                 FROM users u
-                 JOIN class_students cs ON u.id = cs.student_id
-                 WHERE cs.class_id = ?
-                 ORDER BY u.full_name",
-                [$classId]
-            );
-        } else {
-            // Từ class_students
-            $subjects = db_fetch_all(
-                "SELECT DISTINCT cs.id as class_subject_id, s.id as subject_id, s.subject_name, s.subject_code
-                 FROM class_subjects cs
-                 JOIN subjects s ON cs.subject_id = s.id
-                 JOIN class_subject_groups csg ON csg.class_subject_id = cs.id
-                 JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
-                 JOIN class_students cs2 ON cs2.student_id = ssr.student_id AND cs2.class_id = ?
-                 WHERE ssr.status = 'Đang học'
-                 ORDER BY s.subject_name",
-                [$classId]
-            );
-
-            // Lấy danh sách sinh viên từ class_students
-            $students = db_fetch_all(
-                "SELECT u.id as student_id, u.full_name, u.username, u.birth_date
-                 FROM users u
-                 JOIN class_students cs ON u.id = cs.student_id
-                 WHERE cs.class_id = ?
-                 ORDER BY u.full_name",
-                [$classId]
-            );
-        }
+        // Lấy danh sách môn học (BCS chỉ thấy môn mà sv lớp đã đăng ký)
+        $subjects = db_fetch_all(
+            "SELECT DISTINCT cs.id as class_subject_id, s.id as subject_id, s.subject_name, s.subject_code
+             FROM class_subjects cs
+             JOIN subjects s ON cs.subject_id = s.id
+             JOIN class_subject_groups csg ON csg.class_subject_id = cs.id
+             JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
+             JOIN class_students cs2 ON cs2.student_id = ssr.student_id AND cs2.class_id = ?
+             WHERE ssr.status = 'Đang học'
+             ORDER BY s.subject_name",
+            [$classId]
+        );
     } else {
         $classWarning = 'Tài khoản BCS chưa được gán lớp trong hệ thống.';
     }
@@ -226,12 +182,12 @@ function attendanceSemesterLabel($semesterName, $academicYear) {
                     <div class="col-12 col-md-3">
                         <label class="fw-bold small text-muted mb-1">HỌC KỲ</label>
                         <select class="form-select border-primary bg-light fw-bold text-primary bcs-compact-select bcs-short-select" id="filterSemester">
-                            <option value="all">-- Tất cả --</option>
                             <?php foreach ($semesters as $sem): ?>
                             <option value="<?= e($sem['semester_name']) ?>" data-year="<?= e($sem['academic_year'] ?? '') ?>" <?= (($currentSemester['semester_name'] ?? '') === ($sem['semester_name'] ?? '') && ($currentSemester['academic_year'] ?? '') === ($sem['academic_year'] ?? '')) ? 'selected' : '' ?>>
                                 <?= e(attendanceSemesterLabel($sem['semester_name'] ?? '', $sem['academic_year'] ?? '')) ?>
                             </option>
                             <?php endforeach; ?>
+                            <option value="all">-- Xem tất cả học kỳ --</option>
                         </select>
                     </div>
                     <div class="col-12 col-md-4">
@@ -268,7 +224,7 @@ function attendanceSemesterLabel($semesterName, $academicYear) {
                         <div class="p-2 bg-light rounded text-dark small border-start border-3 border-primary fixed-info-box" id="subjectInfoBox">
                             <div class="row g-2 w-100 m-0">
                                 <div class="col-md-4 p-0"><i class="bi bi-person-badge text-primary me-1"></i>Giảng viên: <strong id="lblTeacher">...</strong></div>
-                                <div class="col-md-4 p-0"><i class="bi bi-calendar2-range text-primary me-1"></i>Thời gian: <strong id="lblTime">...</strong></div>
+                                <div class="col-md-4 p-0" style="white-space: nowrap;"><i class="bi bi-calendar2-range text-primary me-1"></i>Thời gian: <strong id="lblTime">...</strong></div>
                                 <div class="col-md-4 p-0"><i class="bi bi-geo-alt text-primary me-1"></i>Phòng: <strong id="lblRoom">...</strong></div>
                             </div>
                         </div>
@@ -307,7 +263,7 @@ function attendanceSemesterLabel($semesterName, $academicYear) {
                             <tr>
                                 <th class="text-center" style="width: 60px;">STT</th>
                                 <th style="width: 150px;">MSSV</th>
-                                <th style="width: 200px;">HỌ VÀ TÊN</th>
+                                <th style="min-width: 160px;">HỌ VÀ TÊN</th>
                                 <th style="width: 110px;">NGÀY SINH</th>
                                 <th style="width: 90px;">LỚP</th>
                                 <th style="width: 150px;">TRẠNG THÁI</th>
@@ -315,32 +271,17 @@ function attendanceSemesterLabel($semesterName, $academicYear) {
                             </tr>
                         </thead>
                         <tbody id="studentTableBody">
-                            <?php foreach ($students as $idx => $student): ?>
-                            <tr data-student-id="<?= $student['student_id'] ?>">
-                                <td class="text-center"><?= $idx + 1 ?></td>
-                                <td><?= e($student['username'] ?? '') ?></td>
-                                <td class="fw-bold text-dark"><?= e($student['full_name']) ?></td>
-                                <td><?= $student['birth_date'] ? formatDate($student['birth_date']) : '-' ?></td>
-                                <td><?= e($className) ?></td>
-                                <td>
-                                    <select class="form-select form-select-sm attendance-status-dropdown" id="status_<?= $student['student_id'] ?>" onchange="setAttendanceDropdown(<?= $student['student_id'] ?>, this.value)">
-                                        <option value="1" selected>Có mặt</option>
-                                        <option value="2">Có phép</option>
-                                        <option value="3">Vắng</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <input type="text" class="form-control form-control-sm" placeholder="Ghi chú..." id="note_<?= $student['student_id'] ?>">
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
+                            <tr><td colspan="7" class="text-center text-muted py-5">
+                                <i class="bi bi-arrow-left-circle fs-3 d-block mb-2 mx-auto text-muted" style="opacity:0.4"></i>
+                                Vui lòng chọn <strong>môn học</strong> và <strong>nhóm</strong> để hiển thị danh sách sinh viên.
+                            </td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-            <div class="card-footer bg-white p-3 d-flex justify-content-between align-items-center">
-                <span class="fw-bold text-primary" id="studentCountText">Sĩ số: <span id="totalCount"><?= count($students) ?></span> | Có mặt: <span id="presentCount">0</span> | Vắng: <span id="absentCount">0</span></span>
-                <button class="btn btn-primary px-5 fw-bold shadow-sm" id="bcsSaveAttendanceBtn"><i class="bi bi-floppy-fill me-2"></i>Lưu Dữ Liệu</button>
+            <div class="card-footer attendance-footer bg-white p-3 d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-primary" id="studentCountText">Sĩ số: <span id="totalCount">0</span> | Có mặt: <span id="presentCount">0</span> | Vắng: <span id="absentCount">0</span></span>
+                <span id="autoSaveStatus" class="small"></span>
             </div>
         </div>
 
@@ -358,6 +299,7 @@ function attendanceSemesterLabel($semesterName, $academicYear) {
         <div class="alert alert-info small border-0 py-2">
             <i class="bi bi-info-circle-fill me-1"></i> Sinh viên được thêm sẽ mặc định <b>"Có mặt"</b> và lưu vào danh sách nhóm hiện tại.
         </div>
+        <div id="addStudentError" class="alert alert-danger small py-2 d-none"></div>
         <form id="addStudentForm">
           <div class="row">
               <div class="col-md-6 mb-3">
@@ -391,11 +333,9 @@ function attendanceSemesterLabel($semesterName, $academicYear) {
 <script src="../../public/js/script.js"></script>
 <script src="../../public/js/bcs/bcs-layout.js"></script>
 <script src="../../public/js/bcs/attendance.js"></script>
-<script src="../../public/js/bcs/attendance-dropdown.js"></script>
 <script>
 // Pass data to JavaScript
 const CLASS_ID = <?= json_encode($classId) ?>;
-const STUDENTS_DATA = <?= json_encode($students) ?>;
 const SOURCE_TYPE = <?= json_encode($sourceType) ?>;
 const CLASS_NAME = <?= json_encode($className) ?>;
 </script>
@@ -414,6 +354,17 @@ const CLASS_NAME = <?= json_encode($className) ?>;
     .bcs-short-input {
         max-width: 220px;
     }
+    .name-cell {
+        white-space: nowrap;
+    }
+    .attendance-footer {
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+    }
+    @keyframes bcs-spin { to { transform: rotate(360deg); } }
+    .bcs-spin { display: inline-block; animation: bcs-spin 0.7s linear infinite; }
 </style>
 </body>
 </html>

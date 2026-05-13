@@ -71,8 +71,7 @@ async function loadAdminHome() {
         ]);
 
         if (meRes.status === 401 || dashboardRes.status === 401) {
-            window.location.href = '/login.html';
-            return;
+            return; // interceptor đã redirect
         }
 
         if (meRes.ok) {

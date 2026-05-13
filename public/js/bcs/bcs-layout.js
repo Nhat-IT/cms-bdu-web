@@ -12,6 +12,16 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Xác nhận trước khi đăng xuất
+    document.querySelectorAll('.logout-btn').forEach(function (link) {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (confirm('Bạn có chắc muốn đăng xuất không?')) {
+                window.location.href = link.href;
+            }
+        });
+    });
+
     hydrateBcsSharedData();
 });
 
@@ -74,6 +84,12 @@ async function hydrateBcsSharedData() {
         }
 
         if (meRes.ok) {
+            const contentType = meRes.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                const text = await meRes.text().catch(() => '');
+                console.error('[BCS] /api/me returned non-JSON (status', meRes.status, '):', text.substring(0, 200));
+                return;
+            }
             const me = await meRes.json();
             const displayName = me.full_name || me.username || 'BCS';
             const avatar = me.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0d6efd&color=fff`;
@@ -109,6 +125,21 @@ async function hydrateBcsSharedData() {
                 if (node.children.length > 0) {
                     return;
                 }
+                
+                // Skip replacement in admin tables
+                let parent = node;
+                let isInAdminTable = false;
+                for (let i = 0; i < 5; i++) {
+                    if (parent && parent.tagName === 'TABLE' && parent.classList && parent.classList.contains('table')) {
+                        isInAdminTable = true;
+                        break;
+                    }
+                    parent = parent.parentElement;
+                    if (!parent) break;
+                }
+                if (isInAdminTable) {
+                    return;
+                }
 
                 const text = String(node.textContent || '');
                 let next = text.replace(/\b25TH01\b/g, className);
@@ -128,6 +159,21 @@ async function hydrateBcsSharedData() {
                         return;
                     }
 
+                    // Skip replacement in admin tables
+                    let parent = node;
+                    let isInAdminTable = false;
+                    for (let i = 0; i < 5; i++) {
+                        if (parent && parent.tagName === 'TABLE' && parent.classList && parent.classList.contains('table')) {
+                            isInAdminTable = true;
+                            break;
+                        }
+                        parent = parent.parentElement;
+                        if (!parent) break;
+                    }
+                    if (isInAdminTable) {
+                        return;
+                    }
+
                     const raw = String(node.getAttribute(attr) || '');
                     let next = raw.replace(/\b25TH01\b/g, className);
                     if (departmentName) {
@@ -143,11 +189,17 @@ async function hydrateBcsSharedData() {
         }
 
         if (unreadRes.ok) {
-            const data = await unreadRes.json();
-            const count = Number(data.unreadCount || 0);
-            document.querySelectorAll('.bcs-notification-count').forEach(function (node) {
-                node.textContent = String(count);
-            });
+            const unreadContentType = unreadRes.headers.get('content-type') || '';
+            if (!unreadContentType.includes('application/json')) {
+                const text = await unreadRes.text().catch(() => '');
+                console.error('[BCS] /api/notifications/unread-count returned non-JSON (status', unreadRes.status, '):', text.substring(0, 200));
+            } else {
+                const data = await unreadRes.json();
+                const count = Number(data.unreadCount || 0);
+                document.querySelectorAll('.bcs-notification-count').forEach(function (node) {
+                    node.textContent = String(count);
+                });
+            }
         }
     } catch (error) {
         console.error('BCS shared data hydration error:', error);

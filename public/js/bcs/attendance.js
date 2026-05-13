@@ -1,8 +1,26 @@
 ﻿const bcsAttendanceState = {
     groups: [],
     subjectMap: new Map(),
-    selectedGroupId: 0
+    selectedGroupId: 0,
+    _initialized: false
 };
+
+let _autoSaveTimer = null;
+
+function bcsShowSaveStatus(state) {
+    const el = document.getElementById('autoSaveStatus');
+    if (!el) return;
+    if (state === 'saving') {
+        el.innerHTML = '<span class="text-warning"><i class="bi bi-arrow-repeat bcs-spin me-1"></i>Đang lưu...</span>';
+    } else if (state === 'saved') {
+        el.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Đã lưu</span>';
+        setTimeout(() => { if (el) el.innerHTML = ''; }, 2500);
+    } else if (state === 'error') {
+        el.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>Lỗi lưu — thử lại</span>';
+    } else {
+        el.innerHTML = '';
+    }
+}
 
 const bcsToUrl = window.cmsUrl || function (path) { return path; };
 
@@ -44,16 +62,20 @@ function bcsGetSessionByPeriods(startPeriod) {
     return '';
 }
 
+function bcsNormalizeDayOfWeek(value) {
+    const map = { '2': 'Thứ 2', '3': 'Thứ 3', '4': 'Thứ 4', '5': 'Thứ 5', '6': 'Thứ 6', '7': 'Thứ 7', '8': 'CN', 'Monday': 'Thứ 2', 'Tuesday': 'Thứ 3', 'Wednesday': 'Thứ 4', 'Thursday': 'Thứ 5', 'Friday': 'Thứ 6', 'Saturday': 'Thứ 7', 'Sunday': 'CN' };
+    return map[String(value || '').trim()] || '';
+}
+
 function bcsBuildSubjectKey(group) {
     return String(group.class_subject_id || '');
 }
 
-function bcsGetGroupLabel(groupCode) {
-    const raw = String(groupCode || '').trim();
+function bcsGetGroupLabel(group) {
+    const raw = String(group.group_code || '').trim();
     if (!raw) return 'Nhóm';
     const match = raw.match(/N\s*(\d+)/i);
-    if (match) return `Nhóm ${match[1]}`;
-    return `Nhóm ${raw}`;
+    return match ? `Nhóm ${match[1]}` : `Nhóm ${raw}`;
 }
 
 function bcsClearSubjectInfo() {
@@ -65,20 +87,19 @@ function bcsClearSubjectInfo() {
     if (lblRoom) lblRoom.textContent = '...';
 }
 
-function bcsSetAttendanceAvailability(canTakeAttendance) {
-    const saveBtn = document.getElementById('bcsSaveAttendanceBtn');
-    if (saveBtn) {
-        saveBtn.disabled = !canTakeAttendance;
-        saveBtn.title = canTakeAttendance ? '' : 'Chưa có dữ liệu điểm danh để lưu.';
-    }
+function bcsSetAttendanceAvailability(_canTakeAttendance) {
+    // Auto-save mode: no manual save button to enable/disable
 }
 
 function bcsRenderRoster(students) {
     const tbody = document.getElementById('studentTableBody');
-    if (!tbody) return;
+    if (!tbody) {
+        console.error('[BCS] studentTableBody not found');
+        return;
+    }
 
     if (!students.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Chưa có dữ liệu điểm danh.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Chưa có sinh viên đăng ký nhóm này.</td></tr>';
         document.getElementById('totalCount').textContent = '0';
         document.getElementById('presentCount').textContent = '0';
         document.getElementById('absentCount').textContent = '0';
@@ -93,9 +114,11 @@ function bcsRenderRoster(students) {
             ? 'bg-warning bg-opacity-10'
             : (statusValue === 3 ? 'bg-danger bg-opacity-10' : '');
         const isUnexcused = statusValue === 3;
+        const savedNote = (sv.note || '').replace(/"/g, '&quot;');
+        const registrationId = Number(sv.registration_id || 0);
 
         return `
-            <tr class="student-row ${rowClass}" data-student-id="${sv.student_id}">
+            <tr class="student-row ${rowClass}" data-student-id="${sv.student_id}" data-registration-id="${registrationId}">
                 <td class="text-center stt-col text-muted">${idx + 1}</td>
                 <td class="fw-bold text-dark mssv-cell">${sv.username || ''}</td>
                 <td class="fw-bold ${isUnexcused ? 'text-danger' : 'text-dark'} student-name name-cell">${sv.full_name || ''}</td>
@@ -108,7 +131,7 @@ function bcsRenderRoster(students) {
                         <option value="3" ${statusValue === 3 ? 'selected' : ''}>Vắng không phép</option>
                     </select>
                 </td>
-                <td><input type="text" class="form-control form-control-sm bg-light border-0" placeholder="Ghi chú..."></td>
+                <td><input type="text" class="form-control form-control-sm bg-light border-0 note-input" placeholder="Ghi chú..." value="${savedNote}"></td>
             </tr>`;
     }).join('');
 
@@ -166,9 +189,11 @@ function bcsPopulateSelectors(groups) {
     });
     subjectSelect.innerHTML = options.join('');
 
+    const isFirstLoad = !bcsAttendanceState._initialized;
+
     if (currentSubject && bcsAttendanceState.subjectMap.has(currentSubject)) {
         subjectSelect.value = currentSubject;
-    } else if (subjectSelect.options.length > 1) {
+    } else if (isFirstLoad && subjectSelect.options.length > 1) {
         subjectSelect.value = subjectSelect.options[1].value;
     }
 
@@ -187,6 +212,7 @@ function bcsPopulateSelectors(groups) {
 function bcsApplyFilters() {
     const filteredGroups = bcsFilterGroupsBySemester(bcsAttendanceState.groups);
     bcsPopulateSelectors(filteredGroups);
+    bcsAttendanceState._initialized = true;
 }
 
 async function bcsLoadRoster() {
@@ -199,23 +225,39 @@ async function bcsLoadRoster() {
     const date = document.getElementById('attendanceDate')?.value;
     if (!date) return;
 
-    const res = await fetch(bcsToUrl(`/api/bcs/attendance/roster?groupId=${bcsAttendanceState.selectedGroupId}&date=${encodeURIComponent(date)}`), {
-        headers: { Accept: 'application/json' }
-    });
+    const url = bcsToUrl(`/api/bcs/attendance/roster?groupId=${bcsAttendanceState.selectedGroupId}&date=${encodeURIComponent(date)}`);
+    const res = await fetch(url, { headers: { Accept: 'application/json' } });
 
     if (res.status === 401) {
         window.location.href = bcsToUrl('/login.php');
         return;
     }
 
-    const data = await res.json().catch(() => ({}));
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+        const text = await res.text().catch(() => '');
+        console.error('[BCS] roster API returned non-JSON:', res.status, text.substring(0, 200));
+        bcsRenderRoster([]);
+        return;
+    }
+    const data = await res.json();
+
     if (!res.ok) {
+        console.error('[BCS] roster API error', res.status, data);
         alert(data.error || 'Không thể tải danh sách điểm danh.');
+        bcsRenderRoster([]);
         return;
     }
 
     const students = Array.isArray(data.students) ? data.students : [];
     bcsRenderRoster(students);
+
+    if (data.studySession) {
+        const sessionSelect = document.getElementById('attendanceSession');
+        if (sessionSelect && Array.from(sessionSelect.options).some(o => o.value === data.studySession)) {
+            sessionSelect.value = data.studySession;
+        }
+    }
 }
 
 window.onSubjectChange = function () {
@@ -237,7 +279,7 @@ window.onSubjectChange = function () {
     }
 
     groupSelect.innerHTML = groups
-        .map((g) => `<option value="${g.group_id}">${bcsGetGroupLabel(g.group_code)}</option>`)
+        .map((g) => `<option value="${g.group_id}">${bcsGetGroupLabel(g)}</option>`)
         .join('');
 
     groupSelect.value = String(groups[0].group_id);
@@ -258,14 +300,13 @@ window.onGroupChange = function () {
         const roomDisplay = group.room_name || group.room || 'N/A';
         const sessionByPeriod = bcsGetSessionByPeriods(group.start_period);
         const sessionValue = sessionByPeriod || String(group.study_session || '').trim();
+        const dayLabel = bcsNormalizeDayOfWeek(group.day_of_week);
+        const dateRange = `${bcsFormatDate(group.start_date)} - ${bcsFormatDate(group.end_date)}`;
+        const timeDisplay = dayLabel ? `${dayLabel} | ${dateRange}` : dateRange;
 
         if (lblTeacher) lblTeacher.textContent = group.teacher_name || 'Chưa cập nhật';
-        if (lblTime) {
-            lblTime.textContent = `${bcsFormatDate(group.start_date)} - ${bcsFormatDate(group.end_date)}`;
-        }
-        if (lblRoom) {
-            lblRoom.textContent = roomDisplay;
-        }
+        if (lblTime) lblTime.textContent = timeDisplay;
+        if (lblRoom) lblRoom.textContent = roomDisplay;
         if (sessionSelect && sessionValue) {
             sessionSelect.value = sessionValue;
         }
@@ -295,6 +336,8 @@ window.updateColor = function (selectElement) {
     }
 
     window.recalculateAttendance();
+    clearTimeout(_autoSaveTimer);
+    _autoSaveTimer = setTimeout(saveBcsAttendanceSilent, 400);
 };
 
 window.recalculateAttendance = function () {
@@ -330,8 +373,55 @@ window.checkSessionReason = function () {
     if (sessionDiv) sessionDiv.classList.add('invisible');
 };
 
-window.addStudentToTable = function () {
-    alert('Bạn cần thêm sinh viên tại trang phân công lớp học.');
+window.addStudentToTable = async function () {
+    const groupId = bcsAttendanceState.selectedGroupId;
+    if (!groupId) {
+        document.getElementById('addStudentError').textContent = 'Vui lòng chọn nhóm trước khi thêm sinh viên.';
+        document.getElementById('addStudentError').classList.remove('d-none');
+        return;
+    }
+
+    const mssv      = (document.getElementById('newMssv')?.value     || '').trim();
+    const fullName  = (document.getElementById('newFullName')?.value  || '').trim();
+    const birthDate = (document.getElementById('newDob')?.value       || '');
+    const className = (document.getElementById('newClass')?.value     || '').trim();
+
+    const errEl = document.getElementById('addStudentError');
+    errEl?.classList.add('d-none');
+
+    if (!mssv || !fullName || !className) {
+        if (errEl) { errEl.textContent = 'Vui lòng điền đầy đủ MSSV, Họ tên và Lớp.'; errEl.classList.remove('d-none'); }
+        return;
+    }
+
+    const addBtn = document.querySelector('#addStudentModal .modal-footer .btn-primary');
+    if (addBtn) { addBtn.disabled = true; addBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang thêm...'; }
+
+    try {
+        const res = await fetch(bcsToUrl('/api/bcs/attendance/add-student'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({ groupId, mssv, fullName, birthDate, className })
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            if (errEl) { errEl.textContent = data.error || 'Không thể thêm sinh viên.'; errEl.classList.remove('d-none'); }
+            return;
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById('addStudentModal'))?.hide();
+        document.getElementById('addStudentForm')?.reset();
+        const classInput = document.getElementById('newClass');
+        if (classInput) classInput.value = window.CLASS_NAME || '';
+        bcsLoadRoster();
+
+    } catch (e) {
+        if (errEl) { errEl.textContent = 'Lỗi kết nối. Vui lòng thử lại.'; errEl.classList.remove('d-none'); }
+    } finally {
+        if (addBtn) { addBtn.disabled = false; addBtn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Thêm vào danh sách'; }
+    }
 };
 
 window.exportToExcel = function () {
@@ -371,6 +461,37 @@ window.exportToExcel = function () {
     URL.revokeObjectURL(url);
 };
 
+async function saveBcsAttendanceSilent() {
+    const date = document.getElementById('attendanceDate')?.value;
+    if (!bcsAttendanceState.selectedGroupId || !date) return;
+
+    const records = Array.from(document.querySelectorAll('#studentTableBody tr.student-row')).map((row) => ({
+        studentId: Number(row.getAttribute('data-student-id')),
+        registrationId: Number(row.getAttribute('data-registration-id') || 0),
+        status: bcsParseStatus(row.querySelector('.status-select')?.value),
+        note: (row.querySelector('.note-input')?.value || '').trim()
+    }));
+
+    if (!records.length) return;
+
+    bcsShowSaveStatus('saving');
+    try {
+        const res = await fetch(bcsToUrl('/api/bcs/attendance/save'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({
+                groupId: bcsAttendanceState.selectedGroupId,
+                attendanceDate: date,
+                session: document.getElementById('attendanceSession')?.value || '',
+                records
+            })
+        });
+        bcsShowSaveStatus(res.ok ? 'saved' : 'error');
+    } catch (e) {
+        bcsShowSaveStatus('error');
+    }
+}
+
 async function saveBcsAttendance() {
     const date = document.getElementById('attendanceDate')?.value;
     if (!bcsAttendanceState.selectedGroupId || !date) {
@@ -380,7 +501,9 @@ async function saveBcsAttendance() {
 
     const records = Array.from(document.querySelectorAll('#studentTableBody tr.student-row')).map((row) => ({
         studentId: Number(row.getAttribute('data-student-id')),
-        status: bcsParseStatus(row.querySelector('.status-select')?.value)
+        registrationId: Number(row.getAttribute('data-registration-id') || 0),
+        status: bcsParseStatus(row.querySelector('.status-select')?.value),
+        note: (row.querySelector('.note-input')?.value || '').trim()
     }));
 
     if (!records.length) {
@@ -406,6 +529,7 @@ async function saveBcsAttendance() {
     }
 
     alert('Đã lưu dữ liệu điểm danh thành công.');
+    bcsLoadRoster();
 }
 
 window.saveAttendance = saveBcsAttendance;
@@ -417,11 +541,17 @@ async function loadBcsAttendanceData() {
         return;
     }
     if (!res.ok) {
+        const errText = await res.text();
+        console.error('[BCS Attendance] groups API error:', res.status, errText);
         return;
     }
 
     const groups = await res.json();
-    bcsAttendanceState.groups = Array.isArray(groups) ? groups : [];
+    if (!Array.isArray(groups)) {
+        console.error('[BCS Attendance] groups API returned non-array:', groups);
+        return;
+    }
+    bcsAttendanceState.groups = groups;
 
     const semesterSelect = document.getElementById('filterSemester');
     const dateInput = document.getElementById('attendanceDate');
@@ -435,7 +565,10 @@ async function loadBcsAttendanceData() {
         dateInput.value = new Date().toISOString().slice(0, 10);
     }
     dateInput?.addEventListener('change', bcsLoadRoster);
-    document.getElementById('bcsSaveAttendanceBtn')?.addEventListener('click', saveBcsAttendance);
+
+    document.getElementById('addStudentModal')?.addEventListener('show.bs.modal', function () {
+        document.getElementById('addStudentError')?.classList.add('d-none');
+    });
 }
 
 document.addEventListener('DOMContentLoaded', loadBcsAttendanceData);

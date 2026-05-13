@@ -153,6 +153,20 @@ function replaceStaticStudentPlaceholders(profile, classes) {
         if (node.children.length > 0) {
             return;
         }
+        // Skip replacement in admin tables
+        let parent = node;
+        let isInAdminTable = false;
+        for (let i = 0; i < 5; i++) {
+            if (parent && parent.tagName === 'TABLE' && parent.classList && parent.classList.contains('table')) {
+                isInAdminTable = true;
+                break;
+            }
+            parent = parent.parentElement;
+            if (!parent) break;
+        }
+        if (isInAdminTable) {
+            return;
+        }
         const text = String(node.textContent || '');
         let next = text.replace(/\b25TH01\b/g, className);
         if (departmentName) {
@@ -167,6 +181,20 @@ function replaceStaticStudentPlaceholders(profile, classes) {
     document.querySelectorAll('*').forEach(function (node) {
         ['value', 'placeholder', 'title', 'onclick', 'data-source'].forEach(function (attr) {
             if (!node.hasAttribute(attr)) {
+                return;
+            }
+            // Skip replacement in admin tables
+            let parent = node;
+            let isInAdminTable = false;
+            for (let i = 0; i < 5; i++) {
+                if (parent && parent.tagName === 'TABLE' && parent.classList && parent.classList.contains('table')) {
+                    isInAdminTable = true;
+                    break;
+                }
+                parent = parent.parentElement;
+                if (!parent) break;
+            }
+            if (isInAdminTable) {
                 return;
             }
             const raw = String(node.getAttribute(attr) || '');

@@ -175,6 +175,8 @@ try {
         $semester = strtoupper(trim((string)($input['semester'] ?? '')));
         $year = trim((string)($input['year'] ?? ''));
         $semesterId = (int)($input['semester_id'] ?? 0);
+        $docId = (int)($input['doc_id'] ?? 0);
+        $storage = trim((string)($input['storage'] ?? ''));
 
         if ($semester === 'ALL') {
             $semester = '';
@@ -198,6 +200,33 @@ try {
         }
 
         $iconType = docs_detect_icon($title, 'file');
+
+        // Database-stored file (from upload-to-drive.php): update with proper metadata
+        if ($storage === 'database' && $docId > 0) {
+            $existing = db_fetch_one(
+                "SELECT id, class_subject_id, uploader_id FROM documents WHERE id = ? AND uploader_id = ? LIMIT 1",
+                [$docId, $userId]
+            );
+            if (!$existing) {
+                docs_json(404, ['ok' => false, 'error' => 'Không tìm thấy tài liệu trong CSDL để cập nhật']);
+            }
+            db_query(
+                "UPDATE documents
+                 SET title = ?, note = ?, category = ?, icon_type = ?, class_subject_id = ?, semester = ?
+                 WHERE id = ?",
+                [
+                    $title,
+                    $note !== '' ? $note : null,
+                    $category,
+                    $iconType,
+                    $classSubjectId,
+                    $semester !== '' ? $semester : null,
+                    $docId
+                ]
+            );
+            docs_json(200, ['ok' => true, 'message' => 'created']);
+        }
+
         db_query(
             "INSERT INTO documents (title, note, category, drive_link, drive_file_id, icon_type, class_subject_id, uploader_id, semester)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",

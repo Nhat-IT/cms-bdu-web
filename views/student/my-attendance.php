@@ -38,23 +38,7 @@ function studentAttendanceSemesterLabel($semesterName, $academicYear): string {
     return trim((string)$semesterName . ($year !== '' ? (' - ' . $year) : ''));
 }
 
-$currentSemester = db_fetch_one(
-    "SELECT id, semester_name, academic_year, start_date, end_date
-     FROM semesters
-     WHERE CURDATE() BETWEEN start_date AND end_date
-     ORDER BY start_date DESC
-     LIMIT 1"
-);
-if (!$currentSemester) {
-    $currentSemester = db_fetch_one(
-        "SELECT id, semester_name, academic_year, start_date, end_date
-         FROM semesters
-         ORDER BY academic_year DESC,
-                  FIELD(UPPER(semester_name), 'HK1', '1', 'HK2', '2', 'HK3', '3'),
-                  start_date DESC
-         LIMIT 1"
-    );
-}
+$currentSemester = getCurrentSemester();
 
 $subjects = db_fetch_all(
     "SELECT DISTINCT cs.id as class_subject_id,

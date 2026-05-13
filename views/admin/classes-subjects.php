@@ -9,20 +9,31 @@ require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/helpers.php';
 
 // Bảo vệ trang - chỉ admin và support_admin được phép truy cập
+
+// ── Auth guard: browser page requests phải redirect, không trả JSON ──────────
+if (!isLoggedIn()) {
+    header('Location: /cms/login.php');
+    exit;
+}
+if (!hasRole(['admin', 'support_admin'])) {
+    header('Location: /cms/login.php?error=forbidden');
+    exit;
+}
+// ─────────────────────────────────────────────────────────────────────────────
 requireRole(['admin', 'support_admin']);
 
 // Lấy thông tin admin hiện tại
 $currentUser = getCurrentUser();
 
-// Lấy danh sách lớp học với số lượng sinh viên (từ class_students)
+// Đếm sinh viên theo class_name trong student_subject_registration (DISTINCT mssv)
 $classes = db_fetch_all("
     SELECT c.*, d.department_name,
-           COALESCE(
-               (SELECT COUNT(*) 
-                FROM class_students cs2
-                WHERE cs2.class_id = c.id),
-               0
-           ) as student_count
+        (
+            SELECT COUNT(DISTINCT ssr.mssv)
+            FROM student_subject_registration ssr
+            WHERE ssr.class_name = c.class_name
+              AND ssr.mssv IS NOT NULL AND ssr.mssv != ''
+        ) AS student_count
     FROM classes c
     LEFT JOIN departments d ON c.department_id = d.id
     ORDER BY c.class_name DESC
@@ -106,6 +117,14 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
 ?>
 
     <div class="p-4">
+        <?php if (isset($_SESSION['flash_error'])): ?>
+            <div class="alert alert-danger d-flex align-items-center" role="alert" id="permanentAlert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span><?= e($_SESSION['flash_error']) ?></span>
+            </div>
+            <?php unset($_SESSION['flash_error']); ?>
+        <?php endif; ?>
+
         <?php if (isset($_GET['class_success'])): ?>
             <div class="alert alert-success d-flex align-items-center" role="alert" id="permanentAlert">
                 <i class="bi bi-check-circle-fill me-2"></i>
@@ -196,7 +215,43 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                 <?php endif; ?>
             </div>
         <?php endif; ?>
-        
+
+        <?php
+        $totalSubjects   = count($subjects);
+        $activeSubjects  = 0;
+        foreach ($subjects as $s) {
+            if (!empty($s['computed_status']) && $s['computed_status'] === '1') {
+                $activeSubjects++;
+            }
+        }
+        ?>
+
+        <!-- Stats row -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body d-flex align-items-center gap-3 py-3">
+                        <div class="icon-box-custom bg-light text-primary"><i class="bi bi-journal-bookmark-fill"></i></div>
+                        <div>
+                            <p class="text-muted mb-0 small fw-bold">TỔNG MÔN HỌC</p>
+                            <h4 class="mb-0 fw-bold"><?php echo number_format($totalSubjects); ?></h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 border-start border-success border-3">
+                    <div class="card-body d-flex align-items-center gap-3 py-3">
+                        <div class="icon-box-custom bg-light text-success"><i class="bi bi-check-circle-fill"></i></div>
+                        <div>
+                            <p class="text-muted mb-0 small fw-bold">ĐANG MỞ</p>
+                            <h4 class="mb-0 fw-bold text-success"><?php echo number_format($activeSubjects); ?></h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white pt-3 pb-0 border-0">
                 <ul class="nav nav-tabs border-bottom-0" id="myTab" role="tablist">
@@ -251,11 +306,17 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                                 <tbody id="classTableBody">
                                     <?php if (count($classes) > 0): ?>
                                         <?php foreach ($classes as $index => $class): ?>
+                                            <?php 
+                                            $rawClassName = $class['class_name'] ?? '';
+                                            $rawAcademicYear = $class['academic_year'] ?? '';
+                                            $displayClassName = !empty($rawClassName) ? e($rawClassName) : '<span class="text-danger">Chưa có tên</span>'; 
+                                            $displayAcademicYear = !empty($rawAcademicYear) ? e($rawAcademicYear) : '<span class="text-danger small">Chưa có</span>';
+                                            ?>
                                             <tr>
                                                 <td class="ps-4 text-muted"><?php echo $index + 1; ?></td>
-                                                <td class="fw-bold text-primary fs-6"><?php echo e($class['class_name']); ?></td>
+                                                <td class="fw-bold text-primary fs-6"><?php echo $displayClassName; ?></td>
                                                 <td><?php echo e($class['department_name'] ?? 'Chưa phân ngành'); ?></td>
-                                                <td><?php echo e($class['academic_year']); ?></td>
+                                                <td><?php echo $displayAcademicYear; ?></td>
                                                 <td class="text-center">
                                                     <?php if ($class['student_count'] > 0): ?>
                                                         <span class="badge student-count-soft"><?php echo $class['student_count']; ?> SV</span>
@@ -1006,8 +1067,15 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                 statusDisplay.textContent = 'Đã đóng';
                 statusDisplay.className = 'form-control border-secondary bg-secondary text-white fw-bold';
             }
-            // Readonly display
-            document.getElementById('modalAcademicYear').value = academicYear || '';
+            // Readonly display — đảm bảo academic_year luôn có trong dropdown dù không còn trong semesters
+            const aySelect = document.getElementById('modalAcademicYear');
+            if (academicYear && ![...aySelect.options].some(o => o.value === academicYear)) {
+                const opt = document.createElement('option');
+                opt.value = academicYear;
+                opt.textContent = academicYear;
+                aySelect.insertBefore(opt, aySelect.options[1]);
+            }
+            aySelect.value = academicYear || '';
             document.getElementById('modalYearLevel').value = yearLevel || '';
             document.getElementById('modalSemester').value = semester || '';
                 openDateInput.value = openDate || '';
@@ -1031,7 +1099,10 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
 
     function fmtDate(d) {
         if (!d) return '—';
-        const [y, mo, day] = d.split('-');
+        const dateOnly = String(d).split(' ')[0];
+        const parts = dateOnly.split('-');
+        if (parts.length !== 3) return String(d);
+        const [y, mo, day] = parts;
         return `${day}/${mo}/${y}`;
     }
 
@@ -1045,8 +1116,8 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
         document.getElementById('historyOpenDate').value = openDate || '';
         document.getElementById('historyCloseDate').value = closeDate || '';
         // Card inputs
-        document.getElementById('historySetOpenDate').value = openDate || '';
-        document.getElementById('historySetCloseDate').value = closeDate || '';
+        document.getElementById('historySetOpenDate').value = openDate ? openDate.split(' ')[0] : '';
+        document.getElementById('historySetCloseDate').value = closeDate ? closeDate.split(' ')[0] : '';
         // Ràng buộc ngày card
         const o = document.getElementById('historySetOpenDate');
         const c = document.getElementById('historySetCloseDate');
@@ -1106,7 +1177,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                 }
                 alert('Đã lưu thay đổi!');
             } else {
-                alert('Lỗi: ' + (data.msg || 'Không thể lưu.'));
+                alert('Lỗi: ' + (data.message || 'Không thể lưu.'));
             }
         })
         .catch(() => alert('Lỗi kết nối!'));
@@ -1146,7 +1217,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                     <td class="small">${semesterLabel(h.semester) || '—'}</td>
                     <td class="small">${fmtDate(h.new_open_date)}</td>
                     <td class="small">${fmtDate(h.new_close_date)}</td>
-                    <td>${statusBadge}</td>
+                    <td>${icon} ${statusBadge}</td>
                 </tr>`;
             }).join('');
         })

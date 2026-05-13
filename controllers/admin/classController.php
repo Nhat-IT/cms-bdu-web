@@ -8,7 +8,7 @@ require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/helpers.php';
 
-requireRole('admin');
+requireRole(['admin', 'support_admin']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirect('../../views/admin/classes-subjects.php');
@@ -25,6 +25,10 @@ if (!in_array($action, ['save', 'delete'], true)) {
 }
 
 if ($action === 'save' && ($className === '' || $academicYear === '')) {
+    $missing = [];
+    if ($className === '') $missing[] = 'Tên lớp';
+    if ($academicYear === '') $missing[] = 'Niên khóa';
+    $_SESSION['flash_error'] = 'Thiếu thông tin: ' . implode(', ', $missing) . '. Vui lòng nhập đầy đủ.';
     redirect('../../views/admin/classes-subjects.php?class_error=missing_data');
 }
 

@@ -164,11 +164,18 @@ class LazyPDOProxy {
     }
 }
 
-// Chế độ hiển thị lỗi (Tắt khi deploy)
+// Chế độ hiển thị lỗi
 $appDebug = strtolower((string) envOrDefault('APP_DEBUG', 'false'));
 $isDebug = in_array($appDebug, ['1', 'true', 'yes', 'on'], true);
-ini_set('display_errors', $isDebug ? '1' : '0');
-error_reporting(E_ALL);
+
+// API requests: always suppress HTML error output, log instead
+if ($isDebug && isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
+    ini_set('display_errors', '0');
+    error_reporting(E_ALL);
+} else {
+    ini_set('display_errors', $isDebug ? '1' : '0');
+    error_reporting(E_ALL);
+}
 
 // Khởi tạo kết nối MySQLi
 function getDBConnection() {

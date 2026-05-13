@@ -8,7 +8,7 @@ require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/helpers.php';
 
-requireRole('admin');
+requireRole(['admin', 'support_admin']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirect('../../views/admin/classes-subjects.php?tab=room');

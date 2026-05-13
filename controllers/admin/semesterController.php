@@ -33,6 +33,7 @@ try {
     if ($action === 'set_current') {
         if ($id > 0) {
             $_SESSION['current_semester_id'] = $id;
+            setSetting('current_semester_id', $id);
             logSystem("Đặt học kỳ ID #$id làm hiện tại", 'semesters', $id);
             redirect('../../views/admin/org-settings.php?tab=semester&semester_current=1');
         }
@@ -44,6 +45,9 @@ try {
             db_query('DELETE FROM semesters WHERE id = ?', [$id]);
             if (isset($_SESSION['current_semester_id']) && (int) $_SESSION['current_semester_id'] === $id) {
                 unset($_SESSION['current_semester_id']);
+            }
+            if ((int) getSetting('current_semester_id') === $id) {
+                setSetting('current_semester_id', '');
             }
             logSystem("Xóa học kỳ ID #$id - $semesterName", 'semesters', $id);
             redirect('../../views/admin/org-settings.php?tab=semester&semester_deleted=1');

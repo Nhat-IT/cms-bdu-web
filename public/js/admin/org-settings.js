@@ -69,8 +69,7 @@ function renderSemesters() {
 async function loadAdminOrgSettings() {
     const res = await fetch('/api/admin/org-settings', { headers: { Accept: 'application/json' } });
     if (res.status === 401) {
-        window.location.href = '/login.html';
-        return;
+        return; // interceptor đã redirect
     }
 
     const data = await res.json().catch(() => ({}));

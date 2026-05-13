@@ -33,8 +33,14 @@ function bcsFormatFileSize($bytes) {
     return round($size / (1024 * 1024 * 1024), 1) . ' GB';
 }
 
-function bcsDocumentSizeLabel($driveLink) {
-    $link = trim((string)$driveLink);
+function bcsDocumentSizeLabel($doc) {
+    $link = trim((string)($doc['drive_link'] ?? ''));
+    $dbSize = (int)($doc['file_size'] ?? 0);
+
+    if ($dbSize > 0) {
+        return bcsFormatFileSize($dbSize);
+    }
+
     if ($link === '') return '-';
 
     $path = (string)(parse_url($link, PHP_URL_PATH) ?? '');
@@ -84,14 +90,8 @@ try {
                   FIELD(UPPER(semester_name), 'HK1', '1', 'HK2', '2', 'HK3', '3'),
                   start_date DESC"
     );
-    // Học kỳ mặc định theo ngày hiện tại
-    foreach ($semesters as $sem) {
-        if (!empty($sem['start_date']) && !empty($sem['end_date']) && date('Y-m-d') >= $sem['start_date'] && date('Y-m-d') <= $sem['end_date']) {
-            $currentSemester = $sem;
-            break;
-        }
-    }
-    if (!$currentSemester && !empty($semesters)) $currentSemester = $semesters[0];
+    // Học kỳ hiện tại: ưu tiên cấu hình admin, fallback theo ngày, fallback mới nhất
+    $currentSemester = getCurrentSemester();
 
     $selectedSemesterId = (int)($_GET['semester_id'] ?? 0);
     if ($selectedSemesterId <= 0) {
@@ -353,16 +353,33 @@ foreach ($documents as $doc) {
                             ?>
                             <tr data-title="<?= e(strtolower($doc['title'] ?? '')) ?>" data-note="<?= e(strtolower($doc['note'] ?? '')) ?>" data-category="<?= e(strtolower($doc['category'] ?? '')) ?>">
                                 <td class="ps-4 py-3">
-                                    <a href="#" class="file-link d-flex align-items-center" onclick="handleFileView(event, '<?= e($doc['drive_link'] ?? '') ?>')">
+                                    <?php
+                                    $dbHasFile   = !empty($doc['file_data']) || (int)($doc['file_size'] ?? 0) > 0;
+                                    $hasDriveLink = !empty($doc['drive_link']);
+                                    $isOwner      = (int)($doc['uploader_id'] ?? 0) === $userId;
+
+                                    if ($dbHasFile) {
+                                        $fileUrl = BASE_URL . '/api/serve-file.php?id=' . (int)$doc['id'] . '&action=view';
+                                        $dlUrl   = BASE_URL . '/api/serve-file.php?id=' . (int)$doc['id'] . '&action=download';
+                                    } else {
+                                        $fileUrl = $doc['drive_link'] ?? '';
+                                        $dlUrl   = $doc['drive_link'] ?? '';
+                                    }
+                                    $hasAnyFile = $dbHasFile || $hasDriveLink;
+                                    ?>
+                                    <a href="#" class="file-link d-flex align-items-center"
+                                       onclick="handleFileView(event, '<?= e($fileUrl) ?>')">
                                         <i class="bi <?= $iconClass ?> fs-3 me-3"></i>
                                         <div>
                                             <h6 class="mb-0 fw-bold text-dark file-title"><?= e($doc['title']) ?></h6>
-                                            <small class="text-muted"><?= e($doc['note'] ?? '') ?></small>
+                                            <?php if (!empty($doc['note'])): ?>
+                                            <small class="text-muted"><?= e($doc['note']) ?></small>
+                                            <?php endif; ?>
                                         </div>
                                     </a>
                                 </td>
                                 <td>
-                                    <?php 
+                                    <?php
                                     $badgeClass = 'bg-secondary';
                                     if (strpos(strtolower($doc['category'] ?? ''), 'thông báo') !== false) $badgeClass = 'bg-danger bg-opacity-10 text-danger border border-danger';
                                     elseif (strpos(strtolower($doc['category'] ?? ''), 'biên bản') !== false) $badgeClass = 'bg-warning bg-opacity-10 text-dark border border-warning';
@@ -372,13 +389,13 @@ foreach ($documents as $doc) {
                                 </td>
                                 <td><?= e($doc['uploader_name'] ?? 'Không xác định') ?></td>
                                 <td><?= formatDate($doc['created_at']) ?></td>
-                                <td class="text-center text-muted small"><?= e(bcsDocumentSizeLabel($doc['drive_link'] ?? '')) ?></td>
+                                <td class="text-center text-muted small"><?= e(bcsDocumentSizeLabel($doc)) ?></td>
                                 <td class="pe-4 text-end">
-                                    <?php if ($doc['uploader_id'] == $userId): ?>
+                                    <?php if ($isOwner): ?>
                                     <button class="btn btn-sm btn-light text-success border me-1" title="Sửa" data-bs-toggle="modal" data-bs-target="#uploadModal" onclick="openDocModal('edit', <?= htmlspecialchars(json_encode($doc)) ?>)"><i class="bi bi-pencil-square"></i></button>
-                                    <button class="btn btn-sm btn-light text-danger border" title="Xóa" onclick="deleteDocument(<?= $doc['id'] ?>)"><i class="bi bi-trash"></i></button>
-                                    <?php else: ?>
-                                    <button class="btn btn-sm btn-light border" title="Tải xuống" onclick="downloadDocument('<?= e($doc['drive_link'] ?? '') ?>')"><i class="bi bi-download"></i></button>
+                                    <button class="btn btn-sm btn-light text-danger border" title="Xóa" onclick="deleteDocument(<?= (int)$doc['id'] ?>)"><i class="bi bi-trash"></i></button>
+                                    <?php elseif ($hasAnyFile): ?>
+                                    <a href="<?= e($dlUrl) ?>" target="_blank" rel="noopener" class="btn btn-sm btn-light border" title="Tải xuống"><i class="bi bi-download"></i></a>
                                     <?php endif; ?>
                                 </td>
                             </tr>

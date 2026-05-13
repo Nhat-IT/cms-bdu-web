@@ -9,30 +9,87 @@ require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/helpers.php';
 
 // Bảo vệ trang - chỉ admin và support_admin được phép truy cập
+
+// ── Auth guard: browser page requests phải redirect, không trả JSON ──────────
+if (!isLoggedIn()) {
+    header('Location: /cms/login.php');
+    exit;
+}
+if (!hasRole(['admin', 'support_admin'])) {
+    header('Location: /cms/login.php?error=forbidden');
+    exit;
+}
+// ─────────────────────────────────────────────────────────────────────────────
 requireRole(['admin', 'support_admin']);
 
 // Lấy thông tin admin hiện tại
 $currentUser = getCurrentUser();
 
-// Đếm tổng số sinh viên (từ bảng users)
-$totalStudents = (int) db_count("SELECT COUNT(*) FROM users WHERE role = 'student'");
-
-// Đếm tổng số giảng viên
-$totalTeachers = (int) db_count("SELECT COUNT(*) FROM users WHERE role = 'teacher'");
-
-// Đếm tổng số lớp học
-$totalClasses = (int) db_count("SELECT COUNT(*) FROM classes");
-
-// Đếm số lớp học phần đang mở
-$openClassSubjects = (int) db_count(
-    "SELECT COUNT(DISTINCT cs.id) FROM class_subjects cs WHERE cs.start_date <= CURDATE() AND cs.end_date >= CURDATE()"
+// Tổng sinh viên = tổng DISTINCT mssv trong bảng đăng ký (cùng công thức với classes-subjects.php)
+$totalStudents = (int) db_count(
+    "SELECT COUNT(DISTINCT mssv) FROM student_subject_registration WHERE mssv IS NOT NULL AND mssv != ''"
 );
 
-// Lấy danh sách lớp học phần gần đây
+// Tổng giảng viên (giảng viên + giáo vụ khoa)
+$totalTeachers = (int) db_count(
+    "SELECT COUNT(*) FROM users WHERE role IN ('teacher','support_admin') AND is_active = 1"
+);
+
+// Tổng lớp học
+$totalClasses = (int) db_count("SELECT COUNT(*) FROM classes");
+
+// Đếm môn đang mở từ dữ liệu đã lọc (theo học kỳ hiện tại / đã chọn)
+// Moved after $classSubjects is defined (see below)
+
+// Phản hồi chưa xử lý (bỏ, không dùng)
+
+// Lấy học kỳ hiện tại để lọc mặc định
+$currentSemester = getCurrentSemester();
+$defaultSemesterId = $currentSemester['id'] ?? null;
+
+// Lấy tất cả học kỳ để làm bộ lọc
+$allSemesters = db_fetch_all(
+    "SELECT id, semester_name, academic_year
+     FROM semesters
+     ORDER BY academic_year DESC, semester_name ASC"
+);
+
+// Xử lý bộ lọc GET
+if (array_key_exists('semester_id', $_GET)) {
+    if ($_GET['semester_id'] === 'all' || $_GET['semester_id'] === '') {
+        $filterSemesterId = null; // Tất cả học kỳ
+    } else {
+        $filterSemesterId = (int) $_GET['semester_id'];
+    }
+} else {
+    $filterSemesterId = $defaultSemesterId; // Mặc định: học kỳ hiện tại
+}
+$filterStatus = isset($_GET['status']) && $_GET['status'] !== ''
+    ? trim($_GET['status'])
+    : '';
+
+// Lấy danh sách lớp học phần (lọc theo học kỳ + trạng thái)
+$where = [];
+$params = [];
+if ($filterSemesterId) {
+    $where[] = "cs.semester_id = ?";
+    $params[] = $filterSemesterId;
+}
+if ($filterStatus !== '') {
+    if ($filterStatus === 'open') {
+        $where[] = "s.open_date IS NOT NULL AND s.open_date <= CURDATE() AND (s.close_date IS NULL OR s.close_date >= CURDATE()) AND (cs.end_date IS NULL OR cs.end_date >= CURDATE())";
+    } elseif ($filterStatus === 'closed') {
+        $where[] = "(s.open_date IS NULL OR s.open_date > CURDATE() OR s.close_date < CURDATE() OR cs.end_date < CURDATE())";
+    }
+}
+$whereClause = count($where) ? 'WHERE ' . implode(' AND ', $where) : '';
+
 $classSubjects = db_fetch_all(
     "SELECT
         cs.id,
-        cs.semester,
+        cs.semester_id,
+        sm.semester_name,
+        sm.academic_year,
         c.class_name,
         s.subject_code,
         s.subject_name,
@@ -40,16 +97,45 @@ $classSubjects = db_fetch_all(
         u.academic_title as teacher_title,
         cs.start_date,
         cs.end_date,
-        CASE
-            WHEN cs.start_date <= CURDATE() AND cs.end_date >= CURDATE() THEN 'open'
-            ELSE 'closed'
-        END as status
+        s.open_date,
+        s.close_date
     FROM class_subjects cs
+    JOIN semesters sm ON cs.semester_id = sm.id
     LEFT JOIN classes c ON cs.class_id = c.id
     LEFT JOIN subjects s ON cs.subject_id = s.id
     LEFT JOIN users u ON cs.teacher_id = u.id
-    ORDER BY cs.id DESC
-    LIMIT 10"
+    {$whereClause}
+    ORDER BY sm.academic_year DESC, sm.semester_name ASC, c.class_name ASC, s.subject_name ASC
+    LIMIT 50",
+    $params
+);
+
+// Tính trạng thái môn: chỉ dùng subjects.open_date / close_date
+// — giống hệt logic trong classes-subjects.php (computed_status)
+$today = date('Y-m-d');
+foreach ($classSubjects as &$cs) {
+    $openDate  = $cs['open_date']  ?? '';
+    $closeDate = $cs['close_date'] ?? '';
+
+    if (empty($openDate) || $openDate > $today) {
+        $cs['computed_status'] = '0';
+    } elseif (!empty($closeDate) && $closeDate < $today) {
+        $cs['computed_status'] = '0';
+    } else {
+        $cs['computed_status'] = '1';
+    }
+
+    $cs['displayStatus'] = ($cs['computed_status'] === '1') ? 'open' : 'closed';
+}
+unset($cs);
+
+// Đếm DISTINCT môn đang mở — cùng công thức với classes-subjects.php
+// (chỉ tính theo subjects.open_date / close_date, không phụ thuộc cs.end_date)
+$openClassSubjects = (int) db_count(
+    "SELECT COUNT(*) FROM subjects
+     WHERE open_date IS NOT NULL
+       AND open_date <= CURDATE()
+       AND (close_date IS NULL OR close_date >= CURDATE())"
 );
 ?>
 <!DOCTYPE html>
@@ -119,7 +205,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                     <div class="d-flex align-items-center">
                         <div class="icon-box-custom bg-light-danger me-3 text-danger"><i class="bi bi-journal-bookmark-fill"></i></div>
                         <div>
-                            <p class="text-danger fw-bold mb-1 small">MÔN HỌC ĐANG MỞ</p>
+                            <p class="text-danger fw-bold mb-1 small">MÔN ĐANG MỞ</p>
                             <h3 class="mb-0 fw-bold text-dark"><?php echo number_format($openClassSubjects); ?></h3>
                         </div>
                     </div>
@@ -131,13 +217,26 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
             <div class="col-lg-9">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-header bg-white pt-3 pb-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-diagram-3 text-primary me-2"></i>Tình trạng Lớp Học Phần</h5>
-                        <div class="d-flex gap-2 align-items-center">
-                            <div class="input-group input-group-sm" style="width: 250px;">
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-diagram-3 text-primary me-2"></i>Lớp Học Phần</h5>
+                        <form method="GET" class="d-flex gap-2 align-items-center flex-wrap">
+                            <select name="semester_id" class="form-select form-select-sm" style="width:180px;" onchange="this.form.submit()">
+                                <option value="all" <?php if ($filterSemesterId === null) echo 'selected'; ?>>— Tất cả học kỳ —</option>
+                                <?php foreach ($allSemesters as $sm): ?>
+                                    <option value="<?php echo (int)$sm['id']; ?>" <?php if ($filterSemesterId == $sm['id']) echo 'selected'; ?>>
+                                        <?php echo e($sm['semester_name']); ?> — <?php echo e($sm['academic_year']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <select name="status" class="form-select form-select-sm" style="width:140px;" onchange="this.form.submit()">
+                                <option value="">— Tất cả —</option>
+                                <option value="open" <?php if ($filterStatus === 'open') echo 'selected'; ?>>Đang mở</option>
+                                <option value="closed" <?php if ($filterStatus === 'closed') echo 'selected'; ?>>Đã đóng</option>
+                            </select>
+                            <div class="input-group input-group-sm" style="width:200px;">
                                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
                                 <input type="text" class="form-control border-start-0" placeholder="Tìm mã lớp, tên môn..." id="searchClassSubject">
                             </div>
-                        </div>
+                        </form>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -147,6 +246,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                                         <th class="ps-4">MÃ LỚP</th>
                                         <th>MÔN HỌC</th>
                                         <th>GIẢNG VIÊN</th>
+                                        <th>HỌC KỲ</th>
                                         <th class="text-center">TRẠNG THÁI</th>
                                         <th class="text-end pe-4">HÀNH ĐỘNG</th>
                                     </tr>
@@ -155,46 +255,46 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                                     <?php if (count($classSubjects) > 0): ?>
                                         <?php foreach ($classSubjects as $index => $cs): ?>
                                             <tr>
-                                                <td class="fw-bold ps-4"><?php echo e($cs['class_name'] ?? '--'); ?></td>
-                                                <td><?php echo e($cs['subject_name']); ?></td>
+                                                <td class="fw-bold ps-4"><?php echo !empty($cs['class_name'])   ? e($cs['class_name'])   : '--'; ?></td>
                                                 <td>
-                                                    <?php if ($cs['teacher_name']): ?>
+                                                    <span class="text-dark fw-semibold"><?php echo !empty($cs['subject_name']) ? e($cs['subject_name']) : '--'; ?></span>
+                                                    <br><small class="text-muted"><?php echo !empty($cs['subject_code']) ? e($cs['subject_code']) : '--'; ?></small>
+                                                </td>
+                                                <td>
+                                                    <?php if (!empty($cs['teacher_name'])): ?>
                                                         <span class="badge bg-light text-dark border">
                                                             <?php echo e(($cs['teacher_title'] ? $cs['teacher_title'] . '. ' : '') . $cs['teacher_name']); ?>
                                                         </span>
                                                     <?php else: ?>
-                                                        <span class="badge bg-secondary">Chưa phân công</span>
+                                                        <span class="text-muted">--</span>
                                                     <?php endif; ?>
                                                 </td>
+                                                <td>
+                                                    <span class="small"><?php echo !empty($cs['semester_name']) ? e($cs['semester_name']) : '--'; ?></span>
+                                                    <br><small class="text-muted"><?php echo !empty($cs['academic_year'])  ? e($cs['academic_year'])  : '--'; ?></small>
+                                                </td>
                                                 <td class="text-center">
-                                                    <?php if ($cs['status'] === 'open'): ?>
+                                                    <?php if ($cs['displayStatus'] === 'open'): ?>
                                                         <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">Đang mở</span>
                                                     <?php else: ?>
                                                         <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">Đã đóng</span>
                                                     <?php endif; ?>
                                                 </td>
                                                 <td class="text-end pe-4">
-                                                    <?php if ($cs['status'] === 'open'): ?>
-                                                        <a href="../../views/admin/assignments.php" class="btn btn-light action-btn text-primary border" title="Xếp lịch">
-                                                            <i class="bi bi-calendar-week"></i> Xếp lịch
-                                                        </a>
-                                                    <?php else: ?>
-                                                        <form method="POST" action="../../controllers/admin/classSubjectController.php" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn mở lại lớp <?php echo e($cs['subject_code'] . ' - ' . $cs['subject_name']); ?>?');">
-                                                            <input type="hidden" name="action" value="toggle_status">
-                                                            <input type="hidden" name="status" value="open">
-                                                            <input type="hidden" name="class_subject_id" value="<?php echo e($cs['id']); ?>">
-                                                            <input type="hidden" name="return" value="home">
-                                                            <button class="btn btn-light action-btn text-success border" title="Mở lại lớp này">
-                                                                <i class="bi bi-unlock-fill"></i> Mở lớp
-                                                            </button>
-                                                        </form>
-                                                    <?php endif; ?>
+                                                    <a href="../../views/admin/assignments.php"
+                                                       class="btn btn-light action-btn text-primary border"
+                                                       title="Xếp lịch & Phân nhóm">
+                                                        <i class="bi bi-calendar-week"></i> Xếp lịch
+                                                    </a>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
                                         <tr>
-                                            <td colspan="5" class="text-center text-muted py-4">Chưa có lớp học phần nào.</td>
+                                            <td colspan="6" class="text-center text-muted py-4">
+                                                <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                                Chưa có lớp học phần nào trong học kỳ này.
+                                            </td>
                                         </tr>
                                     <?php endif; ?>
                                 </tbody>

@@ -82,8 +82,7 @@ async function loadAdminSystemLogs() {
 
         const res = await fetch(`/api/admin/system-logs?${params.toString()}`, fetchOptions);
         if (res.status === 401) {
-            window.location.href = '/login.html';
-            return;
+            return; // interceptor đã redirect
         }
 
         const data = await res.json().catch(() => []);

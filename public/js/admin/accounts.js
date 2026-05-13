@@ -229,16 +229,13 @@ async function loadAccounts() {
         }
 
         const res = await fetch(`/api/admin/accounts?${query.toString()}`, fetchOptions);
-        if (res.status === 401) {
-            window.location.href = '/login.html';
-            return;
-        }
         if (res.status === 403) {
             return;
         }
-        if (!res.ok) {
+        if (!res.ok && res.status !== 401) {
             throw new Error('Không thể tải danh sách tài khoản');
         }
+        if (res.status === 401) return; // interceptor đã redirect
 
         const data = await res.json();
         if (requestId !== loadAccountsRequestId) {

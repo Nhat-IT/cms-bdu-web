@@ -41,23 +41,54 @@
         setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 4000);
     };
 
+    // Hàm kiểm tra và xử lý session hết hạn — delegate sang global interceptor
+    window.handleSessionExpired = function(data) {
+        var SESSION_MSGS = ['login_required', 'session_expired', 'unauthorized', 'not_logged_in'];
+        if (data && data.ok === false && SESSION_MSGS.indexOf(String(data.message || '')) !== -1) {
+            if (typeof window._triggerSessionExpired === 'function') window._triggerSessionExpired();
+            return true;
+        }
+        return false;
+    };
+
     window.callApi = function(action, params) {
-        let fd = new FormData();
+        var fd = new FormData();
         fd.append('action', action);
         fd.append('format', 'json');
         Object.keys(params).forEach(function(k) { fd.append(k, params[k]); });
 
-        console.log('API Request:', action, params);
-
         return fetch('/cms/controllers/admin/classSubjectController.php', {
             method: 'POST',
-            body: fd
-        }).then(function(res) {
-            console.log('API Response Status:', res.status, res.statusText);
-            return res.json();
-        }).then(function(data) {
-            console.log('API Response Data:', data);
+            body: fd,
+            credentials: 'include'
+        })
+        .then(function(res) {
+            var contentType = res.headers.get('content-type') || '';
+            if (res.status === 401) {
+                throw new Error('session_expired');
+            }
+            return res.text().then(function(text) {
+                if (contentType.indexOf('application/json') === -1) {
+                    try { return JSON.parse(text); }
+                    catch (e) { throw new Error('invalid_server_response: ' + text.substring(0, 200)); }
+                }
+                return JSON.parse(text);
+            });
+        })
+        .then(function(data) {
+            if (window.handleSessionExpired(data)) return;
             return data;
+        })
+        .catch(function(err) {
+            var errMsg = err.message || '';
+            if (errMsg === 'session_expired' ||
+                errMsg.includes('login_required') ||
+                errMsg.includes('session_expired') ||
+                errMsg.includes('unauthorized')) {
+                if (typeof window._triggerSessionExpired === 'function') window._triggerSessionExpired();
+                return;
+            }
+            throw err;
         });
     };
 
@@ -95,6 +126,14 @@ function findAssignmentCourse(ref) {
     let course = allAssignmentCourses.find(function (c) { return String(c.id) === refText; }) || null;
     if (course) return course;
 
+    // Try to extract csId from id format like "SUBJECTCODE-csId"
+    const idParts = refText.match(/^.+?-(\d+)$/);
+    if (idParts) {
+        course = allAssignmentCourses.find(function (c) { return String(c.csId) === idParts[1]; }) || null;
+        if (course) return course;
+    }
+
+    // Fallback: try parsing as pure number
     const refNum = parseInt(refText, 10);
     if (Number.isFinite(refNum) && refNum > 0) {
         course = allAssignmentCourses.find(function (c) { return Number(c.csId) === refNum; }) || null;
@@ -118,10 +157,13 @@ function triggerAssignmentFilePicker() {
 }
 
 function resolveClassSubjectId(asg) {
-    const direct = parseInt(asg && asg.csId, 10);
+    if (!asg) return 0;
+    // Try direct csId first
+    const direct = parseInt(asg.csId, 10);
     if (Number.isFinite(direct) && direct > 0) return direct;
-    const idText = String((asg && asg.id) || '');
-    const m = idText.match(/-(\d+)$/);
+    // Try to extract from id format like "SUBJECTCODE-csId"
+    const idText = String(asg.id || '');
+    const m = idText.match(/^.+?-(\d+)$/);
     return m ? parseInt(m[1], 10) : 0;
 }
 
@@ -316,6 +358,7 @@ function upsertScheduleIntoClientData(payload, res) {
     if (!course) {
         const subjectName = template ? (template.subjectName || '') : '';
         const subjectCode = template ? (template.subjectCode || '') : '';
+        const subjectIdVal = subjectIdText || (template ? (template.subjectId || null) : null);
         course = {
             id: (subjectCode || 'SUB') + '-' + csId,
             csId: csId,
@@ -328,7 +371,7 @@ function upsertScheduleIntoClientData(payload, res) {
             openWindow: template ? (template.openWindow || 'Chưa xác định') : 'Chưa xác định',
             groups: [],
             subjectCode: subjectCode,
-            subjectId: subjectIdText || (template ? (template.subjectId || null) : null)
+            subjectId: subjectIdVal
         };
         allAssignmentCourses.push(course);
     }
@@ -404,7 +447,7 @@ function upsertScheduleIntoClientData(payload, res) {
     if (!Array.isArray(asg.groups)) asg.groups = [];
     let asgGroup = asg.groups.find(function (g) { return getGroupCode(g.code) === groupCode; }) || null;
     if (!asgGroup) {
-        asgGroup = { code: groupCode };
+        asgGroup = { code: groupCode, hasStudents: false, studentCount: 0 };
         asg.groups.push(asgGroup);
     }
     asgGroup.code = groupCode;
@@ -423,7 +466,74 @@ function upsertScheduleIntoClientData(payload, res) {
             unassignedClass.assignments = unassignedClass.assignments.filter(function (a) {
                 return String(a.subjectId || '') !== subjectIdText;
             });
+            // Remove class-unassigned if no more assignments
+            if (unassignedClass.assignments.length === 0) {
+                window.allClasses = window.allClasses.filter(function (cls) { return String(cls.id || '') !== 'class-unassigned'; });
+            }
         }
+    }
+
+    // Ensure the assignment is in the correct class
+    if (classCode && classCode !== '--') {
+        let targetClass = window.allClasses.find(function (cls) { return String(cls.classCode || '') === classCode; }) || null;
+        if (!targetClass) {
+            targetClass = {
+                id: 'class-' + classCode,
+                classCode: classCode,
+                name: 'Lớp ' + classCode,
+                hasOpen: true,
+                assignments: []
+            };
+            window.allClasses.push(targetClass);
+        }
+        if (!Array.isArray(targetClass.assignments)) targetClass.assignments = [];
+
+        // Check if assignment already exists in this class
+        let existingAsg = targetClass.assignments.find(function (a) { return parseInt(a.csId, 10) === csId; });
+        if (!existingAsg) {
+            existingAsg = targetClass.assignments.find(function (a) { return String(a.subjectId || '') === subjectIdText; });
+        }
+        if (!existingAsg) {
+            existingAsg = {
+                id: (course.subjectCode || 'SUB') + '-' + csId,
+                csId: csId,
+                subjectId: course.subjectId || null,
+                subjectCode: course.subjectCode || '',
+                subjectName: course.name || '',
+                classCode: classCode,
+                credits: course.credits || 0,
+                isOpen: !!course.isOpen,
+                year: course.year || '',
+                semester: course.semester || '',
+                openWindow: course.openWindow || 'Chưa xác định',
+                computedStatus: '1',
+                hasStudents: false,
+                studentCount: 0,
+                teacherMain: teacherMain || null,
+                teacherMainName: teacherMainName,
+                groups: []
+            };
+            targetClass.assignments.push(existingAsg);
+        }
+        // Update existing
+        existingAsg.csId = csId;
+        existingAsg.teacherMain = teacherMain || null;
+        existingAsg.teacherMainName = teacherMainName;
+        if (!Array.isArray(existingAsg.groups)) existingAsg.groups = [];
+        let existingGroup = existingAsg.groups.find(function (g) { return getGroupCode(g.code) === groupCode; });
+        if (!existingGroup) {
+            existingGroup = { code: groupCode, hasStudents: false, studentCount: 0 };
+            existingAsg.groups.push(existingGroup);
+        }
+        existingGroup.code = groupCode;
+        existingGroup.teacherMain = teacherMain || null;
+        existingGroup.teacherMainName = teacherMainName;
+        existingGroup.teacherSub = teacherSub || null;
+        existingGroup.teacherSubName = teacherSubName;
+        existingGroup.day = day || null;
+        existingGroup.start = start || null;
+        existingGroup.end = end || null;
+        existingGroup.room = room || null;
     }
 
     if (Array.isArray(window.masterScheduleCourses)) {
@@ -432,6 +542,7 @@ function upsertScheduleIntoClientData(payload, res) {
             masterCourse = {
                 id: csId,
                 csId: csId,
+                subjectId: course.subjectId || null,
                 name: ((course.subjectCode || '') ? (course.subjectCode + ' - ') : '') + (course.name || ''),
                 classCode: classCode,
                 year: course.year || '',
@@ -502,16 +613,31 @@ function appendGroupToClassSubject(csId, groupCode) {
             }
         });
     });
+
+    // Note: Do NOT add to masterScheduleCourses here.
+    // masterScheduleCourses should only contain groups that have schedules (from DB).
+    // Groups without schedules are managed in allAssignmentCourses/window.allClasses.
+    // When a schedule is saved, upsertScheduleIntoClientData will add it to masterScheduleCourses.
 }
 
-function markStudentsImportedByCsId(csId, importedCount) {
+function markStudentsImportedByCsId(csId, importedCount, groupCode) {
     const imported = Math.max(0, parseInt(importedCount, 10) || 0);
+    const code = groupCode ? getGroupCode(groupCode) : null;
     (window.allClasses || []).forEach(function (cls) {
         (cls.assignments || []).forEach(function (asg) {
             if (parseInt(asg.csId, 10) !== parseInt(csId, 10)) return;
             asg.hasStudents = true;
             const base = parseInt(asg.studentCount, 10) || 0;
             asg.studentCount = imported > 0 ? (base + imported) : Math.max(base, 1);
+            // Also update the specific group's student count
+            if (code && Array.isArray(asg.groups)) {
+                const grp = asg.groups.find(function (g) { return getGroupCode(g.code) === code; });
+                if (grp) {
+                    grp.hasStudents = true;
+                    const grpBase = parseInt(grp.studentCount, 10) || 0;
+                    grp.studentCount = imported > 0 ? (grpBase + imported) : Math.max(grpBase, 1);
+                }
+            }
         });
     });
 }
@@ -695,8 +821,8 @@ function renderAssignmentOfferingsTable() {
         let rows = [];
         subj.assignments.forEach(function(asg) {
             const groups = (asg.groups && asg.groups.length) ? asg.groups : [{ code: 'N1' }];
-            groups.forEach(function(g, groupIndex) {
-                rows.push({ asg: asg, g: g, groupIndex: groupIndex });
+            groups.forEach(function(g) {
+                rows.push({ asg: asg, g: g });
             });
         });
 
@@ -704,7 +830,6 @@ function renderAssignmentOfferingsTable() {
         const rowsHtml = rows.map(function(row) {
             const asg = row.asg;
             const g = row.g;
-            const groupIndex = row.groupIndex;
 
             function normalizeTeacherName(name) {
                 const text = String(name || '').trim();
@@ -728,7 +853,7 @@ function renderAssignmentOfferingsTable() {
             const statusDisplay = subj.isOpen ? 'Đang mở' : 'Đã đóng';
             const groupCode = g.code || 'N1';
             const normalizedGroupCode = getGroupCode(groupCode);
-            const isFirstGroup = groupIndex === 0 || normalizedGroupCode === 'N1';
+            const isDefaultGroup = normalizedGroupCode === 'N1';
             const classSubjectId = resolveClassSubjectId(asg);
             const hasClassSubject = Number.isFinite(classSubjectId) && classSubjectId > 0;
             const isClosedSubject = !subj.isOpen;
@@ -746,14 +871,14 @@ function renderAssignmentOfferingsTable() {
             const uploadIconBtn = hasClassSubject
                 ? '<button class="btn btn-outline-dark btn-icon-only" title="Tải lên danh sách sinh viên" onclick="uploadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(normalizedGroupCode) + '\')"><i class="bi bi-upload"></i></button>'
                 : '<button class="btn btn-outline-secondary btn-icon-only" title="Cần xếp lịch trước khi tải lên danh sách sinh viên" disabled><i class="bi bi-upload"></i></button>';
-            const downloadIconBtn = asg.hasStudents
+            const downloadIconBtn = (g.hasStudents || g.studentCount > 0)
                 ? (hasClassSubject
-                    ? '<button class="btn btn-outline-success btn-icon-only" title="Tải xuống danh sách sinh viên" onclick="downloadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(normalizedGroupCode) + '\')"><i class="bi bi-download"></i></button>'
-                    : '<button class="btn btn-outline-secondary btn-icon-only" title="Cần xếp lịch trước khi tải xuống danh sách sinh viên" disabled><i class="bi bi-download"></i></button>')
+                    ? '<button class="btn btn-outline-success btn-icon-only" title="Tải xuống danh sách sinh viên (' + (g.studentCount || 0) + ' SV)" onclick="downloadAssignmentStudentList(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(normalizedGroupCode) + '\')"><i class="bi bi-download"></i></button>'
+                    : '<button class="btn btn-outline-secondary btn-icon-only" style="opacity:0.35;cursor:not-allowed" title="Cần xếp lịch trước khi tải xuống danh sách sinh viên" disabled><i class="bi bi-download"></i></button>')
                 : (hasClassSubject
-                    ? '<button class="btn btn-outline-secondary btn-icon-only" title="Chưa có danh sách sinh viên trong DB" disabled><i class="bi bi-download"></i></button>'
-                    : '<button class="btn btn-outline-secondary btn-icon-only" title="Cần xếp lịch trước khi tải xuống danh sách sinh viên" disabled><i class="bi bi-download"></i></button>');
-            const deleteGroupBtn = (totalRows > 1 && hasClassSubject && !isFirstGroup)
+                    ? '<button class="btn btn-outline-secondary btn-icon-only" style="opacity:0.35;cursor:not-allowed" title="Chưa có danh sách sinh viên trong nhóm này" disabled><i class="bi bi-download"></i></button>'
+                    : '<button class="btn btn-outline-secondary btn-icon-only" style="opacity:0.35;cursor:not-allowed" title="Cần xếp lịch trước khi tải xuống danh sách sinh viên" disabled><i class="bi bi-download"></i></button>');
+            const deleteGroupBtn = (hasClassSubject && !isDefaultGroup)
                 ? '<button class="btn btn-outline-danger btn-icon-only assignment-delete-group" title="Xóa nhóm ' + normalizedGroupCode + ' (total:' + totalRows + ')" onclick="deleteGroupFromClass(\'' + escapeHtml(asg.id) + '\', \'' + escapeHtml(normalizedGroupCode) + '\', \'' + escapeHtml(asg.subjectName || '') + '\', \'' + escapeHtml(String(asg.subjectId || '')) + '\')"><i class="bi bi-trash"></i></button>'
                 : '';
             const actionButtons = primaryActionBtn + '<span class="assignment-action-icons">' + uploadIconBtn + downloadIconBtn + deleteGroupBtn + '</span>';
@@ -779,7 +904,7 @@ function renderAssignmentOfferingsTable() {
         const actionDisabled = subj.isOpen ? '' : ' disabled';
         const actionTitle = '';
         const addGroupAction = hasClassSubjectInCard
-            ? "addGroupToClass('" + escapeHtml(firstAsg.id || '') + "', '" + escapeHtml(subj.subjectName || '') + "')"
+            ? "addGroupForSubject('" + escapeHtml(String(subj.subjectId || '')) + "', '" + escapeHtml(subj.subjectName || '') + "')"
             : "addSubjectClass('" + escapeHtml(String(subj.subjectId || '')) + "', '" + escapeHtml(subj.subjectName || '') + "')";
 
         const card = document.createElement('div');
@@ -808,6 +933,35 @@ function renderAssignmentOfferingsTable() {
             '</div>';
         container.appendChild(card);
     });
+
+    // Hiển thị các lớp chưa có môn học nào được phân công
+    const search = (document.getElementById('searchAssignment') || {}).value || '';
+    const searchLower = search.toLowerCase().trim();
+    const emptyClasses = (window.allClasses || []).filter(function(cls) {
+        if (!cls.classCode || cls.classCode === '--') return false;
+        if (!cls.assignments || cls.assignments.length === 0) {
+            return !searchLower || cls.classCode.toLowerCase().includes(searchLower);
+        }
+        return false;
+    });
+
+    if (emptyClasses.length > 0) {
+        const notice = document.createElement('div');
+        notice.className = 'mt-3 p-3 rounded border border-warning bg-warning bg-opacity-10';
+        notice.innerHTML =
+            '<div class="fw-bold text-warning mb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i>Các lớp chưa được phân công môn học</div>' +
+            '<div class="d-flex flex-wrap gap-2">' +
+            emptyClasses.map(function(cls) {
+                return '<span class="badge bg-warning text-dark fs-6 py-2 px-3 border">' +
+                    '<i class="bi bi-building me-1"></i>' + cls.classCode +
+                    '</span>';
+            }).join('') +
+            '</div>' +
+            '<div class="mt-2 text-muted small"><i class="bi bi-info-circle me-1"></i>' +
+            'Vào tab <strong>Danh mục Môn học</strong> để chọn môn, sau đó nhấn <strong>Xếp lịch ngay</strong> và chọn lớp tương ứng.' +
+            '</div>';
+        container.appendChild(notice);
+    }
 }
 
 function escapeHtml(str) {
@@ -1023,13 +1177,47 @@ function parseAssignmentXlsx(buffer) {
 
     function normalizeXlsxDate(value) {
         if (value === null || value === undefined || value === '') return '';
+        
+        // Nếu là Date object (từ XLS hoặc format đặc biệt)
+        if (typeof value === 'object' && value !== null) {
+            if (value instanceof Date) {
+                return String(value.getDate()).padStart(2, '0') + '/' + 
+                       String(value.getMonth() + 1).padStart(2, '0') + '/' + 
+                       String(value.getFullYear());
+            }
+            // XLSX Date object format: {t: 'd', v: serial_number}
+            if (value.t === 'd' || value.t === 'n') {
+                const serial = parseFloat(value.v);
+                if (serial > 20000 && typeof XLSX !== 'undefined' && XLSX.SSF) {
+                    const date = XLSX.SSF.parse_date_code(serial);
+                    if (date && date.d && date.m && date.y) {
+                        return String(date.d).padStart(2, '0') + '/' + 
+                               String(date.m).padStart(2, '0') + '/' + 
+                               String(date.y);
+                    }
+                }
+            }
+            return String(value);
+        }
+        
         if (typeof value === 'number' && value > 20000) {
-            const date = XLSX.SSF.parse_date_code(value);
-            if (date && date.d && date.m && date.y) {
-                return String(date.d).padStart(2, '0') + '/' + String(date.m).padStart(2, '0') + '/' + String(date.y);
+            if (typeof XLSX !== 'undefined' && XLSX.SSF) {
+                const date = XLSX.SSF.parse_date_code(value);
+                if (date && date.d && date.m && date.y) {
+                    return String(date.d).padStart(2, '0') + '/' + 
+                           String(date.m).padStart(2, '0') + '/' + 
+                           String(date.y);
+                }
             }
         }
-        return String(value).trim();
+        
+        // Xử lý chuỗi ngày tháng có thể có timezone
+        const strVal = String(value).trim();
+        if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(strVal)) {
+            return strVal;
+        }
+        
+        return strVal;
     }
 
     // Tự động nhận diện cột theo header (XLSX)
@@ -1088,16 +1276,89 @@ function parseAssignmentXlsx(buffer) {
     const headers = firstLineCols.map(function (item) { return String(item || '').trim(); });
     const firstLineLower = headers.join(' ').toLowerCase();
     
+    // Smart column detection: phân tích dữ liệu thực tế để xác định cột
+    function detectColumnsByData(rows, startIdx) {
+        const cols = { stt: -1, mssv: -1, name: -1, dob: -1, className: -1 };
+        const numRows = Math.min(5, rows.length - startIdx);
+        
+        for (let r = startIdx; r < startIdx + numRows; r++) {
+            const row = rows[r] || [];
+            row.forEach(function(val, idx) {
+                const strVal = String(val !== null && val !== undefined ? val : '').trim();
+                if (!strVal) return;
+                
+                // Kiểm tra MSSV: là số hoặc dạng B23xxx
+                if (cols.mssv < 0 && (
+                    /^\d{6,12}$/.test(strVal) || 
+                    /^B\d{2,6}$/i.test(strVal) ||
+                    /^[A-Z]{0,2}\d{5,12}$/i.test(strVal)
+                )) {
+                    cols.mssv = idx;
+                }
+                
+                // Kiểm tra Tên: là chuỗi có khoảng trắng và không phải số thuần
+                if (cols.name < 0 && (
+                    (strVal.includes(' ') && !/^\d+$/.test(strVal) && strVal.length > 3) ||
+                    /^[\p{L}\s]+$/u.test(strVal)
+                )) {
+                    // Đảm bảo không trùng với cột đã xác định
+                    if (idx !== cols.mssv) {
+                        cols.name = idx;
+                    }
+                }
+                
+                // Kiểm tra ngày sinh
+                if (cols.dob < 0 && (
+                    /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(strVal) ||
+                    /^\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}$/.test(strVal) ||
+                    (typeof val === 'number' && val > 20000 && val < 60000)
+                )) {
+                    cols.dob = idx;
+                }
+                
+                // Kiểm tra Lớp: thường ngắn hơn tên
+                if (cols.className < 0 && cols.name >= 0 && idx !== cols.mssv && idx !== cols.name && idx !== cols.dob && strVal.length <= 20) {
+                    cols.className = idx;
+                }
+                
+                // Kiểm tra STT
+                if (cols.stt < 0 && cols.mssv >= 0 && idx < cols.mssv && /^\d{1,4}$/.test(strVal)) {
+                    cols.stt = idx;
+                }
+            });
+        }
+        
+        return cols;
+    }
+
     // Kiểm tra xem dòng đầu có phải là header không
-    const isHeaderRow = firstLineLower.includes('mssv') || firstLineLower.includes('họ') || firstLineLower.includes('ho') || firstLineLower.includes('tên') || firstLineLower.includes('ten') || firstLineLower.includes('name') || firstLineLower.includes('sinh') || firstLineLower.includes('lớp') || firstLineLower.includes('lop') || firstLineLower.includes('ngày') || firstLineLower.includes('va');
+    const isHeaderRow = firstLineLower.includes('mssv') || firstLineLower.includes('họ') || firstLineLower.includes('ho') || firstLineLower.includes('tên') || firstLineLower.includes('ten') || firstLineLower.includes('name') || firstLineLower.includes('sinh') || firstLineLower.includes('lớp') || firstLineLower.includes('lop') || firstLineLower.includes('ngày') || firstLineLower.includes('va') || firstLineLower.includes('stt');
     
     let startIndex = isHeaderRow ? 1 : 0;
     let colMap = detectColumns(firstLineCols);
     
-    // Fallback: nếu không nhận diện được cột từ header, dùng logic cũ
+    // Fallback 1: nếu không nhận diện được cột từ header, dùng smart detection
+    if (colMap.mssv < 0 || colMap.name < 0) {
+        const smartMap = detectColumnsByData(rows, startIndex);
+        if (smartMap.mssv >= 0) colMap.mssv = smartMap.mssv;
+        if (smartMap.name >= 0) colMap.name = smartMap.name;
+        if (smartMap.dob >= 0 && colMap.dob < 0) colMap.dob = smartMap.dob;
+        if (smartMap.className >= 0 && colMap.className < 0) colMap.className = smartMap.className;
+        if (smartMap.stt >= 0 && colMap.stt < 0) colMap.stt = smartMap.stt;
+    }
+    
+    // Fallback 2: nếu vẫn không xác định được, dùng logic cũ
     if (colMap.mssv < 0 || colMap.name < 0) {
         const firstDataCols = rows[startIndex] || rows[0] || [];
-        const hasSttFirst = /^\d*$/.test((firstDataCols[0] || '').toString().trim()) && (firstDataCols[1] || '').toString().trim() !== '';
+        const firstVal = String(firstDataCols[0] || '').trim();
+        const secondVal = String(firstDataCols[1] || '').trim();
+        const thirdVal = String(firstDataCols[2] || '').trim();
+        
+        // Kiểm tra xem dữ liệu có phải dạng STT|MSSV|Tên... không
+        const hasSttFirst = /^\d{1,4}$/.test(firstVal) && secondVal !== '' && (
+            /^\d{6,12}$/.test(secondVal) || /^B\d{2,6}$/i.test(secondVal) || /^[A-Z]{0,2}\d{5,12}$/i.test(secondVal)
+        );
+        
         colMap = {
             stt: hasSttFirst ? 0 : -1,
             mssv: hasSttFirst ? 1 : 0,
@@ -1108,7 +1369,12 @@ function parseAssignmentXlsx(buffer) {
     }
 
     function parseRowByMap(cols, map) {
-        const c = cols.map(function (item) { return String(item || '').trim(); });
+        const c = cols.map(function (item) { 
+            if (item === null || item === undefined) return '';
+            // Xử lý object từ XLSX (cell với type và value riêng)
+            if (typeof item === 'object' && item.t === 's') return String(item.v || '').trim();
+            return String(item).trim(); 
+        });
         const mssv = map.mssv >= 0 ? (c[map.mssv] || '').replace(/^\uFEFF/, '') : (c[0] || '');
         const name = map.name >= 0 ? (c[map.name] || '') : (c[1] || '');
         const dobRaw = map.dob >= 0 ? (c[map.dob] || '') : (c[2] || '');
@@ -1120,10 +1386,24 @@ function parseAssignmentXlsx(buffer) {
     }
 
     const parsed = [];
+    let skippedEmpty = 0;
     for (let i = startIndex; i < rows.length; i += 1) {
         const cols = rows[i] || [];
+        // Skip empty rows
+        if (cols.length === 0 || cols.every(function(v) { return v === null || v === undefined || v === ''; })) {
+            continue;
+        }
         const row = parseRowByMap(cols, colMap);
-        if (row) parsed.push(row);
+        if (row) {
+            parsed.push(row);
+        } else {
+            skippedEmpty++;
+        }
+    }
+    
+    // Debug: log ra nếu không parse được gì
+    if (parsed.length === 0 && rows.length > startIndex) {
+        console.warn('[parseAssignmentXlsx] No valid rows parsed, first row sample:', rows[startIndex]);
     }
 
     return parsed;
@@ -1183,6 +1463,11 @@ function handleAssignmentUploadChange(event) {
             students: JSON.stringify(parsed)
         })
             .then(function(res) {
+                // Kiểm tra session hết hạn
+                if (window.handleSessionExpired && window.handleSessionExpired(res)) {
+                    return;
+                }
+                
                 if (res && res.ok) {
                     if (window.showToast) {
                         const imported = typeof res.imported === 'number' ? res.imported : parsed.length;
@@ -1193,7 +1478,7 @@ function handleAssignmentUploadChange(event) {
                     }
                     pendingAssignmentUploadClass = '';
                     pendingAssignmentUploadGroup = '';
-                    markStudentsImportedByCsId(csId, res ? res.imported : parsed.length);
+                    markStudentsImportedByCsId(csId, res ? res.imported : parsed.length, pendingAssignmentUploadGroup);
                     if (typeof applyAssignmentFilters === 'function') {
                         applyAssignmentFilters();
                     }
@@ -1203,8 +1488,14 @@ function handleAssignmentUploadChange(event) {
                 if (window.showToast) window.showToast(message, 'error');
                 else alert(message);
             })
-            .catch(function() {
-                alert('Lỗi kết nối server khi import danh sách sinh viên.');
+            .catch(function(err) {
+                console.error('Import error:', err);
+                let msg = 'Lỗi kết nối server khi import danh sách sinh viên.';
+                if (err && err.message === 'session_expired') {
+                    msg = 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.';
+                }
+                if (window.showToast) window.showToast(msg, 'error');
+                else alert(msg);
             })
             .finally(function() {
                 if (event && event.target) {
@@ -1231,6 +1522,7 @@ function updateAssignmentDownloadButtons() {
 
 function downloadAssignmentStudentList(courseId, groupCode = 'N1') {
     const course = findAssignmentCourse(courseId);
+    console.log('Course found:', course);
     if (!course) {
         if (window.showToast) window.showToast('Không tìm thấy lớp học phần.', 'error');
         else alert('Không tìm thấy lớp học phần.');
@@ -1238,52 +1530,168 @@ function downloadAssignmentStudentList(courseId, groupCode = 'N1') {
     }
 
     const csId = resolveClassSubjectId(course);
+    console.log('Download params: courseId=' + courseId + ', course=' + JSON.stringify({id: course.id, csId: course.csId}) + ', resolved csId=' + csId + ', groupCode=' + groupCode);
     if (!csId) {
         if (window.showToast) window.showToast('Môn này chưa có lớp học phần. Vui lòng xếp lịch trước khi tải xuống.', 'warning');
         else alert('Môn này chưa có lớp học phần. Vui lòng xếp lịch trước khi tải xuống.');
         return;
     }
 
-    fetch('/cms/controllers/admin/classSubjectController.php?action=export_group_students&class_subject_id=' + encodeURIComponent(csId) + '&group_code=' + encodeURIComponent(groupCode), {
+    // Hiển thị trạng thái đang tải
+    const loadingMsg = window.showToast ? window.showToast('Đang tải danh sách sinh viên...', 'info') : null;
+
+    const url = '/cms/controllers/admin/classSubjectController.php?action=export_group_students&class_subject_id=' + encodeURIComponent(csId) + '&group_code=' + encodeURIComponent(groupCode);
+    
+    fetch(url, {
         method: 'GET',
-        headers: { 'Accept': 'application/json' }
+        headers: { 
+            'Accept': 'application/json'
+        },
+        credentials: 'include'
     })
-        .then(function(res) { return res.json(); })
+        .then(function(res) { 
+            const contentType = res.headers.get('content-type') || '';
+            if (!res.ok) {
+                // 401/403 xảy ra khi session hết hạn — map sang session_expired
+                // để catch handler hiển thị đúng thông báo
+                if (res.status === 401 || res.status === 403) {
+                    throw new Error('session_expired');
+                }
+                throw new Error('HTTP ' + res.status);
+            }
+            
+            // Get response as text first for debugging
+            return res.text().then(function(text) {
+                console.log('Download response:', text.substring(0, 1000));
+                
+                if (contentType.indexOf('application/json') === -1) {
+                    // Server trả về HTML thay vì JSON - có thể session hết hạn
+                    if (res.status === 302 || res.status === 301 || text.includes('login.php') || text.includes('<!DOCTYPE')) {
+                        throw new Error('session_expired');
+                    }
+                    // Try to parse as JSON anyway
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        throw new Error('invalid_response_format: ' + text.substring(0, 200));
+                    }
+                }
+                try {
+                    const jsonData = JSON.parse(text);
+                    // Check if response indicates session expired (even with correct Content-Type)
+                    if (jsonData.message === 'session_expired' || jsonData.message === 'unauthorized' || jsonData.message === 'login_required') {
+                        throw new Error('session_expired');
+                    }
+                    return jsonData;
+                } catch (e) {
+                    if (e.message === 'session_expired') throw e;
+                    throw new Error('invalid_response_format: ' + text.substring(0, 200));
+                }
+            });
+        })
         .then(function(data) {
-            const students = (data && data.ok && Array.isArray(data.students)) ? data.students : [];
+            if (loadingMsg && loadingMsg.hide) loadingMsg.hide();
+            
+            // Check for API error response
+            if (data && data.ok === false) {
+                let msg = data.message || 'Lỗi khi tải danh sách sinh viên từ DB.';
+                if (data.message === 'session_expired' || data.message === 'unauthorized' || data.message === 'login_required' || data.message === 'not_logged_in') {
+                    msg = 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.';
+                } else if (data.message === 'group_not_found') {
+                    msg = 'Không tìm thấy nhóm "' + (data.groupCode || groupCode) + '" trong lớp học phần này.';
+                }
+                if (window.showToast) window.showToast(msg, 'error');
+                else alert(msg);
+                return;
+            }
+            
+            const students = (data && Array.isArray(data.students)) ? data.students : [];
             if (!students.length) {
                 if (window.showToast) window.showToast('Chưa có danh sách sinh viên trong DB để tải xuống.', 'warning');
                 else alert('Chưa có danh sách sinh viên trong DB để tải xuống.');
                 return;
             }
 
+            // Lấy thông tin nhóm từ response hoặc dùng mặc định
+            const exportedGroupCode = data.groupCode || groupCode;
             const classCode = course.classCode || courseId;
-            const csv = [];
-            csv.push(['STT', 'MSSV', 'Họ và tên', 'Ngày sinh', 'Lớp'].join(','));
+            
+            // Tạo CSV với BOM UTF-8 và line endings \r\n cho tương thích Excel
+            const BOM = '\uFEFF';
+            const CRLF = '\r\n';
+            const csvRows = [];
+            csvRows.push([BOM + 'STT', 'MSSV', 'Họ và tên', 'Ngày sinh', 'Lớp', 'Nhóm'].join(','));
+            
             students.forEach(function(student, index) {
                 const mssv = student.username || student.mssv || '';
                 const name = student.full_name || '';
-                const dob = student.birth_date || '';
+                let dob = student.birth_date || '';
                 const className = student.class_name || '';
-                csv.push([
+                const grpCode = student.group_code || exportedGroupCode || 'N1';
+                
+                // Convert Excel serial date to dd/mm/yyyy format
+                if (/^\d+$/.test(dob)) {
+                    const serial = parseInt(dob, 10);
+                    if (serial > 0) {
+                        const excelEpoch = new Date(1899, 11, 30);
+                        const date = new Date(excelEpoch.getTime() + serial * 86400000);
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const year = date.getFullYear();
+                        dob = day + '/' + month + '/' + year;
+                    }
+                }
+                
+                // Escape CSV fields (handle commas and quotes)
+                const escapeCsv = function(val) {
+                    val = String(val || '');
+                    if (val.includes(',') || val.includes('"') || val.includes('\n') || val.includes('\r')) {
+                        return '"' + val.replace(/"/g, '""') + '"';
+                    }
+                    return val;
+                };
+                
+                csvRows.push([
                     String(index + 1),
-                    mssv,
-                    name,
-                    dob,
-                    className
+                    escapeCsv(mssv),
+                    escapeCsv(name),
+                    escapeCsv(dob),
+                    escapeCsv(className),
+                    escapeCsv(grpCode)
                 ].join(','));
             });
 
+            // Tạo blob với encoding UTF-8 và line endings \r\n
+            const csvContent = csvRows.join(CRLF);
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+            const blobUrl = URL.createObjectURL(blob);
+            
             const link = document.createElement('a');
-            link.href = 'data:text/csv;charset=utf-8,%EF%BB%BF' + encodeURIComponent(csv.join('\n'));
-            link.download = classCode + '_Nhom' + groupCode + '_DanhSachSV.csv';
+            link.href = blobUrl;
+            link.download = classCode + '_Nhom' + exportedGroupCode + '_DanhSachSV.csv';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            URL.revokeObjectURL(blobUrl);
+            
+            if (window.showToast) {
+                window.showToast('Đã tải xuống ' + students.length + ' sinh viên.', 'success');
+            }
         })
-        .catch(function() {
-            if (window.showToast) window.showToast('Lỗi khi tải danh sách sinh viên từ DB.', 'error');
-            else alert('Lỗi khi tải danh sách sinh viên từ DB.');
+        .catch(function(err) {
+            if (loadingMsg && loadingMsg.hide) loadingMsg.hide();
+            if (err.message === 'session_expired') {
+                if (typeof window._triggerSessionExpired === 'function') window._triggerSessionExpired();
+                return;
+            }
+            let msg = 'Lỗi khi tải danh sách sinh viên từ DB.';
+            if (err.message.startsWith('invalid_response_format')) {
+                const match = err.message.match(/invalid_response_format: (.+)/);
+                const responseText = match ? match[1] : '';
+                msg = 'Server trả về lỗi. Chi tiết: ' + (responseText.length > 100 ? responseText.substring(0, 100) + '...' : responseText);
+            }
+            if (window.showToast) window.showToast(msg, 'error');
+            else alert(msg);
         });
 }
 
@@ -1323,8 +1731,16 @@ function openInitialScheduleModal(mode, csId, classCode, subjectName, teacher = 
     const classCodeSelect = document.getElementById('initClassCode');
     if (classCodeSelect) {
         classCodeSelect.value = classCode;
+        // Cập nhật label khi user chọn lớp khác
+        if (!classCodeSelect._labelListenerAdded) {
+            classCodeSelect.addEventListener('change', function() {
+                const lbl = document.getElementById('initGroupLabel');
+                if (lbl) lbl.innerText = getClassGroupLabel(this.value, window._currentGroupCode || 'N1');
+            });
+            classCodeSelect._labelListenerAdded = true;
+        }
     }
-    
+
     document.getElementById('initSubjectName').innerText = subjectName;
     const groupLabel = document.getElementById('initGroupLabel');
     if (groupLabel) {
@@ -1455,6 +1871,12 @@ function handleInitialScheduleSubmit(event) {
         window.callApi('save_group_schedule', payload)
             .then(function(res) {
                 console.log('API Response:', res);
+                
+                // Kiểm tra session hết hạn
+                if (window.handleSessionExpired && window.handleSessionExpired(res)) {
+                    return;
+                }
+                
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
                 
@@ -1487,6 +1909,13 @@ function handleInitialScheduleSubmit(event) {
                 console.error('API Error:', err);
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
+                
+                const errMsg = err.message || '';
+                if (errMsg.includes('login_required') || errMsg.includes('session_expired') || errMsg.includes('unauthorized')) {
+                    if (typeof window._triggerSessionExpired === 'function') window._triggerSessionExpired();
+                    return;
+                }
+                
                 window.showToast('Lỗi kết nối đến server.', 'error');
             });
     }
@@ -1918,6 +2347,11 @@ function saveSingleSession() {
 
         window.callApi('save_extra_class', payloadSingleDate)
             .then(function (res) {
+                // Kiểm tra session hết hạn
+                if (window.handleSessionExpired && window.handleSessionExpired(res)) {
+                    return;
+                }
+                
                 if (!res || !res.ok) {
                     let msg = 'Không thể lưu thay đổi lịch theo ngày.';
                     if (res && res.message === 'invalid_schedule_data') msg = 'Dữ liệu lịch chưa hợp lệ. Vui lòng kiểm tra lại ngày, tiết và phòng.';
@@ -1986,6 +2420,11 @@ function saveSingleSession() {
 
     window.callApi('save_group_schedule', payload)
         .then(function (res) {
+            // Kiểm tra session hết hạn
+            if (window.handleSessionExpired && window.handleSessionExpired(res)) {
+                return;
+            }
+            
             if (!res || !res.ok) {
                 let msg = 'Không thể lưu thay đổi lịch học.';
                 if (res && res.message === 'conflict_room') msg = res.detail || 'Phòng học bị trùng lịch.';
@@ -2053,6 +2492,11 @@ function deleteSingleSession() {
         group_code: groupCode
     })
         .then(function (res) {
+            // Kiểm tra session hết hạn
+            if (window.handleSessionExpired && window.handleSessionExpired(res)) {
+                return;
+            }
+            
             if (!res || !res.ok) {
                 const msg = 'Không thể xóa lịch học khỏi hệ thống.';
                 if (window.showToast) window.showToast(msg, 'error');
@@ -2113,6 +2557,60 @@ function deleteSingleSession() {
         });
 }
 
+function addGroupForSubject(subjectId, subjectName) {
+    const sid = String(subjectId || '').trim();
+    if (!sid) {
+        if (window.showToast) window.showToast('Không xác định được môn học để thêm nhóm.', 'error');
+        else alert('Không xác định được môn học để thêm nhóm.');
+        return;
+    }
+
+    const candidates = [];
+    const seenCs = new Set();
+    (assignmentOfferingsFiltered || []).forEach(function (asg) {
+        if (String(asg.subjectId || '') !== sid) return;
+        const csId = resolveClassSubjectId(asg);
+        if (!Number.isFinite(csId) || csId <= 0) return;
+        const key = String(csId);
+        if (seenCs.has(key)) return;
+        seenCs.add(key);
+        candidates.push({
+            csId: csId,
+            courseId: asg.id,
+            classCode: String(asg.classCode || '').trim() || '--'
+        });
+    });
+
+    if (!candidates.length) {
+        addSubjectClass(sid, subjectName || '');
+        return;
+    }
+
+    if (candidates.length === 1) {
+        addGroupToClass(candidates[0].courseId, subjectName || '');
+        return;
+    }
+
+    const classList = candidates.map(function (item) { return item.classCode; }).join(', ');
+    const selectedClass = prompt(
+        'Môn "' + (subjectName || sid) + '" đang có nhiều lớp: ' + classList + '\nNhập mã lớp cần thêm nhóm:',
+        candidates[0].classCode
+    );
+    if (!selectedClass) return;
+
+    const normalized = String(selectedClass || '').trim().toUpperCase();
+    const matched = candidates.find(function (item) {
+        return String(item.classCode || '').trim().toUpperCase() === normalized;
+    }) || null;
+    if (!matched) {
+        if (window.showToast) window.showToast('Không tìm thấy lớp "' + normalized + '" trong danh sách hiện tại.', 'warning');
+        else alert('Không tìm thấy lớp "' + normalized + '" trong danh sách hiện tại.');
+        return;
+    }
+
+    addGroupToClass(matched.courseId, subjectName || '');
+}
+
 function addGroupToClass(courseId, subjectName) {
     let course = findAssignmentCourse(courseId);
     if (!course) {
@@ -2147,6 +2645,11 @@ function addGroupToClass(courseId, subjectName) {
 
     window.callApi('add_group', { class_subject_id: csId })
         .then(function(res) {
+            // Kiểm tra session hết hạn
+            if (window.handleSessionExpired && window.handleSessionExpired(res)) {
+                return;
+            }
+            
             if (res && res.ok) {
                 if (window.showToast) window.showToast('Đã thêm nhóm mới thành công.', 'success');
                 const maxNum = (course.groups || []).reduce(function(mx, g) {
@@ -2214,6 +2717,11 @@ function deleteGroupFromClass(courseId, groupCode, subjectName, subjectId) {
         group_code: getGroupCode(groupCode)
     })
         .then(function(res) {
+            // Kiểm tra session hết hạn
+            if (window.handleSessionExpired && window.handleSessionExpired(res)) {
+                return;
+            }
+            
             if (res && res.ok) {
                 const removedStudentCount = Math.max(0, parseInt((res && res.deleted_student_count) || 0, 10) || 0);
                 if (window.showToast) {

@@ -110,56 +110,9 @@ function upload_get_drive_access_token(string $credPath): string {
 }
 
 function upload_try_google_drive_sdk(string $tmpPath, string $originalName, string $mimeType): ?array {
-    $autoload = BASE_PATH . '/vendor/autoload.php';
-    if (!file_exists($autoload)) {
-        return null;
-    }
-    require_once $autoload;
-
-    if (!class_exists('Google\\Client') || !class_exists('Google\\Service\\Drive')) {
-        return null;
-    }
-
-    $credPath = upload_resolve_credential_path();
-    if ($credPath === '' || !file_exists($credPath)) {
-        return null;
-    }
-
-    try {
-        $client = new Google\Client();
-        $client->setAuthConfig($credPath);
-        $client->setScopes([Google\Service\Drive::DRIVE_FILE]);
-        $service = new Google\Service\Drive($client);
-
-        $meta = new Google\Service\Drive\DriveFile(['name' => $originalName]);
-        $folderId = trim((string)envOrDefault('GOOGLE_DRIVE_FOLDER_ID', ''));
-        if ($folderId !== '') {
-            $meta->setParents([$folderId]);
-        }
-
-        $created = $service->files->create($meta, [
-            'data' => file_get_contents($tmpPath),
-            'mimeType' => $mimeType ?: 'application/octet-stream',
-            'uploadType' => 'multipart',
-            'fields' => 'id,webViewLink'
-        ]);
-
-        if (!empty($created->id)) {
-            $permission = new Google\Service\Drive\Permission([
-                'type' => 'anyone',
-                'role' => 'reader'
-            ]);
-            $service->permissions->create($created->id, $permission);
-        }
-
-        $fileId = (string)($created->id ?? '');
-        if ($fileId === '') return null;
-        $link = (string)($created->webViewLink ?? ('https://drive.google.com/file/d/' . $fileId . '/view'));
-        return ['success' => true, 'storage' => 'drive', 'link' => $link, 'fileId' => $fileId];
-    } catch (Throwable $e) {
-        error_log('upload-to-drive SDK error: ' . $e->getMessage());
-        return null;
-    }
+    // SDK approach removed: google/apiclient is not installed.
+    // upload_try_google_drive() falls back to upload_try_google_drive_rest() below.
+    return null;
 }
 
 function upload_try_google_drive_rest(string $tmpPath, string $originalName, string $mimeType): ?array {
@@ -221,6 +174,75 @@ function upload_try_google_drive(string $tmpPath, string $originalName, string $
     return upload_try_google_drive_rest($tmpPath, $originalName, $mimeType);
 }
 
+// ------------------------------------------------------------------
+// Store file on local filesystem → /public/uploads/documents/
+// Returns array on success, null on failure
+// ------------------------------------------------------------------
+function upload_try_local(string $tmpPath, string $originalName): ?array {
+    $uploadDir = BASE_PATH . '/public/uploads/documents/';
+    if (!is_dir($uploadDir)) {
+        @mkdir($uploadDir, 0755, true);
+    }
+    if (!is_writable($uploadDir)) return null;
+
+    $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+    $base = upload_sanitize_filename(pathinfo($originalName, PATHINFO_FILENAME));
+    $unique = date('Ymd_His') . '_' . substr(md5(uniqid('', true)), 0, 8) . '_' . $base . ($ext ? '.' . $ext : '');
+    $dest = $uploadDir . $unique;
+
+    if (!@move_uploaded_file($tmpPath, $dest)) return null;
+
+    return [
+        'success' => true,
+        'storage' => 'local',
+        'link'    => BASE_URL . '/public/uploads/documents/' . $unique,
+        'fileId'  => '',
+    ];
+}
+
+// ------------------------------------------------------------------
+// Store file in the DB (documents table) as last-resort storage
+// Returns docId on success, 0 on failure
+// ------------------------------------------------------------------
+function upload_store_in_db(string $tmpPath, string $originalName, string $mimeType, int $size, ?int $userId): int {
+    try {
+        $conn = getDBConnection();
+
+        // Allow class_subject_id to be NULL for the temporary upload record
+        $conn->query("ALTER TABLE documents MODIFY COLUMN class_subject_id INT(11) DEFAULT NULL");
+
+        $stmt = $conn->prepare(
+            "INSERT INTO documents (title, note, category, drive_link, drive_file_id,
+                                   icon_type, file_data, file_size, file_mime, original_filename,
+                                   class_subject_id, uploader_id)
+             VALUES (?, NULL, NULL, NULL, NULL, ?, ?, ?, ?, ?, NULL, ?)"
+        );
+        if (!$stmt) return 0;
+
+        $iconType = 'file';
+        $lct = strtolower($originalName);
+        if (preg_match('/\.pdf$/', $lct)) $iconType = 'pdf';
+        elseif (preg_match('/\.(doc|docx)$/', $lct)) $iconType = 'doc';
+        elseif (preg_match('/\.(xls|xlsx|csv)$/', $lct)) $iconType = 'xls';
+        elseif (preg_match('/\.(zip|rar|7z)$/', $lct)) $iconType = 'zip';
+
+        $fileData = file_get_contents($tmpPath);
+        if ($fileData === false || $fileData === '') return 0;
+
+        $fileMime = $mimeType ?: 'application/octet-stream';
+        $stmt->bind_param('ssssisss', $originalName, $iconType, $fileData, $size, $fileMime, $originalName, $userId);
+        $stmt->send_long_data(2, $fileData);
+        $ok = $stmt->execute();
+        $stmt->close();
+
+        if (!$ok) return 0;
+        return (int)mysqli_insert_id($conn);
+    } catch (Throwable $e) {
+        error_log('upload-store-in-db error: ' . $e->getMessage());
+        return 0;
+    }
+}
+
 if (!isLoggedIn()) {
     upload_json(401, ['success' => false, 'error' => 'Bạn chưa đăng nhập.']);
 }
@@ -252,30 +274,29 @@ if ($size > 25 * 1024 * 1024) {
     upload_json(400, ['success' => false, 'error' => 'Kích thước tệp vượt quá 25MB.']);
 }
 
+// 1. Google Drive (nếu có credentials)
 $driveResult = upload_try_google_drive($tmpPath, $originalName, $mimeType);
 if ($driveResult) {
     upload_json(200, $driveResult);
 }
 
-// Fallback local
-$uploadDir = BASE_PATH . '/public/uploads/documents';
-if (!is_dir($uploadDir) && !@mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
-    upload_json(500, ['success' => false, 'error' => 'Không thể tạo thư mục lưu tệp.']);
+// 2. Local filesystem
+$localResult = upload_try_local($tmpPath, $originalName);
+if ($localResult) {
+    upload_json(200, $localResult);
 }
 
-$safeName = upload_sanitize_filename($originalName);
-$uniqueName = date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '_' . $safeName;
-$targetPath = $uploadDir . '/' . $uniqueName;
-
-if (!move_uploaded_file($tmpPath, $targetPath)) {
-    upload_json(500, ['success' => false, 'error' => 'Không thể lưu tệp lên máy chủ.']);
+// 3. Database BLOB (last resort)
+$docId = upload_store_in_db($tmpPath, $originalName, $mimeType, $size, (int)($_SESSION['user_id'] ?? 0));
+if ($docId > 0) {
+    upload_json(200, [
+        'success' => true,
+        'storage' => 'database',
+        'doc_id'  => $docId,
+        'link'    => '',
+        'fileId'  => '',
+    ]);
 }
 
-$publicLink = BASE_URL . '/public/uploads/documents/' . rawurlencode($uniqueName);
-upload_json(200, [
-    'success' => true,
-    'storage' => 'local',
-    'link' => $publicLink,
-    'fileId' => ''
-]);
+upload_json(500, ['success' => false, 'error' => 'Không thể lưu tệp. Vui lòng thử lại.']);
 

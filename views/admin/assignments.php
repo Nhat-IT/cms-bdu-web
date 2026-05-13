@@ -2,6 +2,17 @@
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/helpers.php';
+
+// ── Auth guard: browser page requests phải redirect, không trả JSON ──────────
+if (!isLoggedIn()) {
+    header('Location: /cms/login.php');
+    exit;
+}
+if (!hasRole(['admin', 'support_admin'])) {
+    header('Location: /cms/login.php?error=forbidden');
+    exit;
+}
+// ─────────────────────────────────────────────────────────────────────────────
 requireRole(['admin', 'support_admin']);
 $currentUser = getCurrentUser();
 $teachers = db_fetch_all("
@@ -14,15 +25,42 @@ $dbYears   = db_fetch_all("SELECT DISTINCT academic_year FROM semesters ORDER BY
 $dbSemesters = ['HK1' => 'Học kỳ 1', 'HK2' => 'Học kỳ 2', 'HK3' => 'Học kỳ 3 (Hè)'];
 
 // Tìm học kỳ hiện tại để đặt làm mặc định
-$currentSemester = db_fetch_one("
-    SELECT semester_name, academic_year 
-    FROM semesters 
-    WHERE CURDATE() BETWEEN start_date AND end_date 
-    ORDER BY start_date DESC 
-    LIMIT 1
+$currentSemester = getCurrentSemester();
+
+// Lấy danh sách học kỳ có dữ liệu trong class_subjects
+$semestersWithData = db_fetch_all("
+    SELECT DISTINCT sm.semester_name, sm.academic_year
+    FROM class_subjects cs
+    JOIN semesters sm ON cs.semester_id = sm.id
+    ORDER BY sm.academic_year DESC, sm.semester_name ASC
 ");
+
+// Normalize semester for comparison (HK1/1 -> HK1)
+function normalizeSemesterKey($semesterName) {
+    $raw = strtoupper(trim((string)($semesterName ?? '')));
+    if ($raw === '') return '';
+    if (preg_match('/^(?:HK)?\s*([123])$/', $raw, $m)) {
+        return 'HK' . $m[1];
+    }
+    return $raw;
+}
+
 $defaultYear = $currentSemester['academic_year'] ?? ($dbYears[0]['academic_year'] ?? '');
-$defaultSemester = $currentSemester['semester_name'] ?? '';
+$defaultSemester = normalizeSemesterKey($currentSemester['semester_name'] ?? '');
+
+// Nếu học kỳ hiện tại không có dữ liệu, dùng học kỳ đầu tiên có dữ liệu
+$currentSemesterKey = normalizeSemesterKey($currentSemester['semester_name'] ?? '');
+$hasDataForCurrentSemester = false;
+foreach ($semestersWithData as $s) {
+    if (normalizeSemesterKey($s['semester_name']) === $currentSemesterKey && ($s['academic_year'] ?? '') === ($currentSemester['academic_year'] ?? '')) {
+        $hasDataForCurrentSemester = true;
+        break;
+    }
+}
+if (!$hasDataForCurrentSemester && !empty($semestersWithData)) {
+    $defaultYear = $semestersWithData[0]['academic_year'] ?? '';
+    $defaultSemester = normalizeSemesterKey($semestersWithData[0]['semester_name'] ?? '');
+}
 
 function formatSemesterNameLabel($semesterName, $dbSemesters) {
     $raw = trim((string)($semesterName ?? ''));
@@ -89,6 +127,15 @@ $rawSubjects = db_fetch_all("
     ORDER BY subject_code ASC
 ");
 
+// Tính lại subject_open theo ngày thực tế (không phụ thuộc is_active trong DB có thể bị stale)
+$_today = date('Y-m-d');
+foreach ($rawSubjects as &$_s) {
+    $od = $_s['open_date']  ?? '';
+    $cd = $_s['close_date'] ?? '';
+    $_s['subject_open'] = (!empty($od) && $od <= $_today && (empty($cd) || $cd >= $_today)) ? 1 : 0;
+}
+unset($_s);
+
 // Query tất cả phân công (class_subjects)
 $rawAssignments = db_fetch_all("
     SELECT
@@ -133,24 +180,53 @@ $rawGroups = db_fetch_all("
         u.full_name  AS sub_name,
         u.academic_title AS sub_title,
         um.full_name AS main_name,
-        um.academic_title AS main_title
+        um.academic_title AS main_title,
+        COUNT(DISTINCT CASE WHEN ssr.student_id > 0 THEN ssr.student_id END) +
+        COUNT(DISTINCT CASE WHEN (ssr.student_id IS NULL OR ssr.student_id = 0)
+                                 AND ssr.mssv IS NOT NULL AND ssr.mssv != ''
+                            THEN ssr.mssv END) AS student_count
     FROM class_subject_groups csg
     LEFT JOIN users u ON csg.sub_teacher_id = u.id
     LEFT JOIN users um ON csg.main_teacher_id = um.id
     LEFT JOIN rooms r ON (r.room_code = csg.room OR r.room_name = csg.room)
+    LEFT JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
     WHERE csg.is_extra = 0 OR csg.is_extra IS NULL
+    GROUP BY csg.id, csg.class_subject_id, csg.group_code, csg.room, r.room_name,
+             csg.day_of_week, csg.start_period, csg.end_period,
+             csg.sub_teacher_id, csg.main_teacher_id,
+             u.full_name, u.academic_title, um.full_name, um.academic_title
     ORDER BY csg.class_subject_id, csg.group_code ASC
 ");
 
-// Số lượng SV theo lớp học phần (class_subject_id)
+// Số lượng SV đăng ký theo lớp học phần
+// Ưu tiên: student_subject_registration (class_name) > users (role=student) > class_students
 $studentCountByCsId = [];
-$rawStudentCounts = db_fetch_all("
-    SELECT cs.id AS class_subject_id, COUNT(cs2.student_id) AS student_count
+$studentCountByClassName = [];
+
+// Đếm từ student_subject_registration theo class_name
+$rawStudentCountsByClass = db_fetch_all("
+    SELECT class_name, COUNT(*) AS student_count
+    FROM student_subject_registration
+    WHERE class_name IS NOT NULL AND class_name != ''
+    GROUP BY class_name
+");
+foreach ($rawStudentCountsByClass as $row) {
+    $studentCountByClassName[strtoupper(trim($row['class_name']))] = (int)$row['student_count'];
+}
+
+// Đếm SV theo cs_id: có tài khoản (student_id) + chưa có tài khoản (mssv)
+$rawStudentCountsByCs = db_fetch_all("
+    SELECT cs.id AS class_subject_id,
+           COUNT(DISTINCT CASE WHEN ssr.student_id > 0 THEN ssr.student_id END) +
+           COUNT(DISTINCT CASE WHEN (ssr.student_id IS NULL OR ssr.student_id = 0)
+                                    AND ssr.mssv IS NOT NULL AND ssr.mssv != ''
+                               THEN ssr.mssv END) AS student_count
     FROM class_subjects cs
-    LEFT JOIN class_students cs2 ON cs2.class_id = cs.class_id
+    LEFT JOIN class_subject_groups csg ON csg.class_subject_id = cs.id
+    LEFT JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
     GROUP BY cs.id
 ");
-foreach ($rawStudentCounts as $row) {
+foreach ($rawStudentCountsByCs as $row) {
     $studentCountByCsId[(int)$row['class_subject_id']] = (int)$row['student_count'];
 }
 
@@ -240,17 +316,46 @@ foreach ($classes as $c) {
                 'end'         => $g['end_period']   ? (string)$g['end_period']   : null,
                 'room'        => $g['room'] ?? null,
                 'roomName'    => $g['room_name'] ?? null,
+                'hasStudents' => ($g['student_count'] ?? 0) > 0,
+                'studentCount'=> (int)($g['student_count'] ?? 0),
             ], $groups)
         ];
     }
     
     if (!empty($assignments)) {
+        // Tính tổng sinh viên cho lớp (ưu tiên theo csId, nếu không có thì theo class_name)
+        $totalStudents = 0;
+        foreach ($assignments as $a) {
+            $csStudentCount = (int)($studentCountByCsId[(int)$a['csId']] ?? 0);
+            if ($csStudentCount > 0) {
+                $totalStudents += $csStudentCount;
+            }
+        }
+        // Nếu không có sinh viên theo csId, thử lấy từ class_name
+        if ($totalStudents == 0) {
+            $totalStudents = (int)($studentCountByClassName[strtoupper($className)] ?? 0);
+        }
+        
         $dbCourses[] = [
             'id'          => 'class-' . $className,
             'classCode'   => $className,
             'name'        => 'Lớp ' . $className,
             'hasOpen'     => $hasOpen,
+            'studentCount'=> $totalStudents,
             'assignments' => $assignments,
+        ];
+    } else {
+        // Lấy số sinh viên từ class_name cho lớp không có assignments
+        $totalStudents = (int)($studentCountByClassName[strtoupper($className)] ?? 0);
+        
+        // Thêm lớp không có phân công nhưng vẫn hiển thị
+        $dbCourses[] = [
+            'id'          => 'class-' . $className,
+            'classCode'   => $className,
+            'name'        => 'Lớp ' . $className,
+            'hasOpen'     => false,
+            'studentCount'=> $totalStudents,
+            'assignments' => [],
         ];
     }
 }
@@ -314,6 +419,7 @@ if (!empty($unassignedAssignments)) {
 $rawMasterScheduleRows = db_fetch_all("
     SELECT
         cs.id               AS cs_id,
+        cs.subject_id       AS subject_id,
         c.class_name        AS class_name,
         s.subject_code      AS subject_code,
         s.subject_name      AS subject_name,
@@ -346,6 +452,7 @@ foreach ($rawMasterScheduleRows as $row) {
         $masterCoursesByCsId[$csId] = [
             'id'        => $csId,
             'csId'      => $csId,
+            'subjectId' => !empty($row['subject_id']) ? (string)$row['subject_id'] : null,
             'name'      => !empty($row['subject_code'])
                 ? (($row['subject_code'] ?? '') . ' - ' . ($row['subject_name'] ?? ''))
                 : ($row['subject_name'] ?? ''),
@@ -367,29 +474,28 @@ foreach ($rawMasterScheduleRows as $row) {
 }
 $dbMasterCourses = array_values($masterCoursesByCsId);
 
-// Lich ghi de theo ngay (chi ap dung cho 1 ngay cu the, khong doi lich ca nhom)
-$hasExtraClassesTable = (int) db_count(
-    "SELECT COUNT(*) AS total
-     FROM information_schema.tables
-     WHERE table_schema = DATABASE()
-       AND table_name = 'extra_classes'"
-) > 0;
-$rawMasterOverrides = $hasExtraClassesTable ? db_fetch_all("
+// Lịch ghi đè theo ngày/học bù lưu trực tiếp ở class_subject_groups (is_extra = 1)
+$rawMasterOverrides = db_fetch_all("
     SELECT
-        cs.id            AS cs_id,
-        csg.group_code   AS group_code,
-        ec.extra_date    AS extra_date,
-        ec.day_of_week   AS day_of_week,
-        ec.start_period  AS start_period,
-        ec.end_period    AS end_period,
-        ec.room          AS room,
-        ec.is_regular    AS is_regular
-    FROM extra_classes ec
-    JOIN class_subject_groups csg ON csg.id = ec.class_subject_group_id
-    JOIN class_subjects cs ON cs.id = csg.class_subject_id
-    ORDER BY ec.extra_date DESC, ec.id DESC
-") : [];
+        csg.class_subject_id AS cs_id,
+        csg.group_code       AS group_code,
+        csg.extra_date       AS extra_date,
+        csg.day_of_week      AS day_of_week,
+        csg.start_period     AS start_period,
+        csg.end_period       AS end_period,
+        csg.room             AS room,
+        csg.note             AS note
+    FROM class_subject_groups csg
+    WHERE csg.is_extra = 1
+      AND csg.extra_date IS NOT NULL
+      AND csg.day_of_week IS NOT NULL
+      AND csg.start_period IS NOT NULL
+      AND csg.end_period IS NOT NULL
+    ORDER BY csg.extra_date DESC, csg.id DESC
+");
 $dbMasterOverrides = array_map(function ($row) {
+    $note = (string)($row['note'] ?? '');
+    $isRegular = stripos($note, 'Cap nhat theo ngay tu Master schedule') !== false ? 1 : 0;
     return [
         'csId'       => (int)($row['cs_id'] ?? 0),
         'groupCode'  => $row['group_code'] ?? 'N1',
@@ -398,7 +504,7 @@ $dbMasterOverrides = array_map(function ($row) {
         'start'      => !empty($row['start_period']) ? (string)$row['start_period'] : null,
         'end'        => !empty($row['end_period']) ? (string)$row['end_period'] : null,
         'room'       => $row['room'] ?? null,
-        'isRegular'  => isset($row['is_regular']) ? (int)$row['is_regular'] : 1
+        'isRegular'  => $isRegular
     ];
 }, $rawMasterOverrides);
 ?>
@@ -599,7 +705,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                                 <label class="text-muted fw-bold d-block mb-1" style="font-size:0.75rem">MÃ LỚP <span class="text-danger">*</span></label>
                                 <select class="form-select form-select-sm fw-bold text-primary border-primary" id="initClassCode" required>
                                     <option value="">-- Chọn lớp --</option>
-                                    <?php foreach ($classes as $c): ?>
+                                    <?php foreach ($classes as $c): if (trim($c['class_name']) === '' || $c['class_name'] === '--') continue; ?>
                                         <option value="<?= e($c['class_name']) ?>"><?= e($c['class_name']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
@@ -857,7 +963,7 @@ window.teachers = <?= json_encode(array_map(fn($t) => [
     'id'    => (string)$t['id'],
     'name'  => $t['name'],
     'title' => $t['academic_title'] ?? ''
-], $teachers)) ?>;
+], $teachers ?? []), JSON_UNESCAPED_UNICODE) ?>;
 window.rooms = <?= json_encode(array_map(fn($r) => [
     'code' => $r['room_code'],
     'name' => $r['room_name'],
@@ -869,29 +975,31 @@ window.days = [
 ];
 
 // Dữ liệu từ DB — classes catalogue với assignments lồng trong
-window.allClasses = <?= json_encode($dbCourses, JSON_UNESCAPED_UNICODE) ?>;
+window.allClasses = <?= json_encode($dbCourses ?? [], JSON_UNESCAPED_UNICODE) ?>;
 // Flat version cho backward compat (openSessionManager, addGroupToClass, v.v.)
 window.allAssignmentCourses = [];
-window.allClasses.forEach(function(cls) {
-    (cls.assignments || []).forEach(function(asg) {
-        window.allAssignmentCourses.push({
-            id:          asg.id,
-            csId:        asg.csId,
-            name:        asg.subjectName,
-            credits:     asg.credits,
-            classCode:   cls.classCode,
-            year:        asg.year,
-            semester:    asg.semester,
-            startDate:   asg.startDate || null,
-            endDate:     asg.endDate || null,
-            isOpen:      asg.isOpen,
-            openWindow:  asg.openWindow,
-            groups:      asg.groups,
-            subjectCode: asg.subjectCode,
-            subjectId:   asg.subjectId
+if (Array.isArray(window.allClasses)) {
+    window.allClasses.forEach(function(cls) {
+        (cls.assignments || []).forEach(function(asg) {
+            window.allAssignmentCourses.push({
+                id:          asg.id,
+                csId:        asg.csId,
+                name:        asg.subjectName,
+                credits:     asg.credits,
+                classCode:   cls.classCode,
+                year:        asg.year,
+                semester:    asg.semester,
+                startDate:   asg.startDate || null,
+                endDate:     asg.endDate || null,
+                isOpen:      asg.isOpen,
+                openWindow:  asg.openWindow,
+                subjectCode: asg.subjectCode,
+                subjectId:   asg.subjectId,
+                groups:      Array.isArray(asg.groups) ? asg.groups.map(function(g){return Object.assign({},g);}) : []
+            });
         });
     });
-});
+}
 
 // Dataset Master Schedule lấy trực tiếp từ DB
 window.masterScheduleCourses = <?= json_encode($dbMasterCourses, JSON_UNESCAPED_UNICODE) ?>;
@@ -1098,6 +1206,33 @@ function handleMasterSemesterChange() {
     });
 
     renderMasterSchedule();
+
+    // Nếu học kỳ hiện tại không có lịch, tự động chọn học kỳ gần nhất có dữ liệu
+    (function autoSelectSemesterWithData() {
+        const semSel = document.getElementById('masterFilterSemester');
+        if (!semSel || !window.masterScheduleCourses || !window.masterScheduleCourses.length) return;
+
+        function semHasData(val) {
+            if (!val) return false;
+            const parts = val.split('|||');
+            const semName = parts[0] || '';
+            const yr = parts[1] || '';
+            return window.masterScheduleCourses.some(function(c) {
+                return String(c.year || '') === yr && normalizeSemesterToken(c.semester || '') === normalizeSemesterToken(semName);
+            });
+        }
+
+        if (!semHasData(semSel.value)) {
+            for (var i = 0; i < semSel.options.length; i++) {
+                if (semHasData(semSel.options[i].value)) {
+                    semSel.value = semSel.options[i].value;
+                    rebuildMasterWeekOptions(false);
+                    renderMasterSchedule();
+                    break;
+                }
+            }
+        }
+    })();
 })();
 
 function renderMasterSchedule() {
@@ -1170,6 +1305,7 @@ function renderMasterSchedule() {
             .replace(/'/g, '&#39;');
     };
     const overrideMap = {};
+    const renderedOverrideKeys = {};
     (window.masterScheduleOverrides || []).forEach(function(ov) {
         const key = String(ov.csId || '') + '|' + normGroup(ov.groupCode || 'N1') + '|' + String(ov.date || '');
         if (String(ov.csId || '') && String(ov.date || '')) {
@@ -1177,11 +1313,110 @@ function renderMasterSchedule() {
         }
     });
 
+    const renderEntry = function(course, group, day, start, end, roomValue, targetDate, sourceOverrideKey) {
+        if (!Number.isFinite(day) || !Number.isFinite(start) || !Number.isFinite(end)) return false;
+        if (day < 2 || day > 8) return false;
+        if (teacherFilter !== 'all' && group.teacherMain !== teacherFilter) return false;
+        if (roomFilter !== 'all' && roomValue !== roomFilter) return false;
+
+        const teacherObj = (window.teachers || []).find(function(t) { return t.id === group.teacherMain; });
+        const teacherDisplay = teacherObj ? ((teacherObj.title ? teacherObj.title + '. ' : '') + teacherObj.name) : '—';
+        const normalizedCode = normGroup(group.code || 'N1');
+        const slotKey = String(day) + '-' + String(start);
+        const slotItem = {
+            subject: course.name || '',
+            classCode: course.classCode || '',
+            groupCode: normalizedCode === 'N1' ? 'Nhóm 1' : normalizedCode,
+            roomName: getRoomName(roomValue),
+            teacher: teacherDisplay
+        };
+        if (occupied[day] && occupied[day][start]) {
+            if (primarySlots[slotKey]) primarySlots[slotKey].items.push(slotItem);
+            if (sourceOverrideKey) renderedOverrideKeys[sourceOverrideKey] = true;
+            return true;
+        }
+
+        // Clip span at the first already-occupied sub-period so we don't remove
+        // a cell that another course already rendered into (which would erase it).
+        let actualEnd = end;
+        for (let p = start + 1; p <= end; p++) {
+            if (occupied[day] && occupied[day][p]) {
+                // Found an occupied cell — register as conflict in its primary slot and stop here
+                const overlapKey = String(day) + '-' + String(p);
+                if (primarySlots[overlapKey]) primarySlots[overlapKey].items.push(slotItem);
+                actualEnd = p - 1;
+                break;
+            }
+            const covered = tbody.querySelector(
+                '.master-cell[data-day="' + day + '"][data-period="' + p + '"]'
+            );
+            if (covered) covered.remove();
+            if (occupied[day]) occupied[day][p] = true;
+        }
+
+        const span = actualEnd - start + 1;
+        const cell = tbody.querySelector(
+            '.master-cell[data-day="' + day + '"][data-period="' + start + '"]'
+        );
+        if (!cell) return false;
+
+        cell.rowSpan = span;
+        cell.style.verticalAlign = 'top';
+        cell.style.padding = '2px';
+        cell.style.height = (span * 45) + 'px';
+        if (occupied[day]) occupied[day][start] = true;
+
+        const tObj = (window.teachers || []).find(function(t) { return t.id === group.teacherMain; });
+        const tName = tObj ? ((tObj.title ? tObj.title + '. ' : '') + tObj.name) : '—';
+        const block = document.createElement('div');
+        block.className = 'subject-block';
+        block.style.height = '100%';
+        block.style.minHeight = (span * 35 - 6) + 'px';
+        block.style.cursor = 'pointer';
+        block.title = 'Click để chỉnh sửa lịch ngày này';
+        block.innerHTML =
+            '<div class="subject-title" style="font-size:0.86rem;font-weight:700">' + course.name + '</div>' +
+            '<div style="font-size:0.78rem">Nhóm: <b class="text-primary">' + (normalizedCode === 'N1' ? 'Nhóm 1' : normalizedCode) + '</b></div>' +
+            '<div style="font-size:0.78rem">🏛 <b>' + getRoomName(roomValue) + '</b></div>' +
+            '<div style="font-size:0.78rem">👤 ' + tName + '</div>';
+
+        (function(cc, cg, fixedDate, fixedDay, fixedStart, fixedEnd, fixedRoom) {
+            block.addEventListener('click', function() {
+                const sd = new Date(fixedDate);
+                const sdStr = toYmd(sd);
+                const sdDisplay = sd.getDate().toString().padStart(2,'0') + '/' +
+                                  (sd.getMonth()+1).toString().padStart(2,'0') + '/' +
+                                  sd.getFullYear();
+                openEditSingleSession(
+                    'edit_master', sdDisplay, sdStr,
+                    String(fixedDay), String(fixedStart), String(fixedEnd),
+                    fixedRoom || '', 'normal',
+                    cc.classCode, cc.name,
+                    cg.teacherMain || '', cg.code, cc.csId || ''
+                );
+            });
+        })(course, group, targetDate, day, start, end, roomValue);
+
+        cell.appendChild(block);
+        primarySlots[slotKey] = { block: block, items: [slotItem] };
+        // Also map every covered sub-period to this slot, so courses whose
+        // start falls inside this span can still be registered as conflicts.
+        for (let cp = start + 1; cp <= actualEnd; cp++) {
+            const cpKey = String(day) + '-' + String(cp);
+            if (!primarySlots[cpKey]) primarySlots[cpKey] = primarySlots[slotKey];
+        }
+        if (sourceOverrideKey) renderedOverrideKeys[sourceOverrideKey] = true;
+        return true;
+    };
+
+    const weekStart = parseYmd(monday);
+    const weekEnd = weekStart ? new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6) : null;
+
     (window.masterScheduleCourses || []).forEach(function(course) {
         if (yearFilter !== 'all' && String(course.year || '') !== yearFilter) return;
         if (semFilter !== 'all' && normalizeSemesterToken(course.semester) !== semFilter) return;
 
-        course.groups.forEach(function(g) {
+        (course.groups || []).forEach(function(g) {
             if (!g.day || !g.start || !g.end) return;
             const baseDay = parseInt(g.day, 10);
             if (!Number.isFinite(baseDay) || !Object.prototype.hasOwnProperty.call(dayOffsetMap, baseDay)) return;
@@ -1192,81 +1427,46 @@ function renderMasterSchedule() {
             const overrideKey = String(course.csId || '') + '|' + normGroup(g.code || 'N1') + '|' + targetYmd;
             const override = overrideMap[overrideKey] || null;
 
-            const day   = parseInt((override && override.day) ? override.day : g.day, 10);
+            const day = parseInt((override && override.day) ? override.day : g.day, 10);
             const start = parseInt((override && override.start) ? override.start : g.start, 10);
-            const end   = parseInt((override && override.end) ? override.end : g.end, 10);
+            const end = parseInt((override && override.end) ? override.end : g.end, 10);
             const roomValue = (override && override.room) ? override.room : g.room;
-            if (!Number.isFinite(day) || !Number.isFinite(start) || !Number.isFinite(end)) return;
-            if (teacherFilter !== 'all' && g.teacherMain !== teacherFilter) return;
-            if (roomFilter    !== 'all' && roomValue     !== roomFilter)    return;
-            const teacherObj = (window.teachers || []).find(t => t.id === g.teacherMain);
-            const teacherDisplay = teacherObj ? ((teacherObj.title ? teacherObj.title + '. ' : '') + teacherObj.name) : '—';
-            const slotKey = String(day) + '-' + String(start);
-            const slotItem = {
-                subject: course.name || '',
-                classCode: course.classCode || '',
-                groupCode: (g.code === 'N1' ? 'Nhóm 1' : (g.code || 'N1')),
-                roomName: getRoomName(roomValue),
-                teacher: teacherDisplay
-            };
-            if (occupied[day] && occupied[day][start]) {
-                if (primarySlots[slotKey]) primarySlots[slotKey].items.push(slotItem);
-                return;
-            }
-
-            const span = end - start + 1;
-            const cell = tbody.querySelector(
-                '.master-cell[data-day="' + day + '"][data-period="' + start + '"]'
-            );
-            if (!cell) return;
-
-            cell.rowSpan           = span;
-            cell.style.verticalAlign = 'top';
-            cell.style.padding       = '2px';
-            cell.style.height        = (span * 45) + 'px';
-            for (let p = start + 1; p <= end; p++) {
-                const covered = tbody.querySelector(
-                    '.master-cell[data-day="' + day + '"][data-period="' + p + '"]'
-                );
-                if (covered) covered.remove();
-                if (occupied[day]) occupied[day][p] = true;
-            }
-            if (occupied[day]) occupied[day][start] = true;
-
-            const tObj    = (window.teachers || []).find(t => t.id === g.teacherMain);
-            const tName   = tObj ? ((tObj.title ? tObj.title + '. ' : '') + tObj.name) : '—';
-            const block = document.createElement('div');
-            block.className   = 'subject-block';
-            block.style.height    = '100%';
-            block.style.minHeight = (span * 35 - 6) + 'px';
-            block.style.cursor    = 'pointer';
-            block.title           = 'Click để chỉnh sửa lịch ngày này';
-            block.innerHTML =
-                '<div class="subject-title" style="font-size:0.86rem;font-weight:700">' + course.name + '</div>' +
-                '<div style="font-size:0.78rem">Nhóm: <b class="text-primary">' + (g.code === "N1" ? "Nhóm 1" : g.code) + '</b></div>' +
-                '<div style="font-size:0.78rem">🏛 <b>' + getRoomName(roomValue) + '</b></div>' +
-                '<div style="font-size:0.78rem">👤 ' + tName + '</div>';
-
-            (function(cc, cg, fixedDate, fixedDay, fixedStart, fixedEnd, fixedRoom) {
-                block.addEventListener('click', function() {
-                    const sd = new Date(fixedDate);
-                    const sdStr = toYmd(sd);
-                    const sdDisplay = sd.getDate().toString().padStart(2,'0') + '/' +
-                                      (sd.getMonth()+1).toString().padStart(2,'0') + '/' +
-                                      sd.getFullYear();
-                    openEditSingleSession(
-                        'edit_master', sdDisplay, sdStr,
-                        String(fixedDay), String(fixedStart), String(fixedEnd),
-                        fixedRoom || '', 'normal',
-                        cc.classCode, cc.name,
-                        cg.teacherMain || '', cg.code, cc.csId || ''
-                    );
-                });
-            })(course, g, targetDate, day, start, end, roomValue);
-
-            cell.appendChild(block);
-            primarySlots[slotKey] = { block: block, items: [slotItem] };
+            renderEntry(course, g, day, start, end, roomValue, targetDate, override ? overrideKey : '');
         });
+    });
+
+    // Render các buổi học bù/ghi đè theo ngày không trùng ngày học cố định của nhóm.
+    (window.masterScheduleOverrides || []).forEach(function(ov) {
+        if (!weekStart || !weekEnd) return;
+        const overrideDate = parseYmd(String(ov.date || ''));
+        if (!overrideDate) return;
+        if (overrideDate < weekStart || overrideDate > weekEnd) return;
+
+        const csIdText = String(ov.csId || '');
+        const groupCode = normGroup(ov.groupCode || 'N1');
+        const overrideKey = csIdText + '|' + groupCode + '|' + toYmd(overrideDate);
+        if (renderedOverrideKeys[overrideKey]) return;
+
+        const course = (window.masterScheduleCourses || []).find(function(c) {
+            return String(c.csId || '') === csIdText;
+        }) || null;
+        if (!course) return;
+        if (yearFilter !== 'all' && String(course.year || '') !== yearFilter) return;
+        if (semFilter !== 'all' && normalizeSemesterToken(course.semester) !== semFilter) return;
+
+        const group = (course.groups || []).find(function(g) {
+            return normGroup(g.code || 'N1') === groupCode;
+        }) || { code: groupCode, teacherMain: null };
+
+        let day = parseInt(ov.day, 10);
+        if (!Number.isFinite(day)) {
+            const jsDay = overrideDate.getDay();
+            day = jsDay === 0 ? 8 : (jsDay + 1);
+        }
+        const start = parseInt(ov.start, 10);
+        const end = parseInt(ov.end, 10);
+        const roomValue = ov.room || group.room || '';
+        renderEntry(course, group, day, start, end, roomValue, overrideDate, overrideKey);
     });
 
     Object.keys(primarySlots).forEach(function(key) {
@@ -1320,3 +1520,4 @@ function renderMasterSchedule() {
 <script src="../../public/js/admin/assignments.js?v=<?= filemtime(__DIR__ . '/../../public/js/admin/assignments.js') ?>"></script>
 </body>
 </html>
+

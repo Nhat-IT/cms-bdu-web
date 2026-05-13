@@ -9,6 +9,17 @@ require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/helpers.php';
 
 // Bảo vệ trang - chỉ admin được phép truy cập
+
+// ── Auth guard: browser page requests phải redirect, không trả JSON ──────────
+if (!isLoggedIn()) {
+    header('Location: /cms/login.php');
+    exit;
+}
+if (!hasRole(['admin'])) {
+    header('Location: /cms/login.php?error=forbidden');
+    exit;
+}
+// ─────────────────────────────────────────────────────────────────────────────
 requireRole('admin');
 
 // Lấy thông tin admin hiện tại

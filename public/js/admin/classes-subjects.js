@@ -77,8 +77,7 @@ async function loadAdminClassesSubjects() {
     const res = await fetch('/api/admin/classes-subjects', { headers: { Accept: 'application/json' } });
 
     if (res.status === 401) {
-        window.location.href = '/login.html';
-        return;
+        return; // interceptor đã redirect
     }
 
     const data = await res.json().catch(() => ({}));

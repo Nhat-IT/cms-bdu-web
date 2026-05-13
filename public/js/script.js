@@ -261,9 +261,9 @@
                     return;
                 }
 
-                if (data.redirectUrl) {
-                    window.location.href = data.redirectUrl;
-                }
+                    if (data.redirectUrl) {
+                        window.location.replace(data.redirectUrl);
+                    }
             } catch (error) {
                 console.error('Bypass error:', error);
                 alert('Lỗi kết nối server');
@@ -301,7 +301,7 @@
                 }
 
                 if (data.redirectUrl) {
-                    window.location.href = data.redirectUrl;
+                    window.location.replace(data.redirectUrl);
                 }
             } catch (error) {
                 console.error('Login error:', error);

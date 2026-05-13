@@ -39,8 +39,7 @@
     async function loadProfile() {
         const res = await fetch('/api/me', { headers: { Accept: 'application/json' } });
         if (res.status === 401) {
-            window.location.href = '/login.html';
-            return;
+            return; // interceptor đã redirect
         }
         if (!res.ok) {
             return;

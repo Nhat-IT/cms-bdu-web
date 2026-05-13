@@ -9,6 +9,17 @@ require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/helpers.php';
 
 // Bảo vệ trang - chỉ admin và support_admin được phép truy cập
+
+// ── Auth guard: browser page requests phải redirect, không trả JSON ──────────
+if (!isLoggedIn()) {
+    header('Location: /cms/login.php');
+    exit;
+}
+if (!hasRole(['admin', 'support_admin'])) {
+    header('Location: /cms/login.php?error=forbidden');
+    exit;
+}
+// ─────────────────────────────────────────────────────────────────────────────
 requireRole(['admin', 'support_admin']);
 
 // Lấy thông tin admin hiện tại
@@ -21,21 +32,7 @@ $departments = db_fetch_all("SELECT * FROM departments ORDER BY department_name"
 $semesters = db_fetch_all("SELECT * FROM semesters ORDER BY academic_year DESC, semester_name");
 
 // Xác định học kỳ hiện tại: ưu tiên lựa chọn thủ công từ session, fallback theo ngày.
-$currentSemester = null;
-$forcedSemesterId = isset($_SESSION['current_semester_id']) ? (int) $_SESSION['current_semester_id'] : 0;
-if ($forcedSemesterId > 0) {
-    $currentSemester = db_fetch_one('SELECT * FROM semesters WHERE id = ?', [$forcedSemesterId]);
-}
-
-if (!$currentSemester) {
-    $currentSemester = db_fetch_one(
-        "SELECT * FROM semesters WHERE CURDATE() BETWEEN start_date AND end_date ORDER BY start_date DESC LIMIT 1"
-    );
-}
-
-if (!$currentSemester) {
-    $currentSemester = db_fetch_one("SELECT * FROM semesters ORDER BY start_date DESC LIMIT 1");
-}
+$currentSemester = getCurrentSemester();
 ?>
 <!DOCTYPE html>
 <html lang="vi">

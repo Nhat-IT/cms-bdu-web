@@ -8,7 +8,7 @@ require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/helpers.php';
 
-requireRole('admin');
+requireRole(['admin', 'support_admin']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirect('../../views/admin/home.php');
@@ -365,6 +365,14 @@ $ok = 0;
 $skip = 0;
 $err = 0;
 
+// DEBUG: log row count for import_accounts
+if ($action === 'import_accounts') {
+    error_log("[IMPORT_DEBUG] import_accounts: total rows after header drop = " . count($rows));
+    foreach (array_slice($rows, 0, 3) as $di => $dr) {
+        error_log("[IMPORT_DEBUG] Row " . ($di+1) . ": " . json_encode($dr, JSON_UNESCAPED_UNICODE));
+    }
+}
+
 try {
     if ($action === 'import_classes') {
         foreach ($rows as $row) {
@@ -483,11 +491,17 @@ try {
         $seenUsernames = [];
 
 
-        foreach ($rows as $row) {
+        foreach ($rows as $idx => $row) {
+            // DEBUG: log each row's column count and first few values
+            if (($idx % 5) === 0) {
+                error_log("[IMPORT_DEBUG] Row " . ($idx+1) . " colCount=" . count($row) . " data=" . json_encode(array_slice($row, 0, 8), JSON_UNESCAPED_UNICODE));
+            }
+
             // Mẫu import tài khoản chuẩn hiện tại có 7 cột:
             // STT | Mã GV/MSSV | Họ và tên | Ngày sinh | Lớp học | Email | Vai trò
             // Cột academic_title là tùy chọn (cột 8 nếu có).
             if (count($row) < 7) {
+                error_log("[IMPORT_DEBUG] Row " . ($idx+1) . ": SKIP colCount=" . count($row) . " < 7");
                 $skip++;
                 continue;
             }
@@ -504,6 +518,7 @@ try {
             $academicTitle = trim($row[7] ?? '');
 
             if ($username === '' || $fullName === '' || !in_array($role, $validRoles, true)) {
+                error_log("[IMPORT_DEBUG] Row " . ($idx+1) . " ($username/$role): SKIP username='$username' fullName='$fullName' roleValid=" . (in_array($role, $validRoles, true) ? "YES" : "NO"));
                 $skip++;
                 continue;
             }
@@ -517,6 +532,7 @@ try {
             }
 
             if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                error_log("[IMPORT_DEBUG] Row " . ($idx+1) . " ($username/$role): SKIP email invalid='$email'");
                 $skip++;
                 continue;
             }
@@ -524,6 +540,7 @@ try {
             // Không cho tạo trùng MSSV/Mã GV trong cùng file import.
             $usernameKey = strtolower($username);
             if (isset($seenUsernames[$usernameKey])) {
+                error_log("[IMPORT_DEBUG] Row " . ($idx+1) . " ($username/$role): SKIP duplicate username in file");
                 $skip++;
                 continue;
             }
@@ -532,11 +549,13 @@ try {
             $classId = null;
             if ($role === 'student' || $role === 'bcs') {
                 if ($className === '') {
+                    error_log("[IMPORT_DEBUG] Row " . ($idx+1) . " ($username/$role): SKIP className empty");
                     $skip++;
                     continue;
                 }
                 $class = db_fetch_one('SELECT id FROM classes WHERE class_name = ? LIMIT 1', [$className]);
                 if (!$class) {
+                    error_log("[IMPORT_DEBUG] Row " . ($idx+1) . " ($username/$role): SKIP class '$className' NOT FOUND");
                     $skip++;
                     continue;
                 }
@@ -547,6 +566,7 @@ try {
                 // Yêu cầu nghiệp vụ: tạo mới, nếu trùng MSSV/Mã GV thì tự bỏ qua.
                 $existingByUsername = db_fetch_one('SELECT id FROM users WHERE username = ? LIMIT 1', [$username]);
                 if ($existingByUsername) {
+                    error_log("[IMPORT_DEBUG] Row " . ($idx+1) . " ($username/$role): SKIP username exists in DB id=" . $existingByUsername['id']);
                     $skip++;
                     continue;
                 }
@@ -554,10 +574,12 @@ try {
                 // Email trùng cũng bỏ qua để tránh lỗi unique.
                 $existingByEmail = db_fetch_one('SELECT id FROM users WHERE email = ? LIMIT 1', [$email]);
                 if ($existingByEmail) {
+                    error_log("[IMPORT_DEBUG] Row " . ($idx+1) . " ($username/$role): SKIP email '$email' exists in DB id=" . $existingByEmail['id']);
                     $skip++;
                     continue;
                 }
 
+                error_log("[IMPORT_DEBUG] Row " . ($idx+1) . " ($username/$role): INSERTING user...");
                 if ($hasBirthDate) {
                     db_query('INSERT INTO users (username, password, full_name, email, role, birth_date, academic_title) VALUES (?, ?, ?, ?, ?, ?, ?)', [$username, $defaultPasswordHash, $fullName, $email, $role, $birthDate, $academicTitle]);
                 } else {
@@ -567,6 +589,7 @@ try {
                 $userId = (int) ($created['id'] ?? 0);
 
                 if ($userId <= 0) {
+                    error_log("[IMPORT_DEBUG] Row " . ($idx+1) . " ($username/$role): ERR userId=0 after insert");
                     $err++;
                     continue;
                 }
@@ -576,8 +599,10 @@ try {
                     db_query('INSERT INTO class_students (class_id, student_id) VALUES (?, ?)', [$classId, $userId]);
                 }
 
+                error_log("[IMPORT_DEBUG] Row " . ($idx+1) . " ($username/$role): OK inserted userId=$userId");
                 $ok++;
             } catch (Exception $e) {
+                error_log("[IMPORT_DEBUG] Row " . ($idx+1) . " ($username/$role): EXCEPTION " . $e->getMessage());
                 $err++;
             }
         }

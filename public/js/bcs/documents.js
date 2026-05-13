@@ -145,7 +145,7 @@ function openDocModal(mode, docData = null) {
 }
 
 async function uploadDocumentFileToDrive(file) {
-    if (!file) return { link: '', fileId: '' };
+    if (!file) return { link: '', fileId: '', storage: '', docId: 0 };
 
     const formData = new FormData();
     formData.append('file', file);
@@ -157,18 +157,20 @@ async function uploadDocumentFileToDrive(file) {
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data?.success) {
-        throw new Error(data?.error || 'Không thể tải file lên Drive');
+        throw new Error(data?.error || 'Không thể tải file lên');
     }
 
     return {
         storage: data.storage || '',
         link: data.link || '',
-        fileId: data.fileId || ''
+        fileId: data.fileId || '',
+        docId: data.doc_id ? Number(data.doc_id) : 0
     };
 }
 
 async function saveDocument() {
-    const docId = Number(document.getElementById('docId')?.value || 0);
+    const existingDocId = Number(document.getElementById('docId')?.value || 0);
+    const isEditMode = existingDocId > 0;
     const title = (document.getElementById('docTitle')?.value || '').trim();
     const note = (document.getElementById('docNote')?.value || '').trim();
     const categorySelect = document.getElementById('docCategory');
@@ -199,36 +201,53 @@ async function saveDocument() {
         return;
     }
 
-    if (!selectedFile && !manualDriveLink && docId <= 0) {
+    if (!selectedFile && !manualDriveLink && !isEditMode) {
         alert('Vui lòng chọn file tải lên hoặc nhập link tài liệu.');
         return;
     }
 
     let driveLink = manualDriveLink;
     let driveFileId = '';
+    let docId = 0;
+    let storage = '';
     if (selectedFile) {
         try {
             const uploaded = await uploadDocumentFileToDrive(selectedFile);
             driveLink = uploaded.link || driveLink;
             driveFileId = uploaded.fileId || '';
+            docId = uploaded.docId || 0;
+            storage = uploaded.storage || '';
         } catch (e) {
             if (!driveLink) {
-                alert((e.message || 'Không thể tải file lên Drive.') + ' Vui lòng nhập Link Google Drive thủ công.');
+                alert((e.message || 'Không thể tải file.') + ' Vui lòng nhập Link Google Drive thủ công.');
                 return;
             }
         }
     }
 
     const payload = {
-        action: docId > 0 ? 'update' : 'create',
-        id: docId > 0 ? docId : undefined,
+        action: isEditMode ? 'update' : 'create',
+        id: isEditMode ? existingDocId : undefined,
         title,
         note,
         category,
         drive_link: driveLink,
         drive_file_id: driveFileId,
-        semester_id: semesterId
+        semester_id: semesterId,
     };
+
+    if (!isEditMode) {
+        if (docId > 0) {
+            payload.doc_id = docId;
+            payload.storage = storage;
+        }
+    } else {
+        delete payload.semester_id;
+        if (driveLink || driveFileId) {
+            payload.drive_link = driveLink;
+            payload.drive_file_id = driveFileId;
+        }
+    }
 
     try {
         const res = await fetch('/cms/api/bcs/documents.php', {
@@ -279,21 +298,21 @@ function deleteDocument(id) {
         });
 }
 
-function handleFileView(event, link) {
+function handleFileView(event, link, isDbFile) {
     event.preventDefault();
     if (!link) {
         alert('Tài liệu này chưa có đường dẫn để mở.');
         return;
     }
-    window.open(link, '_blank', 'noopener');
+    window.open(link, '_blank', 'noopener,noreferrer');
 }
 
-function downloadDocument(link) {
+function downloadDocument(link, isDbFile) {
     if (!link) {
         alert('Tài liệu này chưa có đường dẫn tải.');
         return;
     }
-    window.open(link, '_blank', 'noopener');
+    window.open(link, '_blank', 'noopener,noreferrer');
 }
 
 document.addEventListener('DOMContentLoaded', function () {

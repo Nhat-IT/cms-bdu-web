@@ -29,144 +29,148 @@ $unreadCount = 0;
 try {
     getDBConnection();
 
-    // Lấy thông tin lớp của BCS (hỗ trợ cả class_students và group_students)
-    $classInfo = getUserClassInfo($userId);
-    $classId = $classInfo['class_id'];
-    $className = $classInfo['class_name'];
-    $sourceType = $classInfo['source'];
+    // Lấy thông tin lớp: ưu tiên class_students, fallback về student_subject_registration (class_name)
+    $classInfo = db_fetch_one("
+        SELECT cs.class_id, c.class_name
+        FROM class_students cs
+        LEFT JOIN classes c ON cs.class_id = c.id
+        WHERE cs.student_id = ?
+        LIMIT 1
+    ", [$userId]);
 
-    // Lấy thông tin user
-    $currentUser = db_fetch_one("SELECT * FROM users WHERE id = ?", [$userId]);
-    $fullName = $currentUser['full_name'] ?? '';
-    $position = $currentUser['position'] ?? 'Ban Cán Sự';
-    $avatar = getAvatarUrl($currentUser['avatar'] ?? null, $fullName, 55);
-
-    if ($sourceType !== '') {
-        // Lấy sĩ số lớp
-        if ($sourceType === 'class_students' && $classId) {
-            $classSize = (int) db_fetch_one(
-                "SELECT COUNT(*) as cnt FROM class_students WHERE class_id = ?",
-                [$classId]
-            )['cnt'];
-        } else {
-            $classSize = (int) db_fetch_one("
-                SELECT COUNT(*) as cnt FROM class_students cs
-                JOIN users u ON cs.student_id = u.id
-                WHERE cs.class_id = (SELECT class_id FROM class_students WHERE student_id = ? LIMIT 1)
-            ", [$userId])['cnt'];
-        }
-
-        // Lấy số vắng hôm nay
-        $today = date('Y-m-d');
-        if ($sourceType === 'class_students' && $classId) {
-            $absentRow = db_fetch_one("
-                SELECT COUNT(DISTINCT ar.id) as total
-                FROM attendance_records ar
-                JOIN attendance_sessions a_s ON ar.session_id = a_s.id
-                JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
-                JOIN class_students cs ON cs.student_id = ar.student_id AND cs.class_id = ?
-                WHERE ar.status = 3 AND a_s.attendance_date = ?
-            ", [$classId, $today]);
-        } else {
-            $absentRow = db_fetch_one("
-                SELECT COUNT(DISTINCT ar.id) as total
-                FROM attendance_records ar
-                JOIN attendance_sessions a_s ON ar.session_id = a_s.id
-                JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
-                JOIN class_students cs ON cs.student_id = ar.student_id
-                JOIN class_students cs2 ON cs2.class_id = cs.class_id
-                WHERE ar.status = 3 AND a_s.attendance_date = ? AND cs2.student_id = ?
-            ", [$today, $userId]);
-        }
-        $absentToday = (int) ($absentRow['total'] ?? 0);
-
-        // Lấy số minh chứng chờ duyệt
-        if ($sourceType === 'class_students' && $classId) {
-            $pendingRow = db_fetch_one("
-                SELECT COUNT(DISTINCT ar.id) as total
-                FROM attendance_records ar
-                JOIN attendance_sessions a_s ON ar.session_id = a_s.id
-                JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
-                JOIN class_students cs ON cs.student_id = ar.student_id AND cs.class_id = ?
-                WHERE ar.evidence_status = 'Pending' AND ar.evidence_file IS NOT NULL
-            ", [$classId]);
-        } else {
-            $pendingRow = db_fetch_one("
-                SELECT COUNT(DISTINCT ar.id) as total
-                FROM attendance_records ar
-                JOIN attendance_sessions a_s ON ar.session_id = a_s.id
-                JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
-                JOIN class_students cs ON cs.student_id = ar.student_id
-                JOIN class_students cs2 ON cs2.class_id = cs.class_id
-                WHERE ar.evidence_status = 'Pending' AND ar.evidence_file IS NOT NULL AND cs2.student_id = ?
-            ", [$userId]);
-        }
-        $pendingEvidence = (int) ($pendingRow['total'] ?? 0);
-
-        // Lấy số phản hồi mới
-        if ($sourceType === 'class_students' && $classId) {
-            $feedbackRow = db_fetch_one("
-                SELECT COUNT(DISTINCT f.id) as total
-                FROM feedbacks f
-                JOIN class_students cs ON f.student_id = cs.student_id
-                WHERE cs.class_id = ? AND f.status = 'Pending'
-            ", [$classId]);
-        } else {
-            $feedbackRow = db_fetch_one("
-                SELECT COUNT(DISTINCT f.id) as total
-                FROM feedbacks f
-                JOIN class_students cs ON f.student_id = cs.student_id
-                JOIN class_students cs2 ON cs2.class_id = cs.class_id
-                WHERE f.status = 'Pending' AND cs2.student_id = ?
-            ", [$userId]);
-        }
-        $newFeedback = (int) ($feedbackRow['total'] ?? 0);
-
-        // Lấy lịch học hôm nay
-        $dayOfWeek = date('N');
-        if ($sourceType === 'class_students' && $classId) {
-            $todaySchedule = db_fetch_all("
-                SELECT DISTINCT s.subject_name, csg.start_period, csg.end_period, csg.room,
-                       t.full_name as teacher_name, csg.id as group_id
-                FROM class_subject_groups csg
-                JOIN class_subjects cs ON csg.class_subject_id = cs.id
-                JOIN subjects s ON cs.subject_id = s.id
-                JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
-                JOIN class_students cs2 ON cs2.student_id = ssr.student_id AND cs2.class_id = ?
-                LEFT JOIN users t ON cs.teacher_id = t.id
-                WHERE csg.day_of_week = ?
-                ORDER BY csg.start_period
-            ", [$classId, $dayOfWeek]);
-        } else {
-            $todaySchedule = db_fetch_all("
-                SELECT DISTINCT s.subject_name, csg.start_period, csg.end_period, csg.room,
-                       t.full_name as teacher_name, csg.id as group_id
-                FROM class_subject_groups csg
-                JOIN class_subjects cs ON csg.class_subject_id = cs.id
-                JOIN subjects s ON cs.subject_id = s.id
-                JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
-                JOIN class_students cs2 ON cs2.student_id = ssr.student_id AND cs2.class_id = (SELECT class_id FROM class_students WHERE student_id = ? LIMIT 1)
-                LEFT JOIN users t ON cs.teacher_id = t.id
-                WHERE csg.day_of_week = ?
-                ORDER BY csg.start_period
-            ", [$userId, $dayOfWeek]);
-        }
-    } else {
-        $classWarning = 'Tài khoản BCS chưa được gán lớp trong hệ thống.';
+    // Nếu class_students không có class_name hợp lệ → lấy từ student_subject_registration
+    // (class_id có thể tồn tại trong class_students nhưng class_name NULL do lớp không tồn tại trong bảng classes)
+    if (!$classInfo || empty($classInfo['class_name'])) {
+        $classInfo = db_fetch_one("
+            SELECT ssr.class_name
+            FROM student_subject_registration ssr
+            WHERE ssr.student_id = ?
+            LIMIT 1
+        ", [$userId]);
     }
 
-    // Lấy thông báo gần đây
+    // Nếu class_name tồn tại nhưng class_id rỗng → tra cứu class_id từ bảng classes
+    if ($classInfo && !empty($classInfo['class_name']) && empty($classInfo['class_id'])) {
+        $classLookup = db_fetch_one(
+            "SELECT id, class_name FROM classes WHERE class_name = ? LIMIT 1",
+            [$classInfo['class_name']]
+        );
+        if ($classLookup) {
+            $classInfo['class_id'] = $classLookup['id'];
+        }
+    }
+
+    if ($classInfo && !empty($classInfo['class_id'])) {
+        $classId = (int) $classInfo['class_id'];
+        $className = $classInfo['class_name'] ?? '';
+
+        // Lấy thông tin user trực tiếp từ DB
+        $currentUser = db_fetch_one("SELECT * FROM users WHERE id = ?", [$userId]);
+        $fullName = $currentUser['full_name'] ?? '';
+        $position = $currentUser['position'] ?? 'Ban Cán Sự';
+        $avatar = getAvatarUrl($currentUser['avatar'] ?? null, $fullName, 55);
+
+        // Lấy học kỳ hiện tại
+        $currentSemester = getCurrentSemester();
+        $semesterId = $currentSemester['id'] ?? 0;
+        $today = date('Y-m-d');
+        $dayOfWeek = (int) date('N');
+
+        // Sĩ số lớp — đếm distinct mssv từ student_subject_registration
+        // Không lọc student_id IS NOT NULL vì SV có thể chưa có tài khoản nhưng vẫn thuộc lớp
+        $classSizeRow = db_fetch_one(
+            "SELECT COUNT(DISTINCT mssv) as cnt FROM student_subject_registration WHERE class_name = ?",
+            [$className]
+        );
+        $classSize = (int) ($classSizeRow['cnt'] ?? 0);
+
+        // Vắng hôm nay (status = 3) — lọc theo học kỳ
+        // Dùng student_subject_registration vì có đầy đủ sinh viên của lớp
+        $absentRow = db_fetch_one("
+            SELECT COUNT(DISTINCT ar.id) as total
+            FROM attendance_records ar
+            JOIN attendance_sessions a_s ON ar.session_id = a_s.id
+            JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
+            JOIN class_subjects cs ON csg.class_subject_id = cs.id
+            JOIN student_subject_registration ssr ON ssr.student_id = ar.student_id
+            WHERE ar.status = 3
+              AND a_s.attendance_date = ?
+              AND ssr.class_name = ?
+              AND cs.semester_id = ?
+        ", [$today, $className, $semesterId]);
+        $absentToday = (int) ($absentRow['total'] ?? 0);
+
+        // Minh chứng chờ duyệt — lọc theo học kỳ
+        $pendingRow = db_fetch_one("
+            SELECT COUNT(DISTINCT ar.id) as total
+            FROM attendance_records ar
+            JOIN attendance_sessions a_s ON ar.session_id = a_s.id
+            JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
+            JOIN class_subjects cs ON csg.class_subject_id = cs.id
+            JOIN student_subject_registration ssr ON ssr.student_id = ar.student_id
+            WHERE ar.evidence_status = 'Pending'
+              AND ar.evidence_file IS NOT NULL
+              AND ssr.class_name = ?
+              AND cs.semester_id = ?
+        ", [$className, $semesterId]);
+        $pendingEvidence = (int) ($pendingRow['total'] ?? 0);
+
+        // Phản hồi mới (status = Pending) — lọc theo học kỳ
+        $feedbackRow = db_fetch_one("
+            SELECT COUNT(DISTINCT f.id) as total
+            FROM feedbacks f
+            JOIN student_subject_registration ssr ON ssr.student_id = f.student_id
+            JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
+            JOIN class_subjects csbj ON csg.class_subject_id = csbj.id
+            WHERE f.status = 'Pending'
+              AND ssr.class_name = ?
+              AND csbj.semester_id = ?
+        ", [$className, $semesterId]);
+        $newFeedback = (int) ($feedbackRow['total'] ?? 0);
+
+        // Lịch học hôm nay — dùng student_subject_registration để lấy group của lớp
+        $todaySchedule = db_fetch_all("
+            SELECT DISTINCT
+                s.subject_name,
+                csg.start_period,
+                csg.end_period,
+                csg.room,
+                t.full_name as teacher_name,
+                csg.id as group_id
+            FROM student_subject_registration ssr
+            JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
+            JOIN class_subjects cs ON csg.class_subject_id = cs.id
+            JOIN subjects s ON cs.subject_id = s.id
+            LEFT JOIN users t ON cs.teacher_id = t.id
+            WHERE ssr.class_name = ?
+              AND cs.semester_id = ?
+              AND csg.day_of_week = ?
+            ORDER BY csg.start_period
+        ", [$className, $semesterId, $dayOfWeek]);
+
+    } else {
+        // Không có class gán → cảnh báo
+        $classWarning = 'Tài khoản BCS chưa được gán lớp trong hệ thống.';
+        $currentUser = db_fetch_one("SELECT * FROM users WHERE id = ?", [$userId]);
+        $fullName = $currentUser['full_name'] ?? '';
+        $position = $currentUser['position'] ?? 'Ban Cán Sự';
+        $avatar = getAvatarUrl($currentUser['avatar'] ?? null, $fullName, 55);
+    }
+
+    // Thông báo gần đây — lấy notification_logs gắn với user_id của BCS
     $recentAnnouncements = db_fetch_all("
-        SELECT n.*, u.full_name as creator_name
+        SELECT n.id, n.title, n.message, n.is_read, n.created_at
         FROM notification_logs n
-        LEFT JOIN users u ON n.user_id = u.id
-        WHERE n.message IS NOT NULL AND n.message != ''
+        WHERE n.user_id = ?
         ORDER BY n.created_at DESC
         LIMIT 5
-    ");
+    ", [$userId]);
 
     // Đếm notification chưa đọc
-    $unreadRow = db_fetch_one("SELECT COUNT(*) as total FROM notification_logs WHERE user_id = ? AND is_read = 0", [$userId]);
+    $unreadRow = db_fetch_one(
+        "SELECT COUNT(*) as total FROM notification_logs WHERE user_id = ? AND is_read = 0",
+        [$userId]
+    );
     $unreadCount = (int) ($unreadRow['total'] ?? 0);
 
 } catch (Exception $e) {

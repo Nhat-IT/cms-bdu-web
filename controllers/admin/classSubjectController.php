@@ -4,27 +4,52 @@
  * Xử lý thao tác đóng/mở lớp học phần và cập nhật lịch nhóm.
  */
 
+// Disable output buffering issues - must be at very start
+while (ob_get_level()) ob_end_clean();
+ob_start();
+
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/helpers.php';
 
-// Chỉ kiểm tra POST cho các action cần bảo mật
-$isExport = isset($_GET['action']) && $_GET['action'] === 'export_group_students';
-$isGetAllowed = isset($_GET['action']) && in_array($_GET['action'], ['export_group_students', 'get_group_student_counts'], true);
-if ($_SERVER['REQUEST_METHOD'] !== 'POST' && !$isGetAllowed) {
-    $accept = isset($_SERVER['HTTP_ACCEPT']) ? strtolower($_SERVER['HTTP_ACCEPT']) : '';
-    if (strpos($accept, 'application/json') !== false) {
-        header('Content-Type: application/json');
-        echo json_encode(['ok' => false, 'message' => 'Method not allowed']);
-        exit;
-    }
-    redirect('../../views/admin/home.php');
+// Helper function to send JSON and exit
+function sendDebugJson(array $data): void {
+    while (ob_get_level()) ob_end_clean();
+    http_response_code($data['code'] ?? 200);
+    header('Content-Type: application/json; charset=UTF-8');
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
-// Debug log
-error_log('classSubjectController: action=' . ($_POST['action'] ?? 'none') . ', class_subject_id=' . ($_POST['class_subject_id'] ?? 'none'));
+// Check if session has user
+$debugSession = [
+    'user_id' => $_SESSION['user_id'] ?? null,
+    'role' => $_SESSION['role'] ?? null,
+    'roles' => $_SESSION['roles'] ?? null,
+    'logged_in' => isLoggedIn(),
+    'last_activity' => isset($_SESSION['last_activity']) ? (time() - $_SESSION['last_activity']) : 'no_activity',
+    'timeout_check' => isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 1800)
+];
 
-requireRole('admin');
+// If not logged in, return JSON error immediately
+if (!isLoggedIn()) {
+    error_log('DEBUG: User not logged in');
+    sendDebugJson(['ok' => false, 'message' => 'not_logged_in', 'debug' => $debugSession, 'code' => 401]);
+}
+
+// Check role
+if (!hasRole(['admin', 'support_admin'])) {
+    error_log('DEBUG: User does not have required role');
+    sendDebugJson(['ok' => false, 'message' => 'forbidden', 'debug' => $debugSession, 'code' => 403]);
+}
+
+// Chỉ kiểm tra POST cho các action cần bảo mật
+$isGetAllowed = isset($_GET['action']) && in_array($_GET['action'], ['export_group_students', 'get_group_student_counts'], true);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && !$isGetAllowed) {
+    sendDebugJson(['ok' => false, 'message' => 'method_not_allowed', 'GET' => $_GET, 'code' => 400]);
+}
+
+error_log('DEBUG: User passed auth');
 
 $action = $_SERVER['REQUEST_METHOD'] === 'POST'
     ? ($_POST['action'] ?? '')
@@ -34,6 +59,8 @@ $return = $_POST['return'] ?? 'assignments';
 $returnPage = $return === 'home' ? 'home.php' : 'assignments.php';
 
 function jsonResponse(array $payload, int $status = 200): void {
+    // Clear any previous output
+    while (ob_get_level()) ob_end_clean();
     http_response_code($status);
     header('Content-Type: application/json; charset=UTF-8');
     echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -41,8 +68,11 @@ function jsonResponse(array $payload, int $status = 200): void {
 }
 
 function respondOrRedirect(bool $ok, string $message, string $returnPage): void {
-    // Luôn trả JSON nếu có format=json
-    if (isset($_POST['format']) && $_POST['format'] === 'json') {
+    // Luôn trả JSON nếu có format=json hoặc Accept header yêu cầu JSON
+    $wantsJson = isset($_POST['format']) && $_POST['format'] === 'json';
+    $acceptJson = isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false;
+    
+    if ($wantsJson || $acceptJson) {
         jsonResponse(['ok' => $ok, 'message' => $message], $ok ? 200 : 400);
         return;
     }
@@ -67,7 +97,7 @@ function dbTableExists(string $tableName): bool {
     return $cache[$tableName];
 }
 
-if ($classSubjectId <= 0 && $action !== 'add_group' && $action !== 'get_group_student_counts' && $action !== 'save_group_schedule') {
+if ($classSubjectId <= 0 && $action !== 'add_group' && $action !== 'get_group_student_counts' && $action !== 'save_group_schedule' && $action !== 'export_group_students') {
     respondOrRedirect(false, 'missing_id', $returnPage);
 }
 
@@ -227,7 +257,15 @@ try {
             }
         }
 
-        $groupData = db_fetch_one('SELECT id, sub_teacher_id, main_teacher_id FROM class_subject_groups WHERE class_subject_id = ? AND group_code = ? LIMIT 1', [$classSubjectId, $groupCode]);
+        $groupData = db_fetch_one(
+            'SELECT id, sub_teacher_id, main_teacher_id
+             FROM class_subject_groups
+             WHERE class_subject_id = ?
+               AND group_code = ?
+               AND (is_extra = 0 OR is_extra IS NULL)
+             LIMIT 1',
+            [$classSubjectId, $groupCode]
+        );
         $isUpdate = (bool) $groupData;
         $syncMainTeacher = isset($_POST['sync_main_teacher']) ? ((int) $_POST['sync_main_teacher'] === 1) : !$isUpdate;
 
@@ -370,7 +408,8 @@ try {
         db_query(
             'UPDATE class_subject_groups
              SET room = NULL, day_of_week = NULL, start_period = NULL, end_period = NULL, sub_teacher_id = NULL
-             WHERE class_subject_id = ? AND group_code = ?',
+             WHERE class_subject_id = ? AND group_code = ?
+               AND (is_extra = 0 OR is_extra IS NULL)',
             [$classSubjectId, $groupCode]
         );
         respondOrRedirect(true, 'schedule_cleared', $returnPage);
@@ -382,7 +421,15 @@ try {
 
         $groupId = (int) ($_POST['group_id'] ?? 0);
         if ($groupId <= 0 && isset($_POST['class_subject_id'], $_POST['group_code'])) {
-            $groupData = db_fetch_one('SELECT id FROM class_subject_groups WHERE class_subject_id = ? AND group_code = ? LIMIT 1', [$_POST['class_subject_id'], $_POST['group_code']]);
+            $groupData = db_fetch_one(
+                'SELECT id
+                 FROM class_subject_groups
+                 WHERE class_subject_id = ?
+                   AND group_code = ?
+                   AND (is_extra = 0 OR is_extra IS NULL)
+                 LIMIT 1',
+                [$_POST['class_subject_id'], $_POST['group_code']]
+            );
             if ($groupData) {
                 $groupId = (int) $groupData['id'];
             }
@@ -501,10 +548,19 @@ try {
     if ($action === 'add_group') {
         $classSubjectId = (int) ($_POST['class_subject_id'] ?? 0);
         if ($classSubjectId <= 0) {
+            if (isset($_POST['format']) && $_POST['format'] === 'json') {
+                jsonResponse(['ok' => false, 'message' => 'missing_id'], 400);
+            }
             respondOrRedirect(false, 'missing_id', $returnPage);
         }
 
-        $codes = db_fetch_all('SELECT group_code FROM class_subject_groups WHERE class_subject_id = ?', [$classSubjectId]);
+        $codes = db_fetch_all(
+            'SELECT group_code
+             FROM class_subject_groups
+             WHERE class_subject_id = ?
+               AND (is_extra = 0 OR is_extra IS NULL)',
+            [$classSubjectId]
+        );
         $maxNumber = 0;
         foreach ($codes as $codeRow) {
             $code = (string) ($codeRow['group_code'] ?? '');
@@ -521,6 +577,16 @@ try {
         $created = db_fetch_one('SELECT id FROM class_subject_groups WHERE class_subject_id = ? AND group_code = ? LIMIT 1', [$classSubjectId, $newCode]);
         $newGroupId = (int) ($created['id'] ?? 0);
         logSystem("Thêm nhóm $newCode vào lớp học phần ID #$classSubjectId", 'class_subject_groups', $newGroupId);
+        
+        if (isset($_POST['format']) && $_POST['format'] === 'json') {
+            jsonResponse([
+                'ok' => true,
+                'message' => 'group_added',
+                'group_code' => $newCode,
+                'group_id' => $newGroupId,
+                'class_subject_id' => $classSubjectId
+            ]);
+        }
         respondOrRedirect(true, 'group_added', $returnPage);
     }
 
@@ -535,17 +601,19 @@ try {
         $targetGroup = null;
         if ($groupId > 0) {
             $targetGroup = db_fetch_one(
-                'SELECT id, group_code
+                'SELECT id, group_code, class_subject_id
                  FROM class_subject_groups
                  WHERE id = ? AND class_subject_id = ?
+                   AND (is_extra = 0 OR is_extra IS NULL)
                  LIMIT 1',
                 [$groupId, $classSubjectId]
             );
         } else {
             $targetGroup = db_fetch_one(
-                'SELECT id, group_code
+                'SELECT id, group_code, class_subject_id
                  FROM class_subject_groups
                  WHERE class_subject_id = ? AND group_code = ?
+                   AND (is_extra = 0 OR is_extra IS NULL)
                  LIMIT 1',
                 [$classSubjectId, $groupCode]
             );
@@ -564,9 +632,14 @@ try {
         }
 
         $deletedStudentCount = 0;
+        // Đếm sinh viên từ cả hai bảng group_students và student_subject_registration
         if (dbTableExists('group_students')) {
             $cnt = db_fetch_one('SELECT COUNT(*) AS total FROM group_students WHERE class_subject_group_id = ?', [$targetGroupId]);
             $deletedStudentCount = (int) ($cnt['total'] ?? 0);
+        }
+        if (dbTableExists('student_subject_registration')) {
+            $cnt2 = db_fetch_one('SELECT COUNT(*) AS total FROM student_subject_registration WHERE class_subject_group_id = ?', [$targetGroupId]);
+            $deletedStudentCount += (int) ($cnt2['total'] ?? 0);
         }
 
         $dbConn = getDBConnection();
@@ -598,9 +671,14 @@ try {
             if (dbTableExists('attendance_sessions')) {
                 db_query('DELETE FROM attendance_sessions WHERE class_subject_group_id = ?', [$targetGroupId]);
             }
-            if (dbTableExists('extra_classes')) {
-                db_query('DELETE FROM class_subject_groups WHERE class_subject_id = ? AND is_extra = 1', [$targetGroupId]);
-            }
+            // Xóa luôn các bản ghi lịch học bù/ghi đè của cùng nhóm
+            db_query(
+                'DELETE FROM class_subject_groups
+                 WHERE class_subject_id = ?
+                   AND group_code = ?
+                   AND is_extra = 1',
+                [$classSubjectId, $targetGroupCode]
+            );
             if (dbTableExists('student_subject_registration')) {
                 db_query('DELETE FROM student_subject_registration WHERE class_subject_group_id = ?', [$targetGroupId]);
             }
@@ -671,13 +749,19 @@ try {
         }
 
         $students = db_fetch_all(
-            'SELECT ssr.id, ssr.student_id, u.username, u.full_name, u.birth_date, c.class_name, ssr.status
+            'SELECT
+                COALESCE(u.username, ssr.mssv) AS username,
+                COALESCE(u.full_name, ssr.full_name) AS full_name,
+                COALESCE(CAST(u.birth_date AS CHAR), ssr.birth_date) AS birth_date,
+                COALESCE(NULLIF(ssr.class_name, \'\'), c.class_name) AS class_name,
+                ssr.status
              FROM student_subject_registration ssr
-             JOIN users u ON ssr.student_id = u.id
-             JOIN class_students cs ON ssr.student_id = cs.student_id
-             JOIN classes c ON cs.class_id = c.id
+             LEFT JOIN users u ON u.id = ssr.student_id AND ssr.student_id > 0
+             LEFT JOIN class_subject_groups csg_j ON csg_j.id = ssr.class_subject_group_id
+             LEFT JOIN class_subjects csj ON csj.id = csg_j.class_subject_id
+             LEFT JOIN classes c ON c.id = csj.class_id
              WHERE ssr.class_subject_group_id = ?
-             ORDER BY u.full_name ASC',
+             ORDER BY COALESCE(u.full_name, ssr.full_name) ASC',
             [$targetGroupId]
         );
         jsonResponse(['ok' => true, 'students' => $students]);
@@ -726,22 +810,25 @@ try {
                 continue;
             }
 
+            // Tìm tài khoản theo MSSV (username), không bắt buộc phải có
             $studentId = null;
             $user = db_fetch_one('SELECT id FROM users WHERE username = ? LIMIT 1', [$mssv]);
             if ($user) {
                 $studentId = (int) $user['id'];
             }
 
-            if (!$studentId) {
-                $skipped++;
-                continue;
+            // Kiểm tra trùng: ưu tiên student_id nếu có tài khoản, nếu không thì kiểm tra mssv
+            if ($studentId) {
+                $existing = db_fetch_one(
+                    'SELECT id FROM student_subject_registration WHERE class_subject_group_id = ? AND student_id = ? LIMIT 1',
+                    [$targetGroupId, $studentId]
+                );
+            } else {
+                $existing = db_fetch_one(
+                    'SELECT id FROM student_subject_registration WHERE class_subject_group_id = ? AND mssv = ? LIMIT 1',
+                    [$targetGroupId, $mssv]
+                );
             }
-
-            // Kiểm tra đã tồn tại trong student_subject_registration
-            $existing = db_fetch_one(
-                'SELECT id FROM student_subject_registration WHERE class_subject_group_id = ? AND student_id = ? LIMIT 1',
-                [$targetGroupId, $studentId]
-            );
             if ($existing) {
                 $skipped++;
                 continue;
@@ -749,11 +836,14 @@ try {
 
             try {
                 db_query(
-                    'INSERT INTO student_subject_registration (class_subject_group_id, student_id, status) VALUES (?, ?, ?)',
-                    [$targetGroupId, $studentId, 'Đang học']
+                    'INSERT INTO student_subject_registration
+                        (class_subject_group_id, student_id, mssv, full_name, birth_date, class_name, status)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    [$targetGroupId, $studentId, $mssv, $name, $dob !== '' ? $dob : null, $className, 'Đang học']
                 );
                 $imported++;
             } catch (Exception $e) {
+                $errors[] = "Row $i ($mssv): " . $e->getMessage();
                 $skipped++;
             }
         }
@@ -772,46 +862,95 @@ try {
         $groupCode = trim($_GET['group_code'] ?? '');
         $csId = (int) ($_GET['class_subject_id'] ?? 0);
 
-        if ($groupId <= 0 && $csId > 0 && $groupCode === '') {
-            $students = db_fetch_all(
-                'SELECT u.username, u.full_name, u.birth_date, ssr.status, c.class_name
-                 FROM student_subject_registration ssr
-                 JOIN users u ON ssr.student_id = u.id
-                 JOIN class_students cs ON ssr.student_id = cs.student_id
-                 JOIN classes c ON cs.class_id = c.id
-                 JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
-                 WHERE csg.class_subject_id = ?
-                 ORDER BY u.full_name ASC',
-                [$csId]
-            );
-            jsonResponse(['ok' => true, 'students' => $students]);
-        }
+        error_log("export_group_students: csId=$csId, groupCode=$groupCode, groupId=$groupId");
 
-        $targetGroupId = $groupId;
-        if ($targetGroupId <= 0 && $csId > 0) {
-            $g = db_fetch_one(
-                'SELECT id FROM class_subject_groups WHERE class_subject_id = ? AND group_code = ? LIMIT 1',
-                [$csId, $groupCode ?: 'N1']
-            );
-            $targetGroupId = (int) ($g['id'] ?? 0);
-        }
+        // Debug: Log all params
+        error_log("export_group_students params: " . json_encode($_GET));
 
-        $students = [];
-        if ($targetGroupId > 0) {
-            $students = db_fetch_all(
-                'SELECT u.username, u.full_name, u.birth_date, ssr.status, c.class_name
-                 FROM student_subject_registration ssr
-                 JOIN users u ON ssr.student_id = u.id
-                 JOIN class_students cs ON ssr.student_id = cs.student_id
-                 JOIN classes c ON cs.class_id = c.id
-                 WHERE ssr.class_subject_group_id = ?
-                 ORDER BY u.full_name ASC',
-                [$targetGroupId]
-            );
-        }
+        try {
+            // Query tất cả sinh viên của class_subject (tất cả các nhóm)
+            $students = [];
 
-        // Trả về JSON để JS tạo XLSX
-        jsonResponse(['ok' => true, 'students' => $students]);
+            if ($csId > 0 && $groupCode === '') {
+                // Export tất cả sinh viên của class_subject (tất cả các nhóm)
+                $students = db_fetch_all(
+                    'SELECT DISTINCT
+                        COALESCE(u.username, ssr.mssv) AS username,
+                        COALESCE(u.full_name, ssr.full_name) AS full_name,
+                        COALESCE(CAST(u.birth_date AS CHAR), ssr.birth_date) AS birth_date,
+                        COALESCE(NULLIF(ssr.class_name, \'\'), c.class_name) AS class_name,
+                        ssr.status,
+                        csg.group_code
+                     FROM student_subject_registration ssr
+                     LEFT JOIN users u ON u.id = ssr.student_id AND ssr.student_id > 0
+                     LEFT JOIN class_subject_groups csg ON csg.id = ssr.class_subject_group_id
+                     LEFT JOIN class_subjects csj ON csj.id = csg.class_subject_id
+                     LEFT JOIN classes c ON c.id = csj.class_id
+                     WHERE csg.class_subject_id = ?
+                     ORDER BY csg.group_code ASC, COALESCE(u.full_name, ssr.full_name) ASC',
+                    [$csId]
+                );
+                jsonResponse(['ok' => true, 'students' => $students, 'allGroups' => true]);
+            } elseif ($csId > 0 && $groupCode !== '') {
+                // Export sinh viên của một nhóm cụ thể
+                $g = db_fetch_one(
+                    'SELECT id FROM class_subject_groups WHERE class_subject_id = ? AND group_code = ? LIMIT 1',
+                    [$csId, $groupCode]
+                );
+                $targetGroupId = (int) ($g['id'] ?? 0);
+
+                if ($targetGroupId <= 0) {
+                    // Nhóm không tồn tại trong DB — trả lỗi rõ ràng thay vì danh sách rỗng
+                    jsonResponse(['ok' => false, 'message' => 'group_not_found', 'groupCode' => $groupCode], 404);
+                }
+
+                if ($targetGroupId > 0) {
+                    $students = db_fetch_all(
+                        'SELECT
+                            COALESCE(u.username, ssr.mssv) AS username,
+                            COALESCE(u.full_name, ssr.full_name) AS full_name,
+                            COALESCE(CAST(u.birth_date AS CHAR), ssr.birth_date) AS birth_date,
+                            COALESCE(NULLIF(ssr.class_name, \'\'), c.class_name) AS class_name,
+                            ssr.status,
+                            csg.group_code
+                         FROM student_subject_registration ssr
+                         LEFT JOIN users u ON u.id = ssr.student_id AND ssr.student_id > 0
+                         LEFT JOIN class_subject_groups csg ON csg.id = ssr.class_subject_group_id
+                         LEFT JOIN class_subjects csj ON csj.id = csg.class_subject_id
+                         LEFT JOIN classes c ON c.id = csj.class_id
+                         WHERE ssr.class_subject_group_id = ?
+                         ORDER BY COALESCE(u.full_name, ssr.full_name) ASC',
+                        [$targetGroupId]
+                    );
+                }
+                jsonResponse(['ok' => true, 'students' => $students, 'groupCode' => $groupCode]);
+            } elseif ($groupId > 0) {
+                // Export theo group_id trực tiếp (legacy support)
+                $students = db_fetch_all(
+                    'SELECT
+                        COALESCE(u.username, ssr.mssv) AS username,
+                        COALESCE(u.full_name, ssr.full_name) AS full_name,
+                        COALESCE(CAST(u.birth_date AS CHAR), ssr.birth_date) AS birth_date,
+                        COALESCE(NULLIF(ssr.class_name, \'\'), c.class_name) AS class_name,
+                        ssr.status,
+                        csg.group_code
+                     FROM student_subject_registration ssr
+                     LEFT JOIN users u ON u.id = ssr.student_id AND ssr.student_id > 0
+                     LEFT JOIN class_subject_groups csg ON csg.id = ssr.class_subject_group_id
+                     LEFT JOIN class_subjects csj ON csj.id = csg.class_subject_id
+                     LEFT JOIN classes c ON c.id = csj.class_id
+                     WHERE ssr.class_subject_group_id = ?
+                     ORDER BY COALESCE(u.full_name, ssr.full_name) ASC',
+                    [$groupId]
+                );
+                jsonResponse(['ok' => true, 'students' => $students]);
+            } else {
+                jsonResponse(['ok' => false, 'message' => 'missing_params'], 400);
+            }
+        } catch (Exception $e) {
+            error_log('export_group_students error: ' . $e->getMessage());
+            jsonResponse(['ok' => false, 'message' => 'Lỗi khi tải danh sách: ' . $e->getMessage()], 500);
+        }
     }
 
     if ($action === 'download_group_students_xlsx') {
@@ -833,13 +972,19 @@ try {
         }
 
         $students = db_fetch_all(
-            'SELECT ssr.id, ssr.student_id, u.username, u.full_name, u.birth_date, c.class_name, ssr.status
+            'SELECT
+                COALESCE(u.username, ssr.mssv) AS username,
+                COALESCE(u.full_name, ssr.full_name) AS full_name,
+                COALESCE(CAST(u.birth_date AS CHAR), ssr.birth_date) AS birth_date,
+                COALESCE(NULLIF(ssr.class_name, \'\'), c.class_name) AS class_name,
+                ssr.status
              FROM student_subject_registration ssr
-             JOIN users u ON ssr.student_id = u.id
-             JOIN class_students cs ON ssr.student_id = cs.student_id
-             JOIN classes c ON cs.class_id = c.id
+             LEFT JOIN users u ON u.id = ssr.student_id AND ssr.student_id > 0
+             LEFT JOIN class_subject_groups csg_j ON csg_j.id = ssr.class_subject_group_id
+             LEFT JOIN class_subjects csj ON csj.id = csg_j.class_subject_id
+             LEFT JOIN classes c ON c.id = csj.class_id
              WHERE ssr.class_subject_group_id = ?
-             ORDER BY u.full_name ASC',
+             ORDER BY COALESCE(u.full_name, ssr.full_name) ASC',
             [$targetGroupId]
         );
 
@@ -848,82 +993,19 @@ try {
         foreach ($students as $s) {
             $mssv = $s['username'] ?? '';
             $fullName = $s['full_name'] ?? '';
-
             $birthDate = $s['birth_date'] ?? '';
-            if ($birthDate !== '' && is_numeric($birthDate)) {
+            if ($birthDate !== '' && preg_match('/^\d+$/', $birthDate)) {
                 $serial = (int) $birthDate;
                 $d = new DateTime('1899-12-30');
                 $d->add(new DateInterval('P' . $serial . 'D'));
                 $birthDate = $d->format('d/m/Y');
             }
-
-            $rows[] = [
-                $stt++,
-                $mssv,
-                $fullName,
-                $birthDate,
-                $s['class_name'] ?? ''
-            ];
+            $rows[] = [$stt++, $mssv, $fullName, $birthDate, $s['class_name'] ?? ''];
         }
 
         $sheetName = 'Danh sach SV';
-        $wb = [[
-            'sheetName' => $sheetName,
-            'data' => $rows
-        ]];
+        $wb = [['sheetName' => $sheetName, 'data' => $rows]];
         jsonResponse(['ok' => true, 'workbook' => $wb, 'filename' => 'DanhSachSV_Nhom' . ($groupCode ?: $targetGroupId)]);
-    }
-
-    if ($action === 'export_group_students') {
-        $groupId = (int) ($_GET['group_id'] ?? 0);
-        $groupCode = trim($_GET['group_code'] ?? '');
-        $csId = (int) ($_GET['class_subject_id'] ?? 0);
-        $targetGroupId = $groupId;
-
-        if ($targetGroupId <= 0 && $csId > 0) {
-            $g = db_fetch_one(
-                'SELECT id FROM class_subject_groups WHERE class_subject_id = ? AND group_code = ? LIMIT 1',
-                [$csId, $groupCode ?: 'N1']
-            );
-            $targetGroupId = (int) ($g['id'] ?? 0);
-        }
-
-        if ($targetGroupId <= 0) {
-            jsonResponse(['ok' => false, 'message' => 'no_group_found'], 404);
-        }
-
-        $students = db_fetch_all(
-            'SELECT ssr.id, ssr.student_id, u.username, u.full_name, u.birth_date, c.class_name, ssr.status
-             FROM student_subject_registration ssr
-             JOIN users u ON ssr.student_id = u.id
-             JOIN class_students cs ON ssr.student_id = cs.student_id
-             JOIN classes c ON cs.class_id = c.id
-             WHERE ssr.class_subject_group_id = ?
-             ORDER BY u.full_name ASC',
-            [$targetGroupId]
-        );
-
-        header('Content-Type: text/csv; charset=UTF-8');
-        header('Content-Disposition: attachment; filename="DanhSachSV_Nhom' . ($groupCode ?: $targetGroupId) . '_' . date('Ymd_His') . '.csv"');
-        echo "\xEF\xBB\xBF";
-
-        $out = fopen('php://output', 'w');
-        fputcsv($out, ['STT', 'MSSV', 'Ho va ten', 'Ngay sinh', 'Lop']);
-        $stt = 1;
-        foreach ($students as $s) {
-            $mssv = $s['username'] ?? '';
-            $fullName = $s['full_name'] ?? '';
-            $birthDate = $s['birth_date'] ?? '';
-            fputcsv($out, [
-                $stt++,
-                $mssv,
-                $fullName,
-                $birthDate,
-                $s['class_name'] ?? ''
-            ]);
-        }
-        fclose($out);
-        exit;
     }
 
     if ($action === 'delete') {

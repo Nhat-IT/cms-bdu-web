@@ -287,7 +287,8 @@ CREATE TABLE `class_students` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO `class_students` (`id`, `class_id`, `student_id`) VALUES
-(17, 12, 16);
+(17, 12, 16),
+(22, 16, 2);
 
 -- --------------------------------------------------------
 -- 13. BẢNG STUDENT_SUBJECT_REGISTRATION (Gộp từ bảng group_students)
@@ -343,6 +344,7 @@ CREATE TABLE `attendance_sessions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `class_subject_group_id` int(11) NOT NULL,
   `attendance_date` date NOT NULL,
+  `study_session` varchar(20) DEFAULT NULL COMMENT 'Sáng / Chiều / Tối',
   `created_by` int(11) DEFAULT NULL COMMENT 'ID của BCS điểm danh',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
@@ -362,8 +364,10 @@ DROP TABLE IF EXISTS `attendance_records`;
 CREATE TABLE `attendance_records` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `session_id` int(11) NOT NULL,
-  `student_id` int(11) NOT NULL,
+  `student_id` int(11) DEFAULT NULL COMMENT 'Có thể NULL đối với SV chưa có tài khoản (dùng registration_id)',
+  `registration_id` int(11) DEFAULT NULL COMMENT 'ID đăng ký môn học - dùng khi student_id NULL',
   `status` int(11) NOT NULL COMMENT '1: Có mặt, 2: Vắng có phép, 3: Vắng không phép',
+  `note` varchar(255) DEFAULT NULL COMMENT 'Ghi chú của BCS',
   `evidence_file` varchar(255) DEFAULT NULL,
   `evidence_link` varchar(255) DEFAULT NULL,
   `evidence_file_id` varchar(255) DEFAULT NULL,
@@ -373,6 +377,7 @@ CREATE TABLE `attendance_records` (
   PRIMARY KEY (`id`),
   KEY `session_id` (`session_id`),
   KEY `idx_student_session` (`student_id`,`session_id`),
+  KEY `idx_registration_session` (`registration_id`,`session_id`),
   KEY `evidence_approved_by` (`evidence_approved_by`),
   CONSTRAINT `attendance_records_ibfk_1` FOREIGN KEY (`session_id`) REFERENCES `attendance_sessions` (`id`) ON DELETE CASCADE,
   CONSTRAINT `attendance_records_ibfk_2` FOREIGN KEY (`student_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
@@ -402,6 +407,12 @@ CREATE TABLE `documents` (
   CONSTRAINT `documents_ibfk_1` FOREIGN KEY (`class_subject_id`) REFERENCES `class_subjects` (`id`) ON DELETE CASCADE,
   CONSTRAINT `documents_ibfk_2` FOREIGN KEY (`uploader_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE `documents`
+  ADD COLUMN `file_data` MEDIUMBLOB NULL AFTER `icon_type`,
+  ADD COLUMN `file_size` INT UNSIGNED NULL AFTER `file_data`,
+  ADD COLUMN `file_mime` VARCHAR(100) NULL AFTER `file_size`,
+  ADD COLUMN `original_filename` VARCHAR(255) NULL AFTER `file_mime`;
 
 INSERT INTO `documents` (`id`, `title`, `note`, `category`, `drive_link`, `drive_file_id`, `icon_type`, `custom_icon`, `class_subject_id`, `uploader_id`, `semester`, `created_at`) VALUES
 (7, 'Danh sách lớp', NULL, 'Danh sách lớp', 'http://localhost/cms/public/uploads/documents/20260424_183830_78beb094_DS_mon_ANM.xlsx', NULL, 'file', NULL, 28, 2, 'HK2', '2026-04-24 16:38:30'),
@@ -454,3 +465,18 @@ CREATE TABLE `grades` (
 -- Bật lại kiểm tra khóa ngoại
 SET FOREIGN_KEY_CHECKS = 1;
 COMMIT;
+
+-- =============================================
+-- Bảng cấu hình hệ thống
+-- =============================================
+CREATE TABLE IF NOT EXISTS `settings` (
+  `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `setting_key` varchar(100) NOT NULL UNIQUE,
+  `setting_value` text,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `setting_key` (`setting_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Giá trị mặc định: học kỳ hiện tại
+INSERT IGNORE INTO `settings` (`setting_key`, `setting_value`) VALUES ('current_semester_id', '');
