@@ -30,10 +30,29 @@
             background: #f8fbff;
         }
 
+        /* Làm chậm animation collapse */
+        #processPanel.collapsing {
+            transition-duration: 0.55s !important;
+        }
+
         .process-panel .step-card {
-            /* Card từng bước trong panel quy trình */
             background: linear-gradient(180deg, #ffffff, #f8fbff);
             border: 1px solid rgba(13, 110, 253, 0.08);
+            opacity: 0;
+            transform: translateY(16px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        /* Stagger: mỗi card xuất hiện sau nhau */
+        #processPanel.show .col-md-4:nth-child(1) .step-card { opacity: 1; transform: translateY(0); transition-delay: 0.15s; }
+        #processPanel.show .col-md-4:nth-child(2) .step-card { opacity: 1; transform: translateY(0); transition-delay: 0.30s; }
+        #processPanel.show .col-md-4:nth-child(3) .step-card { opacity: 1; transform: translateY(0); transition-delay: 0.48s; }
+
+        /* Khi đóng lại: reset về invisible ngay */
+        #processPanel:not(.show):not(.collapsing) .step-card {
+            opacity: 0;
+            transform: translateY(16px);
+            transition: none;
         }
 
         .announcements-header {

@@ -222,10 +222,10 @@ function attendanceSemesterLabel($semesterName, $academicYear) {
                 <div class="row g-3 mt-2 align-items-center">
                     <div class="col-12 col-md-8">
                         <div class="p-2 bg-light rounded text-dark small border-start border-3 border-primary fixed-info-box" id="subjectInfoBox">
-                            <div class="row g-2 w-100 m-0">
-                                <div class="col-md-4 p-0"><i class="bi bi-person-badge text-primary me-1"></i>Giảng viên: <strong id="lblTeacher">...</strong></div>
-                                <div class="col-md-4 p-0" style="white-space: nowrap;"><i class="bi bi-calendar2-range text-primary me-1"></i>Thời gian: <strong id="lblTime">...</strong></div>
-                                <div class="col-md-4 p-0"><i class="bi bi-geo-alt text-primary me-1"></i>Phòng: <strong id="lblRoom">...</strong></div>
+                            <div class="d-flex flex-wrap gap-3">
+                                <span><i class="bi bi-person-badge text-primary me-1"></i>Giảng viên: <strong id="lblTeacher">...</strong></span>
+                                <span style="white-space: nowrap;"><i class="bi bi-calendar2-range text-primary me-1"></i>Thời gian: <strong id="lblTime">...</strong></span>
+                                <span><i class="bi bi-geo-alt text-primary me-1"></i>Phòng: <strong id="lblRoom">...</strong></span>
                             </div>
                         </div>
                     </div>

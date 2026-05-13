@@ -90,14 +90,14 @@ window.openEditModal = function (announcement) {
     document.getElementById('newsModalTitle').innerHTML = '<i class="bi bi-pencil-square me-2"></i>Chỉnh sửa bản tin';
     document.getElementById('modalTitleInput').value = announcement.title || '';
     document.getElementById('modalContentInput').value = announcement.message || announcement.content || '';
+
+    const modalEl = document.getElementById('newsModal');
+    if (!modalEl) return;
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
 };
 
 window.editAnnouncement = function (announcement) {
     window.openEditModal(announcement);
-    const modalEl = document.getElementById('newsModal');
-    if (!modalEl) return;
-    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-    modal.show();
 };
 
 window.saveEditedAnnouncement = function () {
@@ -141,18 +141,28 @@ window.confirmDelete = async function (id, askConfirm = true) {
 
 document.addEventListener('DOMContentLoaded', function () {
     const draftRaw = localStorage.getItem('bcs_news_draft');
-    if (!draftRaw) return;
-    try {
-        const draft = JSON.parse(draftRaw);
-        if (draft && typeof draft === 'object') {
-            if (!document.getElementById('newsTitle')?.value) {
-                document.getElementById('newsTitle').value = draft.title || '';
+    if (draftRaw) {
+        try {
+            const draft = JSON.parse(draftRaw);
+            if (draft && typeof draft === 'object') {
+                if (!document.getElementById('newsTitle')?.value) {
+                    document.getElementById('newsTitle').value = draft.title || '';
+                }
+                if (!document.getElementById('newsContent')?.value) {
+                    document.getElementById('newsContent').value = draft.content || '';
+                }
             }
-            if (!document.getElementById('newsContent')?.value) {
-                document.getElementById('newsContent').value = draft.content || '';
-            }
-        }
-    } catch (_) {
-        // ignore corrupted local draft
+        } catch (_) {}
+    }
+
+    const processPanel = document.getElementById('processPanel');
+    const toggleBtn = document.querySelector('[data-bs-target="#processPanel"]');
+    if (processPanel && toggleBtn) {
+        processPanel.addEventListener('show.bs.collapse', function () {
+            toggleBtn.innerHTML = '<i class="bi bi-chevron-up me-1"></i> Ẩn quy trình';
+        });
+        processPanel.addEventListener('hide.bs.collapse', function () {
+            toggleBtn.innerHTML = '<i class="bi bi-chevron-down me-1"></i> Xem quy trình hiển thị';
+        });
     }
 });
