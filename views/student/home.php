@@ -242,48 +242,75 @@ $notice = trim((string)($_GET['notice'] ?? ''));
                         <a href="schedule.php" class="btn btn-sm btn-outline-secondary">Xem toàn bộ lịch</a>
                     </div>
                     <div class="card-body">
-                        <?php if (!empty($todaySchedule)): ?>
-                            <?php foreach ($todaySchedule as $schedule):
-                                $sp = (int)$schedule['start_period'];
-                                $ep = (int)$schedule['end_period'];
-                                $session = $sp <= 5 ? 'Sáng' : ($sp <= 10 ? 'Chiều' : 'Tối');
-                                $badgeColor = $sp <= 5 ? 'bg-warning text-dark' : ($sp <= 10 ? 'bg-info text-dark' : 'bg-secondary');
-                                $isExtra = (int)($schedule['is_extra'] ?? 0);
-                            ?>
-                                <div class="p-3 mb-3 bg-light rounded border-start border-4 <?= $isExtra ? 'border-warning' : 'border-primary' ?> shadow-sm">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <div class="d-flex gap-2 align-items-center">
-                                            <span class="badge <?= $badgeColor ?> px-2 py-1">
-                                                <i class="bi bi-sun<?= $sp > 10 ? '-fill' : '' ?> me-1"></i><?= $session ?>
-                                            </span>
-                                            <span class="badge bg-light text-dark border fw-normal">
-                                                Tiết <?= $sp ?><?= $ep > $sp ? '–' . $ep : '' ?>
-                                            </span>
-                                            <?php if ($isExtra): ?>
-                                                <span class="badge bg-warning text-dark">Học bù</span>
-                                            <?php endif; ?>
-                                        </div>
-                                        <?php if ($schedule['room']): ?>
-                                            <span class="text-muted small fw-bold">
-                                                <i class="bi bi-geo-alt-fill me-1 text-danger"></i><?= e($schedule['room']) ?>
-                                            </span>
-                                        <?php endif; ?>
-                                    </div>
-                                    <h6 class="fw-bold text-dark mb-0"><?= e($schedule['subject_name']) ?></h6>
-                                    <?php if (!empty($schedule['subject_code'])): ?>
-                                        <small class="text-muted"><?= e($schedule['subject_code']) ?></small>
-                                    <?php endif; ?>
-                                    <p class="text-muted small mb-0 mt-1">
-                                        <i class="bi bi-person-badge text-primary me-1"></i>GV: <?= e($schedule['teacher_name'] ?: 'Chưa phân công') ?>
-                                    </p>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <div class="p-4 text-center border rounded border-dashed bg-white mt-4">
-                                <i class="bi bi-cup-hot text-muted fs-1 mb-2"></i>
+                        <?php if (empty($todaySchedule)): ?>
+                            <div class="p-4 text-center border rounded border-dashed bg-white mt-2">
+                                <i class="bi bi-cup-hot text-muted fs-1 mb-2 d-block"></i>
                                 <h6 class="text-muted fw-bold">Hôm nay bạn được nghỉ!</h6>
                                 <p class="small text-muted mb-0">Hãy dành thời gian ôn bài nhé.</p>
                             </div>
+                        <?php else: ?>
+                        <?php
+                        // Nhóm theo buổi: Sáng (tiết 1-5), Chiều (6-10), Tối (11-14)
+                        $bySession = ['sang' => [], 'chieu' => [], 'toi' => []];
+                        foreach ($todaySchedule as $s) {
+                            $sp = (int)($s['start_period'] ?? 0);
+                            if ($sp <= 5)       $bySession['sang'][]   = $s;
+                            elseif ($sp <= 10)  $bySession['chieu'][]  = $s;
+                            else                $bySession['toi'][]    = $s;
+                        }
+                        $sessions = [
+                            'sang'  => ['label' => 'Buổi sáng',  'icon' => 'bi-brightness-high', 'badge' => 'bg-warning text-dark'],
+                            'chieu' => ['label' => 'Buổi chiều', 'icon' => 'bi-cloud-sun',        'badge' => 'bg-info text-dark'],
+                            'toi'   => ['label' => 'Buổi tối',   'icon' => 'bi-moon-stars',       'badge' => 'bg-secondary'],
+                        ];
+                        // Chỉ hiển thị buổi tối nếu có lịch
+                        if (empty($bySession['toi'])) unset($sessions['toi']);
+                        ?>
+                        <?php foreach ($sessions as $key => $meta): ?>
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <i class="bi <?= $meta['icon'] ?> text-secondary"></i>
+                                    <span class="fw-bold text-secondary small text-uppercase"><?= $meta['label'] ?></span>
+                                </div>
+                                <?php if (!empty($bySession[$key])): ?>
+                                    <?php foreach ($bySession[$key] as $schedule):
+                                        $sp = (int)$schedule['start_period'];
+                                        $ep = (int)$schedule['end_period'];
+                                        $isExtra = (int)($schedule['is_extra'] ?? 0);
+                                    ?>
+                                        <div class="p-3 mb-2 bg-light rounded border-start border-4 <?= $isExtra ? 'border-warning' : 'border-primary' ?> shadow-sm">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <div class="d-flex gap-2 align-items-center">
+                                                    <span class="badge <?= $meta['badge'] ?> px-2 py-1">
+                                                        Tiết <?= $sp ?><?= $ep > $sp ? '–' . $ep : '' ?>
+                                                    </span>
+                                                    <?php if ($isExtra): ?>
+                                                        <span class="badge bg-warning text-dark">Học bù</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <?php if ($schedule['room']): ?>
+                                                    <span class="text-muted small fw-bold">
+                                                        <i class="bi bi-geo-alt-fill me-1 text-danger"></i><?= e($schedule['room']) ?>
+                                                    </span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <h6 class="fw-bold text-dark mb-0"><?= e($schedule['subject_name']) ?></h6>
+                                            <?php if (!empty($schedule['subject_code'])): ?>
+                                                <small class="text-muted"><?= e($schedule['subject_code']) ?></small>
+                                            <?php endif; ?>
+                                            <p class="text-muted small mb-0 mt-1">
+                                                <i class="bi bi-person-badge text-primary me-1"></i>GV: <?= e($schedule['teacher_name'] ?: 'Chưa phân công') ?>
+                                            </p>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <div class="d-flex align-items-center gap-2 px-3 py-2 rounded bg-white border text-muted small">
+                                        <i class="bi bi-cup-hot"></i>
+                                        <span><?= $meta['label'] ?> bạn được nghỉ, dành thời gian ôn tập nhé!</span>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
                 </div>
