@@ -9,7 +9,8 @@ require_once __DIR__ . '/../../config/helpers.php';
 
 requireRole('student');
 
-$userId = (int)($_SESSION['user_id'] ?? 0);
+$userId       = (int)($_SESSION['user_id'] ?? 0);
+$studentMssv  = trim((string)($_SESSION['username'] ?? ''));  // MSSV = username
 $pageTitle = 'Lịch học';
 $extraCss = ['layout.css', 'student/student-layout.css', 'student/schedule.css'];
 $extraJs = ['student/student-layout.js'];
@@ -31,77 +32,71 @@ $semesters = db_fetch_all(
               start_date DESC"
 );
 
-// Lấy danh sách năm học unique
-$academicYears = array_unique(array_filter(array_column($semesters, 'academic_year')));
-sort($academicYears, SORT_STRING);
-$academicYears = array_values($academicYears);
-rsort($academicYears);
-
-$selectedYear = trim((string)($_GET['year'] ?? ''));
-$selectedSemesterId = (int)($_GET['semester_id'] ?? 0);
-
-// Lọc semesters theo year nếu được chọn
-$filteredSemesters = $semesters;
-if ($selectedYear !== '') {
-    $filteredSemesters = array_filter($semesters, function($sem) use ($selectedYear) {
-        return ($sem['academic_year'] ?? '') === $selectedYear;
-    });
-    $filteredSemesters = array_values($filteredSemesters);
-}
-
-// Tìm currentSemester trong filtered list
-$currentSemester = null;
 $today = date('Y-m-d');
-foreach ($filteredSemesters as $sem) {
-    $start = $sem['start_date'] ?? '';
-    $end = $sem['end_date'] ?? '';
-    if ($start !== '' && $end !== '' && $today >= $start && $today <= $end) {
-        $currentSemester = $sem;
+
+// Tìm học kỳ hiện tại
+$currentSemesterId = 0;
+foreach ($semesters as $sem) {
+    if (($sem['start_date'] ?? '') <= $today && $today <= ($sem['end_date'] ?? '')) {
+        $currentSemesterId = (int)$sem['id'];
         break;
     }
 }
-if ($currentSemester === null && !empty($filteredSemesters)) {
-    $currentSemester = $filteredSemesters[0];
+// Nếu chưa vào học kỳ nào: chọn học kỳ gần nhất sắp bắt đầu, nếu không có thì học kỳ gần nhất đã qua
+if ($currentSemesterId === 0 && !empty($semesters)) {
+    $nearest = null;
+    $nearestDiff = PHP_INT_MAX;
+    foreach ($semesters as $sem) {
+        $diff = abs(strtotime($sem['start_date'] ?? $today) - strtotime($today));
+        if ($diff < $nearestDiff) {
+            $nearestDiff = $diff;
+            $nearest = $sem;
+        }
+    }
+    $currentSemesterId = $nearest ? (int)$nearest['id'] : (int)$semesters[0]['id'];
 }
 
-// Nếu chưa có semester được chọn, dùng current
-if ($selectedSemesterId <= 0 && $currentSemester) {
-    $selectedSemesterId = (int)($currentSemester['id'] ?? 0);
+// Đưa học kỳ hiện tại lên đầu danh sách dropdown
+usort($semesters, function ($a, $b) use ($currentSemesterId) {
+    $aIsCurrent = ((int)$a['id'] === $currentSemesterId) ? 0 : 1;
+    $bIsCurrent = ((int)$b['id'] === $currentSemesterId) ? 0 : 1;
+    return $aIsCurrent - $bIsCurrent;
+});
+
+$selectedSemesterId = (int)($_GET['semester_id'] ?? 0);
+if ($selectedSemesterId <= 0) {
+    $selectedSemesterId = $currentSemesterId;
 }
 
 $selectedSemester = null;
-foreach ($filteredSemesters as $sem) {
+foreach ($semesters as $sem) {
     if ((int)$sem['id'] === $selectedSemesterId) {
         $selectedSemester = $sem;
         break;
     }
 }
-if ($selectedSemester === null && !empty($filteredSemesters)) {
-    $selectedSemester = $filteredSemesters[0];
-    $selectedSemesterId = (int)($selectedSemester['id'] ?? 0);
+if ($selectedSemester === null && !empty($semesters)) {
+    $selectedSemester = $semesters[0];
+    $selectedSemesterId = (int)$selectedSemester['id'];
 }
 
-$semesterStartTs = strtotime((string)($selectedSemester['start_date'] ?? '')) ?: strtotime(date('Y-m-d'));
-$semesterEndTs = strtotime((string)($selectedSemester['end_date'] ?? '')) ?: $semesterStartTs;
-$semesterWeeks = max(1, (int)floor((($semesterEndTs - $semesterStartTs) / 86400) / 7) + 1);
+$semesterStartTs = strtotime((string)($selectedSemester['start_date'] ?? '')) ?: strtotime($today);
+// +86399 để tính hết ngày cuối (23:59:59), tránh mất tuần cuối cùng
+$semesterEndTs = (strtotime((string)($selectedSemester['end_date'] ?? '')) ?: $semesterStartTs) + 86399;
+$todayTs = strtotime($today);
 
-$currentWeek = (int)floor((strtotime(date('Y-m-d')) - $semesterStartTs) / (7 * 86400)) + 1;
-if ($currentWeek < 1) {
-    $currentWeek = 1;
-}
-if ($currentWeek > $semesterWeeks) {
-    $currentWeek = $semesterWeeks;
-}
+// Tuần luôn bắt đầu từ Thứ 2 (Mon-Sun)
+$semesterStartDow = (int)date('N', $semesterStartTs); // 1=Mon, 7=Sun
+$firstMonday = $semesterStartTs - (($semesterStartDow - 1) * 86400);
+$semesterWeeks = max(1, (int)floor(($semesterEndTs - $firstMonday) / (7 * 86400)) + 1);
+
+$currentWeek = max(1, min($semesterWeeks, (int)floor(($todayTs - $firstMonday) / (7 * 86400)) + 1));
 
 $selectedWeek = (int)($_GET['week'] ?? $currentWeek);
-if ($selectedWeek < 1) {
-    $selectedWeek = 1;
-}
-if ($selectedWeek > $semesterWeeks) {
-    $selectedWeek = $semesterWeeks;
-}
+if ($selectedWeek < 1) $selectedWeek = 1;
+if ($selectedWeek > $semesterWeeks) $selectedWeek = $semesterWeeks;
 
-$weekStartTs = $semesterStartTs + (($selectedWeek - 1) * 7 * 86400);
+$weekStartTs = $firstMonday + (($selectedWeek - 1) * 7 * 86400);
 $weekEndTs = $weekStartTs + (6 * 86400);
 $weekStartYmd = date('Y-m-d', $weekStartTs);
 $weekEndYmd = date('Y-m-d', $weekEndTs);
@@ -110,24 +105,46 @@ $weekEndText = date('d/m/Y', $weekEndTs);
 
 $scheduleData = [];
 if ($selectedSemesterId > 0) {
+    // Khớp theo student_id (có tài khoản) HOẶC mssv (chỉ có trong danh sách)
+    // DISTINCT tránh trùng khi cùng SV có cả 2 dòng trong bảng đăng ký
     $scheduleData = db_fetch_all(
-        "SELECT csg.day_of_week, csg.start_period, csg.end_period, csg.room,
+        "SELECT DISTINCT csg.day_of_week, csg.start_period, csg.end_period, csg.room,
                 csg.group_code, s.subject_name, s.subject_code,
-                COALESCE(st.full_name, t.full_name) AS teacher_name,
-                cs.start_date, cs.end_date
+                COALESCE(maint.full_name, t.full_name) AS teacher_name,
+                cs.start_date, cs.end_date, 0 AS is_extra, NULL AS extra_date,
+                ssr.class_name
          FROM student_subject_registration ssr
          JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
          JOIN class_subjects cs ON csg.class_subject_id = cs.id
          JOIN subjects s ON cs.subject_id = s.id
          LEFT JOIN users t ON cs.teacher_id = t.id
-         LEFT JOIN users st ON csg.sub_teacher_id = st.id
-         WHERE ssr.student_id = ?
+         LEFT JOIN users maint ON csg.main_teacher_id = maint.id
+         WHERE (ssr.student_id = ? OR ssr.mssv = ?)
            AND ssr.status = 'Đang học'
            AND cs.semester_id = ?
-           AND (cs.start_date IS NULL OR cs.start_date <= ?)
-           AND (cs.end_date IS NULL OR cs.end_date >= ?)
-         ORDER BY csg.day_of_week, csg.start_period",
-        [$userId, $selectedSemesterId, $weekEndYmd, $weekStartYmd]
+           AND csg.is_extra = 0
+           AND cs.start_date <= ?
+           AND cs.end_date >= ?
+         UNION ALL
+         SELECT DISTINCT csg.day_of_week, csg.start_period, csg.end_period, csg.room,
+                csg.group_code, s.subject_name, s.subject_code,
+                COALESCE(maint.full_name, t.full_name) AS teacher_name,
+                cs.start_date, cs.end_date, 1 AS is_extra, csg.extra_date,
+                ssr.class_name
+         FROM student_subject_registration ssr
+         JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
+         JOIN class_subjects cs ON csg.class_subject_id = cs.id
+         JOIN subjects s ON cs.subject_id = s.id
+         LEFT JOIN users t ON cs.teacher_id = t.id
+         LEFT JOIN users maint ON csg.main_teacher_id = maint.id
+         WHERE (ssr.student_id = ? OR ssr.mssv = ?)
+           AND ssr.status = 'Đang học'
+           AND cs.semester_id = ?
+           AND csg.is_extra = 1
+           AND csg.extra_date BETWEEN ? AND ?
+         ORDER BY day_of_week, start_period",
+        [$userId, $studentMssv, $selectedSemesterId, $weekEndYmd, $weekStartYmd,
+         $userId, $studentMssv, $selectedSemesterId, $weekStartYmd, $weekEndYmd]
     );
 }
 
@@ -135,18 +152,6 @@ $unreadNotifications = (int)db_count(
     "SELECT COUNT(*) as total FROM notification_logs WHERE user_id = ? AND is_read = 0",
     [$userId]
 );
-
-$scheduleGrid = [];
-foreach ($scheduleData as $schedule) {
-    $day = (int)($schedule['day_of_week'] ?? 0);
-    if ($day < 2 || $day > 8) {
-        continue;
-    }
-    if (!isset($scheduleGrid[$day])) {
-        $scheduleGrid[$day] = [];
-    }
-    $scheduleGrid[$day][] = $schedule;
-}
 
 $startTimes = [
     1 => '07:00',
@@ -189,29 +194,12 @@ for ($i = 0; $i < 7; $i++) {
     $dayDates[$i] = date('d/m', $weekStartTs + ($i * 86400));
 }
 
-function periodTimeRange(int $startPeriod, int $endPeriod): string {
-    $slots = [
-        1 => ['07:00', '07:45'],
-        2 => ['07:50', '08:35'],
-        3 => ['08:40', '09:25'],
-        4 => ['09:35', '10:20'],
-        5 => ['10:25', '11:10'],
-        6 => ['13:00', '13:45'],
-        7 => ['13:50', '14:35'],
-        8 => ['14:40', '15:25'],
-        9 => ['15:35', '16:20'],
-        10 => ['16:25', '17:10'],
-        11 => ['17:30', '18:15'],
-        12 => ['18:20', '19:05'],
-        13 => ['19:10', '19:55'],
-        14 => ['20:00', '20:45']
-    ];
-
-    if (!isset($slots[$startPeriod]) || !isset($slots[$endPeriod])) {
-        return '';
-    }
-    return $slots[$startPeriod][0] . ' - ' . $slots[$endPeriod][1];
+// Cột ngày hôm nay (2=T2...8=CN), 0 nếu hôm nay không thuộc tuần đang xem
+$todayDayOfWeek = 0;
+if ($todayTs >= $weekStartTs && $todayTs <= $weekEndTs) {
+    $todayDayOfWeek = (int)date('N', $todayTs) + 1; // Mon(1)→2 ... Sun(7)→8
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -253,41 +241,32 @@ function periodTimeRange(int $startPeriod, int $endPeriod): string {
     <div class="p-4">
         <div class="filter-section mb-3">
             <form method="get" class="row g-2 align-items-center">
-                <div class="col-12 col-md-3 col-lg-2">
-                    <select class="form-select form-select-sm fw-bold text-secondary shadow-sm border-secondary" name="year" id="yearSelect" onchange="this.form.submit()">
-                        <option value="">Tất cả năm học</option>
-                        <?php foreach ($academicYears as $year): ?>
-                            <option value="<?= e($year) ?>" <?= $selectedYear === $year ? 'selected' : '' ?>>
-                                <?= e($year) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
                 <div class="col-12 col-md-4 col-lg-3">
                     <select class="form-select form-select-sm fw-bold text-dark shadow-sm border-secondary" name="semester_id" id="semesterSelect" onchange="this.form.submit()">
-                        <?php foreach ($filteredSemesters as $sem): ?>
+                        <?php foreach ($semesters as $sem): ?>
                             <option value="<?= (int)$sem['id'] ?>" <?= (int)$sem['id'] === (int)$selectedSemesterId ? 'selected' : '' ?>>
                                 <?= e(studentSemesterLabel($sem['semester_name'] ?? '', $sem['academic_year'] ?? '')) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-12 col-md-5 col-lg-4">
+                <div class="col-12 col-md-5 col-lg-5">
                     <select class="form-select form-select-sm fw-bold text-primary shadow-sm border-primary" name="week" id="weekSelect" onchange="this.form.submit()">
                         <?php for ($week = 1; $week <= $semesterWeeks; $week++):
-                            $start = $semesterStartTs + (($week - 1) * 7 * 86400);
-                            $end = $start + (6 * 86400);
+                            $wStart = $firstMonday + (($week - 1) * 7 * 86400);
+                            $wEnd   = $wStart + (6 * 86400);
+                            $isCurrent = ($week === $currentWeek && $selectedSemesterId === $currentSemesterId);
                         ?>
                             <option value="<?= $week ?>" <?= $week === $selectedWeek ? 'selected' : '' ?>>
-                                Tuần <?= $week ?> [<?= date('d/m/Y', $start) ?> - <?= date('d/m/Y', $end) ?>]
+                                Tuần <?= $week ?> [<?= date('d/m/Y', $wStart) ?> - <?= date('d/m/Y', $wEnd) ?>]<?= $isCurrent ? ' ◀ Tuần hiện tại' : '' ?>
                             </option>
                         <?php endfor; ?>
                     </select>
                 </div>
-                <div class="col-12 col-md-3 col-lg-3 text-md-end">
+                <div class="col-12 col-md-3 col-lg-4 text-md-end">
                     <?php $prevWeek = max(1, $selectedWeek - 1); $nextWeek = min($semesterWeeks, $selectedWeek + 1); ?>
-                    <a class="btn btn-outline-secondary btn-sm" href="?year=<?= e($selectedYear) ?>&semester_id=<?= (int)$selectedSemesterId ?>&week=<?= $prevWeek ?>"><i class="bi bi-chevron-left"></i></a>
-                    <a class="btn btn-outline-secondary btn-sm" href="?year=<?= e($selectedYear) ?>&semester_id=<?= (int)$selectedSemesterId ?>&week=<?= $nextWeek ?>"><i class="bi bi-chevron-right"></i></a>
+                    <a class="btn btn-outline-secondary btn-sm" href="?semester_id=<?= (int)$selectedSemesterId ?>&week=<?= $prevWeek ?>"><i class="bi bi-chevron-left"></i></a>
+                    <a class="btn btn-outline-secondary btn-sm" href="?semester_id=<?= (int)$selectedSemesterId ?>&week=<?= $nextWeek ?>"><i class="bi bi-chevron-right"></i></a>
                 </div>
             </form>
             <div class="small text-muted mt-2">Đang xem tuần <?= $selectedWeek ?>: <?= e($weekStartText) ?> - <?= e($weekEndText) ?></div>
@@ -300,19 +279,24 @@ function periodTimeRange(int $startPeriod, int $endPeriod): string {
                         <thead>
                             <tr>
                                 <th style="width:80px;">
-                                    <a class="week-nav-btn" href="?year=<?= e($selectedYear) ?>&semester_id=<?= (int)$selectedSemesterId ?>&week=<?= $prevWeek ?>" title="Tuần trước">
+                                    <a class="week-nav-btn" href="?semester_id=<?= (int)$selectedSemesterId ?>&week=<?= $prevWeek ?>" title="Tuần trước">
                                         <i class="bi bi-arrow-left fs-5"></i>
                                     </a>
                                 </th>
-                                <th>Thứ 2<br><span class="fw-normal text-muted"><?= e($dayDates[0]) ?></span></th>
-                                <th>Thứ 3<br><span class="fw-normal text-muted"><?= e($dayDates[1]) ?></span></th>
-                                <th>Thứ 4<br><span class="fw-normal text-muted"><?= e($dayDates[2]) ?></span></th>
-                                <th>Thứ 5<br><span class="fw-normal text-muted"><?= e($dayDates[3]) ?></span></th>
-                                <th>Thứ 6<br><span class="fw-normal text-muted"><?= e($dayDates[4]) ?></span></th>
-                                <th>Thứ 7<br><span class="fw-normal text-muted"><?= e($dayDates[5]) ?></span></th>
-                                <th>Chủ nhật<br><span class="fw-normal text-muted"><?= e($dayDates[6]) ?></span></th>
+                                <?php
+                                $dayNames = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+                                for ($col = 0; $col < 7; $col++):
+                                    $colDay = $col + 2;
+                                    $isToday = ($todayDayOfWeek === $colDay);
+                                ?>
+                                <th class="<?= $isToday ? 'today-header' : '' ?>">
+                                    <?= $dayNames[$col] ?><br>
+                                    <span class="fw-normal <?= $isToday ? 'today-date' : 'text-muted' ?>"><?= e($dayDates[$col]) ?></span>
+                                    <?php if ($isToday): ?><br><span class="today-badge">Hôm nay</span><?php endif; ?>
+                                </th>
+                                <?php endfor; ?>
                                 <th style="width:80px;">
-                                    <a class="week-nav-btn" href="?year=<?= e($selectedYear) ?>&semester_id=<?= (int)$selectedSemesterId ?>&week=<?= $nextWeek ?>" title="Tuần sau">
+                                    <a class="week-nav-btn" href="?semester_id=<?= (int)$selectedSemesterId ?>&week=<?= $nextWeek ?>" title="Tuần sau">
                                         <i class="bi bi-arrow-right fs-5"></i>
                                     </a>
                                 </th>
@@ -332,9 +316,10 @@ function periodTimeRange(int $startPeriod, int $endPeriod): string {
                                         continue;
                                     }
 
+                                    $todayClass = ($todayDayOfWeek === $day) ? ' today-col' : '';
                                     $slotItems = $scheduleByStart[$day][$period] ?? [];
                                     if (empty($slotItems)) {
-                                        echo '<td class="master-cell align-middle p-1"></td>';
+                                        echo '<td class="master-cell align-middle p-1' . $todayClass . '"></td>';
                                         continue;
                                     }
 
@@ -343,19 +328,22 @@ function periodTimeRange(int $startPeriod, int $endPeriod): string {
                                     $end = (int)($item['end_period'] ?? $period);
                                     $rowspan = max(1, min(14, $end) - $start + 1);
                                     $rowspanTracker[$day] = $rowspan - 1;
-                                    $timeRange = periodTimeRange($start, $end);
                                     $groupCode = (string)($item['group_code'] ?? 'N1');
-                                    $groupLabel = ($groupCode === 'N1') ? 'Nhóm 1' : $groupCode;
+                                    // Chuẩn hóa: N1, N2... (bỏ "Nhóm X")
+                                    $groupLabel = preg_replace('/^Nh[oó]m\s*/iu', 'N', $groupCode);
+                                    if ($groupLabel === $groupCode && !preg_match('/^N\d+$/i', $groupCode)) {
+                                        $groupLabel = 'N' . ltrim($groupCode, 'N');
+                                    }
                                     ?>
-                                    <td class="master-cell align-middle p-1" rowspan="<?= $rowspan ?>">
+                                    <td class="master-cell align-middle p-1<?= $todayClass ?>" rowspan="<?= $rowspan ?>">
                                         <div class="subject-block">
-                                            <div class="subject-title"><?= e($item['subject_name'] ?? 'Môn học') ?><?= !empty($item['subject_code']) ? (' (' . e($item['subject_code']) . ')') : '' ?></div>
-                                            <div class="subject-meta">Lớp: <b class="text-primary"><?= e($item['class_name'] ?? '--') ?></b> (<?= e($groupLabel) ?>)</div>
-                                            <div class="subject-meta">Phòng: <?= e($item['room'] ?: '--') ?></div>
-                                            <div class="subject-meta">GV: <?= e($item['teacher_name'] ?: 'Chưa phân công') ?></div>
-                                            <?php if ($timeRange !== ''): ?>
-                                                <div class="subject-room"><i class="bi bi-clock me-1"></i><?= e($timeRange) ?></div>
+                                            <div class="subject-title"><?= e($item['subject_name'] ?? 'Môn học') ?></div>
+                                            <?php if (!empty($item['subject_code'])): ?>
+                                                <div class="subject-code"><?= e($item['subject_code']) ?></div>
                                             <?php endif; ?>
+                                            <div class="subject-meta">Lớp: <b class="text-primary"><?= e($item['class_name'] ?? '--') ?></b> · <?= e($groupLabel) ?></div>
+                                            <div class="subject-meta">Phòng: <b><?= e($item['room'] ?: '--') ?></b></div>
+                                            <div class="subject-meta">GV: <?= e($item['teacher_name'] ?: 'Chưa phân công') ?></div>
                                             <?php if (count($slotItems) > 1): ?>
                                                 <span class="conflict-badge">+<?= count($slotItems) - 1 ?></span>
                                             <?php endif; ?>

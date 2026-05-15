@@ -9,83 +9,130 @@ require_once __DIR__ . '/../../config/helpers.php';
 
 requireRole('student');
 
-$userId = $_SESSION['user_id'];
+$userId      = (int)($_SESSION['user_id'] ?? 0);
+$studentMssv = trim((string)($_SESSION['username'] ?? ''));
 $pageTitle = 'Tổng quan cá nhân';
 $extraCss = ['layout.css', 'student/student-layout.css', 'student/home.css'];
 $extraJs = ['student/student-layout.js'];
 
-// Lấy số môn đang học
+$today = date('Y-m-d');
+
+// Học kỳ hiện tại (dùng hàm chung từ helpers.php)
+$currentSem   = getCurrentSemester();
+$currentSemId = (int)($currentSem['id'] ?? 0);
+
+// Số môn đang học trong học kỳ hiện tại
 $subjectCount = db_count("
-    SELECT COUNT(DISTINCT csg.class_subject_id) 
+    SELECT COUNT(DISTINCT csg.class_subject_id)
     FROM student_subject_registration ssr
     JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
-    WHERE ssr.student_id = ? AND ssr.status = 'Đang học'
-", [$userId]);
+    JOIN class_subjects cs ON csg.class_subject_id = cs.id
+    WHERE (ssr.student_id = ? OR ssr.mssv = ?)
+      AND ssr.status = 'Đang học'
+      AND cs.semester_id = ?
+", [$userId, $studentMssv, $currentSemId]);
 
-// Lấy số buổi vắng
+// Số buổi vắng không phép trong học kỳ hiện tại
+// Khớp theo student_id (có TK) hoặc registration_id qua mssv (chỉ có trong DS)
 $absenceCount = db_count("
-    SELECT COUNT(*) 
+    SELECT COUNT(DISTINCT ar.id)
     FROM attendance_records ar
     JOIN attendance_sessions a_s ON ar.session_id = a_s.id
     JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
-    JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id AND ssr.student_id = ?
-    WHERE ar.student_id = ? AND ar.status = 3
-", [$userId, $userId]);
+    JOIN class_subjects cs ON csg.class_subject_id = cs.id
+    LEFT JOIN student_subject_registration ssr_m
+        ON ssr_m.class_subject_group_id = csg.id AND ssr_m.mssv = ?
+    WHERE cs.semester_id = ?
+      AND ar.status = 3
+      AND (ar.student_id = ? OR (ar.registration_id IS NOT NULL AND ar.registration_id = ssr_m.id))
+", [$studentMssv, $currentSemId, $userId]);
 
-// Lấy số phản hồi đã xử lý
+// Số phản hồi đã xử lý
 $resolvedFeedback = db_count("
-    SELECT COUNT(*) 
-    FROM feedbacks 
+    SELECT COUNT(*)
+    FROM feedbacks
     WHERE student_id = ? AND status = 'Resolved'
 ", [$userId]);
 
-// Lấy môn cảnh báo (vắng >= 3)
+// Môn cảnh báo vắng >= 3 trong học kỳ hiện tại
 $warningSubjects = db_fetch_all("
-    SELECT s.subject_name, 
-           COUNT(CASE WHEN ar.status = 3 THEN 1 END) as absences
-    FROM attendance_records ar
-    JOIN attendance_sessions a_s ON ar.session_id = a_s.id
-    JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
+    SELECT s.subject_name,
+           COUNT(DISTINCT CASE WHEN ar.status = 3 THEN ar.id END) AS absences
+    FROM student_subject_registration ssr
+    JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
     JOIN class_subjects cs ON csg.class_subject_id = cs.id
     JOIN subjects s ON cs.subject_id = s.id
-    JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id AND ssr.student_id = ?
-    WHERE ar.student_id = ?
-    GROUP BY s.id
+    LEFT JOIN attendance_sessions a_s ON a_s.class_subject_group_id = csg.id
+    LEFT JOIN attendance_records ar ON ar.session_id = a_s.id
+        AND (ar.student_id = ? OR ar.registration_id = ssr.id)
+    WHERE (ssr.student_id = ? OR ssr.mssv = ?)
+      AND ssr.status = 'Đang học'
+      AND cs.semester_id = ?
+    GROUP BY s.id, s.subject_name
     HAVING absences >= 3
-", [$userId, $userId]);
+", [$userId, $userId, $studentMssv, $currentSemId]);
 $warningCount = count($warningSubjects);
 
-// Lấy lịch học hôm nay
-$dayOfWeek = date('N');
+// Lịch học hôm nay — day('N'): Mon=1…Sun=7 → DB day_of_week: Mon=2…Sun=8
+$dayOfWeekDb = (int)date('N') + 1;
 $todaySchedule = db_fetch_all("
-    SELECT s.subject_name, csg.start_period, csg.end_period, csg.room,
-           t.full_name as teacher_name, 'Sáng' as session_name
-    FROM class_subject_groups csg
+    SELECT DISTINCT s.subject_name, s.subject_code,
+           csg.start_period, csg.end_period, csg.room, csg.group_code,
+           COALESCE(maint.full_name, t.full_name) AS teacher_name,
+           0 AS is_extra
+    FROM student_subject_registration ssr
+    JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
     JOIN class_subjects cs ON csg.class_subject_id = cs.id
     JOIN subjects s ON cs.subject_id = s.id
-    JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id AND ssr.student_id = ?
     LEFT JOIN users t ON cs.teacher_id = t.id
-    WHERE csg.day_of_week = ? AND ssr.status = 'Đang học'
-    ORDER BY csg.start_period
-", [$userId, $dayOfWeek]);
-
-// Lấy tình trạng chuyên cần các môn
-$attendanceStatus = db_fetch_all("
-    SELECT s.subject_name, 
-           COUNT(CASE WHEN ar.status = 3 THEN 1 END) as absences,
-           3 as limit_absences
-    FROM attendance_records ar
-    JOIN attendance_sessions a_s ON ar.session_id = a_s.id
-    JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
+    LEFT JOIN users maint ON csg.main_teacher_id = maint.id
+    WHERE (ssr.student_id = ? OR ssr.mssv = ?)
+      AND ssr.status = 'Đang học'
+      AND cs.semester_id = ?
+      AND csg.is_extra = 0
+      AND csg.day_of_week = ?
+      AND cs.start_date <= ?
+      AND cs.end_date >= ?
+    UNION ALL
+    SELECT DISTINCT s.subject_name, s.subject_code,
+           csg.start_period, csg.end_period, csg.room, csg.group_code,
+           COALESCE(maint.full_name, t.full_name) AS teacher_name,
+           1 AS is_extra
+    FROM student_subject_registration ssr
+    JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
     JOIN class_subjects cs ON csg.class_subject_id = cs.id
     JOIN subjects s ON cs.subject_id = s.id
-    JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id AND ssr.student_id = ?
-    WHERE ar.student_id = ? AND ssr.status = 'Đang học'
-    GROUP BY s.id
-    ORDER BY absences DESC
-", [$userId, $userId]);
+    LEFT JOIN users t ON cs.teacher_id = t.id
+    LEFT JOIN users maint ON csg.main_teacher_id = maint.id
+    WHERE (ssr.student_id = ? OR ssr.mssv = ?)
+      AND ssr.status = 'Đang học'
+      AND cs.semester_id = ?
+      AND csg.is_extra = 1
+      AND csg.extra_date = ?
+    ORDER BY start_period
+", [$userId, $studentMssv, $currentSemId, $dayOfWeekDb, $today, $today,
+   $userId, $studentMssv, $currentSemId, $today]);
 
-// Lấy số thông báo chưa đọc
+// Tình trạng chuyên cần các môn trong học kỳ hiện tại
+$attendanceStatus = db_fetch_all("
+    SELECT s.subject_name,
+           COUNT(DISTINCT CASE WHEN ar.status = 3 THEN ar.id END) AS absences,
+           3 AS limit_absences
+    FROM student_subject_registration ssr
+    JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
+    JOIN class_subjects cs ON csg.class_subject_id = cs.id
+    JOIN subjects s ON cs.subject_id = s.id
+    LEFT JOIN attendance_sessions a_s ON a_s.class_subject_group_id = csg.id
+    LEFT JOIN attendance_records ar ON ar.session_id = a_s.id
+        AND (ar.student_id = ? OR ar.registration_id = ssr.id)
+    WHERE (ssr.student_id = ? OR ssr.mssv = ?)
+      AND ssr.status = 'Đang học'
+      AND cs.semester_id = ?
+    GROUP BY s.id, s.subject_name
+    ORDER BY absences DESC
+", [$userId, $userId, $studentMssv, $currentSemId]);
+
+// Số thông báo chưa đọc
 $unreadNotifications = db_count("SELECT COUNT(*) FROM notification_logs WHERE user_id = ? AND is_read = 0", [$userId]);
 $notice = trim((string)($_GET['notice'] ?? ''));
 ?>
@@ -196,21 +243,38 @@ $notice = trim((string)($_GET['notice'] ?? ''));
                     </div>
                     <div class="card-body">
                         <?php if (!empty($todaySchedule)): ?>
-                            <?php foreach ($todaySchedule as $schedule): ?>
-                                <div class="p-3 mb-3 bg-light rounded border-start border-4 border-primary shadow-sm">
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span class="badge bg-primary px-2 py-1">
-                                            <i class="bi bi-clock me-1"></i><?= e($schedule['session_name']) ?>
-                                        </span>
+                            <?php foreach ($todaySchedule as $schedule):
+                                $sp = (int)$schedule['start_period'];
+                                $ep = (int)$schedule['end_period'];
+                                $session = $sp <= 5 ? 'Sáng' : ($sp <= 10 ? 'Chiều' : 'Tối');
+                                $badgeColor = $sp <= 5 ? 'bg-warning text-dark' : ($sp <= 10 ? 'bg-info text-dark' : 'bg-secondary');
+                                $isExtra = (int)($schedule['is_extra'] ?? 0);
+                            ?>
+                                <div class="p-3 mb-3 bg-light rounded border-start border-4 <?= $isExtra ? 'border-warning' : 'border-primary' ?> shadow-sm">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="d-flex gap-2 align-items-center">
+                                            <span class="badge <?= $badgeColor ?> px-2 py-1">
+                                                <i class="bi bi-sun<?= $sp > 10 ? '-fill' : '' ?> me-1"></i><?= $session ?>
+                                            </span>
+                                            <span class="badge bg-light text-dark border fw-normal">
+                                                Tiết <?= $sp ?><?= $ep > $sp ? '–' . $ep : '' ?>
+                                            </span>
+                                            <?php if ($isExtra): ?>
+                                                <span class="badge bg-warning text-dark">Học bù</span>
+                                            <?php endif; ?>
+                                        </div>
                                         <?php if ($schedule['room']): ?>
                                             <span class="text-muted small fw-bold">
                                                 <i class="bi bi-geo-alt-fill me-1 text-danger"></i><?= e($schedule['room']) ?>
                                             </span>
                                         <?php endif; ?>
                                     </div>
-                                    <h6 class="fw-bold text-dark mb-1"><?= e($schedule['subject_name']) ?></h6>
-                                    <p class="text-muted small mb-0">
-                                        <i class="bi bi-person-badge text-primary me-1"></i>GV: <?= e($schedule['teacher_name'] ?? 'Chưa phân công') ?>
+                                    <h6 class="fw-bold text-dark mb-0"><?= e($schedule['subject_name']) ?></h6>
+                                    <?php if (!empty($schedule['subject_code'])): ?>
+                                        <small class="text-muted"><?= e($schedule['subject_code']) ?></small>
+                                    <?php endif; ?>
+                                    <p class="text-muted small mb-0 mt-1">
+                                        <i class="bi bi-person-badge text-primary me-1"></i>GV: <?= e($schedule['teacher_name'] ?: 'Chưa phân công') ?>
                                     </p>
                                 </div>
                             <?php endforeach; ?>

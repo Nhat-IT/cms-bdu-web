@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(php -r ' *)"
+      "Bash(php -r ' *)",
+      "Bash(git show *)"
     ]
   }
 }
