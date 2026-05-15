@@ -69,9 +69,55 @@
     border-color: #86efac !important;
 }
 
+.attendance-detail-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.attendance-detail-table col.col-att-stt      { width: 6%; }
+.attendance-detail-table col.col-att-date     { width: 13%; }
+.attendance-detail-table col.col-att-session  { width: 9%; }
+.attendance-detail-table col.col-att-status   { width: 16%; }
+.attendance-detail-table col.col-att-evidence { width: 36%; }
+.attendance-detail-table col.col-att-review   { width: 20%; }
+
+.attendance-detail-table th,
+.attendance-detail-table td {
+    vertical-align: middle;
+    padding: 0.65rem 0.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.attendance-detail-table th:first-child,
+.attendance-detail-table td:first-child {
+    padding-left: 1.25rem;
+    text-align: center;
+}
+
+.attendance-detail-table th:last-child,
+.attendance-detail-table td:last-child {
+    padding-right: 1.25rem;
+    text-align: center;
+}
+
+.ev-btn {
+    font-size: 0.78rem;
+    padding: 0.2rem 0.5rem;
+    white-space: nowrap;
+}
+
+.evidence-upload-wrap .input-group .form-control,
+.evidence-upload-wrap .input-group .btn {
+    font-size: 0.8rem;
+}
+
+.evidence-upload-msg {
+    min-height: 1.2em;
+}
+
 @media (max-width: 767.98px) {
     .attendance-summary-badge {
-        /* Mobile: badge thống kê gọn lại nhưng vẫn rõ. */
         width: 100%;
         text-align: center;
     }

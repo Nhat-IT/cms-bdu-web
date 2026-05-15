@@ -23,6 +23,7 @@ function studentAttendanceSessionLabel($startPeriod): string {
 }
 
 function getAttendanceStatusLabel($status): array {
+    if ($status === null) return ['class' => 'secondary', 'text' => '--'];
     $s = (int)$status;
     if ($s === 1) return ['class' => 'success', 'text' => 'Có mặt'];
     if ($s === 2) return ['class' => 'warning text-dark', 'text' => 'Vắng có phép'];
@@ -77,57 +78,105 @@ if ($selectedSubjectId > 0) {
     }
 
     if ($selectedSubject) {
-        $row = db_fetch_one(
-            "SELECT COUNT(*) as total
+        $today = new DateTime();
+        $today->setTime(23, 59, 59);
+
+        // Groups this student is registered in for this subject
+        $groups = db_fetch_all(
+            "SELECT csg.id, csg.day_of_week, csg.start_period, csg.is_extra, csg.extra_date
+             FROM class_subject_groups csg
+             JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
+             WHERE csg.class_subject_id = ? AND ssr.student_id = ?",
+            [$selectedSubjectId, $userId]
+        );
+
+        $subStart = !empty($selectedSubject['start_date']) ? new DateTime($selectedSubject['start_date']) : null;
+        $subEnd   = !empty($selectedSubject['end_date'])   ? new DateTime($selectedSubject['end_date'])   : null;
+
+        // Generate every scheduled date up to today
+        // day_of_week: 2=Mon … 7=Sat, 8=Sun (Vietnamese "Thứ" notation)
+        // PHP date('N'): 1=Mon … 6=Sat, 7=Sun → vnDay==8 ? 7 : vnDay-1
+        $scheduledMap = []; // "gid_date" => ['date', 'group_id', 'start_period']
+        foreach ($groups as $grp) {
+            $gid = (int)$grp['id'];
+            if ((int)$grp['is_extra'] === 1 && !empty($grp['extra_date'])) {
+                $d = new DateTime($grp['extra_date']);
+                if ($d <= $today) {
+                    $scheduledMap[$gid . '_' . $d->format('Y-m-d')] = [
+                        'date' => $d->format('Y-m-d'), 'group_id' => $gid,
+                        'start_period' => (int)$grp['start_period'],
+                    ];
+                }
+            } elseif (!empty($grp['day_of_week']) && $subStart) {
+                $vnDay   = (int)$grp['day_of_week'];
+                $phpN    = ($vnDay === 8) ? 7 : ($vnDay - 1);
+                $limit   = $subEnd ? min($subEnd, $today) : $today;
+                $cur     = clone $subStart;
+                while ($cur <= $limit) {
+                    if ((int)$cur->format('N') === $phpN) {
+                        $scheduledMap[$gid . '_' . $cur->format('Y-m-d')] = [
+                            'date' => $cur->format('Y-m-d'), 'group_id' => $gid,
+                            'start_period' => (int)$grp['start_period'],
+                        ];
+                    }
+                    $cur->modify('+1 day');
+                }
+            }
+        }
+
+        // Sort oldest first (Jan → Dec)
+        uasort($scheduledMap, fn($a, $b) => strcmp($a['date'], $b['date']));
+
+        // Existing attendance sessions for this subject
+        $existingSessions = db_fetch_all(
+            "SELECT a_s.id, a_s.class_subject_group_id, a_s.attendance_date, a_s.study_session
              FROM attendance_sessions a_s
              JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
              WHERE csg.class_subject_id = ?",
             [$selectedSubjectId]
         );
-        $attendanceSummary['total'] = (int)($row['total'] ?? 0);
+        $sessionMap = [];
+        foreach ($existingSessions as $sess) {
+            $sessionMap[$sess['class_subject_group_id'] . '_' . $sess['attendance_date']] = $sess;
+        }
 
-        $row = db_fetch_one(
-            "SELECT COUNT(*) as count
+        // Existing records for this student
+        $existingRecords = db_fetch_all(
+            "SELECT ar.id, ar.session_id, ar.status,
+                    ar.evidence_status, ar.evidence_link as drive_link, ar.evidence_uploaded_at
              FROM attendance_records ar
              JOIN attendance_sessions a_s ON ar.session_id = a_s.id
              JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
-             WHERE csg.class_subject_id = ? AND ar.student_id = ? AND ar.status = 1",
+             WHERE csg.class_subject_id = ? AND ar.student_id = ?",
             [$selectedSubjectId, $userId]
         );
-        $attendanceSummary['present'] = (int)($row['count'] ?? 0);
+        $recordMap = [];
+        foreach ($existingRecords as $rec) {
+            $recordMap[(int)$rec['session_id']] = $rec;
+        }
 
-        $row = db_fetch_one(
-            "SELECT COUNT(*) as count
-             FROM attendance_records ar
-             JOIN attendance_sessions a_s ON ar.session_id = a_s.id
-             JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
-             WHERE csg.class_subject_id = ? AND ar.student_id = ? AND ar.status = 2",
-            [$selectedSubjectId, $userId]
-        );
-        $attendanceSummary['excused'] = (int)($row['count'] ?? 0);
+        // Merge into final list
+        $attendanceRecords = [];
+        foreach ($scheduledMap as $sched) {
+            $session = $sessionMap[$sched['group_id'] . '_' . $sched['date']] ?? null;
+            $record  = $session ? ($recordMap[(int)$session['id']] ?? null) : null;
+            $attendanceRecords[] = [
+                'attendance_date'      => $sched['date'],
+                'start_period'         => $sched['start_period'],
+                'study_session'        => $session['study_session'] ?? null,
+                'status'               => $record ? (int)$record['status'] : null,
+                'id'                   => $record ? (int)$record['id'] : null,
+                'evidence_status'      => $record['evidence_status'] ?? null,
+                'drive_link'           => $record['drive_link'] ?? null,
+                'evidence_uploaded_at' => $record['evidence_uploaded_at'] ?? null,
+            ];
+        }
 
-        $row = db_fetch_one(
-            "SELECT COUNT(*) as count
-             FROM attendance_records ar
-             JOIN attendance_sessions a_s ON ar.session_id = a_s.id
-             JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
-             WHERE csg.class_subject_id = ? AND ar.student_id = ? AND ar.status = 3",
-            [$selectedSubjectId, $userId]
-        );
-        $attendanceSummary['absent'] = (int)($row['count'] ?? 0);
-
-        $attendanceRecords = db_fetch_all(
-            "SELECT ar.*, a_s.attendance_date, csg.start_period,
-                    ar.evidence_status, ar.evidence_link as drive_link, ar.evidence_uploaded_at,
-                    u.full_name as approved_by_name
-             FROM attendance_records ar
-             JOIN attendance_sessions a_s ON ar.session_id = a_s.id
-             JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
-             LEFT JOIN users u ON ar.evidence_approved_by = u.id
-             WHERE csg.class_subject_id = ? AND ar.student_id = ?
-             ORDER BY a_s.attendance_date DESC",
-            [$selectedSubjectId, $userId]
-        );
+        // Summary counts
+        $attendanceSummary['total']   = count($scheduledMap);
+        $attendanceSummary['present'] = count(array_filter($attendanceRecords, fn($r) => $r['status'] === 1));
+        $attendanceSummary['excused'] = count(array_filter($attendanceRecords, fn($r) => $r['status'] === 2));
+        $attendanceSummary['absent']  = count(array_filter($attendanceRecords, fn($r) => $r['status'] === 3));
     }
 }
 
@@ -247,43 +296,44 @@ $semesterLabel = studentAttendanceSemesterLabel(
                 <div class="table-responsive">
                     <table class="table table-hover align-middle custom-detail-table attendance-detail-table mb-0">
                         <colgroup>
-                            <col style="width:52px;">
-                            <col style="width:110px;">
-                            <col style="width:80px;">
-                            <col style="width:140px;">
-                            <col>
-                            <col style="width:150px;">
+                            <col class="col-att-stt">
+                            <col class="col-att-date">
+                            <col class="col-att-session">
+                            <col class="col-att-status">
+                            <col class="col-att-evidence">
+                            <col class="col-att-review">
                         </colgroup>
                         <thead class="text-muted small fw-bold" style="background-color: #f8f9fa;">
                             <tr>
-                                <th class="ps-4 py-3 text-center">STT</th>
-                                <th class="py-3">NGÀY HỌC</th>
-                                <th class="py-3">BUỔI</th>
-                                <th class="py-3">TRẠNG THÁI</th>
-                                <th class="py-3">FILE MINH CHỨNG</th>
-                                <th class="pe-4 py-3 text-center">XÉT DUYỆT</th>
+                                <th>STT</th>
+                                <th>NGÀY HỌC</th>
+                                <th>BUỔI</th>
+                                <th>TRẠNG THÁI</th>
+                                <th>FILE MINH CHỨNG</th>
+                                <th>XÉT DUYỆT</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (!empty($attendanceRecords)): ?>
                                 <?php foreach ($attendanceRecords as $index => $record): ?>
                                     <?php
-                                        $statusInfo = getAttendanceStatusLabel($record['status']);
+                                        $st = $record['status']; // null | 1 | 2 | 3
+                                        $statusInfo   = getAttendanceStatusLabel($st);
                                         $sessionLabel = studentAttendanceSessionLabel($record['start_period'] ?? 1);
                                         $rowClass = '';
-                                        if ((int)$record['status'] === 2) $rowClass = 'bg-warning bg-opacity-10';
-                                        if ((int)$record['status'] === 3) $rowClass = 'bg-danger bg-opacity-10';
+                                        if ($st === 2) $rowClass = 'bg-warning bg-opacity-10';
+                                        if ($st === 3) $rowClass = 'bg-danger bg-opacity-10';
                                     ?>
                                     <tr class="<?= $rowClass ?>">
-                                        <td class="ps-4 py-3 text-center attendance-col-stt <?= (int)$record['status'] === 3 ? 'text-danger' : '' ?>"><?= $index + 1 ?></td>
-                                        <td class="attendance-col-date <?= (int)$record['status'] === 3 ? 'text-danger' : 'text-dark' ?>"><?= formatDate($record['attendance_date'], 'd/m/Y') ?></td>
+                                        <td class="attendance-col-stt <?= $st === 3 ? 'text-danger' : '' ?>"><?= $index + 1 ?></td>
+                                        <td class="attendance-col-date <?= $st === 3 ? 'text-danger fw-bold' : 'text-dark' ?>"><?= formatDate($record['attendance_date'], 'd/m/Y') ?></td>
                                         <td class="text-dark"><?= e($sessionLabel) ?></td>
                                         <td>
                                             <span class="badge bg-<?= $statusInfo['class'] ?> px-3 py-1 rounded-pill"><?= e($statusInfo['text']) ?></span>
                                         </td>
                                         <?php
                                             $evStatus = $record['evidence_status'] ?? '';
-                                            $isAbsent = in_array((int)$record['status'], [2, 3]);
+                                            $isAbsent = in_array($st, [2, 3]);
                                             $canUpload = $isAbsent && $evStatus !== 'Approved' && $evStatus !== 'Pending';
                                         ?>
                                         <td>
@@ -368,15 +418,19 @@ $semesterLabel = studentAttendanceSemesterLabel(
     <script src="../../public/js/<?= e($js) ?>"></script>
 <?php endforeach; ?>
 <script>
+function evMsg(wrap, html) {
+    wrap.querySelector('.evidence-upload-msg').innerHTML = html;
+}
+
+// Upload (nộp / thay đổi)
 document.querySelectorAll('.evidence-upload-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
         const wrap = btn.closest('.evidence-upload-wrap');
         const recordId = wrap.dataset.recordId;
         const fileInput = wrap.querySelector('.evidence-file-input');
-        const msgDiv = wrap.querySelector('.evidence-upload-msg');
 
         if (!fileInput.files || !fileInput.files[0]) {
-            msgDiv.innerHTML = '<span class="text-danger">Vui lòng chọn file.</span>';
+            evMsg(wrap, '<span class="text-danger">Vui lòng chọn file.</span>');
             return;
         }
 
@@ -385,21 +439,61 @@ document.querySelectorAll('.evidence-upload-btn').forEach(function (btn) {
         formData.append('file', fileInput.files[0]);
 
         btn.disabled = true;
-        msgDiv.innerHTML = '<span class="text-muted"><i class="bi bi-hourglass-split me-1"></i>Đang tải...</span>';
+        evMsg(wrap, '<span class="text-muted"><i class="bi bi-hourglass-split me-1"></i>Đang tải...</span>');
 
         fetch('/cms/api/student/evidence-upload.php', { method: 'POST', body: formData })
             .then(r => r.json())
             .then(function (data) {
                 if (data.success) {
-                    msgDiv.innerHTML = '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Nộp thành công!</span>';
+                    evMsg(wrap, '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Nộp thành công!</span>');
                     setTimeout(function () { window.location.reload(); }, 1200);
                 } else {
-                    msgDiv.innerHTML = '<span class="text-danger">' + (data.error || 'Lỗi tải lên.') + '</span>';
+                    evMsg(wrap, '<span class="text-danger">' + (data.error || 'Lỗi tải lên.') + '</span>');
                     btn.disabled = false;
                 }
             })
             .catch(function () {
-                msgDiv.innerHTML = '<span class="text-danger">Lỗi kết nối. Thử lại.</span>';
+                evMsg(wrap, '<span class="text-danger">Lỗi kết nối. Thử lại.</span>');
+                btn.disabled = false;
+            });
+    });
+});
+
+// Hiện form thay đổi file (khi đang Pending)
+document.querySelectorAll('.evidence-change-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        const wrap = btn.closest('.evidence-upload-wrap');
+        const form = wrap.querySelector('.evidence-change-form');
+        form.classList.toggle('d-none');
+    });
+});
+
+// Xóa minh chứng
+document.querySelectorAll('.evidence-delete-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        if (!confirm('Bạn có chắc muốn xóa minh chứng đã nộp?')) return;
+        const wrap = btn.closest('.evidence-upload-wrap');
+        const recordId = wrap.dataset.recordId;
+
+        btn.disabled = true;
+        evMsg(wrap, '<span class="text-muted">Đang xóa...</span>');
+
+        const formData = new FormData();
+        formData.append('record_id', recordId);
+
+        fetch('/cms/api/student/evidence-delete.php', { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(function (data) {
+                if (data.success) {
+                    evMsg(wrap, '<span class="text-success">Đã xóa!</span>');
+                    setTimeout(function () { window.location.reload(); }, 800);
+                } else {
+                    evMsg(wrap, '<span class="text-danger">' + (data.error || 'Xóa thất bại.') + '</span>');
+                    btn.disabled = false;
+                }
+            })
+            .catch(function () {
+                evMsg(wrap, '<span class="text-danger">Lỗi kết nối. Thử lại.</span>');
                 btn.disabled = false;
             });
     });
