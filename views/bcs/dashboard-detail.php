@@ -26,14 +26,9 @@ $fullName = $currentUser['full_name'] ?? '';
 $position = $currentUser['position'] ?? 'Ban Cán Sự';
 $avatar = getAvatarUrl($currentUser['avatar'] ?? null, $fullName, 55);
 
-// Lấy tổng sinh viên
-if ($sourceType === 'class_students' && $classId) {
-    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM class_students WHERE class_id = ?");
-    $stmt->execute([$classId]);
-} else {
-    $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM class_students WHERE class_id = (SELECT class_id FROM class_students WHERE student_id = ? LIMIT 1)");
-    $stmt->execute([$userId]);
-}
+// Lấy tổng sinh viên — dùng SSR để bao gồm cả SV chưa có tài khoản (giống home.php)
+$stmt = $pdo->prepare("SELECT COUNT(DISTINCT mssv) as total FROM student_subject_registration WHERE class_name = ?");
+$stmt->execute([$className]);
 $totalStudents = $stmt->fetch()['total'] ?? 0;
 
 // Lấy số SV cảnh báo (vắng >= 3 buổi trên 1 môn)
@@ -102,8 +97,8 @@ $warningSubjectCount = count($warningSubjects);
 if ($sourceType === 'class_students' && $classId) {
     $stmt = $pdo->prepare("
         SELECT u.id as student_id, u.full_name, u.email as student_code,
-               s.subject_name, a_s.attendance_date, csg.study_session,
-               ar.status, ar.evidence_status as evidence_status
+               s.subject_name, a_s.attendance_date, a_s.study_session,
+               ar.status, ar.evidence_status as evidence_status, ar.evidence_link
         FROM attendance_records ar
         JOIN attendance_sessions a_s ON ar.session_id = a_s.id
         JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
@@ -120,8 +115,8 @@ if ($sourceType === 'class_students' && $classId) {
 } else {
     $stmt = $pdo->prepare("
         SELECT u.id as student_id, u.full_name, u.username as student_code,
-               s.subject_name, a_s.attendance_date, csg.study_session,
-               ar.status, ar.evidence_status as evidence_status
+               s.subject_name, a_s.attendance_date, a_s.study_session,
+               ar.status, ar.evidence_status as evidence_status, ar.evidence_link
         FROM attendance_records ar
         JOIN attendance_sessions a_s ON ar.session_id = a_s.id
         JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
@@ -341,8 +336,8 @@ foreach ($absenceDetails as $abs) {
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-center<?= $idx > 0 ? ' border-bottom' : '' ?>">
-                                    <?php if ($abs['evidence_id']): ?>
-                                    <button class="btn btn-sm btn-primary rounded-circle shadow-sm" title="Xem minh chứng"><i class="bi bi-file-earmark-medical"></i></button>
+                                    <?php if (!empty($abs['evidence_link'])): ?>
+                                    <a href="<?= e($abs['evidence_link']) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-primary rounded-circle shadow-sm" title="Xem minh chứng"><i class="bi bi-file-earmark-medical"></i></a>
                                     <?php else: ?>
                                     <button class="btn btn-sm btn-light rounded-circle" title="Không có minh chứng" disabled><i class="bi bi-eye-slash text-muted"></i></button>
                                     <?php endif; ?>

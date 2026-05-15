@@ -246,6 +246,14 @@ $semesterLabel = studentAttendanceSemesterLabel(
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle custom-detail-table attendance-detail-table mb-0">
+                        <colgroup>
+                            <col style="width:52px;">
+                            <col style="width:110px;">
+                            <col style="width:80px;">
+                            <col style="width:140px;">
+                            <col>
+                            <col style="width:150px;">
+                        </colgroup>
                         <thead class="text-muted small fw-bold" style="background-color: #f8f9fa;">
                             <tr>
                                 <th class="ps-4 py-3 text-center">STT</th>
@@ -273,28 +281,67 @@ $semesterLabel = studentAttendanceSemesterLabel(
                                         <td>
                                             <span class="badge bg-<?= $statusInfo['class'] ?> px-3 py-1 rounded-pill"><?= e($statusInfo['text']) ?></span>
                                         </td>
-                                        <td class="text-muted small">
-                                            <?php if ((int)$record['status'] === 3 && empty($record['evidence_status'])): ?>
-                                                <span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>Chưa có minh chứng!</span>
-                                            <?php elseif (!empty($record['drive_link'])): ?>
-                                                <a href="<?= e($record['drive_link']) ?>" target="_blank" class="btn btn-sm btn-light text-primary border">
-                                                    <i class="bi bi-image me-1"></i>Xem file
+                                        <?php
+                                            $evStatus = $record['evidence_status'] ?? '';
+                                            $isAbsent = in_array((int)$record['status'], [2, 3]);
+                                            $canUpload = $isAbsent && $evStatus !== 'Approved' && $evStatus !== 'Pending';
+                                        ?>
+                                        <td>
+                                            <?php if (!$isAbsent): ?>
+                                                <span class="text-muted">--</span>
+                                            <?php elseif ($evStatus === 'Approved' && !empty($record['drive_link'])): ?>
+                                                <a href="<?= e($record['drive_link']) ?>" target="_blank" class="btn btn-sm btn-success text-white">
+                                                    <i class="bi bi-check-circle me-1"></i>Xem file
                                                 </a>
+                                            <?php elseif ($evStatus === 'Pending'): ?>
+                                                <div class="evidence-upload-wrap" data-record-id="<?= (int)$record['id'] ?>">
+                                                    <div class="d-flex align-items-center gap-1 flex-wrap">
+                                                        <?php if (!empty($record['drive_link'])): ?>
+                                                        <a href="<?= e($record['drive_link']) ?>" target="_blank" class="btn btn-sm btn-outline-primary ev-btn">
+                                                            <i class="bi bi-image me-1"></i>Xem
+                                                        </a>
+                                                        <?php endif; ?>
+                                                        <button class="btn btn-sm btn-outline-secondary ev-btn evidence-change-btn" type="button" title="Thay đổi file">
+                                                            <i class="bi bi-arrow-repeat me-1"></i>Thay
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-danger ev-btn evidence-delete-btn" type="button" title="Xóa minh chứng">
+                                                            <i class="bi bi-trash3"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div class="evidence-change-form mt-2 d-none">
+                                                        <div class="input-group input-group-sm">
+                                                            <input type="file" class="form-control form-control-sm evidence-file-input" accept="image/*,.pdf">
+                                                            <button class="btn btn-primary btn-sm evidence-upload-btn" type="button"><i class="bi bi-upload"></i></button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="evidence-upload-msg mt-1 small"></div>
+                                                </div>
                                             <?php else: ?>
-                                                --
+                                                <div class="evidence-upload-wrap" data-record-id="<?= (int)$record['id'] ?>">
+                                                    <?php if (!empty($record['drive_link'])): ?>
+                                                    <a href="<?= e($record['drive_link']) ?>" target="_blank" class="btn btn-sm btn-outline-danger ev-btn mb-1">
+                                                        <i class="bi bi-exclamation-circle me-1"></i>Xem file cũ
+                                                    </a>
+                                                    <?php endif; ?>
+                                                    <div class="input-group input-group-sm">
+                                                        <input type="file" class="form-control form-control-sm evidence-file-input" accept="image/*,.pdf">
+                                                        <button class="btn btn-primary btn-sm evidence-upload-btn" type="button"><i class="bi bi-upload me-1"></i>Nộp</button>
+                                                    </div>
+                                                    <div class="evidence-upload-msg mt-1 small"></div>
+                                                </div>
                                             <?php endif; ?>
                                         </td>
                                         <td class="pe-4 text-center">
-                                            <?php if ((int)$record['status'] === 3 && empty($record['evidence_status'])): ?>
-                                                <span class="text-muted">Chưa nộp</span>
-                                            <?php elseif (($record['evidence_status'] ?? '') === 'Pending'): ?>
+                                            <?php if (!$isAbsent): ?>
+                                                <span class="text-muted">--</span>
+                                            <?php elseif ($evStatus === 'Pending'): ?>
                                                 <span class="badge bg-warning bg-opacity-25 text-dark border border-warning px-2 py-1">Đang chờ duyệt</span>
-                                            <?php elseif (($record['evidence_status'] ?? '') === 'Approved'): ?>
+                                            <?php elseif ($evStatus === 'Approved'): ?>
                                                 <span class="badge attendance-approved-pill border px-2 py-1">Đã duyệt hợp lệ</span>
-                                            <?php elseif (($record['evidence_status'] ?? '') === 'Rejected'): ?>
+                                            <?php elseif ($evStatus === 'Rejected'): ?>
                                                 <span class="badge bg-danger bg-opacity-25 text-danger border border-danger px-2 py-1">Bị từ chối</span>
                                             <?php else: ?>
-                                                --
+                                                <span class="text-muted small">Chưa nộp</span>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
@@ -320,5 +367,43 @@ $semesterLabel = studentAttendanceSemesterLabel(
 <?php foreach ($extraJs as $js): ?>
     <script src="../../public/js/<?= e($js) ?>"></script>
 <?php endforeach; ?>
+<script>
+document.querySelectorAll('.evidence-upload-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        const wrap = btn.closest('.evidence-upload-wrap');
+        const recordId = wrap.dataset.recordId;
+        const fileInput = wrap.querySelector('.evidence-file-input');
+        const msgDiv = wrap.querySelector('.evidence-upload-msg');
+
+        if (!fileInput.files || !fileInput.files[0]) {
+            msgDiv.innerHTML = '<span class="text-danger">Vui lòng chọn file.</span>';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('record_id', recordId);
+        formData.append('file', fileInput.files[0]);
+
+        btn.disabled = true;
+        msgDiv.innerHTML = '<span class="text-muted"><i class="bi bi-hourglass-split me-1"></i>Đang tải...</span>';
+
+        fetch('/cms/api/student/evidence-upload.php', { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(function (data) {
+                if (data.success) {
+                    msgDiv.innerHTML = '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Nộp thành công!</span>';
+                    setTimeout(function () { window.location.reload(); }, 1200);
+                } else {
+                    msgDiv.innerHTML = '<span class="text-danger">' + (data.error || 'Lỗi tải lên.') + '</span>';
+                    btn.disabled = false;
+                }
+            })
+            .catch(function () {
+                msgDiv.innerHTML = '<span class="text-danger">Lỗi kết nối. Thử lại.</span>';
+                btn.disabled = false;
+            });
+    });
+});
+</script>
 </body>
 </html>
