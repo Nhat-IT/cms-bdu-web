@@ -101,6 +101,9 @@ function openDocModal(mode, docData = null) {
         }
         bcsSyncModalAcademicYear();
 
+        const subjectSelect = document.getElementById('docClassSubjectId');
+        if (subjectSelect) subjectSelect.value = '0';
+
         customCategoryDiv?.classList.add('d-none');
         if (customCategoryInput) customCategoryInput.value = '';
         return;
@@ -141,6 +144,13 @@ function openDocModal(mode, docData = null) {
         if (customOption) categorySelect.value = customOption.value;
         customCategoryDiv?.classList.remove('d-none');
         if (customCategoryInput) customCategoryInput.value = doc.category || '';
+    }
+
+    const subjectSelect = document.getElementById('docClassSubjectId');
+    if (subjectSelect) {
+        if (!bcsSetSelectValue(subjectSelect, String(doc.class_subject_id || '0'))) {
+            subjectSelect.value = '0';
+        }
     }
 }
 
@@ -225,6 +235,8 @@ async function saveDocument() {
         }
     }
 
+    const classSubjectId = Number(document.getElementById('docClassSubjectId')?.value || 0);
+
     const payload = {
         action: isEditMode ? 'update' : 'create',
         id: isEditMode ? existingDocId : undefined,
@@ -234,6 +246,7 @@ async function saveDocument() {
         drive_link: driveLink,
         drive_file_id: driveFileId,
         semester_id: semesterId,
+        class_subject_id: classSubjectId,
     };
 
     if (!isEditMode) {

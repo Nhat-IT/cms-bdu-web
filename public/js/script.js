@@ -271,6 +271,20 @@
         });
     }
 
+    function showLoginError(message) {
+        let alertBox = document.getElementById('loginErrorAlert');
+        if (!alertBox) {
+            alertBox = document.createElement('div');
+            alertBox.id = 'loginErrorAlert';
+            alertBox.className = 'alert alert-danger alert-dismissible fade show';
+            alertBox.role = 'alert';
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) loginForm.insertAdjacentElement('beforebegin', alertBox);
+        }
+        alertBox.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>' + message +
+            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+    }
+
     function initLoginForm() {
         const loginForm = document.getElementById('loginForm');
         if (!loginForm) return;
@@ -280,14 +294,18 @@
 
             const username = document.getElementById('usernameInput').value.trim();
             const password = document.getElementById('passwordInput').value;
+            const submitBtn = loginForm.querySelector('[type="submit"]');
 
             if (!username || !password) {
-                alert('Vui lòng nhập tên đăng nhập và mật khẩu');
+                showLoginError('Vui lòng nhập tên đăng nhập và mật khẩu.');
                 return;
             }
 
+            if (submitBtn) submitBtn.disabled = true;
+
             try {
-                const response = await fetch('/auth/login', {
+                const loginUrl = loginForm.action || window.location.pathname;
+                const response = await fetch(loginUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
@@ -295,8 +313,9 @@
 
                 const data = await response.json();
 
-                if (!response.ok) {
-                    alert(data.message || 'Đăng nhập thất bại');
+                if (!response.ok || !data.success) {
+                    showLoginError(data.message || 'Đăng nhập thất bại.');
+                    if (submitBtn) submitBtn.disabled = false;
                     return;
                 }
 
@@ -305,7 +324,8 @@
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                alert('Lỗi kết nối server');
+                showLoginError('Lỗi kết nối server. Vui lòng thử lại.');
+                if (submitBtn) submitBtn.disabled = false;
             }
         });
     }

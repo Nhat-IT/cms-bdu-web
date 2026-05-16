@@ -80,12 +80,45 @@ try {
             serve_error(403, 'Bạn không có quyền truy cập tài liệu này.');
         }
     } elseif ($role === 'student') {
-        // Student: check if enrolled in the class
-        $enrolled = db_fetch_one(
-            "SELECT id FROM class_students WHERE class_id = ? AND student_id = ? LIMIT 1",
-            [$doc['class_id'] ?? 0, $userId]
-        );
-        if (!$enrolled) {
+        $mssv = trim((string)($_SESSION['username'] ?? ''));
+        $docClassId = (int)($doc['class_id'] ?? 0);
+        $allowed = false;
+
+        if ($docClassId > 0) {
+            // Tài liệu có môn: kiểm tra sinh viên thuộc lớp qua student_subject_registration
+            $check = db_fetch_one(
+                "SELECT 1 FROM student_subject_registration ssr
+                 JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
+                 JOIN class_subjects cs ON csg.class_subject_id = cs.id
+                 WHERE (ssr.student_id = ? OR ssr.mssv = ?)
+                   AND cs.class_id = ?
+                   AND ssr.status = 'Đang học'
+                 LIMIT 1",
+                [$userId, $mssv, $docClassId]
+            );
+            $allowed = !empty($check);
+        } else {
+            // Tài liệu "Khác" (class_subject_id NULL): kiểm tra uploader cùng lớp với sinh viên
+            $uploaderClass = db_fetch_one(
+                "SELECT class_id FROM class_students WHERE student_id = ? LIMIT 1",
+                [(int)($doc['uploader_id'] ?? 0)]
+            );
+            if ($uploaderClass && (int)$uploaderClass['class_id'] > 0) {
+                $check = db_fetch_one(
+                    "SELECT 1 FROM student_subject_registration ssr
+                     JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
+                     JOIN class_subjects cs ON csg.class_subject_id = cs.id
+                     WHERE (ssr.student_id = ? OR ssr.mssv = ?)
+                       AND cs.class_id = ?
+                       AND ssr.status = 'Đang học'
+                     LIMIT 1",
+                    [$userId, $mssv, (int)$uploaderClass['class_id']]
+                );
+                $allowed = !empty($check);
+            }
+        }
+
+        if (!$allowed) {
             serve_error(403, 'Bạn không có quyền truy cập tài liệu này.');
         }
     } else {

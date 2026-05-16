@@ -12,16 +12,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Xác nhận trước khi đăng xuất
-    document.querySelectorAll('.logout-btn').forEach(function (link) {
-        link.addEventListener('click', function (e) {
-            e.preventDefault();
-            if (confirm('Bạn có chắc muốn đăng xuất không?')) {
-                window.location.href = link.href;
-            }
-        });
-    });
-
     hydrateBcsSharedData();
 });
 

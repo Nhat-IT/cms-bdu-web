@@ -6,6 +6,7 @@
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/config/session.php';
 require_once __DIR__ . '/config/helpers.php';
+require_once __DIR__ . '/config/mailer.php';
 
 // Nếu đã đăng nhập thì chuyển về trang chủ
 if (isLoggedIn()) {
@@ -34,18 +35,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             if ($user) {
                 // Tạo OTP
                 $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-                $expires = date('Y-m-d H:i:s', strtotime('+10 minutes'));
-                
-                // Lưu OTP vào database (sử dụng bảng password_resets)
+                $expires = gmdate('Y-m-d H:i:s', time() + 600); // UTC +10 phút
+
+                // Lưu OTP vào database
                 db_query("DELETE FROM password_resets WHERE email = ?", [$email]);
                 db_query("INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)", [$email, password_hash($otp, PASSWORD_DEFAULT), $expires]);
-                
-                // TODO: Gửi email thực tế với OTP
-                // Hiện tại hiển thị OTP để test
-                $success = 'Mã OTP đã được gửi đến email của bạn!';
-                $_SESSION['reset_email'] = $email;
-                $_SESSION['reset_otp'] = $otp; // Chỉ dùng để test, xóa khi deploy
-                $step = 2;
+
+                // Gửi email thật
+                $mailResult = sendOtpEmail($email, $user['full_name'], $otp);
+
+                if ($mailResult['success']) {
+                    $success = 'Mã OTP đã được gửi đến email ' . e($email) . '. Vui lòng kiểm tra hộp thư (và thư mục Spam).';
+                    $_SESSION['reset_email'] = $email;
+                    $step = 2;
+                } else {
+                    // Xóa token vừa tạo nếu gửi mail thất bại
+                    db_query("DELETE FROM password_resets WHERE email = ?", [$email]);
+                    $error = $mailResult['message'];
+                }
             } else {
                 $error = 'Không tìm thấy tài khoản với thông tin này.';
             }
@@ -57,11 +64,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 // Xử lý đặt lại mật khẩu
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'reset_password') {
-    $otp = trim($_POST['otp'] ?? '');
+    $otp = preg_replace('/\D/', '', $_POST['otp'] ?? ''); // chỉ giữ chữ số
     $newPassword = $_POST['new_password'] ?? '';
     $confirmPassword = $_POST['confirm_password'] ?? '';
     $email = $_SESSION['reset_email'] ?? '';
-    
+
     if (empty($otp) || empty($newPassword) || empty($confirmPassword)) {
         $error = 'Vui lòng nhập đầy đủ thông tin.';
         $step = 2;
@@ -73,9 +80,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $step = 2;
     } else {
         try {
-            // Kiểm tra OTP (sử dụng bcrypt để verify)
-            $reset = db_fetch_one("SELECT * FROM password_resets WHERE email = ? AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1", [$email]);
-            
+            // Dùng UTC_TIMESTAMP() để khớp với gmdate() khi lưu expires_at
+            $reset = db_fetch_one("SELECT * FROM password_resets WHERE email = ? AND expires_at > UTC_TIMESTAMP() LIMIT 1", [$email]);
+
             if ($reset && password_verify($otp, $reset['token'])) {
                 // Cập nhật mật khẩu
                 $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);

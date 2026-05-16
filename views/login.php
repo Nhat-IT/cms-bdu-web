@@ -19,18 +19,45 @@ $success = '';
 
 // Xử lý đăng nhập
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
-    
+    $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+    $isJson = strpos($contentType, 'application/json') !== false;
+
+    if ($isJson) {
+        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $username = trim($body['username'] ?? '');
+        $password = $body['password'] ?? '';
+    } else {
+        $username = trim($_POST['username'] ?? '');
+        $password = $_POST['password'] ?? '';
+    }
+
     if (empty($username) || empty($password)) {
+        if ($isJson) {
+            http_response_code(400);
+            header('Content-Type: application/json; charset=UTF-8');
+            echo json_encode(['success' => false, 'message' => 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.']);
+            exit;
+        }
         $error = 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.';
     } else {
         $result = handleLogin($username, $password);
-        
+
         if ($result['success']) {
-            header('Location: ' . getHomeUrl($result['role']));
+            $redirectUrl = getHomeUrl($result['role']);
+            if ($isJson) {
+                header('Content-Type: application/json; charset=UTF-8');
+                echo json_encode(['success' => true, 'redirectUrl' => $redirectUrl]);
+                exit;
+            }
+            header('Location: ' . $redirectUrl);
             exit;
         } else {
+            if ($isJson) {
+                http_response_code(401);
+                header('Content-Type: application/json; charset=UTF-8');
+                echo json_encode(['success' => false, 'message' => $result['message']]);
+                exit;
+            }
             $error = $result['message'];
         }
     }
@@ -86,7 +113,7 @@ if (isset($_GET['reset']) && $_GET['reset'] === 'success') {
                         </div>
                     <?php endif; ?>
 
-                    <form method="POST" action="">
+                    <form method="POST" action="" id="loginForm" target="_self">
                         <div class="form-floating mb-3">
                             <input type="text" class="form-control" id="usernameInput" name="username" 
                                    value="<?= e($_POST['username'] ?? '') ?>" 

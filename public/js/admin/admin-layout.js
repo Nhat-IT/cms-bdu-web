@@ -85,21 +85,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    const logoutLinks = document.querySelectorAll('#sidebar .logout-btn');
-    logoutLinks.forEach(function (link) {
-        if (link.dataset.adminLogoutBound === '1') {
-            return;
-        }
-
-        link.dataset.adminLogoutBound = '1';
-        link.addEventListener('click', function (event) {
-            const ok = window.confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?');
-            if (!ok) {
-                event.preventDefault();
-            }
-        });
-    });
-
     hydrateAdminSharedData();
 });
 

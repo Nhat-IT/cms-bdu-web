@@ -23,6 +23,7 @@ $semesters = [];
 $selectedSemesterId = 0;
 $selectedSemesterName = '';
 $documents = [];
+$classSubjects = [];
 $currentSemester = null;
 
 function bcsFormatFileSize($bytes) {
@@ -110,22 +111,26 @@ try {
             $documents = db_fetch_all(
                 "SELECT d.*, s.subject_name, u.full_name as uploader_name, sm.semester_name, sm.academic_year
                  FROM documents d
-                 JOIN class_subjects cs ON d.class_subject_id = cs.id
-                 JOIN subjects s ON cs.subject_id = s.id
+                 LEFT JOIN class_subjects cs ON d.class_subject_id = cs.id
+                 LEFT JOIN subjects s ON cs.subject_id = s.id
                  LEFT JOIN users u ON d.uploader_id = u.id
                  LEFT JOIN semesters sm ON cs.semester_id = sm.id
-                 WHERE cs.class_id = ?
+                 WHERE (
+                     cs.class_id = ?
+                     OR (d.class_subject_id IS NULL AND EXISTS (
+                         SELECT 1 FROM class_students WHERE student_id = d.uploader_id AND class_id = ?
+                     ))
+                 )
                    AND (? <= 0 OR cs.semester_id = ? OR UPPER(COALESCE(d.semester, '')) = ?)
                  ORDER BY d.created_at DESC",
-                [$classId, $selectedSemesterId, $selectedSemesterId, $selectedSemesterName]
+                [$classId, $classId, $selectedSemesterId, $selectedSemesterId, $selectedSemesterName]
             );
         } else {
-            // Với class_students: lấy tài liệu dựa trên lớp
             $documents = db_fetch_all(
                 "SELECT d.*, s.subject_name, u.full_name as uploader_name, sm.semester_name, sm.academic_year
                  FROM documents d
-                 JOIN class_subjects cs ON d.class_subject_id = cs.id
-                 JOIN subjects s ON cs.subject_id = s.id
+                 LEFT JOIN class_subjects cs ON d.class_subject_id = cs.id
+                 LEFT JOIN subjects s ON cs.subject_id = s.id
                  JOIN class_students cs2 ON cs2.class_id = cs.class_id AND cs2.student_id = ?
                  LEFT JOIN users u ON d.uploader_id = u.id
                  LEFT JOIN semesters sm ON cs.semester_id = sm.id
@@ -136,6 +141,21 @@ try {
         }
     } else {
         $classWarning = 'Tài khoản BCS chưa được gán lớp trong hệ thống.';
+    }
+
+    if ($classId > 0) {
+        $classSubjects = db_fetch_all(
+            "SELECT cs.id, s.subject_name, s.subject_code, cs.semester_id,
+                    sm.semester_name, sm.academic_year
+             FROM class_subjects cs
+             JOIN subjects s ON cs.subject_id = s.id
+             LEFT JOIN semesters sm ON cs.semester_id = sm.id
+             WHERE cs.class_id = ?
+             ORDER BY sm.academic_year DESC,
+                      FIELD(UPPER(sm.semester_name), 'HK1', '1', 'HK2', '2', 'HK3', '3'),
+                      s.subject_name ASC",
+            [$classId]
+        );
     }
 } catch (Exception $e) {
     error_log('BCS documents load error: ' . $e->getMessage());
@@ -208,9 +228,29 @@ foreach ($documents as $doc) {
     </div>
     
     <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-        <a href="../../views/logout.php" class="nav-link logout-btn" title="Đăng xuất">
+        <a href="#" class="nav-link logout-btn" title="Đăng xuất"
+           data-bs-toggle="modal" data-bs-target="#logoutModal">
             <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
         </a>
+    </div>
+</div>
+
+<!-- Modal xác nhận đăng xuất -->
+<div class="modal fade" id="logoutModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-body text-center py-4 px-3">
+                <div class="mb-3">
+                    <i class="bi bi-box-arrow-left text-danger" style="font-size: 2.5rem;"></i>
+                </div>
+                <h6 class="fw-bold mb-1">Xác nhận đăng xuất</h6>
+                <p class="text-muted small mb-4">Bạn có chắc chắn muốn đăng xuất không?</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">Hủy</button>
+                    <a href="../../views/logout.php" class="btn btn-danger btn-sm px-4">Đăng xuất</a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -372,8 +412,9 @@ foreach ($documents as $doc) {
                                         <i class="bi <?= $iconClass ?> fs-3 me-3"></i>
                                         <div>
                                             <h6 class="mb-0 fw-bold text-dark file-title"><?= e($doc['title']) ?></h6>
+                                            <small class="text-muted">Môn: <?= e(($doc['subject_name'] ?? '') ?: 'Khác') ?></small>
                                             <?php if (!empty($doc['note'])): ?>
-                                            <small class="text-muted"><?= e($doc['note']) ?></small>
+                                            <small class="text-muted d-block"><?= e($doc['note']) ?></small>
                                             <?php endif; ?>
                                         </div>
                                     </a>
@@ -455,6 +496,24 @@ foreach ($documents as $doc) {
             <div id="customCategoryDiv" class="mt-2 d-none">
                 <input type="text" class="form-control border-primary" id="customCategoryInput" placeholder="Nhập tên danh mục...">
             </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Môn học</label>
+            <select class="form-select" id="docClassSubjectId">
+                <option value="0">Khác</option>
+                <?php foreach ($classSubjects as $cs): ?>
+                <?php
+                    $smCode = strtoupper((string)($cs['semester_name'] ?? ''));
+                    $smLabel = preg_match('/^(HK)?([123])$/', $smCode, $m)
+                        ? ('HK' . $m[2] . ' ' . ($cs['academic_year'] ?? ''))
+                        : (($cs['semester_name'] ?? '') . ' ' . ($cs['academic_year'] ?? ''));
+                ?>
+                <option value="<?= (int)$cs['id'] ?>" data-semester-id="<?= (int)($cs['semester_id'] ?? 0) ?>">
+                    <?= e($cs['subject_name']) ?><?= $smLabel !== '' ? ' (' . e(trim($smLabel)) . ')' : '' ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
           </div>
 
           <div class="mb-3">

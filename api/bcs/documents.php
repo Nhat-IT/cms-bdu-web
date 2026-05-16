@@ -186,12 +186,14 @@ try {
             docs_json(400, ['ok' => false, 'error' => 'Thiếu tiêu đề hoặc danh mục']);
         }
 
-        $classSubjectId = $semesterId > 0
-            ? docs_find_class_subject_by_semester_id($classId, $className, $semesterId)
-            : docs_find_class_subject_id($classId, $className, $year, $semester);
-
-        if ($classSubjectId <= 0) {
-            docs_json(400, ['ok' => false, 'error' => 'Không tìm thấy lớp học phần phù hợp để lưu tài liệu']);
+        $classSubjectIdInput = (int)($input['class_subject_id'] ?? 0);
+        $classSubjectId = null; // null = "Khác"
+        if ($classSubjectIdInput > 0 && $classId > 0) {
+            $csCheck = db_fetch_one(
+                "SELECT id FROM class_subjects WHERE id = ? AND class_id = ? LIMIT 1",
+                [$classSubjectIdInput, $classId]
+            );
+            if ($csCheck) $classSubjectId = $classSubjectIdInput;
         }
 
         if ($semester === '' && $semesterId > 0) {
@@ -289,21 +291,36 @@ try {
         }
 
         $iconType = docs_detect_icon($title, 'file');
-        if ($driveLink !== '') {
-            db_query(
-                "UPDATE documents
-                 SET title = ?, note = ?, category = ?, drive_link = ?, drive_file_id = ?, icon_type = ?
-                 WHERE id = ?",
-                [$title, $note !== '' ? $note : null, $category, $driveLink, $driveFileId !== '' ? $driveFileId : null, $iconType, $docId]
-            );
-        } else {
-            db_query(
-                "UPDATE documents
-                 SET title = ?, note = ?, category = ?, icon_type = ?
-                 WHERE id = ?",
-                [$title, $note !== '' ? $note : null, $category, $iconType, $docId]
-            );
+
+        // $updateClassSubjectId: false = không thay đổi, null = Khác, int > 0 = môn cụ thể
+        $updateClassSubjectId = false;
+        $classSubjectIdSent = array_key_exists('class_subject_id', $input);
+        if ($classSubjectIdSent && $classId > 0) {
+            $classSubjectIdInput = (int)$input['class_subject_id'];
+            if ($classSubjectIdInput > 0) {
+                $csCheck = db_fetch_one(
+                    "SELECT id FROM class_subjects WHERE id = ? AND class_id = ? LIMIT 1",
+                    [$classSubjectIdInput, $classId]
+                );
+                if ($csCheck) $updateClassSubjectId = $classSubjectIdInput;
+            } else {
+                $updateClassSubjectId = null; // "Khác": set class_subject_id = NULL
+            }
         }
+
+        if ($driveLink !== '') {
+            $sets = "title = ?, note = ?, category = ?, drive_link = ?, drive_file_id = ?, icon_type = ?";
+            $params = [$title, $note !== '' ? $note : null, $category, $driveLink, $driveFileId !== '' ? $driveFileId : null, $iconType];
+        } else {
+            $sets = "title = ?, note = ?, category = ?, icon_type = ?";
+            $params = [$title, $note !== '' ? $note : null, $category, $iconType];
+        }
+        if ($updateClassSubjectId !== false) {
+            $sets .= ", class_subject_id = ?";
+            $params[] = $updateClassSubjectId; // null hoặc int
+        }
+        $params[] = $docId;
+        db_query("UPDATE documents SET $sets WHERE id = ?", $params);
 
         docs_json(200, ['ok' => true, 'message' => 'updated']);
     }

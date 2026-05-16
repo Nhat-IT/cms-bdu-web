@@ -2,7 +2,19 @@
   "permissions": {
     "allow": [
       "Bash(php -r ' *)",
-      "Bash(git show *)"
+      "Bash(git show *)",
+      "PowerShell(& \"C:\\\\xampp\\\\php\\\\php.exe\" -l \"C:\\\\xampp\\\\htdocs\\\\cms\\\\api\\\\bcs\\\\documents.php\")",
+      "PowerShell(& \"C:\\\\xampp\\\\php\\\\php.exe\" -l \"C:\\\\xampp\\\\htdocs\\\\cms\\\\views\\\\bcs\\\\documents.php\")",
+      "PowerShell(& \"C:\\\\xampp\\\\php\\\\php.exe\" -l \"C:\\\\xampp\\\\htdocs\\\\cms\\\\views\\\\student\\\\documents.php\")",
+      "PowerShell(& \"C:\\\\xampp\\\\php\\\\php.exe\" -l \"C:\\\\xampp\\\\htdocs\\\\cms\\\\api\\\\serve-file.php\")",
+      "Bash(composer --version)",
+      "PowerShell(composer --version 2>&1)",
+      "PowerShell(php --version 2>&1)",
+      "PowerShell(Invoke-WebRequest -Uri \"https://getcomposer.org/composer-stable.phar\" -OutFile \"C:\\\\xampp\\\\htdocs\\\\cms\\\\composer.phar\" -UseBasicParsing)",
+      "PowerShell($phpPath = \"C:\\\\xampp\\\\php\\\\php.exe\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\xampp\\\\htdocs\\\\cms\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(Format-Table -HideTableHeaders)"
     ]
   }
 }

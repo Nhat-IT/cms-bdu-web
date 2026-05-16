@@ -157,9 +157,29 @@ $myAnnouncements = $stmt->fetchAll();
     </div>
 
     <div class="mt-auto mb-3 flex-shrink-0 pt-3 border-top border-light border-opacity-10">
-        <a href="../../views/logout.php" class="nav-link logout-btn" title="Đăng xuất">
+        <a href="#" class="nav-link logout-btn" title="Đăng xuất"
+           data-bs-toggle="modal" data-bs-target="#logoutModal">
             <i class="bi bi-box-arrow-left"></i> <span class="hide-on-collapse fw-bold">Đăng xuất</span>
         </a>
+    </div>
+</div>
+
+<!-- Modal xác nhận đăng xuất -->
+<div class="modal fade" id="logoutModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-body text-center py-4 px-3">
+                <div class="mb-3">
+                    <i class="bi bi-box-arrow-left text-danger" style="font-size: 2.5rem;"></i>
+                </div>
+                <h6 class="fw-bold mb-1">Xác nhận đăng xuất</h6>
+                <p class="text-muted small mb-4">Bạn có chắc chắn muốn đăng xuất không?</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">Hủy</button>
+                    <a href="../../views/logout.php" class="btn btn-danger btn-sm px-4">Đăng xuất</a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

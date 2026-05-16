@@ -46,7 +46,8 @@ $currentUser = $currentUser ?? [];
                 </li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
-                    <a class="dropdown-item fw-bold text-danger" href="<?= BASE_URL ?>/logout.php">
+                    <a class="dropdown-item fw-bold text-danger" href="#"
+                       data-bs-toggle="modal" data-bs-target="#logoutModal">
                         <i class="bi bi-box-arrow-right text-danger me-2"></i>Đăng xuất
                     </a>
                 </li>

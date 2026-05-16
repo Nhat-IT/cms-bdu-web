@@ -81,6 +81,7 @@ if ($currentSemester === null && !empty($semesters)) {
 
 $selectedSemesterId = (int)($_GET['semester_id'] ?? ($currentSemester['id'] ?? 0));
 
+// Query gốc: tài liệu có môn học cụ thể
 $documents = db_fetch_all(
     "SELECT DISTINCT d.id, d.title, d.note, d.category, d.drive_link, d.drive_file_id,
             d.icon_type, d.custom_icon, d.class_subject_id, d.uploader_id,
@@ -108,20 +109,82 @@ $documents = db_fetch_all(
     [$userId, $studentMssv, $selectedSemesterId, $selectedSemesterId]
 );
 
+// Query thêm: tài liệu "Khác" (class_subject_id = NULL) từ cùng lớp với sinh viên
+$selectedSemesterName2 = '';
+foreach ($semesters as $sem) {
+    if ((int)($sem['id'] ?? 0) === $selectedSemesterId) {
+        $selectedSemesterName2 = strtoupper(trim((string)($sem['semester_name'] ?? '')));
+        break;
+    }
+}
+$docsKhac = db_fetch_all(
+    "SELECT DISTINCT d.id, d.title, d.note, d.category, d.drive_link, d.drive_file_id,
+            d.icon_type, d.custom_icon, d.class_subject_id, d.uploader_id,
+            d.file_size, d.file_mime, d.original_filename, d.created_at,
+            NULL as subject_name, NULL as subject_code,
+            uploader.full_name as uploader_name,
+            NULL as semester_name, NULL as academic_year
+     FROM documents d
+     LEFT JOIN users uploader ON d.uploader_id = uploader.id
+     WHERE d.class_subject_id IS NULL
+       AND LOWER(COALESCE(uploader.role, '')) IN ('bcs', 'admin', 'support_admin')
+       AND d.uploader_id IN (
+           SELECT cls.student_id FROM class_students cls
+           WHERE cls.class_id IN (
+               SELECT DISTINCT cs2.class_id
+               FROM student_subject_registration ssr
+               JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
+               JOIN class_subjects cs2 ON csg.class_subject_id = cs2.id
+               WHERE (ssr.student_id = ? OR ssr.mssv = ?)
+                 AND ssr.status = 'Đang học'
+                 AND cs2.class_id IS NOT NULL
+           )
+       )
+       AND (? <= 0 OR UPPER(COALESCE(d.semester, '')) = ?)
+     ORDER BY d.created_at DESC",
+    [$userId, $studentMssv, $selectedSemesterId, $selectedSemesterName2]
+);
+
+if (!empty($docsKhac)) {
+    $existingIds = array_column($documents, 'id');
+    foreach ($docsKhac as $dk) {
+        if (!in_array($dk['id'], $existingIds)) {
+            $documents[] = $dk;
+        }
+    }
+    usort($documents, fn($a, $b) => strtotime((string)($b['created_at'] ?? '0')) - strtotime((string)($a['created_at'] ?? '0')));
+}
+
 $unreadNotifications = (int)db_count(
     "SELECT COUNT(*) as total FROM notification_logs WHERE user_id = ? AND is_read = 0",
     [$userId]
 );
 
+// Lấy toàn bộ môn học trong lớp của sinh viên từ DB (không phụ thuộc filter học kỳ)
+$allSubjectRows = db_fetch_all(
+    "SELECT DISTINCT s.subject_code, s.subject_name
+     FROM subjects s
+     JOIN class_subjects cs ON cs.subject_id = s.id
+     WHERE cs.class_id IN (
+         SELECT DISTINCT cs2.class_id
+         FROM student_subject_registration ssr
+         JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
+         JOIN class_subjects cs2 ON csg.class_subject_id = cs2.id
+         WHERE (ssr.student_id = ? OR ssr.mssv = ?)
+           AND ssr.status = 'Đang học'
+           AND cs2.class_id IS NOT NULL
+     )
+     ORDER BY s.subject_name ASC",
+    [$userId, $studentMssv]
+);
 $uniqueSubjects = [];
-foreach ($documents as $doc) {
-    $code = (string)($doc['subject_code'] ?? '');
-    $name = (string)($doc['subject_name'] ?? '');
-    if ($code !== '' && !isset($uniqueSubjects[$code])) {
+foreach ($allSubjectRows as $row) {
+    $code = (string)($row['subject_code'] ?? '');
+    $name = (string)($row['subject_name'] ?? '');
+    if ($code !== '') {
         $uniqueSubjects[$code] = $name;
     }
 }
-asort($uniqueSubjects);
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -184,6 +247,7 @@ asort($uniqueSubjects);
                         <?php foreach ($uniqueSubjects as $code => $name): ?>
                             <option value="<?= e($code) ?>"><?= e($name) ?></option>
                         <?php endforeach; ?>
+                        <option value="__khac__">Khác</option>
                     </select>
                     <select class="form-select form-select-sm w-auto" id="categoryFilter" onchange="filterDocuments()">
                         <option value="">Tất cả danh mục</option>
@@ -256,14 +320,14 @@ asort($uniqueSubjects);
                                         $categoryClass = 'bg-success bg-opacity-10 text-success border-success';
                                     }
                                     ?>
-                                    <tr data-category="<?= e(strtolower($category)) ?>" data-subject="<?= e(strtolower($doc['subject_code'] ?? '')) ?>" data-title="<?= e(strtolower(($title) . ' ' . ($doc['subject_name'] ?? '') . ' ' . ($doc['note'] ?? ''))) ?>">
+                                    <tr data-category="<?= e(strtolower($category)) ?>" data-subject="<?= ($doc['subject_code'] ?? '') !== '' ? e(strtolower($doc['subject_code'])) : '__khac__' ?>" data-title="<?= e(strtolower(($title) . ' ' . ($doc['subject_name'] ?? '') . ' ' . ($doc['note'] ?? ''))) ?>">
                                         <td class="ps-4 py-3">
                                             <?php if ($hasAnyFile): ?>
                                                 <a href="<?= e($fileUrl) ?>" target="_blank" rel="noopener noreferrer" class="file-link d-flex align-items-center">
                                                     <i class="bi <?= $fileIcon ?> fs-3 <?= $iconColor ?> me-3"></i>
                                                     <div>
                                                         <h6 class="mb-0 fw-bold text-dark file-title"><?= e($title) ?></h6>
-                                                        <small class="text-muted"><?= e('Môn: ' . (($doc['subject_name'] ?? '') !== '' ? $doc['subject_name'] : '--')) ?></small>
+                                                        <small class="text-muted"><?= e('Môn: ' . (($doc['subject_name'] ?? '') !== '' ? $doc['subject_name'] : 'Khác')) ?></small>
                                                     </div>
                                                 </a>
                                             <?php else: ?>
@@ -286,7 +350,7 @@ asort($uniqueSubjects);
                                         <td class="text-center text-muted small"><?= e(studentDocSizeLabel($doc)) ?></td>
                                         <td class="pe-4 text-end">
                                             <?php if ($hasAnyFile): ?>
-                                                <a href="<?= e($dlUrl) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary fw-bold px-3 rounded-pill shadow-sm">
+                                                <a href="<?= e($dlUrl) ?>" <?= $dbHasFile ? '' : 'target="_blank" rel="noopener noreferrer"' ?> class="btn btn-sm btn-outline-primary fw-bold px-3 rounded-pill shadow-sm">
                                                     <i class="bi bi-download me-1"></i>Tải file
                                                 </a>
                                             <?php else: ?>
