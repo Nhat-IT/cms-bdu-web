@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../config/helpers.php';
 requireRole('student');
 
 $userId = (int)($_SESSION['user_id'] ?? 0);
+$studentMssv = trim((string)($_SESSION['username'] ?? ''));  // MSSV = username
 $pageTitle = 'Kho tài liệu';
 $extraCss = ['layout.css', 'student/student-layout.css', 'student/documents.css'];
 $extraJs = ['student/student-layout.js'];
@@ -31,8 +32,11 @@ function studentDocFormatFileSize($bytes): string {
     return round($size / (1024 * 1024 * 1024), 1) . ' GB';
 }
 
-function studentDocSizeLabel($driveLink): string {
-    $link = trim((string)$driveLink);
+function studentDocSizeLabel($doc): string {
+    $dbSize = (int)($doc['file_size'] ?? 0);
+    if ($dbSize > 0) return studentDocFormatFileSize($dbSize);
+
+    $link = trim((string)($doc['drive_link'] ?? ''));
     if ($link === '') return '-';
 
     $path = (string)(parse_url($link, PHP_URL_PATH) ?? '');
@@ -54,21 +58,11 @@ function studentDocSizeLabel($driveLink): string {
 }
 
 $semesters = db_fetch_all(
-    "SELECT sm.id, sm.semester_name, sm.academic_year, sm.start_date, sm.end_date
-     FROM semesters sm
-     WHERE sm.id IN (
-        SELECT DISTINCT cs.semester_id
-        FROM student_subject_registration ssr
-        JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
-        JOIN class_subjects cs ON csg.class_subject_id = cs.id
-        WHERE ssr.student_id = ?
-          AND ssr.status = 'Đang học'
-          AND cs.semester_id IS NOT NULL
-     )
-     ORDER BY sm.academic_year DESC,
-              FIELD(UPPER(sm.semester_name), 'HK1', '1', 'HK2', '2', 'HK3', '3'),
-              sm.start_date DESC",
-    [$userId]
+    "SELECT id, semester_name, academic_year, start_date, end_date
+     FROM semesters
+     ORDER BY academic_year DESC,
+              FIELD(UPPER(semester_name), 'HK1', '1', 'HK2', '2', 'HK3', '3'),
+              start_date DESC"
 );
 
 $currentSemester = null;
@@ -88,7 +82,10 @@ if ($currentSemester === null && !empty($semesters)) {
 $selectedSemesterId = (int)($_GET['semester_id'] ?? ($currentSemester['id'] ?? 0));
 
 $documents = db_fetch_all(
-    "SELECT d.*, s.subject_name, s.subject_code,
+    "SELECT DISTINCT d.id, d.title, d.note, d.category, d.drive_link, d.drive_file_id,
+            d.icon_type, d.custom_icon, d.class_subject_id, d.uploader_id,
+            d.file_size, d.file_mime, d.original_filename, d.created_at,
+            s.subject_name, s.subject_code,
             uploader.full_name as uploader_name,
             sm.semester_name, sm.academic_year
      FROM documents d
@@ -96,22 +93,35 @@ $documents = db_fetch_all(
      JOIN subjects s ON cs.subject_id = s.id
      LEFT JOIN users uploader ON d.uploader_id = uploader.id
      LEFT JOIN semesters sm ON cs.semester_id = sm.id
-     WHERE d.class_subject_id IN (
-        SELECT DISTINCT csg.class_subject_id
+     WHERE cs.class_id IN (
+        SELECT DISTINCT cs2.class_id
         FROM student_subject_registration ssr
         JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
-        WHERE ssr.student_id = ? AND ssr.status = 'Đang học'
+        JOIN class_subjects cs2 ON csg.class_subject_id = cs2.id
+        WHERE (ssr.student_id = ? OR ssr.mssv = ?)
+          AND ssr.status = 'Đang học'
+          AND cs2.class_id IS NOT NULL
      )
-       AND LOWER(COALESCE(uploader.role, '')) = 'bcs'
+       AND LOWER(COALESCE(uploader.role, '')) IN ('bcs', 'admin', 'support_admin')
        AND (? <= 0 OR cs.semester_id = ?)
      ORDER BY d.created_at DESC",
-    [$userId, $selectedSemesterId, $selectedSemesterId]
+    [$userId, $studentMssv, $selectedSemesterId, $selectedSemesterId]
 );
 
 $unreadNotifications = (int)db_count(
     "SELECT COUNT(*) as total FROM notification_logs WHERE user_id = ? AND is_read = 0",
     [$userId]
 );
+
+$uniqueSubjects = [];
+foreach ($documents as $doc) {
+    $code = (string)($doc['subject_code'] ?? '');
+    $name = (string)($doc['subject_name'] ?? '');
+    if ($code !== '' && !isset($uniqueSubjects[$code])) {
+        $uniqueSubjects[$code] = $name;
+    }
+}
+asort($uniqueSubjects);
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -169,11 +179,18 @@ $unreadNotifications = (int)db_count(
                             </option>
                         <?php endforeach; ?>
                     </select>
+                    <select class="form-select form-select-sm w-auto" id="subjectFilter" onchange="filterDocuments()">
+                        <option value="">Tất cả môn học</option>
+                        <?php foreach ($uniqueSubjects as $code => $name): ?>
+                            <option value="<?= e($code) ?>"><?= e($name) ?></option>
+                        <?php endforeach; ?>
+                    </select>
                     <select class="form-select form-select-sm w-auto" id="categoryFilter" onchange="filterDocuments()">
                         <option value="">Tất cả danh mục</option>
                         <option value="Thông báo">Thông báo</option>
                         <option value="Biên bản">Biên bản</option>
                         <option value="Học liệu">Học liệu</option>
+                        <option value="Danh sách lớp">Danh sách lớp</option>
                         <option value="Khác">Khác</option>
                     </select>
                     <div class="input-group input-group-sm" style="width: 250px;">
@@ -201,24 +218,31 @@ $unreadNotifications = (int)db_count(
                                 <?php foreach ($documents as $doc): ?>
                                     <?php
                                     $title = (string)($doc['title'] ?? '');
-                                    $link = (string)($doc['drive_link'] ?? '');
+                                    $iconType = strtolower((string)($doc['icon_type'] ?? ''));
                                     $fileIcon = 'bi-file-earmark-fill';
                                     $iconColor = 'text-secondary';
-
-                                    $target = strtolower($title . ' ' . $link);
-                                    if (preg_match('/\.pdf(\?|$)/i', $target)) {
-                                        $fileIcon = 'bi-file-earmark-pdf-fill';
-                                        $iconColor = 'text-danger';
-                                    } elseif (preg_match('/\.(doc|docx)(\?|$)/i', $target)) {
-                                        $fileIcon = 'bi-file-earmark-word-fill';
-                                        $iconColor = 'text-primary';
-                                    } elseif (preg_match('/\.(xls|xlsx)(\?|$)/i', $target)) {
-                                        $fileIcon = 'bi-file-earmark-excel-fill';
-                                        $iconColor = 'text-success';
-                                    } elseif (preg_match('/\.(zip|rar|7z)(\?|$)/i', $target)) {
-                                        $fileIcon = 'bi-file-earmark-zip-fill';
-                                        $iconColor = 'text-warning';
+                                    if ($iconType === 'pdf') { $fileIcon = 'bi-file-earmark-pdf-fill'; $iconColor = 'text-danger'; }
+                                    elseif ($iconType === 'doc') { $fileIcon = 'bi-file-earmark-word-fill'; $iconColor = 'text-primary'; }
+                                    elseif ($iconType === 'xls') { $fileIcon = 'bi-file-earmark-excel-fill'; $iconColor = 'text-success'; }
+                                    elseif ($iconType === 'zip') { $fileIcon = 'bi-file-earmark-zip-fill'; $iconColor = 'text-warning'; }
+                                    else {
+                                        $target = strtolower($title . ' ' . ($doc['drive_link'] ?? '') . ' ' . ($doc['original_filename'] ?? ''));
+                                        if (preg_match('/\.pdf(\?|$)/i', $target)) { $fileIcon = 'bi-file-earmark-pdf-fill'; $iconColor = 'text-danger'; }
+                                        elseif (preg_match('/\.(doc|docx)(\?|$)/i', $target)) { $fileIcon = 'bi-file-earmark-word-fill'; $iconColor = 'text-primary'; }
+                                        elseif (preg_match('/\.(xls|xlsx)(\?|$)/i', $target)) { $fileIcon = 'bi-file-earmark-excel-fill'; $iconColor = 'text-success'; }
+                                        elseif (preg_match('/\.(zip|rar|7z)(\?|$)/i', $target)) { $fileIcon = 'bi-file-earmark-zip-fill'; $iconColor = 'text-warning'; }
                                     }
+
+                                    $dbHasFile = (int)($doc['file_size'] ?? 0) > 0 || !empty($doc['original_filename']);
+                                    $hasDriveLink = !empty($doc['drive_link']);
+                                    if ($dbHasFile) {
+                                        $fileUrl = BASE_URL . '/api/serve-file.php?id=' . (int)$doc['id'] . '&action=view';
+                                        $dlUrl   = BASE_URL . '/api/serve-file.php?id=' . (int)$doc['id'] . '&action=download';
+                                    } else {
+                                        $fileUrl = (string)($doc['drive_link'] ?? '');
+                                        $dlUrl   = (string)($doc['drive_link'] ?? '');
+                                    }
+                                    $hasAnyFile = $dbHasFile || $hasDriveLink;
 
                                     $category = (string)($doc['category'] ?? 'Khác');
                                     $categoryClass = 'bg-secondary bg-opacity-10 text-secondary border-secondary';
@@ -228,12 +252,14 @@ $unreadNotifications = (int)db_count(
                                         $categoryClass = 'bg-primary bg-opacity-10 text-primary border-primary';
                                     } elseif (stripos($category, 'Biên bản') !== false) {
                                         $categoryClass = 'bg-warning bg-opacity-10 text-dark border-warning';
+                                    } elseif (stripos($category, 'Danh sách') !== false) {
+                                        $categoryClass = 'bg-success bg-opacity-10 text-success border-success';
                                     }
                                     ?>
-                                    <tr data-category="<?= e(strtolower($category)) ?>" data-title="<?= e(strtolower(($title ?? '') . ' ' . ($doc['subject_name'] ?? '') . ' ' . ($doc['note'] ?? ''))) ?>">
+                                    <tr data-category="<?= e(strtolower($category)) ?>" data-subject="<?= e(strtolower($doc['subject_code'] ?? '')) ?>" data-title="<?= e(strtolower(($title) . ' ' . ($doc['subject_name'] ?? '') . ' ' . ($doc['note'] ?? ''))) ?>">
                                         <td class="ps-4 py-3">
-                                            <?php if ($link !== ''): ?>
-                                                <a href="<?= e($link) ?>" target="_blank" rel="noopener noreferrer" class="file-link d-flex align-items-center">
+                                            <?php if ($hasAnyFile): ?>
+                                                <a href="<?= e($fileUrl) ?>" target="_blank" rel="noopener noreferrer" class="file-link d-flex align-items-center">
                                                     <i class="bi <?= $fileIcon ?> fs-3 <?= $iconColor ?> me-3"></i>
                                                     <div>
                                                         <h6 class="mb-0 fw-bold text-dark file-title"><?= e($title) ?></h6>
@@ -257,10 +283,10 @@ $unreadNotifications = (int)db_count(
                                             <span class="badge bg-light text-dark border"><i class="bi bi-person-badge me-1"></i><?= e($doc['uploader_name'] ?? 'BCS') ?></span>
                                         </td>
                                         <td class="text-center text-dark"><?= formatDate($doc['created_at'] ?? null, 'd/m/Y') ?></td>
-                                        <td class="text-center text-muted small"><?= e(studentDocSizeLabel($link)) ?></td>
+                                        <td class="text-center text-muted small"><?= e(studentDocSizeLabel($doc)) ?></td>
                                         <td class="pe-4 text-end">
-                                            <?php if ($link !== ''): ?>
-                                                <a href="<?= e($link) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary fw-bold px-3 rounded-pill shadow-sm">
+                                            <?php if ($hasAnyFile): ?>
+                                                <a href="<?= e($dlUrl) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary fw-bold px-3 rounded-pill shadow-sm">
                                                     <i class="bi bi-download me-1"></i>Tải file
                                                 </a>
                                             <?php else: ?>
@@ -292,16 +318,19 @@ $unreadNotifications = (int)db_count(
 <?php endforeach; ?>
 <script>
 function filterDocuments() {
+    const subject = (document.getElementById('subjectFilter')?.value || '').toLowerCase();
     const category = (document.getElementById('categoryFilter')?.value || '').toLowerCase();
     const keyword = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
     const rows = document.querySelectorAll('#documentsTable tbody tr[data-category]');
 
     rows.forEach((row) => {
+        const rowSubject = row.getAttribute('data-subject') || '';
         const rowCategory = row.getAttribute('data-category') || '';
         const rowTitle = row.getAttribute('data-title') || '';
+        const matchSubject = !subject || rowSubject === subject;
         const matchCategory = !category || rowCategory.includes(category);
         const matchKeyword = !keyword || rowTitle.includes(keyword);
-        row.style.display = (matchCategory && matchKeyword) ? '' : 'none';
+        row.style.display = (matchSubject && matchCategory && matchKeyword) ? '' : 'none';
     });
 }
 </script>
