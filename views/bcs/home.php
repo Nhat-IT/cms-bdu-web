@@ -267,12 +267,7 @@ try {
         
         <div class="bcs-header-meta d-flex align-items-center text-white">
             <span class="bcs-header-label fw-bold">BAN CÁN SỰ</span>
-            <a href="../switch-role.php?role=student&next=notifications" class="bcs-notification-link" title="Có <?= $unreadCount ?> thông báo hệ thống">
-                <i class="bi bi-bell fs-5"></i>
-                <?php if ($unreadCount > 0): ?>
-                <span class="bcs-notification-count"><?= $unreadCount ?></span>
-                <?php endif; ?>
-            </a>
+            <?php include_once __DIR__ . '/../../layouts/notification-bell-bcs.php'; ?>
         </div>
     </div>
 

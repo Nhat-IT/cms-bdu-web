@@ -9,6 +9,10 @@ $bellNotifsBcs = db_fetch_all(
      ORDER BY created_at DESC LIMIT 5",
     [$userId]
 );
+$_bcsUnreadCount = (int)db_count(
+    "SELECT COUNT(*) FROM notification_logs WHERE user_id = ? AND is_read = 0",
+    [$userId]
+);
 $allNotifUrl = '../switch-role.php?role=student&next=notifications';
 ?>
 <div class="dropdown">
@@ -16,10 +20,10 @@ $allNotifUrl = '../switch-role.php?role=student&next=notifications';
        id="bcsNotifBellDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"
        title="Thông báo">
         <i class="bi bi-bell fs-5"></i>
-        <?php if ($unreadCount > 0): ?>
+        <?php if ($_bcsUnreadCount > 0): ?>
             <span class="bcs-notification-count position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
                   style="font-size:.65rem;">
-                <?= $unreadCount > 9 ? '9+' : $unreadCount ?>
+                <?= $_bcsUnreadCount > 9 ? '9+' : $_bcsUnreadCount ?>
             </span>
         <?php endif; ?>
     </a>
@@ -32,8 +36,8 @@ $allNotifUrl = '../switch-role.php?role=student&next=notifications';
              style="background:#1565c0;color:#fff;">
             <i class="bi bi-bell-fill"></i>
             <span class="fw-bold">Thông báo mới</span>
-            <?php if ($unreadCount > 0): ?>
-                <span class="badge bg-danger ms-auto"><?= $unreadCount > 9 ? '9+' : $unreadCount ?></span>
+            <?php if ($_bcsUnreadCount > 0): ?>
+                <span class="badge bg-danger ms-auto"><?= $_bcsUnreadCount > 9 ? '9+' : $_bcsUnreadCount ?></span>
             <?php endif; ?>
         </div>
 

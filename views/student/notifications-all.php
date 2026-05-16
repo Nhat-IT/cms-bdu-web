@@ -282,13 +282,11 @@ foreach ($rawSchedule as $sc) {
 // Sắp xếp mới nhất trước
 usort($feed, fn($a, $b) => strcmp($b['sort_time'], $a['sort_time']));
 
-// Đếm số thông báo chưa đọc
-$unreadNotifications = 0;
-foreach ($feed as $item) {
-    if ($item['type'] === 'notification' && !$item['is_read']) {
-        $unreadNotifications++;
-    }
-}
+// Đếm số thông báo chưa đọc — query trực tiếp từ DB để luôn chính xác
+$unreadNotifications = (int)db_count(
+    "SELECT COUNT(*) FROM notification_logs WHERE user_id = ? AND is_read = 0",
+    [$userId]
+);
 
 // Đếm theo loại
 $countByType = ['notification' => 0, 'document' => 0, 'attendance' => 0, 'schedule' => 0];
@@ -661,10 +659,10 @@ foreach ($feed as $item) {
             '.notify-item[data-read="false"]'
         ).length;
 
-        // Bell badge: chỉ đếm notification_logs
+        // Bell badge: đếm tất cả mục chưa đọc
         if (topBadge) {
-            if (unreadNotif > 0) {
-                topBadge.textContent = unreadNotif > 9 ? '9+' : String(unreadNotif);
+            if (unreadAll > 0) {
+                topBadge.textContent = unreadAll > 9 ? '9+' : String(unreadAll);
                 topBadge.classList.remove('d-none');
             } else {
                 topBadge.classList.add('d-none');
@@ -674,12 +672,12 @@ foreach ($feed as $item) {
         // Nút "đánh dấu tất cả": disable khi không còn mục nào chưa đọc
         if (markAllBtn) markAllBtn.disabled = unreadAll === 0;
 
-        // Subtitle: chỉ hiện số thông báo notification_logs chưa đọc
+        // Subtitle: hiện tổng số mục chưa đọc
         if (statusSubtitle) {
             const base = `${totalCount} mục &bull; `;
-            statusSubtitle.innerHTML = unreadNotif > 0
-                ? base + `<span class="text-primary fw-bold">${unreadNotif} thông báo chưa đọc</span>`
-                : base + `<span class="text-success fw-semibold">Đã đọc tất cả thông báo</span>`;
+            statusSubtitle.innerHTML = unreadAll > 0
+                ? base + `<span class="text-primary fw-bold">${unreadAll} mục chưa đọc</span>`
+                : base + `<span class="text-success fw-semibold">Đã đọc tất cả</span>`;
         }
     }
 

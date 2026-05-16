@@ -9,15 +9,19 @@ $bellNotifs = db_fetch_all(
      ORDER BY created_at DESC LIMIT 5",
     [$userId]
 );
+$_bellUnreadCount = (int)db_count(
+    "SELECT COUNT(*) FROM notification_logs WHERE user_id = ? AND is_read = 0",
+    [$userId]
+);
 ?>
 <div class="dropdown">
     <a href="#" class="text-white text-decoration-none position-relative me-1 d-flex align-items-center"
        id="notifBellDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Thông báo">
         <i class="bi bi-bell fs-5"></i>
-        <?php if ($unreadNotifications > 0): ?>
+        <?php if ($_bellUnreadCount > 0): ?>
             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
                   style="font-size:.65rem;">
-                <?= $unreadNotifications > 9 ? '9+' : $unreadNotifications ?>
+                <?= $_bellUnreadCount > 9 ? '9+' : $_bellUnreadCount ?>
             </span>
         <?php endif; ?>
     </a>
@@ -30,8 +34,8 @@ $bellNotifs = db_fetch_all(
              style="background:#1565c0;color:#fff;">
             <i class="bi bi-bell-fill"></i>
             <span class="fw-bold">Thông báo mới</span>
-            <?php if ($unreadNotifications > 0): ?>
-                <span class="badge bg-danger ms-auto"><?= $unreadNotifications > 9 ? '9+' : $unreadNotifications ?></span>
+            <?php if ($_bellUnreadCount > 0): ?>
+                <span class="badge bg-danger ms-auto"><?= $_bellUnreadCount > 9 ? '9+' : $_bellUnreadCount ?></span>
             <?php endif; ?>
         </div>
 
