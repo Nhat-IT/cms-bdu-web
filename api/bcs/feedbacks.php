@@ -5,6 +5,7 @@
  */
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/session.php';
+require_once __DIR__ . '/../../config/helpers.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -109,11 +110,13 @@ try {
              WHERE id = ?",
             [$reply !== '' ? $reply : null, $id]
         );
+        logSystem("Phản hồi phản hồi sinh viên ID #$id", 'feedbacks', $id);
         bcs_feedback_json(200, ['ok' => true]);
     }
 
     if ($action === 'delete') {
         db_query("DELETE FROM feedbacks WHERE id = ?", [$id]);
+        logSystem("Xóa phản hồi sinh viên ID #$id", 'feedbacks', $id);
         bcs_feedback_json(200, ['ok' => true]);
     }
 

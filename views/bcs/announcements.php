@@ -31,17 +31,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['news_action'])) {
                     "INSERT INTO notification_logs (user_id, title, message, is_read) VALUES (?, ?, ?, 1)",
                     [$userId, $title, $content !== '' ? $content : null]
                 );
+                $newNotifId = (int)mysqli_insert_id(getDBConnection());
+                logSystem('Tạo thông báo: ' . mb_strimwidth($title, 0, 80, '...'), 'notification_logs', $newNotifId ?: null);
 
                 if ($classId) {
-                    $students = db_fetch_all(
+                    $studentIds = [];
+
+                    // Từ class_students
+                    $fromCs = db_fetch_all(
                         "SELECT student_id FROM class_students WHERE class_id = ? AND student_id <> ?",
                         [$classId, $userId]
                     );
-                    foreach ($students as $st) {
-                        $sid = (int)($st['student_id'] ?? 0);
-                        if ($sid <= 0) {
-                            continue;
-                        }
+                    foreach ($fromCs as $row) {
+                        $sid = (int)($row['student_id'] ?? 0);
+                        if ($sid > 0) $studentIds[$sid] = true;
+                    }
+
+                    // Từ student_subject_registration (sinh viên có mssv nhưng chưa liên kết user_id)
+                    $fromSsr = db_fetch_all(
+                        "SELECT DISTINCT COALESCE(ssr.student_id, u.id) AS uid
+                         FROM student_subject_registration ssr
+                         JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
+                         JOIN class_subjects cs ON csg.class_subject_id = cs.id
+                         LEFT JOIN users u ON (ssr.student_id IS NULL AND ssr.mssv IS NOT NULL AND u.username = ssr.mssv)
+                         WHERE cs.class_id = ?
+                           AND ssr.status = 'Đang học'
+                           AND COALESCE(ssr.student_id, u.id) IS NOT NULL
+                           AND COALESCE(ssr.student_id, u.id) <> ?",
+                        [$classId, $userId]
+                    );
+                    foreach ($fromSsr as $row) {
+                        $sid = (int)($row['uid'] ?? 0);
+                        if ($sid > 0) $studentIds[$sid] = true;
+                    }
+
+                    foreach (array_keys($studentIds) as $sid) {
                         db_query(
                             "INSERT INTO notification_logs (user_id, title, message, is_read) VALUES (?, ?, ?, 0)",
                             [$sid, $title, $content !== '' ? $content : null]
@@ -54,8 +78,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['news_action'])) {
                 "UPDATE notification_logs SET title = ?, message = ? WHERE id = ? AND user_id = ?",
                 [$title, $content !== '' ? $content : null, $id, $userId]
             );
+            logSystem("Cập nhật thông báo ID #$id: " . mb_strimwidth($title, 0, 80, '...'), 'notification_logs', $id);
         } elseif ($action === 'delete' && $id > 0) {
             db_query("DELETE FROM notification_logs WHERE id = ? AND user_id = ?", [$id, $userId]);
+            logSystem("Xóa thông báo ID #$id", 'notification_logs', $id);
         }
     } catch (Throwable $e) {
         error_log('bcs announcements save error: ' . $e->getMessage());

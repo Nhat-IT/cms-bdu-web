@@ -217,15 +217,7 @@ $semesterLabel = studentAttendanceSemesterLabel(
             <h5 class="m-0 text-white fw-bold d-flex align-items-center">LỊCH SỬ ĐIỂM DANH</h5>
         </div>
         <div class="d-flex align-items-center text-white">
-            <a href="notifications-all.php" class="text-white text-decoration-none" title="Xem thông báo">
-                <i class="bi bi-bell fs-5 text-white position-relative cursor-pointer">
-                    <?php if ($unreadNotifications > 0): ?>
-                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                            <?= $unreadNotifications > 9 ? '9+' : $unreadNotifications ?>
-                        </span>
-                    <?php endif; ?>
-                </i>
-            </a>
+            <?php include_once __DIR__ . '/../../layouts/notification-bell.php'; ?>
         </div>
     </div>
 

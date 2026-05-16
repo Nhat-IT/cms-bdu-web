@@ -85,6 +85,30 @@ try {
         );
     }
 
+    $countSaved = count($records);
+
+    $groupInfo = db_fetch_one(
+        "SELECT csg.group_code, s.subject_name, s.subject_code, c.class_name
+         FROM class_subject_groups csg
+         JOIN class_subjects cs ON csg.class_subject_id = cs.id
+         JOIN subjects s ON cs.subject_id = s.id
+         LEFT JOIN classes c ON cs.class_id = c.id
+         WHERE csg.id = ?
+         LIMIT 1",
+        [$groupId]
+    );
+    $subjectLabel = $groupInfo
+        ? trim(($groupInfo['subject_name'] ?? '') . ' (' . ($groupInfo['subject_code'] ?? '') . ')')
+        : "Nhóm ID #$groupId";
+    $groupCode  = $groupInfo['group_code'] ?? '';
+    $className  = $groupInfo['class_name'] ?? '';
+    $sessionPart = $sessionLabel !== '' ? " buổi $sessionLabel" : '';
+    $logDetail = "Lưu điểm danh $subjectLabel"
+        . ($groupCode !== '' ? " - Nhóm $groupCode" : '')
+        . ($className  !== '' ? " - Lớp $className"  : '')
+        . " ngày $attendanceDate$sessionPart ($countSaved sinh viên)";
+    logSystem($logDetail, 'attendance_sessions', $sessionId);
+
     echo json_encode(['success' => true, 'sessionId' => $sessionId], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
     error_log('[save.php] ' . $e->getMessage());

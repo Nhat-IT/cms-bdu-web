@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * CMS BDU - Nhật Ký Hệ Thống
  * Trang xem nhật ký hệ thống cho Admin
@@ -52,13 +52,15 @@ if ($actionFilter !== 'all') {
     if ($actionFilter === 'login') {
         $whereConditions[] = "(sl.action LIKE '%login%' OR sl.action LIKE '%đăng nhập%' OR sl.action LIKE '%logout%' OR sl.action LIKE '%đăng xuất%')";
     } elseif ($actionFilter === 'create') {
-        $whereConditions[] = "(sl.action LIKE '%create%' OR sl.action LIKE '%thêm%' OR sl.action LIKE '%import%')";
+        $whereConditions[] = "(sl.action LIKE '%create%' OR sl.action LIKE '%thêm%' OR sl.action LIKE '%import%' OR sl.action LIKE '%gửi%' OR sl.action LIKE '%tạo%')";
     } elseif ($actionFilter === 'update') {
-        $whereConditions[] = "(sl.action LIKE '%update%' OR sl.action LIKE '%sửa%' OR sl.action LIKE '%edit%')";
+        $whereConditions[] = "(sl.action LIKE '%update%' OR sl.action LIKE '%sửa%' OR sl.action LIKE '%edit%' OR sl.action LIKE '%cập nhật%' OR sl.action LIKE '%đổi%')";
     } elseif ($actionFilter === 'delete') {
         $whereConditions[] = "(sl.action LIKE '%delete%' OR sl.action LIKE '%xóa%')";
+    } elseif ($actionFilter === 'download') {
+        $whereConditions[] = "(sl.action LIKE '%tải tài liệu%' OR sl.action LIKE '%download%')";
     } elseif ($actionFilter === 'warning') {
-        $whereConditions[] = "(sl.action LIKE '%warning%' OR sl.action LIKE '%cảnh báo%' OR sl.action LIKE '%failed%')";
+        $whereConditions[] = "(sl.action LIKE '%warning%' OR sl.action LIKE '%cảnh báo%' OR sl.action LIKE '%failed%' OR sl.action LIKE '%thất bại%')";
     }
 }
 
@@ -131,18 +133,27 @@ $logs = db_fetch_all($sql, $params);
 function getActionType($action) {
     $action = strtolower($action);
     if (strpos($action, 'delete') !== false || strpos($action, 'xóa') !== false) {
-        return ['type' => 'delete', 'label' => 'XÓA (DELETE)', 'class' => 'bg-danger'];
+        return ['type' => 'delete', 'label' => 'XÓA', 'class' => 'bg-danger'];
     }
-    if (strpos($action, 'create') !== false || strpos($action, 'thêm') !== false || strpos($action, 'import') !== false) {
-        return ['type' => 'create', 'label' => 'THÊM (CREATE)', 'class' => 'bg-success'];
+    if (strpos($action, 'tải tài liệu') !== false || strpos($action, 'download') !== false) {
+        return ['type' => 'download', 'label' => 'TẢI XUỐNG', 'class' => 'bg-cyan'];
     }
-    if (strpos($action, 'update') !== false || strpos($action, 'sửa') !== false || strpos($action, 'edit') !== false) {
-        return ['type' => 'update', 'label' => 'SỬA (UPDATE)', 'class' => 'bg-primary'];
+    if (strpos($action, 'create') !== false || strpos($action, 'thêm') !== false
+        || strpos($action, 'import') !== false || strpos($action, 'gửi') !== false
+        || strpos($action, 'tạo') !== false) {
+        return ['type' => 'create', 'label' => 'THÊM MỚI', 'class' => 'bg-success'];
     }
-    if (strpos($action, 'login') !== false || strpos($action, 'đăng nhập') !== false || strpos($action, 'logout') !== false) {
-        return ['type' => 'login', 'label' => 'ĐĂNG NHẬP', 'class' => 'bg-info text-dark'];
+    if (strpos($action, 'update') !== false || strpos($action, 'sửa') !== false
+        || strpos($action, 'edit') !== false || strpos($action, 'cập nhật') !== false
+        || strpos($action, 'đổi') !== false || strpos($action, 'đánh dấu') !== false) {
+        return ['type' => 'update', 'label' => 'CẬP NHẬT', 'class' => 'bg-primary'];
     }
-    if (strpos($action, 'warning') !== false || strpos($action, 'cảnh báo') !== false || strpos($action, 'failed') !== false) {
+    if (strpos($action, 'login') !== false || strpos($action, 'đăng nhập') !== false
+        || strpos($action, 'logout') !== false || strpos($action, 'đăng xuất') !== false) {
+        return ['type' => 'login', 'label' => 'ĐĂNG NHẬP/XUẤT', 'class' => 'bg-dark text-white'];
+    }
+    if (strpos($action, 'warning') !== false || strpos($action, 'cảnh báo') !== false
+        || strpos($action, 'failed') !== false || strpos($action, 'thất bại') !== false) {
         return ['type' => 'warning', 'label' => 'CẢNH BÁO', 'class' => 'bg-warning text-dark'];
     }
     return ['type' => 'other', 'label' => 'KHÁC', 'class' => 'bg-secondary'];
@@ -160,10 +171,11 @@ function getRoleDisplay($role, $fullName) {
     }
     
     $roleConfig = [
-        'admin' => ['icon' => 'bi-shield-fill', 'icon_class' => 'text-danger', 'badge_class' => 'bg-danger text-white', 'label' => 'Quản trị viên'],
-        'teacher' => ['icon' => 'bi-person-video3', 'icon_class' => 'text-primary', 'badge_class' => 'bg-primary text-white', 'label' => 'Giảng viên'],
-        'bcs' => ['icon' => 'bi-star-fill', 'icon_class' => 'text-warning', 'badge_class' => 'bg-warning text-dark', 'label' => 'Ban Cán Sự'],
-        'student' => ['icon' => 'bi-person', 'icon_class' => 'text-info', 'badge_class' => 'bg-info text-white', 'label' => 'Sinh viên'],
+        'admin'         => ['icon' => 'bi-shield-fill',      'icon_class' => 'text-danger',  'badge_class' => 'bg-danger text-white',   'label' => 'Quản trị viên'],
+        'support_admin' => ['icon' => 'bi-building-fill',    'icon_class' => 'text-purple',  'badge_class' => 'bg-purple text-white',   'label' => 'Giáo vụ khoa'],
+        'teacher'       => ['icon' => 'bi-person-video3',    'icon_class' => 'text-primary', 'badge_class' => 'bg-primary text-white',  'label' => 'Giảng viên'],
+        'bcs'           => ['icon' => 'bi-star-fill',        'icon_class' => 'text-warning', 'badge_class' => 'bg-warning text-dark',   'label' => 'Ban Cán Sự'],
+        'student'       => ['icon' => 'bi-person-fill',      'icon_class' => 'text-info',    'badge_class' => 'bg-info text-white',     'label' => 'Sinh viên'],
     ];
     
     return $roleConfig[$role] ?? ['icon' => 'bi-person', 'icon_class' => 'text-secondary', 'badge_class' => 'bg-secondary text-white', 'label' => $role];
@@ -213,6 +225,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                         <select name="role" class="form-select fw-bold">
                             <option value="all" <?php echo $roleFilter === 'all' ? 'selected' : ''; ?>>Tất cả</option>
                             <option value="admin" <?php echo $roleFilter === 'admin' ? 'selected' : ''; ?>>Quản trị viên</option>
+                            <option value="support_admin" <?php echo $roleFilter === 'support_admin' ? 'selected' : ''; ?>>Giáo vụ khoa</option>
                             <option value="teacher" <?php echo $roleFilter === 'teacher' ? 'selected' : ''; ?>>Giảng viên</option>
                             <option value="bcs" <?php echo $roleFilter === 'bcs' ? 'selected' : ''; ?>>Ban Cán Sự</option>
                             <option value="student" <?php echo $roleFilter === 'student' ? 'selected' : ''; ?>>Sinh viên</option>
@@ -223,9 +236,10 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                         <select name="action" class="form-select fw-bold">
                             <option value="all" <?php echo $actionFilter === 'all' ? 'selected' : ''; ?>>Tất cả</option>
                             <option value="login" <?php echo $actionFilter === 'login' ? 'selected' : ''; ?>>Đăng nhập / Đăng xuất</option>
-                            <option value="create" <?php echo $actionFilter === 'create' ? 'selected' : ''; ?>>Thêm mới (Create)</option>
-                            <option value="update" <?php echo $actionFilter === 'update' ? 'selected' : ''; ?>>Chỉnh sửa (Update)</option>
-                            <option value="delete" <?php echo $actionFilter === 'delete' ? 'selected' : ''; ?>>Xóa (Delete)</option>
+                            <option value="create" <?php echo $actionFilter === 'create' ? 'selected' : ''; ?>>Thêm mới / Gửi</option>
+                            <option value="update" <?php echo $actionFilter === 'update' ? 'selected' : ''; ?>>Cập nhật / Chỉnh sửa</option>
+                            <option value="delete" <?php echo $actionFilter === 'delete' ? 'selected' : ''; ?>>Xóa</option>
+                            <option value="download" <?php echo $actionFilter === 'download' ? 'selected' : ''; ?>>Tải tài liệu</option>
                             <option value="warning" <?php echo $actionFilter === 'warning' ? 'selected' : ''; ?>>Cảnh báo bảo mật</option>
                         </select>
                     </div>
@@ -273,35 +287,36 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                                     $isWarning = $actionType['type'] === 'warning';
                                     ?>
                                     <tr class="<?php echo $isWarning ? 'bg-warning bg-opacity-10' : ''; ?>">
-                                        <td class="ps-4 text-dark log-time <?php echo $isWarning ? 'fw-bold text-danger' : ''; ?>">
+                                        <td class="ps-4 log-time <?php echo $isWarning ? 'fw-bold text-danger' : ''; ?>">
                                             <?php echo formatDateTime($log['created_at']); ?>
                                         </td>
                                         <td>
                                             <?php if ($log['full_name']): ?>
-                                                <div class="fw-bold text-dark"><?php echo e($log['full_name']); ?></div>
-                                                <div class="small text-muted">
+                                                <div class="user-cell-name"><?php echo e($log['full_name']); ?></div>
+                                                <div class="user-cell-meta">
                                                     <i class="bi <?php echo $roleDisplay['icon']; ?> <?php echo $roleDisplay['icon_class']; ?> me-1"></i>
-                                                    <?php echo e($log['username']); ?>
+                                                    <span class="badge <?php echo $roleDisplay['badge_class']; ?> small py-0"><?php echo $roleDisplay['label']; ?></span>
+                                                    <span class="ms-1"><?php echo e($log['username']); ?></span>
                                                 </div>
                                             <?php else: ?>
-                                                <div class="fw-bold text-dark">Unknown / Guest</div>
-                                                <div class="small text-muted">
+                                                <div class="user-cell-name text-muted">Unknown / Guest</div>
+                                                <div class="user-cell-meta">
                                                     <i class="bi bi-question-circle text-warning me-1"></i>Unauthenticated
                                                 </div>
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <span class="badge <?php echo $actionType['class']; ?>"><?php echo $actionType['label']; ?></span>
+                                            <span class="badge <?php echo $actionType['class']; ?> fw-semibold"><?php echo $actionType['label']; ?></span>
                                         </td>
-                                        <td class="text-dark"><?php echo e($log['action']); ?></td>
-                                        <td class="pe-4 text-end text-muted small">
+                                        <td class="action-detail" title="<?php echo e($log['action']); ?>"><?php echo e($log['action']); ?></td>
+                                        <td class="pe-4 text-end target-cell">
                                             <?php if ($log['target_table']): ?>
                                                 <span class="badge bg-light text-dark border"><?php echo e($log['target_table']); ?></span>
                                                 <?php if ($log['target_id']): ?>
-                                                    <br>ID: <?php echo e($log['target_id']); ?>
+                                                    <br><span class="text-muted">ID: <?php echo e($log['target_id']); ?></span>
                                                 <?php endif; ?>
                                             <?php else: ?>
-                                                --
+                                                <span class="text-muted">—</span>
                                             <?php endif; ?>
                                         </td>
                                     </tr>

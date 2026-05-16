@@ -4,8 +4,9 @@
  * URL: /cms/api/serve-file.php?id=<doc_id>&action=view|download
  * Requires logged-in user with appropriate role.
  */
-require_once __DIR__ . '/config/config.php';
-require_once __DIR__ . '/config/session.php';
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../config/session.php';
+require_once __DIR__ . '/../config/helpers.php';
 
 function serve_error(int $code, string $message): void {
     http_response_code($code);
@@ -123,6 +124,11 @@ try {
         }
     } else {
         serve_error(403, 'Không xác định được quyền truy cập.');
+    }
+
+    // Log tải tài liệu
+    if ($action === 'download') {
+        logSystem('Tải tài liệu: ' . ($doc['title'] ?? ''), 'documents', $docId);
     }
 
     // Prevent caching of sensitive documents

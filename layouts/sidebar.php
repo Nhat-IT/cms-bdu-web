@@ -86,7 +86,7 @@ $unreadCount = db_count("SELECT COUNT(*) FROM notification_logs WHERE user_id = 
                 <a href="notifications-all.php" class="nav-link <?= $currentPage === 'notifications-all' ? 'active' : '' ?>" title="Xem thông báo">
                     <i class="bi bi-bell-fill"></i> <span class="hide-on-collapse">Thông báo</span>
                     <?php if ($unreadCount > 0): ?>
-                        <span class="badge bg-danger rounded-pill float-end"><?= $unreadCount ?></span>
+                        <span class="badge bg-danger rounded-pill float-end"><?= $unreadCount > 9 ? '9+' : $unreadCount ?></span>
                     <?php endif; ?>
                 </a>
                 <a href="my-feedback.php" class="nav-link <?= $currentPage === 'my-feedback' ? 'active' : '' ?>" title="Gửi phản hồi">

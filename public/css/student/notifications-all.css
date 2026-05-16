@@ -1,90 +1,171 @@
-/* Mô tả: Giao diện danh sách thông báo cua sinh viên (item, uu tien, hover). */
+/* Notifications-all: unified activity feed */
 
-        .notify-item {
-            /* Từng thông báo trong danh sách */
-            border-left: 4px solid transparent;
-            transition: all 0.2s ease;
-            cursor: pointer;
-            position: relative;
-            padding-right: 2rem;
-        }
+/* ── Feed item ──────────────────────────────────────────────────────────── */
+.notify-item {
+    border-left: 4px solid transparent;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    position: relative;
+}
 
-        .notify-item[data-read="false"] {
-            /* Chưa đọc: nền xanh rất nhẹ để nổi bật hơn. */
-            background-color: #f3f8ff;
-            border-left-color: #60a5fa;
-        }
+.notify-item[data-read="false"] {
+    background-color: #f3f8ff;
+    border-left-color: #60a5fa;
+}
 
-        .notify-item[data-read="false"]::before {
-            /* Chấm xanh báo trạng thái chưa đọc. */
-            content: "";
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: #2563eb;
-            transform: translateY(-50%);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
-        }
+.notify-item[data-type="notification"]:hover {
+    background: #f0f6ff;
+    border-left-color: #0d6efd;
+    cursor: pointer;
+}
 
-        .notify-item[data-read="false"] h6 {
-            /* Tiêu đề chưa đọc đậm hơn. */
-            font-weight: 800;
-            color: #0f172a;
-        }
+.notify-item[data-type="document"]:hover  { background: #f0fbff; }
+.notify-item[data-type="attendance"]:hover { background: #fff8f0; }
+.notify-item[data-type="schedule"]:hover   { background: #f8f9fa; }
 
-        .notify-item[data-read="true"] {
-            /* Đã đọc: nền sáng trung tính để giảm nhấn mạnh. */
-            background-color: #ffffff;
-            border-left-color: transparent;
-        }
+/* ── Unread dot ──────────────────────────────────────────────────────────── */
+.unread-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #2563eb;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.14);
+}
 
-        .notify-item[data-read="true"] h6 {
-            /* Tiêu đề đã đọc nhẹ hơn một chút. */
-            font-weight: 700;
-            color: #334155;
-        }
+/* ── Feed icon ───────────────────────────────────────────────────────────── */
+.feed-icon-wrap {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+.icon-feed-primary    { background: rgba(13,110,253,.12);  color: #0d6efd; }
+.icon-feed-info       { background: rgba(13,202,240,.12);  color: #0891b2; }
+.icon-feed-success    { background: rgba(25,135,84,.12);   color: #198754; }
+.icon-feed-warning    { background: rgba(255,193,7,.15);   color: #b45309; }
+.icon-feed-danger     { background: rgba(220,53,69,.12);   color: #dc3545; }
+.icon-feed-secondary  { background: rgba(108,117,125,.12); color: #495057; }
 
-        .notify-item:hover {
-            /* Hover: doi nen va vien trai de nhãn manh */
-            background: #f8fbff;
-            border-left-color: #0d6efd;
-        }
+/* ── Content line ────────────────────────────────────────────────────────── */
+.feed-content-line {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
 
-        .source-badge {
-            /* Badge nguồn thông báo (hệ thống, học vụ, mon hoc...) */
-            font-size: 0.74rem;
-            font-weight: 700;
-            letter-spacing: 0.02em;
-            text-transform: uppercase;
-        }
+/* ── Type chips ──────────────────────────────────────────────────────────── */
+.type-chip {
+    border: 1px solid #dee2e6;
+    background: #fff;
+    color: #495057;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 4px 14px;
+    transition: all 0.15s ease;
+}
+.type-chip:hover {
+    border-color: #0d6efd;
+    color: #0d6efd;
+    background: rgba(13,110,253,.06);
+}
+.type-chip.active {
+    background: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+}
+.type-chip.active:hover {
+    background: #0b5ed7;
+    border-color: #0b5ed7;
+    color: #fff;
+}
 
-        .source-badge-bcs {
-            /* Nguồn BAN CÁN SỰ: nền đậm hơn và chữ xanh dương. */
-            background-color: #c7ddff !important;
-            color: #0d6efd !important;
-            border: 1px solid #8cb8ff;
-        }
+/* ── Source badges ───────────────────────────────────────────────────────── */
+.source-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+.source-badge-bcs {
+    background-color: #c7ddff !important;
+    color: #0d6efd !important;
+    border: 1px solid #8cb8ff;
+}
+.source-badge-lecturer {
+    background-color: #b8f2d0 !important;
+    color: #0f8f4f !important;
+    border: 1px solid #7ad7a6;
+}
+.source-badge-dept {
+    background-color: #e9d5ff !important;
+    color: #7c3aed !important;
+    border: 1px solid #c4b5fd;
+}
+.source-badge-attendance {
+    background-color: #fee2e2 !important;
+    color: #b91c1c !important;
+    border: 1px solid #fca5a5;
+}
+.source-badge-schedule {
+    background-color: #e2e8f0 !important;
+    color: #334155 !important;
+    border: 1px solid #cbd5e1;
+}
+.source-badge-default {
+    background-color: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1;
+}
 
-        .source-badge-lecturer {
-            /* Nguồn GIẢNG VIÊN: nền đậm hơn để nổi bật hơn. */
-            background-color: #b8f2d0 !important;
-            color: #0f8f4f !important;
-            border: 1px solid #7ad7a6;
-        }
+/* ── Mark-unread button (Gmail-style, appears on row hover) ─────────────── */
+.btn-mark-unread {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-size: 0.9rem;
+    padding: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+}
 
-        #clearNotifyFilterBtn {
-            /* Nút xóa lọc đậm hơn để dễ nhìn. */
-            font-weight: 700;
-            color: #334155;
-            border-color: #64748b;
-        }
+.notify-item:hover .btn-mark-unread {
+    opacity: 1;
+    pointer-events: auto;
+}
 
-        #clearNotifyFilterBtn:hover,
-        #clearNotifyFilterBtn:focus-visible {
-            background-color: #334155;
-            border-color: #334155;
-            color: #ffffff;
-        }
+.btn-mark-unread:hover {
+    background: rgba(13, 110, 253, 0.10);
+    color: #0d6efd;
+}
+
+.notify-item[data-read="false"] .btn-mark-unread {
+    visibility: hidden;
+}
+
+/* ── Clear filter button ─────────────────────────────────────────────────── */
+#clearNotifyFilterBtn {
+    font-weight: 700;
+    color: #334155;
+    border-color: #64748b;
+}
+#clearNotifyFilterBtn:hover {
+    background-color: #334155;
+    border-color: #334155;
+    color: #fff;
+}

@@ -32,6 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     "INSERT INTO feedbacks (student_id, title, content, status) VALUES (?, ?, ?, 'Pending')",
                     [$userId, $topic, $content]
                 );
+                $newFeedbackId = (int)mysqli_insert_id(getDBConnection());
+                logSystem('Gửi phản hồi: ' . mb_strimwidth($topic, 0, 80, '...'), 'feedbacks', $newFeedbackId ?: null);
                 $submitSuccess = true;
             } catch (Throwable $e) {
                 $submitError = 'Đã xảy ra lỗi khi gửi phản hồi.';
@@ -63,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                      WHERE id = ? AND student_id = ? AND status = 'Pending'",
                     [$topic, $content, $feedbackId, $userId]
                 );
+                logSystem("Cập nhật phản hồi ID #$feedbackId", 'feedbacks', $feedbackId);
 
                 echo json_encode(['success' => true], JSON_UNESCAPED_UNICODE);
                 exit;
@@ -73,6 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                  WHERE id = ? AND student_id = ? AND status = 'Pending'",
                 [$feedbackId, $userId]
             );
+            logSystem("Xóa phản hồi ID #$feedbackId", 'feedbacks', $feedbackId);
 
             echo json_encode(['success' => true], JSON_UNESCAPED_UNICODE);
             exit;
@@ -122,15 +126,7 @@ $unreadNotifications = (int)db_count(
         </div>
 
         <div class="d-flex align-items-center text-white">
-            <a href="notifications-all.php" class="text-white text-decoration-none" title="Xem thông báo">
-                <i class="bi bi-bell fs-5 text-white position-relative cursor-pointer">
-                    <?php if ($unreadNotifications > 0): ?>
-                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                            <?= $unreadNotifications > 9 ? '9+' : $unreadNotifications ?>
-                        </span>
-                    <?php endif; ?>
-                </i>
-            </a>
+            <?php include_once __DIR__ . '/../../layouts/notification-bell.php'; ?>
         </div>
     </div>
 

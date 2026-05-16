@@ -14,7 +14,24 @@
       "PowerShell($phpPath = \"C:\\\\xampp\\\\php\\\\php.exe\")",
       "Bash(Get-ChildItem -Path \"c:\\\\xampp\\\\htdocs\\\\cms\" -Directory)",
       "Bash(Select-Object Name)",
-      "Bash(Format-Table -HideTableHeaders)"
+      "Bash(Format-Table -HideTableHeaders)",
+      "Bash(php -l \"c:\\\\xampp\\\\htdocs\\\\cms\\\\views\\\\student\\\\notifications-all.php\")",
+      "PowerShell(& \"C:\\\\xampp\\\\php\\\\php.exe\" -l \"C:\\\\xampp\\\\htdocs\\\\cms\\\\views\\\\student\\\\notifications-all.php\" 2>&1)",
+      "Bash(Get-ChildItem -Path \"c:\\\\xampp\\\\htdocs\\\\cms\\\\config\\\\\" -File | Select-Object Name)",
+      "Bash(php -r \"echo __DIR__;\" /c/xampp/htdocs/cms/api/serve-file.php)",
+      "Bash(Get-ChildItem -Path \"c:\\\\xampp\\\\htdocs\\\\cms\" -Recurse -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object FullName)",
+      "Bash(ConvertTo-Json)",
+      "Bash(Out-Null)",
+      "Bash(Write-Output \"Directory structure verified\")",
+      "Bash(grep -A 15 \"CREATE TABLE \\\\`class_students\\\\`\" \"c:\\\\xampp\\\\htdocs\\\\cms\\\\db.sql\")",
+      "Bash(grep -A 5 \"INSERT INTO \\\\`class_students\\\\`\" \"c:\\\\xampp\\\\htdocs\\\\cms\\\\db.sql\")",
+      "Bash(grep -E \"INSERT INTO \\\\`users\\\\`|'student'|'bcs'\" \"c:\\\\xampp\\\\htdocs\\\\cms\\\\db.sql\")",
+      "Bash(grep -A 5 \"INSERT INTO \\\\`student_subject_registration\\\\`\" \"c:\\\\xampp\\\\htdocs\\\\cms\\\\db.sql\")",
+      "Bash(grep -A 20 \"INSERT INTO \\\\`student_subject_registration\\\\`\" \"c:\\\\xampp\\\\htdocs\\\\cms\\\\db.sql\")",
+      "Bash(grep -A 5 \"INSERT INTO \\\\`classes\\\\`\" \"c:\\\\xampp\\\\htdocs\\\\cms\\\\db.sql\")",
+      "Bash(grep -E \"INSERT INTO \\\\`class_subjects\\\\`|INSERT INTO \\\\`class_subject_groups\\\\`\" \"c:\\\\xampp\\\\htdocs\\\\cms\\\\db.sql\")",
+      "Bash(grep -A 30 \"INSERT INTO \\\\`class_subjects\\\\`\" \"c:\\\\xampp\\\\htdocs\\\\cms\\\\db.sql\")"
     ]
   }
 }
