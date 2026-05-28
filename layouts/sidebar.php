@@ -29,8 +29,54 @@ if (in_array($role, ['student', 'bcs'])) {
     $className = $class ? $class['class_name'] : '';
 }
 
-// Đếm thông báo chưa đọc
-$unreadCount = db_count("SELECT COUNT(*) FROM notification_logs WHERE user_id = ? AND is_read = 0", [$currentUser['id']]);
+// Đếm thông báo chưa đọc (unified count)
+$studentMssv = trim((string)($_SESSION['username'] ?? ''));
+
+// 1. Thông báo từ notification_logs
+$unreadNotif = db_count("SELECT COUNT(*) FROM notification_logs WHERE user_id = ? AND is_read = 0", [$currentUser['id']]);
+
+// 2. Tài liệu mới trong 14 ngày gần nhất
+$unreadDocs = 0;
+if ($studentMssv !== '') {
+    $unreadDocs = db_count(
+        "SELECT COUNT(DISTINCT d.id)
+         FROM documents d
+         JOIN class_subjects cs ON d.class_subject_id = cs.id
+         LEFT JOIN users uploader ON d.uploader_id = uploader.id
+         WHERE cs.class_id IN (
+             SELECT DISTINCT cs2.class_id
+             FROM student_subject_registration ssr
+             JOIN class_subject_groups csg ON ssr.class_subject_group_id = csg.id
+             JOIN class_subjects cs2 ON csg.class_subject_id = cs2.id
+             WHERE (ssr.student_id = ? OR ssr.mssv = ?)
+               AND ssr.status = 'Đang học'
+               AND cs2.class_id IS NOT NULL
+         )
+         AND LOWER(COALESCE(uploader.role, '')) IN ('bcs', 'admin', 'support_admin')
+         AND d.created_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)",
+        [$currentUser['id'], $studentMssv]
+    );
+}
+
+// 3. Điểm danh mới trong 14 ngày gần nhất
+$unreadAtt = 0;
+if ($studentMssv !== '') {
+    $unreadAtt = db_count(
+        "SELECT COUNT(DISTINCT ar.id)
+         FROM attendance_records ar
+         JOIN attendance_sessions a_s ON ar.session_id = a_s.id
+         JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
+         LEFT JOIN student_subject_registration ssr_m
+             ON ssr_m.class_subject_group_id = csg.id AND ssr_m.mssv = ?
+         WHERE (ar.student_id = ?
+                OR (ar.registration_id IS NOT NULL AND ar.registration_id = ssr_m.id))
+           AND a_s.attendance_date >= DATE_SUB(CURDATE(), INTERVAL 14 DAY)",
+        [$studentMssv, $currentUser['id']]
+    );
+}
+
+// Unified count
+$unreadCount = $unreadNotif + $unreadDocs + $unreadAtt;
 ?>
 <div class="sidebar" id="sidebar">
     
@@ -85,9 +131,9 @@ $unreadCount = db_count("SELECT COUNT(*) FROM notification_logs WHERE user_id = 
                 <div class="px-4 mt-3 mb-2 small text-white-50 fw-bold hide-on-collapse" style="font-size: 0.7rem; letter-spacing: 1px;">TƯƠNG TÁC</div>
                 <a href="notifications-all.php" class="nav-link <?= $currentPage === 'notifications-all' ? 'active' : '' ?>" title="Xem thông báo">
                     <i class="bi bi-bell-fill"></i> <span class="hide-on-collapse">Thông báo</span>
-                    <?php if ($unreadCount > 0): ?>
-                        <span class="badge bg-danger rounded-pill float-end"><?= $unreadCount > 9 ? '9+' : $unreadCount ?></span>
-                    <?php endif; ?>
+                    <span id="sidebarNotifBadge" class="badge bg-danger rounded-pill float-end<?= $unreadCount === 0 ? ' d-none' : '' ?>">
+                        <?= $unreadCount > 9 ? '9+' : $unreadCount ?>
+                    </span>
                 </a>
                 <a href="my-feedback.php" class="nav-link <?= $currentPage === 'my-feedback' ? 'active' : '' ?>" title="Gửi phản hồi">
                     <i class="bi bi-envelope-paper"></i> <span class="hide-on-collapse">Gửi phản hồi</span>
@@ -223,8 +269,40 @@ $unreadCount = db_count("SELECT COUNT(*) FROM notification_logs WHERE user_id = 
 </div>
 
 <script>
+var _dbNotifCount = <?= (int)$unreadCount ?>;
+
 document.getElementById('logoutBtn').addEventListener('click', function(e) {
     e.preventDefault();
     new bootstrap.Modal(document.getElementById('logoutModal')).show();
+});
+
+// Sử dụng localStorage làm nguồn chính (từ notifications-all.php)
+document.addEventListener('DOMContentLoaded', function() {
+    // Đọc từ localStorage trước (ưu tiên)
+    var lsCount = parseInt(localStorage.getItem('cms_unread_all') || '-1', 10);
+    var lsTs = parseInt(localStorage.getItem('cms_unread_ts') || '0', 10);
+    var total = _dbNotifCount;
+
+    // Chỉ dùng localStorage nếu timestamp gần đây (trong vòng 5 phút)
+    if (lsCount >= 0) {
+        var age = Date.now() - lsTs;
+        if (age < 300000) { // 5 phút
+            total = lsCount;
+        }
+    }
+
+    // Chỉ cập nhật badge trong sidebar (notification-bell.php quản lý badge riêng)
+    function setBadge(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        if (total > 0) {
+            el.textContent = total > 9 ? '9+' : String(total);
+            el.classList.remove('d-none');
+        } else {
+            el.textContent = '';
+            el.classList.add('d-none');
+        }
+    }
+    setBadge('sidebarNotifBadge');
 });
 </script>

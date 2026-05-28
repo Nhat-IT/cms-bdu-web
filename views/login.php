@@ -99,9 +99,16 @@ if (isset($_GET['reset']) && $_GET['reset'] === 'success') {
                     <h3 class="mb-4 fw-bold text-dark">Đăng Nhập Hệ Thống</h3>
                     <p class="text-muted mb-4">Vui lòng nhập thông tin tài khoản để tiếp tục.</p>
 
-                    <?php if ($error): ?>
+                    <?php
+                    $googleError = '';
+                    if (!empty($_GET['google_error'])) {
+                        $googleError = htmlspecialchars(urldecode($_GET['google_error']), ENT_QUOTES, 'UTF-8');
+                    }
+                    ?>
+
+                    <?php if ($error || $googleError): ?>
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="bi bi-exclamation-circle me-2"></i><?= e($error) ?>
+                            <i class="bi bi-exclamation-circle me-2"></i><?= $error ? e($error) : $googleError ?>
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     <?php endif; ?>
@@ -151,7 +158,7 @@ if (isset($_GET['reset']) && $_GET['reset'] === 'success') {
                         <hr class="flex-grow-1 text-muted" style="opacity: 0.2;">
                     </div>
 
-                    <a href="#" class="btn btn-outline-dark w-100 rounded-pill d-flex align-items-center justify-content-center py-2 google-login-btn" style="font-weight: 500; transition: all 0.3s ease;">
+                    <a href="<?php echo BASE_URL; ?>/api/auth/google-login.php" class="btn btn-outline-dark w-100 rounded-pill d-flex align-items-center justify-content-center py-2 google-login-btn" style="font-weight: 500; transition: all 0.3s ease;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-google me-2 google-login-icon" viewBox="0 0 16 16" style="color: #ed1d0a;">
                             <path d="M15.545 6.558a9.42 9.42 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.689 7.689 0 0 1 5.352 2.082l-2.284 2.284A4.347 4.347 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.792 4.792 0 0 0 0 3.063h.003c.635 1.893 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.702 3.702 0 0 0 1.599-2.431H8v-3.08h7.545z"/>
                         </svg>

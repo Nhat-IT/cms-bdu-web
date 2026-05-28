@@ -74,7 +74,7 @@ try {
         $currentSemester = getCurrentSemester();
         $semesterId = $currentSemester['id'] ?? 0;
         $today = date('Y-m-d');
-        $dayOfWeek = (int) date('N');
+        $dayOfWeek = (int) date('N') + 1; // DB: Mon=2…Sun=8
 
         // Sĩ số lớp — đếm distinct mssv từ student_subject_registration
         // Không lọc student_id IS NOT NULL vì SV có thể chưa có tài khoản nhưng vẫn thuộc lớp
@@ -87,12 +87,17 @@ try {
         // Vắng hôm nay (status = 3) — lọc theo học kỳ
         // Dùng student_subject_registration vì có đầy đủ sinh viên của lớp
         $absentRow = db_fetch_one("
-            SELECT COUNT(DISTINCT ar.id) as total
+            SELECT COUNT(DISTINCT COALESCE(ar.student_id, ar.registration_id)) as total
             FROM attendance_records ar
             JOIN attendance_sessions a_s ON ar.session_id = a_s.id
             JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
             JOIN class_subjects cs ON csg.class_subject_id = cs.id
-            JOIN student_subject_registration ssr ON ssr.student_id = ar.student_id
+            JOIN student_subject_registration ssr
+                ON ssr.class_subject_group_id = csg.id
+                AND (
+                    (ar.student_id IS NOT NULL AND ssr.student_id = ar.student_id)
+                    OR (ar.student_id IS NULL AND ssr.id = ar.registration_id)
+                )
             WHERE ar.status = 3
               AND a_s.attendance_date = ?
               AND ssr.class_name = ?

@@ -211,19 +211,43 @@ function replaceStaticStudentPlaceholders(profile, classes) {
 }
 
 function updateNotificationBadge(notifications) {
-    const unread = (notifications || []).filter(function (x) {
+    const apiUnread = (notifications || []).filter(function (x) {
         return Number(x.is_read) === 0;
     }).length;
 
-    document.querySelectorAll('.notification-badge, .top-navbar-blue .badge.rounded-pill.bg-danger').forEach(function (badge) {
-        badge.textContent = String(unread);
+    // Ưu tiên localStorage nếu được ghi bởi notifications-all.php trong vòng 5 phút
+    var lsCount = parseInt(localStorage.getItem('cms_unread_all') || '-1', 10);
+    var lsTs    = parseInt(localStorage.getItem('cms_unread_ts')  || '0',  10);
+    var useLocal = lsCount >= 0 && (Date.now() - lsTs) < 300000;
+    var unread   = useLocal ? lsCount : apiUnread;
+
+    if (!useLocal) {
+        localStorage.setItem('cms_unread_all', String(apiUnread));
+        localStorage.setItem('cms_unread_ts',  String(Date.now()));
+    }
+
+    function applyBadge(el) {
+        if (!el) return;
         if (unread > 0) {
-            badge.style.display = 'inline-block';
+            el.textContent = unread > 9 ? '9+' : String(unread);
+            el.classList.remove('d-none');
+            el.style.display = '';
+        } else {
+            el.textContent = '';
+            el.classList.add('d-none');
         }
-    });
+    }
+
+    applyBadge(document.getElementById('notifBellBadge'));
+    applyBadge(document.getElementById('bellHeaderBadge'));
+    applyBadge(document.getElementById('sidebarNotifBadge'));
+    document.querySelectorAll('.notification-badge').forEach(applyBadge);
 }
 
 function mountNotificationDropdown(notifications) {
+    // notification-bell.php đã cung cấp dropdown Bootstrap đầy đủ — bỏ qua
+    if (document.getElementById('notifBellDropdown')) return;
+
     const bellLink = document.querySelector('.top-navbar-blue a[href="notifications-all.php"].text-decoration-none, .top-navbar-blue a[href$="/views/student/notifications-all.php"].text-decoration-none');
     if (!bellLink || bellLink.closest('.student-notify-wrapper')) {
         return;

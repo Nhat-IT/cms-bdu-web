@@ -218,7 +218,7 @@ foreach ($rawAttendance as $ar) {
     $attCode  = (int)($ar['att_status'] ?? 0);
     $meta     = $attStatusMeta[$attCode] ?? ['label' => 'Không rõ', 'icon' => 'bi-question-circle-fill', 'color' => 'secondary'];
     $evRaw    = (string)($ar['evidence_status'] ?? '');
-    $evPart   = ($evRaw !== '' && $evRaw !== 'None') ? ' | ' . ($evidenceLabel[$evRaw] ?? $evRaw) : '';
+    $evPart   = ($attCode !== 1 && $evRaw !== '' && $evRaw !== 'None') ? ' | ' . ($evidenceLabel[$evRaw] ?? $evRaw) : '';
     $roomPart = $ar['room'] ? 'Phòng ' . $ar['room'] : '';
     $feed[] = [
         'type'      => 'attendance',
@@ -237,7 +237,7 @@ foreach ($rawAttendance as $ar) {
             'att_label'      => $meta['label'],
             'att_status'     => $attCode,
             'evidence_status'=> $evRaw,
-            'evidence_label' => ($evRaw !== '' && $evRaw !== 'None') ? ($evidenceLabel[$evRaw] ?? $evRaw) : '',
+            'evidence_label' => ($attCode !== 1 && $evRaw !== '' && $evRaw !== 'None') ? ($evidenceLabel[$evRaw] ?? $evRaw) : '',
             'room'           => (string)($ar['room'] ?? ''),
         ],
     ];
@@ -322,16 +322,8 @@ foreach ($feed as $item) {
                 <i class="bi bi-bell-fill me-2"></i>THÔNG BÁO & CẬP NHẬT
             </h5>
         </div>
-        <!-- Badge chuông: tối đa 9+ -->
         <div class="d-flex align-items-center">
-            <a href="notifications-all.php" class="text-white text-decoration-none position-relative me-1" title="Thông báo">
-                <i class="bi bi-bell fs-5"></i>
-                <span id="topUnreadCount"
-                      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger<?= $unreadNotifications === 0 ? ' d-none' : '' ?>"
-                      style="font-size:.65rem;">
-                    <?= $unreadNotifications > 9 ? '9+' : $unreadNotifications ?>
-                </span>
-            </a>
+            <?php include_once __DIR__ . '/../../layouts/notification-bell.php'; ?>
         </div>
     </div>
 
@@ -343,17 +335,17 @@ foreach ($feed as $item) {
                 <h5 class="fw-bold mb-1">Tổng hợp hoạt động</h5>
                 <p class="text-muted mb-0" id="statusSubtitle">
                     <?= count($feed) ?> mục &bull;
-                    <?php if ($unreadNotifications > 0): ?>
-                        <span class="text-primary fw-bold"><?= $unreadNotifications ?> thông báo chưa đọc</span>
+                    <?php if ($_bellUnreadCount > 0): ?>
+                        <span class="text-primary fw-bold"><?= $_bellUnreadCount ?> mục chưa đọc</span>
                     <?php else: ?>
-                        <span class="text-success fw-semibold">Đã đọc tất cả thông báo</span>
+                        <span class="text-success fw-semibold">Đã đọc tất cả</span>
                     <?php endif; ?>
                 </p>
             </div>
             <div class="d-flex gap-2 flex-wrap align-items-center">
                 <!-- Nút luôn hiển thị, disable khi không có unread -->
                 <button type="button" class="btn btn-outline-success fw-bold" id="markAllReadBtn"
-                        <?= $unreadNotifications === 0 ? 'disabled' : '' ?>>
+                        <?= $_bellUnreadCount === 0 ? 'disabled' : '' ?>>
                     <i class="bi bi-check2-all me-1"></i>Đánh dấu tất cả đã đọc
                 </button>
                 <a href="notifications-all.php" class="btn btn-outline-primary fw-bold">
@@ -494,7 +486,7 @@ foreach ($feed as $item) {
 </div>
 
 <!-- Modal chi tiết -->
-<div class="modal fade" id="notifyDetailModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="notifyDetailModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <div class="modal-header text-white bg-primary" id="notifyDetailHeader">
@@ -520,10 +512,21 @@ foreach ($feed as $item) {
     const readFilter     = document.getElementById('notifyReadFilter');
     const clearBtn       = document.getElementById('clearNotifyFilterBtn');
     const markAllBtn     = document.getElementById('markAllReadBtn');
-    const topBadge       = document.getElementById('topUnreadCount');
+    const topBadge       = document.getElementById('notifBellBadge');
     const emptyMsg       = document.getElementById('emptyFilterMsg');
     const statusSubtitle = document.getElementById('statusSubtitle');
     const detailModal    = new bootstrap.Modal(document.getElementById('notifyDetailModal'));
+    const notifyDetailModal = document.getElementById('notifyDetailModal');
+
+    // Xử lý aria-hidden issue khi modal đóng
+    notifyDetailModal.addEventListener('hidden.bs.modal', function() {
+        // Di chuyển focus ra ngoài modal trước khi nó đóng hoàn toàn
+        document.body.focus();
+    });
+    notifyDetailModal.addEventListener('hide.bs.modal', function() {
+        // Xóa aria-hidden nếu Bootstrap thêm vào
+        this.removeAttribute('aria-hidden');
+    });
     const typeChips      = document.querySelectorAll('.type-chip');
     const totalCount     = <?= count($feed) ?>;
 
@@ -651,7 +654,41 @@ foreach ($feed as $item) {
     });
 
     // ── Cập nhật badge chuông & trạng thái (tối đa 9+) ──────────────────────
+    const sidebarBadge = document.getElementById('sidebarNotifBadge');
+
+    function refreshBellDropdown() {
+        const container = document.getElementById('bellNotifList');
+        if (!container) return;
+
+        // Lấy tối đa 4 item chưa đọc (tất cả loại) — sau khi localStorage đã khôi phục
+        const items = [...document.querySelectorAll(
+            '.notify-item[data-read="false"]'
+        )].slice(0, 4);
+
+        if (items.length === 0) {
+            container.innerHTML =
+                '<div class="px-3 py-4 text-center text-muted small">' +
+                '<i class="bi bi-bell-slash fs-4 d-block mb-2"></i>' +
+                'Không có thông báo mới</div>';
+            return;
+        }
+
+        container.innerHTML = items.map(item => {
+            const title    = item.querySelector('h6')?.textContent?.trim() ?? '';
+            const timeStr  = item.querySelector('small.text-muted.text-nowrap')?.textContent?.trim() ?? '';
+            const srcBadge = item.querySelector('.source-badge');
+            return '<a href="notifications-all.php" class="dropdown-item px-3 py-2 border-bottom" style="white-space:normal;">' +
+                '<div class="d-flex justify-content-between align-items-center mb-1">' +
+                (srcBadge ? srcBadge.outerHTML : '') +
+                '<small class="text-muted" style="font-size:.72rem;">' + esc(timeStr) + '</small>' +
+                '</div>' +
+                '<div class="fw-bold text-dark" style="font-size:.88rem;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">' +
+                esc(title) + '</div></a>';
+        }).join('');
+    }
+
     function updateUnreadCounter() {
+        // Đếm sau khi localStorage đã khôi phục trạng thái đã đọc cho doc/att/schedule.
         const unreadNotif = document.querySelectorAll(
             '.notify-item[data-type="notification"][data-read="false"]'
         ).length;
@@ -659,26 +696,40 @@ foreach ($feed as $item) {
             '.notify-item[data-read="false"]'
         ).length;
 
-        // Bell badge: đếm tất cả mục chưa đọc
-        if (topBadge) {
-            if (unreadAll > 0) {
-                topBadge.textContent = unreadAll > 9 ? '9+' : String(unreadAll);
-                topBadge.classList.remove('d-none');
+        // Lưu vào localStorage để các trang khác có thể sync
+        localStorage.setItem('cms_unread_all', String(unreadAll));
+        localStorage.setItem('cms_unread_notif', String(unreadNotif));
+        localStorage.setItem('cms_unread_ts', String(Date.now()));
+
+        function setBadge(el, count) {
+            if (!el) return;
+            if (count > 0) {
+                el.textContent = count > 9 ? '9+' : String(count);
+                el.classList.remove('d-none');
             } else {
-                topBadge.classList.add('d-none');
+                el.textContent = '';
+                el.classList.add('d-none');
             }
         }
 
-        // Nút "đánh dấu tất cả": disable khi không còn mục nào chưa đọc
+        setBadge(topBadge, unreadAll);
+        setBadge(document.getElementById('bellHeaderBadge'), unreadAll);
+        setBadge(sidebarBadge, unreadAll);
+
+        // Sync với bell badge (notification-bell.php)
+        const bellBadge = document.getElementById('notifBellBadge');
+        setBadge(bellBadge, unreadAll);
+
         if (markAllBtn) markAllBtn.disabled = unreadAll === 0;
 
-        // Subtitle: hiện tổng số mục chưa đọc
         if (statusSubtitle) {
             const base = `${totalCount} mục &bull; `;
             statusSubtitle.innerHTML = unreadAll > 0
                 ? base + `<span class="text-primary fw-bold">${unreadAll} mục chưa đọc</span>`
                 : base + `<span class="text-success fw-semibold">Đã đọc tất cả</span>`;
         }
+
+        refreshBellDropdown();
     }
 
     // ── Hàm helper cho modal ─────────────────────────────────────────────────

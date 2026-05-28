@@ -96,7 +96,7 @@ $warningSubjectCount = count($warningSubjects);
 // Lấy chi tiết vắng học theo sinh viên
 if ($sourceType === 'class_students' && $classId) {
     $stmt = $pdo->prepare("
-        SELECT u.id as student_id, u.full_name, u.email as student_code,
+        SELECT u.id as student_id, u.full_name, u.username as student_code,
                s.subject_name, a_s.attendance_date, a_s.study_session,
                ar.status, ar.evidence_status as evidence_status, ar.evidence_link
         FROM attendance_records ar
@@ -307,7 +307,7 @@ foreach ($absenceDetails as $abs) {
             <div class="card-header bg-white pt-3 pb-2 border-0 d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <h5 class="fw-bold text-dark m-0"><i class="bi bi-person-lines-fill me-2 text-primary"></i>Chi tiết vắng học theo sinh viên</h5>
                 <div class="d-flex gap-2">
-                    <input type="text" class="form-control form-control-sm border-secondary" id="searchInput" placeholder="Tìm MSSV hoặc Tên..." style="width: 200px;">
+                    <input type="text" class="form-control form-control-sm border-secondary" id="bcsDashboardDetailKeyword" placeholder="Tìm MSSV hoặc Tên..." style="width: 200px;">
                     <button class="btn btn-success btn-sm fw-bold shadow-sm" onclick="exportDetailExcel()"><i class="bi bi-file-earmark-excel me-1"></i> Xuất Excel</button>
                 </div>
             </div>
@@ -326,48 +326,12 @@ foreach ($absenceDetails as $abs) {
                                 <th class="text-center py-3 border-start">TỔNG VẮNG (MÔN)</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <?php if (!empty($groupedAbsences)): ?>
-                            <?php $stt = 1; foreach ($groupedAbsences as $studentId => $data): ?>
-                            <?php $rowCount = count($data['absences']); $first = true; foreach ($data['absences'] as $idx => $abs): ?>
+                        <tbody id="bcsDashboardDetailBody">
                             <tr>
-                                <?php if ($first): ?>
-                                <td rowspan="<?= $rowCount ?>" class="text-center align-middle bg-white border-end"><?= $stt ?></td>
-                                <td rowspan="<?= $rowCount ?>" class="align-middle pe-4 bg-white border-end">
-                                    <div class="fw-bold text-dark" style="font-size: 0.95rem;"><?= e($data['student_name']) ?></div>
-                                    <div class="text-muted small"><?= e($data['student_code']) ?></div>
+                                <td colspan="8" class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>Đang tải dữ liệu...
                                 </td>
-                                <?php $first = false; endif; ?>
-                                <td class="py-3<?= $idx > 0 ? ' border-bottom' : '' ?>">
-                                    <span class="badge bg-white text-dark border border-secondary px-3 py-2 fw-normal rounded-1 shadow-sm"><?= e($abs['subject_name']) ?></span>
-                                </td>
-                                <td class="text-dark fw-bold<?= $idx > 0 ? ' border-bottom' : '' ?>"><?= formatDate($abs['attendance_date']) ?></td>
-                                <td class="text-dark<?= $idx > 0 ? ' border-bottom' : '' ?>"><?= e($abs['study_session'] ?? 'Sáng') ?></td>
-                                <td<?= $idx > 0 ? ' class="border-bottom"' : '' ?>>
-                                    <?php if ($abs['status'] == 2): ?>
-                                    <span class="text-warning fw-bold"><i class="bi bi-exclamation-circle me-1"></i>Có phép</span>
-                                    <?php else: ?>
-                                    <span class="text-danger fw-bold"><i class="bi bi-x-circle me-1"></i>Không phép</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="text-center<?= $idx > 0 ? ' border-bottom' : '' ?>">
-                                    <?php if (!empty($abs['evidence_link'])): ?>
-                                    <a href="<?= e($abs['evidence_link']) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-primary rounded-circle shadow-sm" title="Xem minh chứng"><i class="bi bi-file-earmark-medical"></i></a>
-                                    <?php else: ?>
-                                    <button class="btn btn-sm btn-light rounded-circle" title="Không có minh chứng" disabled><i class="bi bi-eye-slash text-muted"></i></button>
-                                    <?php endif; ?>
-                                </td>
-                                <?php if ($idx == 0): ?>
-                                <td rowspan="<?= $rowCount ?>" class="text-center align-middle fw-bold text-<?= $rowCount >= 3 ? 'danger' : 'warning' ?> fs-4 bg-white border-start"><?= $rowCount ?></td>
-                                <?php endif; ?>
                             </tr>
-                            <?php endforeach; ?>
-                            <?php $stt++; endforeach; ?>
-                            <?php else: ?>
-                            <tr>
-                                <td colspan="8" class="text-center py-4 text-muted">Không có dữ liệu vắng học</td>
-                            </tr>
-                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>

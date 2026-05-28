@@ -91,8 +91,8 @@ $todaySchedule = db_fetch_all("
       AND cs.semester_id = ?
       AND csg.is_extra = 0
       AND csg.day_of_week = ?
-      AND cs.start_date <= ?
-      AND cs.end_date >= ?
+      AND (cs.start_date IS NULL OR cs.start_date <= ?)
+      AND (cs.end_date IS NULL OR cs.end_date >= ?)
     UNION ALL
     SELECT DISTINCT s.subject_name, s.subject_code,
            csg.start_period, csg.end_period, csg.room, csg.group_code,

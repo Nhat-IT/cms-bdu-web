@@ -74,12 +74,12 @@
     width: 100%;
 }
 
-.attendance-detail-table col.col-att-stt      { width: 6%; }
-.attendance-detail-table col.col-att-date     { width: 13%; }
-.attendance-detail-table col.col-att-session  { width: 9%; }
-.attendance-detail-table col.col-att-status   { width: 16%; }
-.attendance-detail-table col.col-att-evidence { width: 36%; }
-.attendance-detail-table col.col-att-review   { width: 20%; }
+.attendance-detail-table col.col-att-stt      { width: 16.67%; }
+.attendance-detail-table col.col-att-date     { width: 16.67%; }
+.attendance-detail-table col.col-att-session  { width: 16.67%; }
+.attendance-detail-table col.col-att-status   { width: 16.67%; }
+.attendance-detail-table col.col-att-evidence { width: 16.67%; }
+.attendance-detail-table col.col-att-review   { width: 16.65%; }
 
 .attendance-detail-table th,
 .attendance-detail-table td {
