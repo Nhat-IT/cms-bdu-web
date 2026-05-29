@@ -795,6 +795,13 @@ try {
             jsonResponse(['ok' => false, 'message' => 'invalid_data'], 400);
         }
 
+        // Lấy class_subject_id để kiểm tra trùng xuyên nhóm (1 SV chỉ học 1 nhóm/môn)
+        $subjectCsId = $csId > 0 ? $csId : 0;
+        if ($subjectCsId <= 0) {
+            $csRow = db_fetch_one('SELECT class_subject_id FROM class_subject_groups WHERE id = ? LIMIT 1', [$targetGroupId]);
+            $subjectCsId = (int) ($csRow['class_subject_id'] ?? 0);
+        }
+
         $imported = 0;
         $skipped = 0;
         $errors = [];
@@ -817,17 +824,36 @@ try {
                 $studentId = (int) $user['id'];
             }
 
-            // Kiểm tra trùng: ưu tiên student_id nếu có tài khoản, nếu không thì kiểm tra mssv
-            if ($studentId) {
-                $existing = db_fetch_one(
-                    'SELECT id FROM student_subject_registration WHERE class_subject_group_id = ? AND student_id = ? LIMIT 1',
-                    [$targetGroupId, $studentId]
-                );
+            // Kiểm tra trùng trong toàn bộ môn học (bao gồm các nhóm khác): 1 SV chỉ học 1 nhóm/môn
+            if ($subjectCsId > 0) {
+                if ($studentId) {
+                    $existing = db_fetch_one(
+                        'SELECT ssr.id FROM student_subject_registration ssr
+                         JOIN class_subject_groups csg ON csg.id = ssr.class_subject_group_id
+                         WHERE csg.class_subject_id = ? AND ssr.student_id = ? LIMIT 1',
+                        [$subjectCsId, $studentId]
+                    );
+                } else {
+                    $existing = db_fetch_one(
+                        'SELECT ssr.id FROM student_subject_registration ssr
+                         JOIN class_subject_groups csg ON csg.id = ssr.class_subject_group_id
+                         WHERE csg.class_subject_id = ? AND ssr.mssv = ? LIMIT 1',
+                        [$subjectCsId, $mssv]
+                    );
+                }
             } else {
-                $existing = db_fetch_one(
-                    'SELECT id FROM student_subject_registration WHERE class_subject_group_id = ? AND mssv = ? LIMIT 1',
-                    [$targetGroupId, $mssv]
-                );
+                // Fallback: chỉ kiểm tra trong nhóm hiện tại nếu không xác định được môn
+                if ($studentId) {
+                    $existing = db_fetch_one(
+                        'SELECT id FROM student_subject_registration WHERE class_subject_group_id = ? AND student_id = ? LIMIT 1',
+                        [$targetGroupId, $studentId]
+                    );
+                } else {
+                    $existing = db_fetch_one(
+                        'SELECT id FROM student_subject_registration WHERE class_subject_group_id = ? AND mssv = ? LIMIT 1',
+                        [$targetGroupId, $mssv]
+                    );
+                }
             }
             if ($existing) {
                 $skipped++;

@@ -9,85 +9,30 @@ require_once __DIR__ . '/../../config/helpers.php';
 
 requireRole('student');
 
-$userId = $_SESSION['user_id'];
+$userId = (int)($_SESSION['user_id'] ?? 0);
 $pageTitle = 'Hồ Sơ Cá Nhân';
 $extraCss = ['layout.css', 'student/student-layout.css', 'student/profile.css'];
 $extraJs = ['student/student-layout.js', 'student/profile.js'];
 
-// Lấy thông tin user
-$stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-$stmt->execute([$userId]);
-$user = $stmt->fetch();
-
-// Lấy thông tin lớp học
-$stmt = $pdo->prepare("
+$user = db_fetch_one("SELECT * FROM users WHERE id = ?", [$userId]);
+$classInfo = db_fetch_one("
     SELECT c.class_name, d.department_name, c.academic_year
     FROM class_students cs
     JOIN classes c ON cs.class_id = c.id
     LEFT JOIN departments d ON c.department_id = d.id
     WHERE cs.student_id = ?
-    LIMIT 1
-");
-$stmt->execute([$userId]);
-$classInfo = $stmt->fetch();
+    LIMIT 1", [$userId]);
 
-// Lấy học kỳ hiện tại
-$stmt = $pdo->prepare("SELECT semester_name, academic_year FROM semesters ORDER BY id DESC LIMIT 1");
-$stmt->execute();
-$currentSemester = $stmt->fetch();
+$unreadNotifications = (int)(db_fetch_one(
+    "SELECT COUNT(*) as total FROM notification_logs WHERE user_id = ? AND is_read = 0",
+    [$userId]
+)['total'] ?? 0);
 
-// Lấy số thông báo chưa đọc
-$stmt = $pdo->prepare("SELECT COUNT(*) as total FROM notification_logs WHERE user_id = ? AND is_read = 0");
-$stmt->execute([$userId]);
-$unreadNotifications = $stmt->fetch()['total'];
+$avatarUrl = getAvatarUrl($user['avatar'] ?? '', $user['full_name'] ?? '', 200);
 
-// Xử lý cập nhật thông tin
-$updateSuccess = false;
-$updateError = '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    if ($_POST['action'] === 'update_profile') {
-        $birthDate = $_POST['birth_date'] ?? null;
-        $phone = $_POST['phone_number'] ?? null;
-        $address = $_POST['address'] ?? null;
-        
-        try {
-            $stmt = $pdo->prepare("
-                UPDATE users SET birth_date = ?, phone_number = ?, address = ?
-                WHERE id = ?
-            ");
-            $stmt->execute([$birthDate, $phone, $address, $userId]);
-            $updateSuccess = true;
-            
-            // Cập nhật lại thông tin user
-            $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-            $stmt->execute([$userId]);
-            $user = $stmt->fetch();
-        } catch (PDOException $e) {
-            $updateError = 'Đã xảy ra lỗi khi cập nhật thông tin.';
-        }
-    } elseif ($_POST['action'] === 'change_password') {
-        $oldPassword = $_POST['old_password'] ?? '';
-        $newPassword = $_POST['new_password'] ?? '';
-        $confirmPassword = $_POST['confirm_password'] ?? '';
-        
-        if (empty($oldPassword) || empty($newPassword) || empty($confirmPassword)) {
-            $updateError = 'Vui lòng điền đầy đủ thông tin.';
-        } elseif ($newPassword !== $confirmPassword) {
-            $updateError = 'Mật khẩu xác nhận không khớp.';
-        } elseif (!password_verify($oldPassword, $user['password'])) {
-            $updateError = 'Mật khẩu hiện tại không đúng.';
-        } else {
-            try {
-                $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-                $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
-                $stmt->execute([$hashedPassword, $userId]);
-                $updateSuccess = true;
-            } catch (PDOException $e) {
-                $updateError = 'Đã xảy ra lỗi khi đổi mật khẩu.';
-            }
-        }
-    }
+$mssv = $user['username'] ?? '';
+if (strpos($mssv, '@') !== false) {
+    $mssv = explode('@', $mssv)[0];
 }
 ?>
 <!DOCTYPE html>
@@ -108,50 +53,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 <?php include_once __DIR__ . '/../../layouts/sidebar.php'; ?>
 
 <div class="main-content" id="mainContent">
-    
+
     <div class="top-navbar-blue d-flex justify-content-between align-items-center px-4 shadow-sm">
         <div class="d-flex align-items-center">
             <button class="btn btn-outline-light me-3 border-0" id="sidebarToggle"><i class="bi bi-list fs-3"></i></button>
-            <h5 class="m-0 text-white fw-bold d-flex align-items-center">
-                HỒ SƠ CÁ NHÂN
-            </h5>
+            <h5 class="m-0 text-white fw-bold">HỒ SƠ CÁ NHÂN</h5>
         </div>
-        
         <div class="d-flex align-items-center text-white">
             <?php include_once __DIR__ . '/../../layouts/notification-bell.php'; ?>
         </div>
     </div>
 
     <div class="p-4">
-        
-        <?php if ($updateSuccess): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle me-2"></i>Cập nhật thông tin thành công!
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        <?php endif; ?>
-        
-        <?php if ($updateError): ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-circle me-2"></i><?= e($updateError) ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        <?php endif; ?>
-        
         <div class="row g-4">
-            
+
+            <!-- Cột trái: avatar + thông tin học vụ -->
             <div class="col-lg-4">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="profile-header-bg"></div>
                     <div class="card-body text-center pt-0">
-                        
+
                         <div class="avatar-wrapper mb-3">
-                            <img src="<?= getAvatarUrl($user['avatar'] ?? '', $user['full_name'] ?? '', 200) ?>" id="mainProfileAvatar" class="profile-avatar" alt="Student Avatar">
+                            <img src="<?= e($avatarUrl) ?>" id="mainProfileAvatar" class="profile-avatar" alt="Student Avatar">
+                            <label for="avatarUploadInput" class="avatar-edit-btn" title="Thay đổi ảnh đại diện">
+                                <i class="bi bi-camera-fill"></i>
+                            </label>
+                            <input type="file" id="avatarUploadInput" class="d-none" accept="image/png, image/jpeg, image/jpg, image/webp">
                         </div>
-                        
-                        <h5 class="fw-bold text-dark mb-1"><?= e($user['full_name'] ?? '') ?></h5>
+                        <div id="avatarUploadMsg" class="small mb-2"></div>
+
+                        <h5 class="fw-bold text-dark mb-1" id="profileDisplayName"><?= e($user['full_name'] ?? '') ?></h5>
                         <p class="text-muted small mb-3"><i class="bi bi-mortarboard-fill text-info me-1"></i>Sinh viên Chính quy</p>
-                        
+
                         <div class="d-flex justify-content-center gap-2 mb-4">
                             <span class="badge bg-primary bg-opacity-10 text-primary border border-primary"><?= e($classInfo['class_name'] ?? 'Chưa có lớp') ?></span>
                             <span class="badge bg-success bg-opacity-10 text-success border border-success">Đang học</span>
@@ -163,54 +96,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                             <p class="mb-2 text-muted small fw-bold">THÔNG TIN HỌC VỤ</p>
                             <div class="mb-3">
                                 <small class="text-muted d-block">Mã số sinh viên:</small>
-                                <span class="fw-bold text-dark"><?= e($user['username'] ?? '') ?></span>
+                                <span class="fw-bold text-dark" id="profileMssv"><?= e($mssv) ?></span>
                             </div>
                             <div class="mb-3">
                                 <small class="text-muted d-block">Chuyên ngành:</small>
-                                <span class="fw-bold text-dark"><?= e($classInfo['department_name'] ?? 'Công nghệ thông tin') ?></span>
+                                <span class="fw-bold text-dark" id="profileMajor"><?= e($classInfo['department_name'] ?? '--') ?></span>
                             </div>
                             <div class="mb-0">
                                 <small class="text-muted d-block">Niên khóa:</small>
-                                <span class="fw-bold text-dark"><?= e($classInfo['academic_year'] ?? '2022 - 2026') ?></span>
+                                <span class="fw-bold text-dark" id="profileCohort"><?= e($classInfo['academic_year'] ?? '--') ?></span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Cột phải: form -->
             <div class="col-lg-8">
-                
+
                 <div class="card shadow-sm border-0 mb-4">
                     <div class="card-header bg-white pt-4 pb-2 border-0">
                         <h5 class="fw-bold text-dark m-0"><i class="bi bi-person-lines-fill text-info me-2"></i>Thông tin Liên hệ</h5>
-                        <p class="text-muted small mt-1 mb-0">Hệ thống không cho phép tự ý đổi Họ tên và Email cấp kèm. Liên hệ Giáo vụ Khoa nếu có sai sót.</p>
+                        <p class="text-muted small mt-1 mb-0">Họ tên và Email do Giáo vụ Khoa cấp, không tự thay đổi được.</p>
                     </div>
                     <div class="card-body">
-                        <form method="POST" action="">
-                            <input type="hidden" name="action" value="update_profile">
+                        <form id="profileForm" onsubmit="return handleUpdateProfile(event)">
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Họ và tên đầy đủ</label>
-                                    <input type="text" class="form-control border-secondary bg-light" value="<?= e($user['full_name'] ?? '') ?>" readonly title="Không thể tự thay đổi">
+                                    <input type="text" id="profileFullName" class="form-control border-secondary bg-light" value="<?= e($user['full_name'] ?? '') ?>" readonly>
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold">Ngày sinh</label>
-                                    <input type="date" class="form-control border-secondary" name="birth_date" value="<?= e($user['birth_date'] ?? '') ?>">
+                                    <input type="date" id="profileBirthDate" class="form-control border-secondary" value="<?= e($user['birth_date'] ? substr($user['birth_date'], 0, 10) : '') ?>">
                                 </div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Email trường cấp</label>
-                                    <input type="email" class="form-control border-secondary bg-light" value="<?= e($user['email'] ?? '') ?>" readonly title="Không thể tự thay đổi">
+                                    <input type="email" id="profileEmail" class="form-control border-secondary bg-light" value="<?= e($user['email'] ?? '') ?>" readonly>
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold">Số điện thoại cá nhân</label>
-                                    <input type="tel" class="form-control border-secondary" name="phone_number" value="<?= e($user['phone_number'] ?? '') ?>" placeholder="Dùng để GV/BCS liên lạc...">
+                                    <input type="tel" id="profilePhoneNumber" class="form-control border-secondary" value="<?= e($user['phone_number'] ?? '') ?>" placeholder="Dùng để GV/BCS liên lạc...">
                                 </div>
                             </div>
                             <div class="mb-4">
                                 <label class="form-label fw-bold">Địa chỉ hiện tại</label>
-                                <input type="text" class="form-control border-secondary" name="address" value="<?= e($user['address'] ?? '') ?>" placeholder="Nhập địa chỉ tạm trú/thường trú...">
+                                <input type="text" id="profileAddress" class="form-control border-secondary" value="<?= e($user['address'] ?? '') ?>" placeholder="Nhập địa chỉ tạm trú/thường trú...">
                             </div>
                             <div class="text-end border-top pt-3">
                                 <button type="submit" class="btn btn-primary fw-bold px-4 shadow-sm"><i class="bi bi-save me-1"></i>LƯU THAY ĐỔI</button>
@@ -222,24 +155,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 <div class="card shadow-sm border-0 border-start border-4 border-danger">
                     <div class="card-header bg-white pt-4 pb-2 border-0">
                         <h5 class="fw-bold text-dark m-0"><i class="bi bi-shield-lock-fill text-danger me-2"></i>Đổi Mật Khẩu</h5>
-                        <p class="text-muted small mt-1 mb-0">Vui lòng thay đổi mật khẩu định kỳ để bảo vệ tài khoản học tập của bạn.</p>
+                        <p class="text-muted small mt-1 mb-0">Vui lòng thay đổi mật khẩu định kỳ để bảo vệ tài khoản học tập.</p>
                     </div>
                     <div class="card-body">
-                        <form method="POST" action="" onsubmit="return validatePasswordChange(event)">
-                            <input type="hidden" name="action" value="change_password">
+                        <form id="passwordForm" onsubmit="return handleChangePassword(event)">
                             <div class="mb-3">
                                 <label class="form-label fw-bold text-muted">Mật khẩu hiện tại <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control border-secondary" placeholder="Nhập mật khẩu cũ..." required id="oldPassword" name="old_password">
+                                <div class="input-group">
+                                    <input type="password" class="form-control border-secondary" id="oldPassword" placeholder="Nhập mật khẩu cũ..." required>
+                                    <button type="button" class="btn btn-outline-secondary toggle-password" data-target="oldPassword"><i class="bi bi-eye-fill text-muted"></i></button>
+                                </div>
                             </div>
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold text-dark">Mật khẩu mới <span class="text-danger">*</span></label>
-                                    <input type="password" class="form-control border-danger" placeholder="Nhập mật khẩu mới..." required id="newPassword" name="new_password">
+                                    <div class="input-group">
+                                        <input type="password" class="form-control border-danger" id="newPassword" placeholder="Nhập mật khẩu mới..." required>
+                                        <button type="button" class="btn btn-outline-secondary toggle-password" data-target="newPassword"><i class="bi bi-eye-fill text-muted"></i></button>
+                                    </div>
                                 </div>
                                 <div class="col-md-6 mt-3 mt-md-0">
                                     <label class="form-label fw-bold text-dark">Xác nhận mật khẩu mới <span class="text-danger">*</span></label>
-                                    <input type="password" class="form-control border-danger" placeholder="Nhập lại mật khẩu mới..." required id="confirmPassword" name="confirm_password">
-                                    <div class="invalid-feedback">Mật khẩu xác nhận không khớp!</div>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control border-danger" id="confirmPassword" placeholder="Nhập lại mật khẩu mới..." required>
+                                        <button type="button" class="btn btn-outline-secondary toggle-password" data-target="confirmPassword"><i class="bi bi-eye-fill text-muted"></i></button>
+                                    </div>
+                                    <div class="invalid-feedback d-block" id="confirmPasswordError" style="display:none!important"></div>
                                 </div>
                             </div>
                             <div class="text-end border-top pt-3">
@@ -251,7 +192,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
             </div>
         </div>
-
     </div>
 </div>
 
@@ -260,25 +200,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 <?php foreach ($extraJs as $js): ?>
     <script src="../../public/js/<?= e($js) ?>"></script>
 <?php endforeach; ?>
-<script>
-function validatePasswordChange(e) {
-    const newPass = document.getElementById('newPassword').value;
-    const confirmPass = document.getElementById('confirmPassword').value;
-    
-    if (newPass !== confirmPass) {
-        document.getElementById('confirmPassword').classList.add('is-invalid');
-        e.preventDefault();
-        return false;
-    }
-    
-    if (newPass.length < 6) {
-        alert('Mật khẩu mới phải có ít nhất 6 ký tự.');
-        e.preventDefault();
-        return false;
-    }
-    
-    return true;
-}
-</script>
 </body>
 </html>

@@ -58,13 +58,32 @@ $subjects = db_fetch_all(
      LEFT JOIN semesters sm ON cs.semester_id = sm.id
      LEFT JOIN users t ON cs.teacher_id = t.id
      WHERE ssr.student_id = ?
-       AND ssr.status = 'Đang học'
        AND COALESCE(s.subject_name, '') <> ''
      ORDER BY s.subject_name",
     [$userId]
 );
 
-$selectedSubjectId = (int)($_GET['subject_id'] ?? ($subjects[0]['class_subject_id'] ?? 0));
+// Build semester list from enrolled subjects
+$studentSemesters = [];
+$_semSeen = [];
+foreach ($subjects as $_s) {
+    $_sid = (int)($_s['semester_id'] ?? 0);
+    if ($_sid > 0 && !isset($_semSeen[$_sid])) {
+        $_semSeen[$_sid] = true;
+        $studentSemesters[] = ['id' => $_sid, 'semester_name' => $_s['semester_name'], 'academic_year' => $_s['academic_year']];
+    }
+}
+
+$defaultSemesterId = (int)($currentSemester['id'] ?? ($studentSemesters[0]['id'] ?? 0));
+$selectedSemesterId = (int)($_GET['semester_id'] ?? $defaultSemesterId);
+
+$filteredSubjects = array_values(array_filter($subjects, fn($s) => (int)($s['semester_id'] ?? 0) === $selectedSemesterId));
+
+$selectedSubjectId = (int)($_GET['subject_id'] ?? ($filteredSubjects[0]['class_subject_id'] ?? 0));
+if (!in_array($selectedSubjectId, array_map('intval', array_column($filteredSubjects, 'class_subject_id')))) {
+    $selectedSubjectId = (int)($filteredSubjects[0]['class_subject_id'] ?? 0);
+}
+
 $selectedSubject = null;
 $attendanceSummary = ['total' => 0, 'present' => 0, 'absent' => 0, 'excused' => 0];
 $attendanceRecords = [];
@@ -225,19 +244,27 @@ $semesterLabel = studentAttendanceSemesterLabel(
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-body">
                 <div class="row g-3 align-items-center mb-3">
-                    <div class="col-md-3 col-lg-2">
+                    <div class="col-md-3 col-lg-3">
                         <label class="attendance-filter-label mb-1">HỌC KỲ</label>
-                        <select class="form-select form-select-sm attendance-select bg-light" id="studentSemesterSelect" disabled>
-                            <option selected><?= e($semesterLabel !== '' ? $semesterLabel : 'Học kỳ - Chưa xác định') ?></option>
+                        <select class="form-select form-select-sm attendance-select bg-light" id="studentSemesterSelect" onchange="window.location.href='my-attendance.php?semester_id=' + this.value">
+                            <?php if (empty($studentSemesters)): ?>
+                                <option value="0">-- Chưa xác định --</option>
+                            <?php else: ?>
+                                <?php foreach ($studentSemesters as $sem): ?>
+                                    <option value="<?= (int)$sem['id'] ?>" <?= $selectedSemesterId === (int)$sem['id'] ? 'selected' : '' ?>>
+                                        <?= e(studentAttendanceSemesterLabel($sem['semester_name'], $sem['academic_year'])) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </select>
                     </div>
                     <div class="col-md-4 col-lg-4">
                         <label class="attendance-filter-label mb-1">CHỌN MÔN HỌC</label>
-                        <select class="form-select attendance-select border-primary text-primary" id="studentSubjectSelect" onchange="window.location.href='my-attendance.php?subject_id=' + this.value">
-                            <?php if (empty($subjects)): ?>
+                        <select class="form-select attendance-select border-primary text-primary" id="studentSubjectSelect" onchange="window.location.href='my-attendance.php?semester_id=<?= $selectedSemesterId ?>&subject_id=' + this.value">
+                            <?php if (empty($filteredSubjects)): ?>
                                 <option value="">-- Chưa có môn học --</option>
                             <?php else: ?>
-                                <?php foreach ($subjects as $subject): ?>
+                                <?php foreach ($filteredSubjects as $subject): ?>
                                     <option value="<?= (int)$subject['class_subject_id'] ?>" <?= $selectedSubjectId == (int)$subject['class_subject_id'] ? 'selected' : '' ?>>
                                         <?= e($subject['subject_name']) ?>
                                     </option>

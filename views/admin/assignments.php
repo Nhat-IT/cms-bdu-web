@@ -360,55 +360,88 @@ foreach ($classes as $c) {
     }
 }
 
-// Bổ sung các môn đã tạo trong danh mục nhưng chưa có lớp học phần nào
+// =====================================================
+// MÔN CHƯA TẠO LỚP HỌC PHẦN
+// KHÔNG đưa vào $dbCourses để tránh hiện lớp "--"
+// =====================================================
+
 $assignedSubjectIds = [];
+
 foreach ($rawAssignments as $a) {
     $assignedSubjectIds[(int)($a['subject_id'] ?? 0)] = true;
 }
 
 $unassignedAssignments = [];
-foreach ($rawSubjects as $s) {
-    $subjectId = (int)($s['subject_id'] ?? 0);
-    if ($subjectId <= 0 || isset($assignedSubjectIds[$subjectId])) continue;
 
-    $openDate = $s['open_date'] ?? null;
+foreach ($rawSubjects as $s) {
+
+    $subjectId = (int)($s['subject_id'] ?? 0);
+
+    // Bỏ qua môn đã có lớp học phần
+    if ($subjectId <= 0 || isset($assignedSubjectIds[$subjectId])) {
+        continue;
+    }
+
+    $openDate  = $s['open_date'] ?? null;
     $closeDate = $s['close_date'] ?? null;
-    $openWindow = (!empty($openDate) || !empty($closeDate))
-        ? (!empty($openDate) ? date('d/m/Y', strtotime($openDate)) : '--') . ' - ' . (!empty($closeDate) ? date('d/m/Y', strtotime($closeDate)) : '--')
+
+    $openWindow =
+        (!empty($openDate) || !empty($closeDate))
+        ? (!empty($openDate)
+            ? date('d/m/Y', strtotime($openDate))
+            : '--')
+            . ' - ' .
+            (!empty($closeDate)
+                ? date('d/m/Y', strtotime($closeDate))
+                : '--')
         : 'Chưa xác định';
 
     $today = date('Y-m-d');
-    if (empty($openDate) || $openDate > $today || (!empty($closeDate) && $closeDate < $today)) {
+
+    if (
+        empty($openDate)
+        || $openDate > $today
+        || (!empty($closeDate) && $closeDate < $today)
+    ) {
         $computedStatus = '0';
     } else {
         $computedStatus = '1';
     }
 
     $unassignedAssignments[] = [
-        'id'             => 'subject_pending_' . $subjectId,
-        'csId'           => null,
-        'subjectId'      => $subjectId,
-        'subjectCode'    => $s['subject_code'],
-        'subjectName'    => $s['subject_name'],
-        'classCode'      => '--',
-        'credits'        => (int)($s['credits'] ?? 0),
-        'isOpen'         => (bool)($s['subject_open'] ?? 0),
-        'year'           => $s['academic_year'] ?? '',
-        'semester'       => normalizeSemesterCode($s['semester'] ?? ''),
-        'openWindow'     => $openWindow,
-        'computedStatus' => $computedStatus,
-        'hasStudents'    => false,
-        'studentCount'   => 0,
-        'teacherMain'    => null,
-        'teacherMainName'=> null,
-        'groups'         => []
+        'id'              => 'subject_pending_' . $subjectId,
+        'csId'            => null,
+        'subjectId'       => $subjectId,
+        'subjectCode'     => $s['subject_code'],
+        'subjectName'     => $s['subject_name'],
+
+        // QUAN TRỌNG:
+        // Không dùng '--' nữa
+        'classCode'       => '',
+
+        'credits'         => (int)($s['credits'] ?? 0),
+        'isOpen'          => (bool)($s['subject_open'] ?? 0),
+        'year'            => $s['academic_year'] ?? '',
+        'semester'        => normalizeSemesterCode($s['semester'] ?? ''),
+        'openWindow'      => $openWindow,
+        'computedStatus'  => $computedStatus,
+        'hasStudents'     => false,
+        'studentCount'    => 0,
+        'teacherMain'     => null,
+        'teacherMainName' => null,
+        'groups'          => []
     ];
 }
 
+// Dataset riêng cho môn chưa có lớp
+// KHÔNG merge vào $dbCourses
+$unassignedCourses = [];
+
 if (!empty($unassignedAssignments)) {
-    $dbCourses[] = [
+
+    $unassignedCourses = [
         'id'          => 'class-unassigned',
-        'classCode'   => '--',
+        'classCode'   => '',
         'name'        => 'Môn chưa tạo lớp học phần',
         'hasOpen'     => true,
         'assignments' => $unassignedAssignments,
@@ -976,6 +1009,10 @@ window.days = [
 
 // Dữ liệu từ DB — classes catalogue với assignments lồng trong
 window.allClasses = <?= json_encode($dbCourses ?? [], JSON_UNESCAPED_UNICODE) ?>;
+
+// Dataset riêng cho môn chưa tạo lớp
+window.unassignedCourses = <?= json_encode($unassignedCourses ?? [], JSON_UNESCAPED_UNICODE) ?>;
+
 // Flat version cho backward compat (openSessionManager, addGroupToClass, v.v.)
 window.allAssignmentCourses = [];
 if (Array.isArray(window.allClasses)) {

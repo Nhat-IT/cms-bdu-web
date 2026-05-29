@@ -4,7 +4,9 @@
  * Cấu hình phiên làm việc
  */
 
+
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/helpers.php';
 
 // Don't call session_start() if session is already active
 if (session_status() === PHP_SESSION_NONE) {

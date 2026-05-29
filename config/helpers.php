@@ -45,8 +45,19 @@ function getCurrentSemester() {
 
 // Lấy avatar với fallback
 function getAvatarUrl($avatar = null, $name = '', $size = 55) {
-    if ($avatar && file_exists($avatar)) {
-        return $avatar;
+    if ($avatar) {
+        if (file_exists($avatar)) {
+            return $avatar;
+        }
+        if (strncmp($avatar, '/', 1) === 0 && isset($_SERVER['DOCUMENT_ROOT'])) {
+            $fsPath = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']), '/') . $avatar;
+            if (file_exists($fsPath)) {
+                return $avatar;
+            }
+        }
+        if (strncmp($avatar, 'http', 4) === 0) {
+            return $avatar;
+        }
     }
     $encodedName = urlencode((string) ($name ?? ''));
     return "https://ui-avatars.com/api/?name={$encodedName}&background=0d6efd&color=fff&size={$size}";

@@ -38,8 +38,14 @@ function usersHasSecondaryRoleColumn() {
 }
 
 // is_active luôn tồn tại trong bảng users (1 = hoạt động, 0 = bị khóa)
+function usersHasDepartmentColumn() {
+    $row = db_fetch_one("SELECT COUNT(*) as total FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'department_id'");
+    return ((int) ($row['total'] ?? 0)) > 0;
+}
+
 $hasLockColumn = true;
 $hasSecondaryRoleColumn = usersHasSecondaryRoleColumn();
+$hasDepartmentColumn = usersHasDepartmentColumn();
 
 // Build query
 $whereConditions = [];
@@ -132,6 +138,7 @@ $fields = [
     'role',
     'academic_title',
     $hasSecondaryRoleColumn ? 'secondary_role' : 'NULL AS secondary_role',
+    $hasDepartmentColumn ? 'department_id' : 'NULL AS department_id',
     'position',
     'birth_date',
     'avatar',
@@ -145,6 +152,8 @@ $users = db_fetch_all($sql, $params);
 
 // Lấy danh sách lớp học cho dropdown
 $classes = db_fetch_all("SELECT id, class_name FROM classes ORDER BY class_name");
+// Lấy danh sách ngành học cho dropdown
+$departments = db_fetch_all("SELECT id, department_name FROM departments ORDER BY department_name");
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -189,17 +198,22 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
         <?php endif; ?>
 
         <?php if (isset($_GET['account_success'])): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="alert alert-success alert-dismissible fade show auto-dismiss" role="alert">
                 <i class="bi bi-check-circle-fill me-2"></i> Lưu tài khoản thành công.
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
+        <?php elseif (isset($_GET['account_deleted'])): ?>
+            <div class="alert alert-warning alert-dismissible fade show auto-dismiss" role="alert">
+                <i class="bi bi-trash-fill me-2"></i> Xóa tài khoản thành công.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
         <?php elseif (isset($_GET['account_reset'])): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="alert alert-success alert-dismissible fade show auto-dismiss" role="alert">
                 <i class="bi bi-key-fill me-2"></i> Đã khôi phục mật khẩu mặc định.
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php elseif (isset($_GET['account_lock_changed'])): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="alert alert-success alert-dismissible fade show auto-dismiss" role="alert">
                 <i class="bi bi-lock-fill me-2"></i> Đã cập nhật trạng thái khóa tài khoản.
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
@@ -223,7 +237,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                 $accountErrorCode = $_GET['account_error'];
                 $accountErrorMessage = $accountErrorMessages[$accountErrorCode] ?? 'Đã xảy ra lỗi. Vui lòng thử lại.';
             ?>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="alert alert-danger alert-dismissible fade show auto-dismiss" role="alert">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i> <?php echo e($accountErrorMessage); ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
@@ -377,8 +391,8 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                                                     <i class="bi bi-key-fill"></i>
                                                 </button>
                                             </form>
-                                            <button class="btn btn-light action-btn text-primary border me-1" title="Sửa thông tin" data-bs-toggle="modal" data-bs-target="#accountModal" 
-                                                onclick="openAccountModal('edit', '<?php echo e($user['id']); ?>', '<?php echo e($user['username']); ?>', '<?php echo e($user['full_name']); ?>', '<?php echo e($user['email']); ?>', '<?php echo e($user['role']); ?>', '<?php echo e($user['secondary_role'] ?? ''); ?>', '<?php echo e($user['class_id'] ?? ''); ?>', '<?php echo e($user['academic_title'] ?? ''); ?>', '<?php echo e($user['position'] ?? ''); ?>', '<?php echo e(!empty($user['birth_date']) ? date('Y-m-d', strtotime($user['birth_date'])) : ''); ?>')">
+                                            <button class="btn btn-light action-btn text-primary border me-1" title="Sửa thông tin" data-bs-toggle="modal" data-bs-target="#accountModal"
+                                                onclick="openAccountModal('edit', '<?php echo e($user['id']); ?>', '<?php echo e($user['username']); ?>', '<?php echo e($user['full_name']); ?>', '<?php echo e($user['email']); ?>', '<?php echo e($user['role']); ?>', '<?php echo e($user['secondary_role'] ?? ''); ?>', '<?php echo e($user['class_id'] ?? ''); ?>', '<?php echo e($user['academic_title'] ?? ''); ?>', '<?php echo e($user['position'] ?? ''); ?>', '<?php echo e(!empty($user['birth_date']) ? date('Y-m-d', strtotime($user['birth_date'])) : ''); ?>', '<?php echo e($user['department_id'] ?? ''); ?>')">
                                                 <i class="bi bi-pencil-square"></i>
                                             </button>
                                             <?php if (!$isProtectedAdmin): ?>
@@ -515,7 +529,19 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
                 <input type="text" class="form-control border-secondary" id="modalPositionSecondary" name="position_secondary" placeholder="Ví dụ: Cố vấn học tập">
             </div>
           </div>
-          
+
+          <div class="row" id="departmentGroup">
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Ngành học</label>
+                <select class="form-select border-secondary" name="department_id" id="modalDepartment">
+                    <option value="">-- Chọn ngành học --</option>
+                    <?php foreach ($departments as $dept): ?>
+                        <option value="<?php echo e($dept['id']); ?>"><?php echo e($dept['department_name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+          </div>
+
           <div class="mb-4 bg-light p-3 rounded border">
             <label class="form-label fw-bold d-block mb-3">Vai trò trong hệ thống <span class="text-danger">*</span></label>
             <div class="row role-checkbox-group">
@@ -615,6 +641,8 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
     const modalClassInput = document.getElementById('modalClass');
     const academicTitleGroup = document.getElementById('academicTitleGroup');
     const modalAcademicTitle = document.getElementById('modalAcademicTitle');
+    const departmentGroup = document.getElementById('departmentGroup');
+    const modalDepartment = document.getElementById('modalDepartment');
     const roleValidationMsg = document.getElementById('roleValidationMsg');
     const filterForm = document.getElementById('accountFilterForm');
     const searchFilterInput = document.getElementById('searchFilterInput');
@@ -686,6 +714,8 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
             modalClassInput.removeAttribute('required');
             modalClassInput.value = '';
             academicTitleGroup.style.display = 'block';
+            if (departmentGroup) departmentGroup.style.display = 'none';
+            if (modalDepartment) modalDepartment.value = '';
             roleValidationMsg.style.display = 'none';
             return;
         }
@@ -746,6 +776,15 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
             modalAcademicTitle.value = '';
         }
 
+        if (departmentGroup) {
+            if (hasAdminRole) {
+                departmentGroup.style.display = 'none';
+                if (modalDepartment) modalDepartment.value = '';
+            } else {
+                departmentGroup.style.display = '';
+            }
+        }
+
         roleValidationMsg.style.display = selectedRoles.length > 0 ? 'none' : 'none';
     }
 
@@ -782,7 +821,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
         return [parts[0] || '', parts[1] || ''];
     }
 
-    function openAccountModal(mode, id = '', code = '', fullName = '', email = '', primaryRole = '', secondaryRole = '', classId = '', academicTitle = '', position = '', birthDate = '') {
+    function openAccountModal(mode, id = '', code = '', fullName = '', email = '', primaryRole = '', secondaryRole = '', classId = '', academicTitle = '', position = '', birthDate = '', departmentId = '') {
         const title = document.getElementById('accountModalTitle');
         const inputCode = document.getElementById('modalCode');
         const inputAcademicTitle = document.getElementById('modalAcademicTitle');
@@ -818,6 +857,8 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
             roleStaffOption.style.display = '';
         }
 
+        if (modalDepartment) modalDepartment.value = '';
+
         if (mode === 'add') {
             title.innerHTML = '<i class="bi bi-person-plus-fill me-2"></i>Thêm Tài Khoản Mới';
             inputCode.removeAttribute('readonly');
@@ -839,6 +880,7 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
             modalClassInput.value = classId;
             inputAcademicTitle.value = academicTitle;
             if (inputBirthDate) inputBirthDate.value = birthDate || '';
+            if (modalDepartment) modalDepartment.value = departmentId || '';
             const [positionPrimary, positionSecondary] = splitPositions(position);
             if (inputPositionPrimary) inputPositionPrimary.value = positionPrimary;
             if (inputPositionSecondary) inputPositionSecondary.value = positionSecondary;
@@ -937,6 +979,13 @@ require_once __DIR__ . '/../../layouts/admin-topbar.php';
             return false;
         }
     }
+
+    document.querySelectorAll('.auto-dismiss').forEach(function(el) {
+        setTimeout(function() {
+            var alert = bootstrap.Alert.getOrCreateInstance(el);
+            alert.close();
+        }, 3000);
+    });
 
     function handleDeleteAccount(event) {
         event.preventDefault();

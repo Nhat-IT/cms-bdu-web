@@ -31,9 +31,16 @@ $birthDateRaw = trim($_POST['birth_date'] ?? '');
 $birthDate = $birthDateRaw !== '' ? $birthDateRaw : null;
 $classIdRaw = $_POST['class_id'] ?? '';
 $classId = ($classIdRaw === '' || $classIdRaw === null) ? null : (int) $classIdRaw;
+$departmentIdRaw = $_POST['department_id'] ?? '';
+$departmentId = ($departmentIdRaw === '' || $departmentIdRaw === null) ? null : (int) $departmentIdRaw;
 
 function usersHasSecondaryRoleColumnAdmin(): bool {
     $row = db_fetch_one("SELECT COUNT(*) as total FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'secondary_role'");
+    return ((int) ($row['total'] ?? 0)) > 0;
+}
+
+function usersHasDepartmentColumnAdmin(): bool {
+    $row = db_fetch_one("SELECT COUNT(*) as total FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'department_id'");
     return ((int) ($row['total'] ?? 0)) > 0;
 }
 
@@ -157,7 +164,7 @@ if ($action === 'delete_user') {
 
         db_query('DELETE FROM users WHERE id = ?', [$id]);
         logSystem("Xóa tài khoản ID #$id", 'users', $id);
-        redirect('../../views/admin/accounts.php?account_success=1');
+        redirect('../../views/admin/accounts.php?account_deleted=1');
     } catch (Exception $e) {
         redirect('../../views/admin/accounts.php?account_error=delete_failed');
     }
@@ -229,35 +236,55 @@ if ($isProtectedById || $isProtectedByEmail) {
 }
 
     try {
+    $hasSecondaryRoleColumn = usersHasSecondaryRoleColumnAdmin();
+    $hasDepartmentColumn = usersHasDepartmentColumnAdmin();
+
     if ($id > 0) {
-        $hasSecondaryRoleColumn = usersHasSecondaryRoleColumnAdmin();
+        $updateFields = 'username = ?, full_name = ?, email = ?, role = ?';
+        $updateParams = [$username, $fullName, $email, $role];
+
         if ($hasSecondaryRoleColumn) {
-            db_query(
-                'UPDATE users SET username = ?, full_name = ?, email = ?, role = ?, secondary_role = ?, academic_title = ?, position = ?, birth_date = ? WHERE id = ?',
-                [$username, $fullName, $email, $role, $secondaryRole !== '' ? $secondaryRole : null, $academicTitle !== '' ? $academicTitle : null, $position, $birthDate, $id]
-            );
-        } else {
-            db_query(
-                'UPDATE users SET username = ?, full_name = ?, email = ?, role = ?, academic_title = ?, position = ?, birth_date = ? WHERE id = ?',
-                [$username, $fullName, $email, $role, $academicTitle !== '' ? $academicTitle : null, $position, $birthDate, $id]
-            );
+            $updateFields .= ', secondary_role = ?';
+            $updateParams[] = $secondaryRole !== '' ? $secondaryRole : null;
         }
+
+        $updateFields .= ', academic_title = ?, position = ?, birth_date = ?';
+        array_push($updateParams, $academicTitle !== '' ? $academicTitle : null, $position, $birthDate);
+
+        if ($hasDepartmentColumn) {
+            $updateFields .= ', department_id = ?';
+            $updateParams[] = $departmentId;
+        }
+
+        $updateParams[] = $id;
+        db_query("UPDATE users SET $updateFields WHERE id = ?", $updateParams);
+
         $userId = $id;
         logSystem("Cập nhật tài khoản ID #$id - $fullName (vai trò: $role)", 'users', $userId);
     } else {
         $defaultPasswordHash = password_hash('123456@', PASSWORD_DEFAULT);
-        $hasSecondaryRoleColumn = usersHasSecondaryRoleColumnAdmin();
+
+        $insertFields = 'username, password, full_name, email, role';
+        $insertPlaceholders = '?, ?, ?, ?, ?';
+        $insertParams = [$username, $defaultPasswordHash, $fullName, $email, $role];
+
         if ($hasSecondaryRoleColumn) {
-            db_query(
-                'INSERT INTO users (username, password, full_name, email, role, secondary_role, academic_title, position, birth_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [$username, $defaultPasswordHash, $fullName, $email, $role, $secondaryRole !== '' ? $secondaryRole : null, $academicTitle !== '' ? $academicTitle : null, $position, $birthDate]
-            );
-        } else {
-            db_query(
-                'INSERT INTO users (username, password, full_name, email, role, academic_title, position, birth_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                [$username, $defaultPasswordHash, $fullName, $email, $role, $academicTitle !== '' ? $academicTitle : null, $position, $birthDate]
-            );
+            $insertFields .= ', secondary_role';
+            $insertPlaceholders .= ', ?';
+            $insertParams[] = $secondaryRole !== '' ? $secondaryRole : null;
         }
+
+        $insertFields .= ', academic_title, position, birth_date';
+        $insertPlaceholders .= ', ?, ?, ?';
+        array_push($insertParams, $academicTitle !== '' ? $academicTitle : null, $position, $birthDate);
+
+        if ($hasDepartmentColumn) {
+            $insertFields .= ', department_id';
+            $insertPlaceholders .= ', ?';
+            $insertParams[] = $departmentId;
+        }
+
+        db_query("INSERT INTO users ($insertFields) VALUES ($insertPlaceholders)", $insertParams);
 
         $created = db_fetch_one('SELECT id FROM users WHERE email = ? LIMIT 1', [$email]);
         $userId = (int) ($created['id'] ?? 0);
