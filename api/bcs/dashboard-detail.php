@@ -71,6 +71,19 @@ try {
     $warningSubjectCount = count(array_unique(array_column($warningPairs, 'class_subject_id')));
     $warningStudentCount = count(array_unique(array_column($warningPairs, 'student_key')));
 
+    // Đếm SV có ít nhất 1 buổi vắng (không nhất thiết >= 3)
+    $absentStudentsRow = db_fetch_one("
+        SELECT COUNT(DISTINCT COALESCE(ar.student_id, ar.registration_id)) AS total
+        FROM attendance_records ar
+        JOIN attendance_sessions a_s ON ar.session_id = a_s.id
+        JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
+        JOIN class_subjects cs ON csg.class_subject_id = cs.id
+        $ssrJoin
+        WHERE ar.status = 3
+          AND (cs.class_id = ? OR a_s.created_by = ?)
+    ", [$classId, $userId]);
+    $absentStudentCount = (int)($absentStudentsRow['total'] ?? 0);
+
     // ── Detail rows ──────────────────────────────────────────────────────────
 
     $subquery = "
@@ -112,6 +125,7 @@ try {
     echo json_encode([
         'stats' => [
             'totalStudents'   => $totalStudents,
+            'absentStudents'  => $absentStudentCount,
             'warningStudents' => $warningStudentCount,
             'warningSubjects' => $warningSubjectCount,
         ],

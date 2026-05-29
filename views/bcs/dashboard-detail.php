@@ -133,6 +133,23 @@ if ($sourceType === 'class_students' && $classId) {
 }
 $absenceDetails = $stmt->fetchAll();
 
+// Đếm SV có ít nhất 1 buổi vắng (dùng cùng filter với API)
+$absentStudentCount = (int)(db_fetch_one("
+    SELECT COUNT(DISTINCT COALESCE(ar.student_id, ar.registration_id)) as total
+    FROM attendance_records ar
+    JOIN attendance_sessions a_s ON ar.session_id = a_s.id
+    JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
+    JOIN class_subjects cs ON csg.class_subject_id = cs.id
+    LEFT JOIN student_subject_registration ssr
+        ON ssr.class_subject_group_id = csg.id
+        AND (
+            (ar.student_id IS NOT NULL AND ssr.student_id = ar.student_id)
+            OR (ar.student_id IS NULL AND ssr.id = ar.registration_id)
+        )
+    WHERE ar.status = 3
+      AND (cs.class_id = ? OR a_s.created_by = ?)
+", [$classId, $userId])['total'] ?? 0);
+
 // Đếm notification
 $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM notification_logs WHERE user_id = ? AND is_read = 0");
 $stmt->execute([$userId]);
@@ -190,8 +207,8 @@ foreach ($absenceDetails as $abs) {
             transform: scale(1.02);
             transition: transform .15s, box-shadow .15s;
         }
-        #cardWarnStudents.filter-active { box-shadow: 0 0 0 3px #dc3545 !important; }
-        #cardWarnSubjects.filter-active { box-shadow: 0 0 0 3px #ffc107 !important; }
+#cardWarnStudents.filter-active   { box-shadow: 0 0 0 3px #dc3545 !important; }
+        #cardWarnSubjects.filter-active   { box-shadow: 0 0 0 3px #ffc107 !important; }
     </style>
 </head>
 <body class="dashboard-body">
@@ -274,39 +291,53 @@ foreach ($absenceDetails as $abs) {
 
     <div class="p-4">
         <div class="row g-4 mb-4">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card stat-card-custom border-start border-primary border-4 h-100 p-3 shadow-sm bg-white">
                     <div class="d-flex align-items-center">
                         <div class="icon-box-custom bg-light-primary me-3 text-primary rounded p-2"><i class="bi bi-people-fill fs-4"></i></div>
                         <div>
                             <p class="text-muted fw-bold mb-1" style="font-size: 0.85rem;">TỔNG SINH VIÊN</p>
-                            <h2 class="mb-0 fw-bold text-dark"><?= $totalStudents ?></h2>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-4">
-                <div class="card stat-card-custom border-start border-danger border-4 h-100 p-3 shadow-sm bg-white"
-                     id="cardWarnStudents" onclick="toggleFilter('students')" style="cursor:pointer;" title="Nhấp để lọc Sinh viên bị cảnh báo">
-                    <div class="d-flex align-items-center">
-                        <div class="icon-box-custom bg-light-danger me-3 text-danger rounded p-2"><i class="bi bi-person-x-fill fs-4"></i></div>
-                        <div>
-                            <p class="text-danger fw-bold mb-1" style="font-size: 0.85rem;">SV CẢNH BÁO</p>
-                            <h2 class="mb-0 fw-bold text-danger"><?= $warningStudentCount ?></h2>
+                            <h2 class="mb-0 fw-bold text-dark" id="statTotalStudents"><?= $totalStudents ?></h2>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
+                <div class="card stat-card-custom border-start border-4 h-100 p-3 shadow-sm bg-white"
+                     style="border-color:#6f42c1!important;"
+                     id="cardAbsentStudents">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3 rounded p-2" style="background:#ede7f6;"><i class="bi bi-person-dash-fill fs-4" style="color:#6f42c1;"></i></div>
+                        <div>
+                            <p class="fw-bold mb-1" style="font-size:0.85rem;color:#6f42c1;">SINH VIÊN VẮNG</p>
+                            <h2 class="mb-0 fw-bold" style="color:#6f42c1;" id="statAbsentStudents"><?= $absentStudentCount ?></h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card stat-card-custom border-start border-danger border-4 h-100 p-3 shadow-sm bg-white"
+                     id="cardWarnStudents" onclick="toggleFilter('students')" style="cursor:pointer;" title="Nhấp để lọc SV cảnh báo (≥3 buổi vắng)">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box-custom bg-light-danger me-3 text-danger rounded p-2"><i class="bi bi-person-x-fill fs-4"></i></div>
+                        <div>
+                            <p class="text-danger fw-bold mb-1" style="font-size: 0.85rem;">SV CẢNH BÁO</p>
+                            <h2 class="mb-0 fw-bold text-danger" id="statWarnStudents"><?= $warningStudentCount ?></h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
                 <div class="card stat-card-custom border-start border-warning border-4 h-100 p-3 shadow-sm bg-white"
                      id="cardWarnSubjects" onclick="toggleFilter('subjects')" style="cursor:pointer;" title="Nhấp để lọc Môn cảnh báo">
                     <div class="d-flex align-items-center">
                         <div class="icon-box-custom bg-light-warning me-3 text-warning rounded p-2"><i class="bi bi-journal-x fs-4"></i></div>
                         <div>
                             <p class="text-warning fw-bold mb-1" style="font-size: 0.85rem;">MÔN CẢNH BÁO</p>
-                            <h2 class="mb-0 fw-bold text-warning"><?= $warningSubjectCount ?></h2>
+                            <h2 class="mb-0 fw-bold text-warning" id="statWarnSubjects"><?= $warningSubjectCount ?></h2>
                         </div>
                     </div>
                 </div>

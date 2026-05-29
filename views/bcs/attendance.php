@@ -344,7 +344,52 @@ function attendanceSemesterLabel($semesterName, $academicYear) {
   </div>
 </div>
 
+<!-- Modal chỉnh sửa thông tin sinh viên -->
+<div class="modal fade" id="editStudentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-fill me-2"></i>Chỉnh sửa thông tin Sinh viên</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div id="editStudentError" class="alert alert-danger small py-2 d-none"></div>
+        <input type="hidden" id="editRegistrationId">
+        <input type="hidden" id="editStudentIdLinked">
+        <form id="editStudentForm" onsubmit="return false;">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold">Mã số (MSSV) <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="editMssv" required>
+              <div class="form-text text-muted" id="editMssvNote" style="display:none;">Tài khoản hệ thống — không thể thay đổi MSSV.</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold">Lớp học <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="editClass" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Họ và Tên Sinh viên <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="editFullName" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-bold">Ngày sinh</label>
+            <input type="date" class="form-control" id="editDob">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer border-0 pb-4 px-4 bg-light">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+        <button type="button" class="btn btn-primary fw-bold" id="editStudentSaveBtn" onclick="window.saveEditStudent()">
+          <i class="bi bi-check2-circle me-1"></i>Lưu thay đổi
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="../../public/js/script.js"></script>
 <script src="../../public/js/bcs/bcs-layout.js"></script>
 <script src="../../public/js/bcs/attendance.js"></script>
@@ -371,6 +416,23 @@ const CLASS_NAME = <?= json_encode($className) ?>;
     }
     .name-cell {
         white-space: nowrap;
+    }
+    .edit-sv-btn {
+        opacity: 0;
+        transition: opacity 0.15s;
+        vertical-align: middle;
+        line-height: 1;
+        border: none;
+        background: none;
+        display: inline-flex;
+        align-items: center;
+    }
+    tr:hover .edit-sv-btn,
+    .edit-sv-btn:focus {
+        opacity: 1;
+    }
+    #attendanceTable td.name-cell {
+        overflow: visible;
     }
     .attendance-footer {
         position: sticky;

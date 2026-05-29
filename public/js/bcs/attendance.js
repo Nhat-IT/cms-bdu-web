@@ -109,6 +109,7 @@ function bcsRenderRoster(students) {
 
     tbody.innerHTML = students.map((sv, idx) => {
         const birth = sv.birth_date ? bcsFormatDate(sv.birth_date) : '';
+        const rawBirth = sv.birth_date ? String(sv.birth_date).slice(0, 10) : '';
         const statusValue = Number(sv.status);
         const rowClass = statusValue === 2
             ? 'bg-warning bg-opacity-10'
@@ -116,12 +117,24 @@ function bcsRenderRoster(students) {
         const isUnexcused = statusValue === 3;
         const savedNote = (sv.note || '').replace(/"/g, '&quot;');
         const registrationId = Number(sv.registration_id || 0);
+        const escAttr = v => String(v || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 
         return `
-            <tr class="student-row ${rowClass}" data-student-id="${sv.student_id}" data-registration-id="${registrationId}">
+            <tr class="student-row ${rowClass}"
+                data-student-id="${sv.student_id}"
+                data-registration-id="${registrationId}"
+                data-mssv="${escAttr(sv.username)}"
+                data-full-name="${escAttr(sv.full_name)}"
+                data-birth="${rawBirth}"
+                data-class="${escAttr(sv.class_name)}">
                 <td class="text-center stt-col text-muted">${idx + 1}</td>
                 <td class="fw-bold text-dark mssv-cell">${sv.username || ''}</td>
-                <td class="fw-bold ${isUnexcused ? 'text-danger' : 'text-dark'} student-name name-cell">${sv.full_name || ''}</td>
+                <td class="fw-bold ${isUnexcused ? 'text-danger' : 'text-dark'} student-name name-cell">
+                    ${sv.full_name || ''}
+                    <button class="btn btn-link p-0 ms-1 edit-sv-btn" title="Chỉnh sửa thông tin sinh viên" onclick="window.openEditStudentModal(this)">
+                        <i class="bi bi-pencil-fill" style="font-size:0.7rem;color:#0d6efd;"></i>
+                    </button>
+                </td>
                 <td>${birth}</td>
                 <td>${sv.class_name || ''}</td>
                 <td>
@@ -362,7 +375,7 @@ window.filterTable = function () {
     const rows = Array.from(document.querySelectorAll('#studentTableBody tr.student-row'));
     rows.forEach((row) => {
         const mssv = (row.querySelector('.mssv-cell')?.textContent || '').toLowerCase();
-        const name = (row.querySelector('.name-cell')?.textContent || '').toLowerCase();
+        const name = (row.getAttribute('data-full-name') || '').toLowerCase();
         row.style.display = (!keyword || mssv.includes(keyword) || name.includes(keyword)) ? '' : 'none';
     });
     window.recalculateAttendance();
@@ -424,10 +437,12 @@ window.addStudentToTable = async function () {
     }
 };
 
-window.exportToExcel = function () {
-    const subject = document.getElementById('subjectSelect')?.selectedOptions?.[0]?.textContent?.trim() || 'Môn học';
-    const group = document.getElementById('groupSelect')?.selectedOptions?.[0]?.textContent?.trim() || 'Nhóm';
+window.exportToExcel = async function () {
+    const subject   = document.getElementById('subjectSelect')?.selectedOptions?.[0]?.textContent?.trim() || 'Môn học';
+    const group     = document.getElementById('groupSelect')?.selectedOptions?.[0]?.textContent?.trim()   || 'Nhóm';
     const dateValue = document.getElementById('attendanceDate')?.value || new Date().toISOString().slice(0, 10);
+    const session   = document.getElementById('attendanceSession')?.value || '';
+    const className = window.CLASS_NAME || '';
 
     const rows = Array.from(document.querySelectorAll('#studentTableBody tr.student-row'));
     if (!rows.length) {
@@ -435,26 +450,122 @@ window.exportToExcel = function () {
         return;
     }
 
-    const csvRows = [
-        ['MSSV', 'Họ tên', 'Ngày sinh', 'Lớp', 'Trạng thái'].join(','),
-        ...rows.map((row) => {
-            const mssv = row.querySelector('.mssv-cell')?.textContent?.trim() || '';
-            const name = row.querySelector('.name-cell')?.textContent?.trim() || '';
-            const dob = row.children[3]?.textContent?.trim() || '';
-            const cls = row.children[4]?.textContent?.trim() || '';
-            const status = row.querySelector('.status-select')?.selectedOptions?.[0]?.textContent?.trim() || '';
-            const esc = (v) => `"${String(v).replace(/"/g, '""')}"`;
-            return [mssv, name, dob, cls, status].map(esc).join(',');
-        })
+    const dp = dateValue.split('-');
+    const dateDisp = dp.length === 3 ? `${dp[2]}/${dp[1]}/${dp[0]}` : dateValue;
+
+    const data = rows.map((row, i) => ({
+        stt:       i + 1,
+        mssv:      row.querySelector('.mssv-cell')?.textContent?.trim() || '',
+        name:      (row.getAttribute('data-full-name') || '').trim(),
+        dob:       row.children[3]?.textContent?.trim() || '',
+        cls:       row.children[4]?.textContent?.trim() || '',
+        statusVal: Number(row.querySelector('.status-select')?.value || 1),
+        statusTxt: row.querySelector('.status-select')?.selectedOptions?.[0]?.textContent?.trim() || '',
+        note:      row.querySelector('.note-input')?.value?.trim() || ''
+    }));
+
+    if (typeof ExcelJS === 'undefined') {
+        alert('Thư viện xuất Excel chưa tải. Vui lòng kiểm tra kết nối internet và thử lại.');
+        return;
+    }
+
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Điểm Danh');
+
+    ws.columns = [
+        { width: 6  },
+        { width: 14 },
+        { width: 28 },
+        { width: 13 },
+        { width: 11 },
+        { width: 16 },
+        { width: 25 },
     ];
 
-    const content = `Subject,${JSON.stringify(subject)}\nGroup,${JSON.stringify(group)}\nDate,${dateValue}\n\n${csvRows.join('\n')}`;
-    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+    const TNR = (size, bold = false, italic = false, argb = null) => {
+        const f = { name: 'Times New Roman', size };
+        if (bold)   f.bold   = true;
+        if (italic) f.italic = true;
+        if (argb)   f.color  = { argb };
+        return f;
+    };
+    const BORDER_H = { top: { style:'thin', color:{argb:'FFFFFFFF'} }, bottom: { style:'thin', color:{argb:'FFFFFFFF'} }, left: { style:'thin', color:{argb:'FFFFFFFF'} }, right: { style:'thin', color:{argb:'FFFFFFFF'} } };
+    const BORDER_D = { top: { style:'thin', color:{argb:'FFd1d5db'} }, bottom: { style:'thin', color:{argb:'FFd1d5db'} }, left: { style:'thin', color:{argb:'FFd1d5db'} }, right: { style:'thin', color:{argb:'FFd1d5db'} } };
 
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `bcs_attendance_${dateValue}_${bcsAttendanceState.selectedGroupId || 'group'}.csv`;
+    let r = 1;
+
+    // Tiêu đề
+    ws.mergeCells(`A${r}:G${r}`);
+    const titleC = ws.getCell(`A${r}`);
+    titleC.value     = 'BẢNG ĐIỂM DANH';
+    titleC.font      = TNR(14, true);
+    titleC.alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.getRow(r++).height = 30;
+
+    // Thông tin
+    ws.mergeCells(`A${r}:G${r}`);
+    const infoC = ws.getCell(`A${r}`);
+    infoC.value     = `Môn học: ${subject} | ${group} | Ngày: ${dateDisp}${session ? ' | Buổi: ' + session : ''}`;
+    infoC.font      = TNR(12, false, true);
+    infoC.alignment = { vertical: 'middle' };
+    ws.getRow(r++).height = 18;
+
+    // Lớp
+    if (className) {
+        ws.mergeCells(`A${r}:G${r}`);
+        const clsC = ws.getCell(`A${r}`);
+        clsC.value     = `Lớp: ${className}`;
+        clsC.font      = TNR(12, false, true);
+        clsC.alignment = { vertical: 'middle' };
+        ws.getRow(r++).height = 18;
+    }
+
+    // Khoảng trống
+    ws.getRow(r++).height = 6;
+
+    // Header
+    const headers = ['STT', 'MSSV', 'HỌ VÀ TÊN', 'NGÀY SINH', 'LỚP', 'TRẠNG THÁI', 'GHI CHÚ'];
+    const hRow = ws.getRow(r++);
+    hRow.height = 28;
+    headers.forEach((val, i) => {
+        const c = hRow.getCell(i + 1);
+        c.value     = val;
+        c.font      = TNR(12, true, false, 'FFFFFFFF');
+        c.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1a56db' } };
+        c.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        c.border    = BORDER_H;
+    });
+
+    // Dữ liệu
+    const STATUS = {
+        1: { bg: 'FFdcfce7', text: 'FF166534' },
+        2: { bg: 'FFfefce8', text: 'FF854d0e' },
+        3: { bg: 'FFfee2e2', text: 'FF991b1b' }
+    };
+    const CENTER_COLS = new Set([1, 4, 5, 6]);
+
+    data.forEach(sv => {
+        const row = ws.addRow([sv.stt, sv.mssv, sv.name, sv.dob, sv.cls, sv.statusTxt, sv.note]);
+        row.height = 20;
+        const sc = STATUS[sv.statusVal] || STATUS[1];
+        row.eachCell({ includeEmpty: true }, (cell, col) => {
+            cell.font      = TNR(12);
+            cell.alignment = { vertical: 'middle', horizontal: CENTER_COLS.has(col) ? 'center' : 'left' };
+            cell.border    = BORDER_D;
+            if (col === 6) {
+                cell.font = TNR(12, true, false, sc.text);
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: sc.bg } };
+            }
+        });
+    });
+
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob   = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url    = URL.createObjectURL(blob);
+    const a      = document.createElement('a');
+    const groupNum = (group.match(/\d+/) || [''])[0];
+    a.href     = url;
+    a.download = `diemdanh_${dateValue}_nhom${groupNum || group.replace(/\s+/g, '_')}.xlsx`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -570,5 +681,74 @@ async function loadBcsAttendanceData() {
         document.getElementById('addStudentError')?.classList.add('d-none');
     });
 }
+
+window.openEditStudentModal = function (btn) {
+    const row = btn.closest('tr');
+    const studentId = Number(row.getAttribute('data-student-id') || 0);
+
+    document.getElementById('editRegistrationId').value = row.getAttribute('data-registration-id') || '';
+    document.getElementById('editStudentIdLinked').value = studentId;
+    document.getElementById('editMssv').value = row.getAttribute('data-mssv') || '';
+    document.getElementById('editFullName').value = row.getAttribute('data-full-name') || '';
+    document.getElementById('editDob').value = row.getAttribute('data-birth') || '';
+    document.getElementById('editClass').value = row.getAttribute('data-class') || '';
+
+    // MSSV của tài khoản có sẵn là tên đăng nhập — không cho sửa
+    const mssvInput = document.getElementById('editMssv');
+    mssvInput.readOnly = studentId > 0;
+    mssvInput.classList.toggle('bg-light', studentId > 0);
+    const mssvNote = document.getElementById('editMssvNote');
+    if (mssvNote) mssvNote.style.display = studentId > 0 ? '' : 'none';
+
+    document.getElementById('editStudentError').classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('editStudentModal')).show();
+};
+
+window.saveEditStudent = async function () {
+    const registrationId = Number(document.getElementById('editRegistrationId').value);
+    const studentId      = Number(document.getElementById('editStudentIdLinked').value);
+    const mssv      = (document.getElementById('editMssv').value      || '').trim();
+    const fullName  = (document.getElementById('editFullName').value  || '').trim();
+    const birthDate =  document.getElementById('editDob').value       || '';
+    const className = (document.getElementById('editClass').value     || '').trim();
+
+    const errEl = document.getElementById('editStudentError');
+    errEl.classList.add('d-none');
+
+    if (!mssv || !fullName || !className) {
+        errEl.textContent = 'Vui lòng điền đầy đủ MSSV, Họ tên và Lớp.';
+        errEl.classList.remove('d-none');
+        return;
+    }
+
+    const saveBtn = document.getElementById('editStudentSaveBtn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang lưu...';
+
+    try {
+        const res = await fetch(bcsToUrl('/api/bcs/attendance/update-student'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({ registrationId, studentId, mssv, fullName, birthDate, className })
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            errEl.textContent = data.error || 'Không thể cập nhật thông tin.';
+            errEl.classList.remove('d-none');
+            return;
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById('editStudentModal'))?.hide();
+        bcsLoadRoster();
+    } catch (e) {
+        errEl.textContent = 'Lỗi kết nối. Vui lòng thử lại.';
+        errEl.classList.remove('d-none');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i>Lưu thay đổi';
+    }
+};
 
 document.addEventListener('DOMContentLoaded', loadBcsAttendanceData);

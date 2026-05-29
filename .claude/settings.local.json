@@ -33,7 +33,8 @@
       "Bash(grep -E \"INSERT INTO \\\\`class_subjects\\\\`|INSERT INTO \\\\`class_subject_groups\\\\`\" \"c:\\\\xampp\\\\htdocs\\\\cms\\\\db.sql\")",
       "Bash(grep -A 30 \"INSERT INTO \\\\`class_subjects\\\\`\" \"c:\\\\xampp\\\\htdocs\\\\cms\\\\db.sql\")",
       "Bash(Get-Content \"c:\\\\xampp\\\\htdocs\\\\cms\\\\views\\\\bcs\\\\dashboard-detail.php\")",
-      "Bash(Select-Object -First 30)"
+      "Bash(Select-Object -First 30)",
+      "Bash(php -l views/bcs/attendance.php)"
     ]
   }
 }

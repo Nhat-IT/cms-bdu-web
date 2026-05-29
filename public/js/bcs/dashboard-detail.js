@@ -30,7 +30,7 @@ function updateFilterUI() {
     const clearBtn = document.getElementById('clearFilterBtn');
     if (clearBtn) clearBtn.style.display = (activeDetailFilter || keyword) ? '' : 'none';
 
-    document.getElementById('cardWarnStudents')?.classList.toggle('filter-active', activeDetailFilter === 'students');
+document.getElementById('cardWarnStudents')?.classList.toggle('filter-active', activeDetailFilter === 'students');
     document.getElementById('cardWarnSubjects')?.classList.toggle('filter-active', activeDetailFilter === 'subjects');
 }
 
@@ -52,12 +52,12 @@ function clearDetailFilter() {
 
 // ── Render stats ──────────────────────────────────────────────────────────
 function bcsRenderDetailStats() {
-    const cards = document.querySelectorAll('.stat-card-custom h2');
-    if (cards.length >= 3) {
-        cards[0].textContent = String(bcsDetailData.stats.totalStudents  || 0);
-        cards[1].textContent = String(bcsDetailData.stats.warningStudents || 0);
-        cards[2].textContent = String(bcsDetailData.stats.warningSubjects || 0);
-    }
+    const s = bcsDetailData.stats || {};
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = String(val || 0); };
+    set('statTotalStudents',  s.totalStudents);
+    set('statAbsentStudents', s.absentStudents);
+    set('statWarnStudents',   s.warningStudents);
+    set('statWarnSubjects',   s.warningSubjects);
 }
 
 // ── Render bảng (có áp dụng filter) ──────────────────────────────────────
