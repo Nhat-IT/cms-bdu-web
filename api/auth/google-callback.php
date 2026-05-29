@@ -79,7 +79,7 @@ if (!$emailVerified) {
 $user = db_fetch_one("SELECT * FROM users WHERE LOWER(email) = ?", [$googleEmail]);
 
 if (!$user) {
-    googleOAuthError('Email ' . $googleEmail . ' không có trong hệ thống. Vui lòng liên hệ Admin.', 'email_not_found');
+    googleOAuthError('Email ' . $googleEmail . ' không phải do BDU cấp. Vui lòng liên hệ Admin.', 'email_not_found');
 }
 
 // Kiểm tra tài khoản có bị khóa không
