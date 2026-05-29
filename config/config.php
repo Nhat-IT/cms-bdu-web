@@ -2,12 +2,14 @@
 /**
  * CMS BDU - Database Configuration
  * Kết nối MySQL Database sử dụng MySQLi
- * 
+ *
  * THÔNG TIN CẤU HÌNH:
  * - Copy file .env.example thành .env.local
  * - Cập nhật thông tin database trong .env.local
  * - KHÔNG commit .env.local lên git
  */
+
+date_default_timezone_set('Asia/Ho_Chi_Minh');
 
 // Load environment variables from common env files.
 function loadEnvFile($filePath) {
