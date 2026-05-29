@@ -588,6 +588,32 @@ INSERT INTO `subjects` (`id`, `subject_code`, `subject_name`, `credits`, `year_l
 -- --------------------------------------------------------
 
 --
+-- Cấu trúc bảng cho bảng `subject_status_history`
+--
+
+CREATE TABLE `subject_status_history` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `subject_id` int(11) NOT NULL,
+  `academic_year` varchar(20) DEFAULT NULL,
+  `semester` varchar(10) DEFAULT NULL,
+  `action_type` enum('open','close','schedule_change') NOT NULL DEFAULT 'open',
+  `old_status` tinyint(1) DEFAULT NULL,
+  `new_status` tinyint(1) NOT NULL,
+  `old_open_date` date DEFAULT NULL,
+  `new_open_date` date DEFAULT NULL,
+  `old_close_date` date DEFAULT NULL,
+  `new_close_date` date DEFAULT NULL,
+  `note` text DEFAULT NULL,
+  `changed_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_ssh_subject` (`subject_id`),
+  KEY `idx_ssh_changed_by` (`changed_by`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Cấu trúc bảng cho bảng `system_logs`
 --
 

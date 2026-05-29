@@ -57,21 +57,28 @@ if (!in_array($action, ['save', 'delete', 'get_history', 'update_status'], true)
         jsonResponse(['ok' => false, 'message' => 'missing_params'], 400);
     }
 
-    $history = db_fetch_all(
-        "SELECT h.*,
-                DATE(h.new_open_date)  AS new_open_date,
-                DATE(h.new_close_date) AS new_close_date,
-                DATE(h.old_open_date)  AS old_open_date,
-                DATE(h.old_close_date) AS old_close_date,
-                u.full_name AS changed_by_name
-         FROM subject_status_history h
-         LEFT JOIN users u ON u.id = h.changed_by
-         WHERE h.subject_id = ?
-         ORDER BY h.created_at DESC",
-        [$subjectId]
-    );
+    if (!subjectHistoryTableExists()) {
+        jsonResponse(['ok' => true, 'history' => []]);
+    }
 
-    jsonResponse(['ok' => true, 'history' => $history]);
+    try {
+        $history = db_fetch_all(
+            "SELECT h.id, h.subject_id, h.academic_year, h.semester, h.action_type,
+                    h.old_status, h.new_status,
+                    h.old_open_date, h.new_open_date,
+                    h.old_close_date, h.new_close_date,
+                    h.note, h.changed_by, h.created_at,
+                    u.full_name AS changed_by_name
+             FROM subject_status_history h
+             LEFT JOIN users u ON u.id = h.changed_by
+             WHERE h.subject_id = ?
+             ORDER BY h.created_at DESC",
+            [$subjectId]
+        );
+        jsonResponse(['ok' => true, 'history' => $history]);
+    } catch (Exception $e) {
+        jsonResponse(['ok' => true, 'history' => []]);
+    }
 }
 
 if ($action === 'update_status') {
