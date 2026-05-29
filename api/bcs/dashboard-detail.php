@@ -21,8 +21,7 @@ if (!hasRole('bcs')) {
     exit;
 }
 
-$userId  = (int) $_SESSION['user_id'];
-$keyword = trim($_GET['keyword'] ?? '');
+$userId = (int) $_SESSION['user_id'];
 
 try {
     $classInfo = getUserClassInfo($userId);
@@ -60,12 +59,13 @@ try {
         FROM attendance_records ar
         JOIN attendance_sessions a_s ON ar.session_id = a_s.id
         JOIN class_subject_groups csg ON a_s.class_subject_group_id = csg.id
+        JOIN class_subjects cs ON csg.class_subject_id = cs.id
         $ssrJoin
         WHERE ar.status = 3
-          AND ssr.class_name = ?
+          AND (cs.class_id = ? OR a_s.created_by = ?)
         GROUP BY student_key, csg.class_subject_id
         HAVING COUNT(*) >= 3
-    ", [$className]);
+    ", [$classId, $userId]);
 
     // Lấy số môn cảnh báo từ warningPairs (không cần query thêm)
     $warningSubjectCount = count(array_unique(array_column($warningPairs, 'class_subject_id')));
@@ -73,10 +73,6 @@ try {
 
     // ── Detail rows ──────────────────────────────────────────────────────────
 
-    $kf    = $keyword ? " AND (COALESCE(u.full_name, ssr.full_name) LIKE ? OR COALESCE(u.username, ssr.mssv) LIKE ?)" : '';
-    $kArgs = $keyword ? ["%$keyword%", "%$keyword%"] : [];
-
-    // Đếm tổng vắng theo từng môn cho từng SV
     $subquery = "
         SELECT COUNT(*)
         FROM attendance_records ar2
@@ -108,10 +104,10 @@ try {
         LEFT JOIN users u             ON ar.student_id = u.id
         $ssrJoin
         WHERE ar.status = 3
-          AND ssr.class_name = ? $kf
+          AND (cs.class_id = ? OR a_s.created_by = ?)
         ORDER BY COALESCE(u.full_name, ssr.full_name), a_s.attendance_date DESC
         LIMIT 200
-    ", array_merge([$className], $kArgs));
+    ", [$classId, $userId]);
 
     echo json_encode([
         'stats' => [

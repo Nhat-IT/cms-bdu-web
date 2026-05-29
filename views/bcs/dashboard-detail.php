@@ -184,6 +184,14 @@ foreach ($absenceDetails as $abs) {
         .custom-detail-table td:last-child {
             border-right: none;
         }
+
+        .stat-card-custom.filter-active {
+            box-shadow: 0 0 0 3px rgba(0,0,0,.2) !important;
+            transform: scale(1.02);
+            transition: transform .15s, box-shadow .15s;
+        }
+        #cardWarnStudents.filter-active { box-shadow: 0 0 0 3px #dc3545 !important; }
+        #cardWarnSubjects.filter-active { box-shadow: 0 0 0 3px #ffc107 !important; }
     </style>
 </head>
 <body class="dashboard-body">
@@ -279,7 +287,8 @@ foreach ($absenceDetails as $abs) {
             </div>
             
             <div class="col-md-4">
-                <div class="card stat-card-custom border-start border-danger border-4 h-100 p-3 shadow-sm bg-white">
+                <div class="card stat-card-custom border-start border-danger border-4 h-100 p-3 shadow-sm bg-white"
+                     id="cardWarnStudents" onclick="toggleFilter('students')" style="cursor:pointer;" title="Nhấp để lọc Sinh viên bị cảnh báo">
                     <div class="d-flex align-items-center">
                         <div class="icon-box-custom bg-light-danger me-3 text-danger rounded p-2"><i class="bi bi-person-x-fill fs-4"></i></div>
                         <div>
@@ -289,9 +298,10 @@ foreach ($absenceDetails as $abs) {
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-4">
-                <div class="card stat-card-custom border-start border-warning border-4 h-100 p-3 shadow-sm bg-white">
+                <div class="card stat-card-custom border-start border-warning border-4 h-100 p-3 shadow-sm bg-white"
+                     id="cardWarnSubjects" onclick="toggleFilter('subjects')" style="cursor:pointer;" title="Nhấp để lọc Môn cảnh báo">
                     <div class="d-flex align-items-center">
                         <div class="icon-box-custom bg-light-warning me-3 text-warning rounded p-2"><i class="bi bi-journal-x fs-4"></i></div>
                         <div>
@@ -306,8 +316,11 @@ foreach ($absenceDetails as $abs) {
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white pt-3 pb-2 border-0 d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <h5 class="fw-bold text-dark m-0"><i class="bi bi-person-lines-fill me-2 text-primary"></i>Chi tiết vắng học theo sinh viên</h5>
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 align-items-center">
                     <input type="text" class="form-control form-control-sm border-secondary" id="bcsDashboardDetailKeyword" placeholder="Tìm MSSV hoặc Tên..." style="width: 200px;">
+                    <button class="btn btn-outline-secondary btn-sm" id="clearFilterBtn" onclick="clearDetailFilter()" style="display:none;" title="Xóa lọc">
+                        <i class="bi bi-x-lg"></i> Xóa lọc
+                    </button>
                     <button class="btn btn-success btn-sm fw-bold shadow-sm" onclick="exportDetailExcel()"><i class="bi bi-file-earmark-excel me-1"></i> Xuất Excel</button>
                 </div>
             </div>
