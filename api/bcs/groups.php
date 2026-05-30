@@ -61,12 +61,16 @@ try {
          JOIN class_subjects cs  ON csg.class_subject_id = cs.id
          JOIN subjects s         ON cs.subject_id = s.id
          JOIN classes c          ON cs.class_id = c.id
-         JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg.id
-         JOIN class_students cs2 ON cs2.student_id = ssr.student_id AND cs2.class_id = ?
          LEFT JOIN semesters sm  ON cs.semester_id = sm.id
          LEFT JOIN users u       ON cs.teacher_id = u.id
          LEFT JOIN rooms r       ON r.room_code = csg.room
-         WHERE ssr.status = 'Đang học'
+         WHERE cs.id IN (
+             SELECT DISTINCT csg2.class_subject_id
+             FROM class_subject_groups csg2
+             JOIN student_subject_registration ssr ON ssr.class_subject_group_id = csg2.id
+             JOIN class_students cs2 ON cs2.student_id = ssr.student_id AND cs2.class_id = ?
+             WHERE ssr.status = 'Đang học'
+         )
          ORDER BY sm.academic_year DESC,
                   FIELD(UPPER(sm.semester_name),'HK1','1','HK2','2','HK3','3'),
                   s.subject_name,
